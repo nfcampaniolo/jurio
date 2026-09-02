@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+ <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'wait_for_update': 500
+      });
+    </script>
+  <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="869d54bc-6b13-4281-a6ab-489dc313a855"  type="text/javascript"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="application-name" content="Jurio">
+  <meta name="description" content="Informativa privacy di Jurio.">
+  <meta name="robots" content="index,follow">
+  <title>Privacy Policy | Jurio</title>
+  <!--
+    ============================================================
+    JURIO — CONFIGURAZIONE PRIVACY
+    ============================================================
+  -->
+<script>
+  window.JURIO_PRIVACY = {
+    mode: "production",
+
+    document: {
+      version: "1.0",
+      lastUpdated: "31/08/2026"
+    },
+
+    controller: {
+      name: "Nicolò Flavio Campaniolo",
+      address: "Torino, Italia",
+      email: "nf.campaniolo@gmail.com"
+    },
+
+    dpo: {
+      applicable: false, // Se false, la sezione DPO viene nascosta in automatico
+      name: "Nicolò Flavio Campaniolo",
+      email: "nf.campaniolo@gmail.com"
+    },
+
+    service: {
+      hosting: "Google Cloud",
+      payment: "Stripe",
+      ai: "Google Gemini API",
+      analytics: "Google Analytics (soggetto a consenso cookie)",
+      aiTraining:
+        "Jurio utilizza la Gemini Developer API in modalità a pagamento. In tale configurazione, i prompt e le risposte inviati tramite l'API non vengono utilizzati da Google per migliorare i propri prodotti, secondo i termini e le condizioni applicabili al servizio.",
+      internationalTransfers:
+        "I dati possono essere trattati e conservati su infrastrutture Google situate anche al di fuori dello Spazio Economico Europeo. Gli eventuali trasferimenti internazionali sono effettuati secondo le garanzie previste dalla normativa applicabile e dai termini di trattamento dei dati di Google."
+    },
+
+    retention: {
+      account: "Per tutta la durata dell'account e, successivamente, per il tempo necessario alla gestione di eventuali obblighi o controversie.",
+      userContent:
+        "Fino alla cancellazione da parte dell'utente o alla cessazione dell'account, salvo necessità di conservazione per obblighi di legge o tutela dei diritti.",
+      billing:
+        "Per il periodo richiesto dagli obblighi civilistici, fiscali e contabili applicabili.",
+      logs:
+        "Per il periodo strettamente necessario alla sicurezza, alla prevenzione degli abusi e alla gestione tecnica del servizio."
+    },
+
+    options: {
+      marketing: false,
+      profiling: false,
+      automatedDecision: false,
+      nonEuTransfers: true,
+      thirdPartyData: true
+    },
+    
+    links: {
+      cookie: "/cookie",
+      terms: "/termini"
+    }
+  };
+</script>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" aria-label="Jurio — home" style="font-family: var(--font-serif); text-decoration: none; color: inherit;">Jurio</a>
+      <nav class="nav" aria-label="Navigazione principale">
+        <a href="/#come-funziona">Come funziona</a>
+        <a href="/prezzi">Prezzi</a>
+        <a href="/#faq">FAQ</a>
+        <a href="/ricerca">Ricerca giurisprudenza</a>
+        <a href="/chat">Consulente legale</a>
+      </nav>
+      <a class="header-cta" href="/profilo">Accedi</a>
+    </div>
+  </header>
+
+  <main id="contenuto">
+    <section class="terms-hero">
+      <div class="container terms-hero-inner">
+        <span class="eyebrow">Informativa privacy</span>
+        <h1>Privacy <em>Policy</em></h1>
+        <p class="intro">
+          Informativa sul trattamento dei dati personali effettuato in relazione a Jurio,
+          ai sensi del Regolamento (UE) 2016/679 (“GDPR”) e della normativa nazionale applicabile.
+          <br><br>
+          <strong>Versione:</strong> <span data-config="document.version"></span>
+          · <strong>Ultimo aggiornamento:</strong> <span data-config="document.lastUpdated"></span>
+        </p>
+
+        <div class="notice" data-draft hidden>
+          <strong>Bozza di configurazione:</strong>
+          il documento è attualmente in modalità test. Per rimuovere questo avviso imposta <code>mode: "production"</code> nel JSON.
+        </div>
+      </div>
+    </section>
+
+    <section class="terms-section">
+      <div class="container">
+        <article class="terms-card">
+          <div class="content">
+
+            <section>
+              <h2>Titolare del trattamento</h2>
+              <p>Il Titolare del trattamento è:</p>
+              <ul>
+                <li><strong><span data-config="controller.name"></span></strong></li>
+                <li>Indirizzo: <span data-config="controller.address"></span></li>
+              </ul>
+              <div class="contact">
+                Per richieste relative al trattamento dei dati e all'esercizio dei diritti:
+                <a data-email="controller.email" href="#"></a>.
+              </div>
+
+              <div data-dpo-block style="display:none; margin-top: 1rem;">
+                <p><strong>Responsabile della protezione dei dati (DPO):</strong><br>
+                <span data-config="dpo.name"></span>, contattabile all'indirizzo <a data-email="dpo.email" href="#"></a>.</p>
+              </div>
+            </section>
+
+            <section>
+              <h2>Quali dati trattiamo</h2>
+              <p>In funzione delle modalità di utilizzo del servizio, possono essere trattati:</p>
+              <ul>
+                <li>dati identificativi e di account, come nome, cognome ed email;</li>
+                <li>dati tecnici e di sicurezza necessari al funzionamento del servizio, come indirizzo IP, log e identificativi tecnici;</li>
+                <li>dati amministrativi e di fatturazione;</li>
+                <li>documenti, testi, prompt e altri contenuti inseriti dall'utente nel servizio.</li>
+              </ul>
+              <p>
+                Jurio non richiede, per la normale erogazione del servizio, dati appartenenti a categorie particolari.
+                L'utente non deve inserire dati di terzi se non dispone di un'idonea base giuridica per farlo.
+              </p>
+            </section>
+
+            <section>
+              <h2>Finalità e basi giuridiche</h2>
+              <ul>
+                <li>
+                  <strong>Erogazione del servizio e gestione dell'account</strong>:
+                  esecuzione del contratto o di misure precontrattuali, art. 6, par. 1, lett. b) GDPR.
+                </li>
+                <li>
+                  <strong>Fatturazione e adempimenti</strong>:
+                  adempimento di obblighi legali, art. 6, par. 1, lett. c) GDPR.
+                </li>
+                <li>
+                  <strong>Sicurezza, prevenzione degli abusi e tutela dei sistemi</strong>:
+                  legittimo interesse del Titolare, art. 6, par. 1, lett. f) GDPR,
+                  nei limiti di quanto necessario e proporzionato.
+                </li>
+                <li data-section="marketing" hidden>
+                  <strong>Marketing</strong>:
+                  consenso dell'interessato, art. 6, par. 1, lett. a) GDPR.
+                </li>
+              </ul>
+            </section>
+
+            <section>
+              <h2>Fornitori e destinatari</h2>
+              <p>
+                Per erogare il servizio il Titolare può avvalersi di fornitori tecnici che trattano dati per suo conto,
+                ove ne ricorrano i presupposti e previa adozione delle misure contrattuali previste dall'art. 28 GDPR.
+              </p>
+              <ul>
+                <li><strong>Hosting / infrastruttura:</strong> <span data-config="service.hosting"></span></li>
+                <li><strong>Pagamenti:</strong> <span data-config="service.payment"></span></li>
+                <li><strong>Servizi AI:</strong> <span data-config="service.ai"></span></li>
+                <li><strong>Analytics:</strong> <span data-config="service.analytics"></span></li>
+              </ul>
+              <p style="margin-top: 1rem;"><strong style="color: var(--color-primary);">Policy AI:</strong> <span data-config="service.aiTraining"></span></p>
+            </section>
+
+            <section data-section="thirdPartyData" hidden>
+              <h2>Dati contenuti nei documenti dell'utente</h2>
+              <p>
+                Se l'utente carica documenti contenenti dati personali di altre persone, il Titolare del trattamento
+                agisce in base al ruolo effettivamente svolto nell'operazione concreta. L'utente deve assicurarsi di avere
+                una base giuridica idonea e di poter legittimamente utilizzare e caricare tali dati sulla piattaforma.
+              </p>
+            </section>
+
+            <section data-section="nonEuTransfers" hidden>
+              <h2>Trasferimenti fuori dallo SEE</h2>
+              <p data-config="service.internationalTransfers"></p>
+            </section>
+
+            <section>
+              <h2>Conservazione</h2>
+              <ul>
+                <li><strong>Account:</strong> <span data-config="retention.account"></span></li>
+                <li><strong>Contenuti dell'utente:</strong> <span data-config="retention.userContent"></span></li>
+                <li><strong>Dati di fatturazione:</strong> <span data-config="retention.billing"></span></li>
+                <li><strong>Log tecnici e sicurezza:</strong> <span data-config="retention.logs"></span></li>
+              </ul>
+              <p>
+                Quando non è possibile indicare un termine preciso, la conservazione è determinata sulla base
+                dei criteri necessari a conseguire le finalità del trattamento e degli eventuali obblighi di legge.
+              </p>
+            </section>
+
+            <section>
+              <h2>Diritti dell'interessato</h2>
+              <p>
+                Nei casi previsti dal GDPR, l'interessato può chiedere al Titolare l'accesso ai propri dati,
+                la rettifica, la cancellazione, la limitazione del trattamento, la portabilità dei dati
+                e può opporsi ai trattamenti basati sul legittimo interesse. Quando il trattamento si basa
+                sul consenso, il consenso può essere revocato in qualsiasi momento, senza pregiudicare la liceità
+                del trattamento precedente alla revoca.
+              </p>
+              <p>
+                Le richieste possono essere inviate a
+                <a data-email="controller.email" href="#"></a>.
+                L'interessato può inoltre proporre reclamo al Garante per la protezione dei dati personali
+                o all'autorità di controllo competente.
+              </p>
+            </section>
+
+            <section>
+              <h2>Conferimento dei dati</h2>
+              <p>
+                I dati necessari per creare l'account, fornire il servizio o adempiere a obblighi di legge
+                devono essere forniti quando indispensabili per tali finalità. Il mancato conferimento può
+                impedire l'erogazione delle relative funzionalità.
+              </p>
+            </section>
+
+            <section data-section="profiling" hidden>
+              <h2>Profilazione</h2>
+              <p>
+                I dati sono utilizzati per finalità di profilazione nei limiti descritti in questa informativa
+                e secondo la base giuridica applicabile.
+              </p>
+            </section>
+
+            <section data-section="automatedDecision" hidden>
+              <h2>Decisioni automatizzate</h2>
+              <p>
+                Possono essere adottate decisioni basate esclusivamente su trattamenti automatizzati con le
+                caratteristiche e le garanzie previste dall'art. 22 GDPR. La logica, la rilevanza e le conseguenze
+                del trattamento saranno descritte prima che esso venga effettuato.
+              </p>
+            </section>
+
+            <section>
+              <h2>Cookie e strumenti di tracciamento</h2>
+              <p>
+                L'uso di cookie e altri strumenti di tracciamento è disciplinato dalla
+                <a data-link="links.cookie">Cookie Policy</a>.
+                Gli strumenti soggetti a consenso non vengono attivati prima della relativa manifestazione
+                di volontà, secondo la normativa applicabile.
+              </p>
+            </section>
+
+            <section>
+              <h2>Aggiornamenti</h2>
+              <p>
+                Questa informativa può essere modificata per aggiornamenti normativi, organizzativi o tecnici.
+                La versione vigente e la data dell'ultimo aggiornamento sono riportate in questa pagina.
+              </p>
+            </section>
+
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <footer style="padding: 10px">
+    Documento v.<span data-config="document.version"></span>
+    · Ultimo aggiornamento <span data-config="document.lastUpdated"></span>
+    · <a data-link="links.terms">Termini di servizio</a>
+  </footer>
+    <div id="footer"></div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+      const components = [
+        {
+          selector: "#header",
+          file: "/header.html"
+        },
+        {
+          selector: "#footer",
+          file: "/footer.html"
+        }
+      ];
+      await Promise.all(
+        components.map(async ({ selector, file }) => {
+          const element = document.querySelector(selector);
+
+          if (!element) return;
+
+          try {
+            const response = await fetch(file);
+
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+
+            element.innerHTML = await response.text();
+          } catch (error) {
+            console.error(`Errore nel caricamento di ${file}:`, error);
+          }
+        })
+      );
+    });
+  </script>
+
+  <!--
+    ============================================================
+    MOTORE JAVASCRIPT PER IL DATA BINDING
+    ============================================================
+  -->
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const config = window.JURIO_PRIVACY;
+      if (!config) return;
+
+      // Funzione helper per risolvere i percorsi annidati (es. "document.version")
+      const getNestedValue = (obj, path) => {
+        return path.split('.').reduce((acc, part) => acc && acc[part], obj);
+      };
+
+      // 1. Popolamento dei testi standard
+      document.querySelectorAll('[data-config]').forEach(el => {
+        const val = getNestedValue(config, el.getAttribute('data-config'));
+        if (val !== undefined && val !== null) {
+          el.textContent = val;
+        }
+      });
+
+      // 2. Popolamento dei link mailto
+      document.querySelectorAll('[data-email]').forEach(el => {
+        const val = getNestedValue(config, el.getAttribute('data-email'));
+        if (val) {
+          el.textContent = val;
+          el.href = `mailto:${val}`;
+        }
+      });
+
+      // 3. Popolamento dei link generici (cookie, terms)
+      document.querySelectorAll('[data-link]').forEach(el => {
+        const val = getNestedValue(config, el.getAttribute('data-link'));
+        if (val) el.href = val;
+      });
+
+      // 4. Gestione visualizzazione blocco DPO
+      const dpoBlock = document.querySelector('[data-dpo-block]');
+      if (dpoBlock) {
+        dpoBlock.style.display = config.dpo.applicable ? 'block' : 'none';
+      }
+
+      // 5. Gestione delle sezioni opzionali (marketing, profiling, ecc.)
+      document.querySelectorAll('[data-section]').forEach(el => {
+        const optionName = el.getAttribute('data-section');
+        if (config.options[optionName]) {
+          el.removeAttribute('hidden');
+        } else {
+          el.setAttribute('hidden', '');
+        }
+      });
+
+      // 6. Gestione avviso Bozza / Produzione
+      const draftNotice = document.querySelector('[data-draft]');
+      if (draftNotice) {
+        if (config.mode === "production") {
+          draftNotice.setAttribute('hidden', '');
+        } else {
+          draftNotice.removeAttribute('hidden');
+        }
+      }
+    });
+  </script>
+</body>
+</html>

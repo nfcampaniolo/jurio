@@ -1,0 +1,63 @@
+/**
+ * JURIO SEARCH INDEX MAP - 2026
+ * Vettori: [embedding, fattispecie_rilevante_vector]
+ * Stato: 62 Combinazioni Blindate (31 per vettore)
+ */
+
+const ALLOWED_SEARCH_COMBINATIONS = {
+  // LIVELLO 1: Filtri Singoli (Full Coverage)
+  SINGLE_FILTERS: [
+    { fields: ["organo_giudicante"] },
+    { fields: ["materia"] },
+    { fields: ["tipo_massima"] },
+    { fields: ["tipo_documento"] },
+    { fields: ["sezione"] },
+    { fields: ["dataSentenza"] }
+  ],
+
+  // LIVELLO 2: Coppie Rapide (Common Cross)
+  DUAL_FILTERS: [
+    { fields: ["materia", "organo_giudicante"] }, // <--- Grado Standard
+    { fields: ["organo_giudicante", "tipo_documento"] },
+    { fields: ["organo_giudicante", "tipo_massima"] },
+    { fields: ["organo_giudicante", "sezione"] },
+    { fields: ["organo_giudicante", "dataSentenza"] },
+    { fields: ["materia", "tipo_documento"] },
+    { fields: ["materia", "tipo_massima"] },
+    { fields: ["materia", "dataSentenza"] },
+    { fields: ["tipo_documento", "tipo_massima"] },
+    { fields: ["tipo_documento", "dataSentenza"] },
+    { fields: ["dataSentenza", "sezione"] }
+  ],
+
+  // LIVELLO 3+: Catene Complesse (Advanced Search)
+  COMPLEX_CHAINS: [
+    // Focus Grado (Materia + Organo)
+    { fields: ["materia", "organo_giudicante", "tipo_documento"] },
+    { fields: ["materia", "organo_giudicante", "tipo_massima"] },
+    { fields: ["materia", "organo_giudicante", "dataSentenza"] },
+    { fields: ["materia", "organo_giudicante", "sezione"] },
+    
+    // Focus Tipologia e Valore
+    { fields: ["organo_giudicante", "tipo_documento", "tipo_massima"] },
+    { fields: ["organo_giudicante", "tipo_documento", "dataSentenza"] },
+    
+    // Focus Multi-Filtro (4-6 Campi)
+    { fields: ["materia", "organo_giudicante", "tipo_documento", "tipo_massima"] },
+    { fields: ["materia", "organo_giudicante", "tipo_documento", "dataSentenza"] },
+    { fields: ["materia", "organo_giudicante", "tipo_massima", "dataSentenza"] },
+    { fields: ["materia", "organo_giudicante", "tipo_documento", "tipo_massima", "dataSentenza"] },
+    { fields: ["materia", "organo_giudicante", "tipo_documento", "sezione", "dataSentenza"] },
+    { fields: ["tipo_documento", "tipo_massima", "sezione", "dataSentenza"] },
+    { fields: ["materia", "organo_giudicante", "tipo_massima", "tipo_documento", "sezione"] },
+    { fields: ["materia", "organo_giudicante", "tipo_massima", "tipo_documento", "sezione", "dataSentenza"] }
+  ]
+};
+
+// LOGICA DI FALLBACK APPLICATA (Backend & buildVectorFilters)
+const FALLBACK_RULES = {
+  IF_NO_GRADO: "Usa solo il primo filtro rilevante trovato (Index Single Coverage)",
+  IF_GRADO_EXISTS: "Permetti combinazioni fino a 6 campi (Chain Coverage)",
+  ORDER_SENSITIVITY: "Ininfluente per ==. Rilevante per dataSentenza (gestito come ASC)",
+  DATA_FIELD_NAME: "Deve essere 'dataSentenza' (case sensitive)"
+};

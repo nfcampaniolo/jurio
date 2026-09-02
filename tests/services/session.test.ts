@@ -1,0 +1,99 @@
+import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
+
+/* ---------- hoisted mocks ---------- */
+const {
+  mockGetAuthClient,
+  mockGetDb,
+  mockDoc,
+  mockUpdateDoc,
+  mockSignOut,
+} = vi.hoisted(() => ({
+  mockGetAuthClient: vi.fn(),
+  mockGetDb: vi.fn().mockResolvedValue("mock_db"),
+  mockDoc: vi.fn((_db: unknown, ...pathSegments: string[]) => pathSegments.join("/")),
+  mockUpdateDoc: vi.fn().mockResolvedValue(undefined),
+  mockSignOut: vi.fn().mockResolvedValue(undefined),
+}));
+
+/* ---------- mock modules ---------- */
+vi.mock("@/services/auth", () => ({
+  getAuthClient: () => mockGetAuthClient(),
+}));
+
+vi.mock("@/services/db", () => ({
+  getDb: () => mockGetDb(),
+}));
+
+vi.mock("firebase/firestore", () => ({
+  doc: (db: unknown, ...pathSegments: string[]) => mockDoc(db, ...pathSegments),
+  updateDoc: (ref: unknown, data: unknown) => mockUpdateDoc(ref, data),
+}));
+
+vi.mock("firebase/auth", () => ({
+  signOut: (auth: unknown) => mockSignOut(auth),
+}));
+
+/* ---------- subject under test ---------- */
+import { forceSessionTakeover, clearLocalSession } from "@/services/sessionLogic";
+
+describe("session Service Suite", () => {
+  let setItemSpy: ReturnType<typeof vi.spyOn>;
+  let removeItemSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {});
+    removeItemSpy = vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  describe("forceSessionTakeover", () => {
+    test("lancia un errore 'no_user' se non c'è un utente autenticato", async () => {
+      mockGetAuthClient.mockResolvedValueOnce({ currentUser: null });
+
+      await expect(forceSessionTakeover()).rejects.toThrow("no_user");
+      expect(mockGetDb).not.toHaveBeenCalled();
+    });
+
+    test("aggiorna la sessione su firestore e salva in localStorage usando crypto.randomUUID", async () => {
+      const mockUser = { uid: "user_123" };
+      mockGetAuthClient.mockResolvedValueOnce({ currentUser: mockUser });
+
+      const originalCrypto = global.crypto;
+      const mockRandomUUID = vi.fn().mockReturnValue("mock-uuid-123");
+      Object.defineProperty(global, "crypto", {
+        value: { randomUUID: mockRandomUUID },
+        configurable: true,
+      });
+
+      await forceSessionTakeover();
+
+      expect(mockGetDb).toHaveBeenCalledTimes(1);
+      expect(setItemSpy).toHaveBeenCalledWith("active_session_id", "mock-uuid-123");
+      expect(mockUpdateDoc).toHaveBeenCalledTimes(1);
+      expect(mockUpdateDoc).toHaveBeenCalledWith("users/user_123", {
+        currentSessionId: "mock-uuid-123",
+      });
+
+      Object.defineProperty(global, "crypto", {
+        value: originalCrypto,
+        configurable: true,
+      });
+    });
+  });
+
+  describe("clearLocalSession", () => {
+    test("rimuove il session id da localStorage ed effettua il signOut", async () => {
+      const mockAuth = "mock_auth_instance";
+      mockGetAuthClient.mockResolvedValueOnce(mockAuth);
+
+      await clearLocalSession();
+
+      expect(removeItemSpy).toHaveBeenCalledWith("active_session_id");
+      expect(mockSignOut).toHaveBeenCalledWith(mockAuth);
+    });
+  });
+});

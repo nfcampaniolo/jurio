@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2022",         // Innalzato da 2017 a 2022 per Genkit
+    "skipLibCheck": true,       // FONDAMENTALE: evita errori interni alle librerie AI/Firebase
+    "esModuleInterop": true,
+    "noImplicitReturns": true,
+    "noUnusedLocals": true,
+    "outDir": "lib",
+    "rootDir": "src",           // Specifichiamo dove parte il codice
+    "sourceMap": true,
+    "strict": true,
+  },
+  "compileOnSave": true,
+  "include": [
+    "src/**/*"                 // Assicuriamoci di prendere tutti i file nelle sottocartelle
+  ]
+}
