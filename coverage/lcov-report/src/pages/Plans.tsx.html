@@ -643,14 +643,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfile } from "@/features/profile/hooks/useProfile";
 import { motion, useReducedMotion } from "framer-motion";
-import { fetchPlansFromDb, type PlanUI } from "@/services/plans";
+import { fetchPlansFromDb, type PlanUI } from "@/features/plans/hooks/plans";
 import { FiArrowLeft } from "react-icons/fi";
-import PaymentModal from "@/components/Plans/PaymentModal";
-import { DiscountCoupon } from "@/components/Plans/DiscountCoupon"; 
-import { type CouponData, fetchUserCoupon } from "@/hooks/discount"; 
-import { useTrialInfo } from "@/hooks/usePlans";
+import PaymentModal from "@/features/plans/components/PaymentModal";
+import { DiscountCoupon } from "@/features/plans/components/DiscountCoupon"; 
+import { type CouponData, fetchUserCoupon } from "@/features/plans/hooks/discount"; 
+import { useTrialInfo } from "@/features/plans/hooks/usePlans";
 import {
   type StatusNormalized,
   normalizeStatus,
@@ -658,13 +658,13 @@ import {
   getUpgradeTarget,
   findPlanByStatus,
   findPlanByKey,
-} from "@/hooks/planlDomain";
-import { PaymentHistory } from "@/components/Plans/PaymentHistory";
+} from "@/features/plans/hooks/planlDomain";
+import { PaymentHistory } from "@/features/plans/components/PaymentHistory";
 import { Loader2 } from "lucide-react";
 &nbsp;
-import { CurrentPlanCard } from "@/components/Plans/CurrentPlanCard";
-import { PlansGrid } from "@/components/Plans/PlansGrid";
-import { TeamPlansSection } from "@/components/Plans/TeamPlansSection";
+import { CurrentPlanCard } from "@/features/plans/components/CurrentPlanCard";
+import { PlansGrid } from "@/features/plans/components/PlansGrid";
+import { TeamPlansSection } from "@/features/plans/components/TeamPlansSection";
 &nbsp;
 type BillingCycle = "monthly" | "yearly";
 &nbsp;

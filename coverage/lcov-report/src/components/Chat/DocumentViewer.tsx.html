@@ -602,7 +602,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquarePlus, Loader2 } from 'lucide-react';
 import { type AttachedDocument } from '@/interfaces/interfaces';
 import { fetchWithSecurity } from "@/config/apiClient";
-import { withTrace } from "@/services/perf";
+import { withTrace } from "@/infrastructure/perf";
 import { getText } from "@/config/env";
 &nbsp;
 const EXTRACT_DOCUMENT_TEXT_URL = getText(); 

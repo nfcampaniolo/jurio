@@ -17,7 +17,7 @@ vi.mock("@dr.pogodin/react-helmet", () => ({
 }));
 
 /* ---------- mock GuideLayout ---------- */
-vi.mock("@/components/Guida/GuideLayout", () => ({
+vi.mock("@/features/guide/components/GuideLayout", () => ({
   __esModule: true,
   default: ({
     currentSlug,
@@ -33,7 +33,7 @@ vi.mock("@/components/Guida/GuideLayout", () => ({
 }));
 
 /* ---------- mock guideContent ---------- */
-vi.mock("@/hooks/guideContent", () => ({
+vi.mock("@/features/guide/hooks/guideContent", () => ({
   __esModule: true,
   guideContent: {
     introduzione: (
@@ -46,7 +46,7 @@ vi.mock("@/hooks/guideContent", () => ({
 }));
 
 /* ---------- component under test ---------- */
-import Guida from "@/pages/Guida"; // <-- adegua il path se necessario
+import Guida from "@/features/guide/Guida"; // <-- adegua il path se necessario
 
 describe("Guida Page Suite", () => {
   beforeEach(() => {

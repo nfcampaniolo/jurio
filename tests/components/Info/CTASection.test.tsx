@@ -13,7 +13,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- mock ButtonCTA ---------- */
-vi.mock("@/components/ButtonCTA", () => ({
+vi.mock("@/shared/components/ButtonCTA", () => ({
   ButtonCTA: ({
     children,
     onClick,
@@ -26,7 +26,7 @@ vi.mock("@/components/ButtonCTA", () => ({
 }));
 
 /* ---------- component ---------- */
-import CTASection from "@/components/Info/CTASection";
+import CTASection from "@/features/search/components/CTASection";
 
 describe("CTASection Component Suite", () => {
   beforeEach(() => {

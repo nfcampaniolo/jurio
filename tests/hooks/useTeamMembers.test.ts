@@ -68,12 +68,12 @@ vi.mock("@/config/env", () => ({
   getAssign: () => mockGetAssign(),
 }));
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: () => mockGetDb(),
 }));
 
-vi.mock("@/services/storage", () => ({
+vi.mock("@/shared/services/storage", () => ({
   __esModule: true,
   getAvatar: (uid: string) => mockGetAvatar(uid),
 }));
@@ -88,7 +88,7 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { useTeamMembers } from "@/hooks/useTeamMembers"; // <-- adegua il path di import se necessario
+import { useTeamMembers } from "@/features/teams/hooks/useTeamMembers"; // <-- adegua il path di import se necessario
 
 describe("useTeamMembers Hook Suite", () => {
   const defaultTeamId = "team_alpha_2026";

@@ -6,7 +6,7 @@ const { mockGetFirestore } = vi.hoisted(() => ({
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/firebase", () => ({
+vi.mock("@/infrastructure/firebase", () => ({
   firebaseApp: "mock_firebase_app",
 }));
 
@@ -21,7 +21,7 @@ describe("getPromptDb Service Suite", () => {
   });
 
   test("inizializza e restituisce l'istanza Firestore Lite usando firebaseApp", async () => {
-    const { getPromptDb } = await import("@/services/promptDb");
+    const { getPromptDb } = await import("@/infrastructure/promptDb");
     const db = await getPromptDb();
 
     expect(db).toBe("mock_firestore_lite_instance");
@@ -30,7 +30,7 @@ describe("getPromptDb Service Suite", () => {
   });
 
   test("restituisce la stessa istanza cachata nelle chiamate successive", async () => {
-    const { getPromptDb } = await import("@/services/promptDb");
+    const { getPromptDb } = await import("@/infrastructure/promptDb");
     const db1 = await getPromptDb();
     const db2 = await getPromptDb();
 

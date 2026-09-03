@@ -541,15 +541,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { PastFascicoli } from "@/components/Chat/PastFascicoli";
+import { PastFascicoli } from "@/features/chat/components/PastFascicoli";
 import { Header } from "@/components/Info/Header";
 import { Helmet } from "@dr.pogodin/react-helmet";
-import { useLegalChat } from "@/hooks/useLegalChat";
+import { useLegalChat } from "@/features/chat/hooks/useLegalChat";
 import { Loader2, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { PastChat, PastFascicolo } from "@/interfaces/interfaces";
 import { getAuth } from "firebase/auth";
-import { ConfirmModal } from "@/components/ConfirmModal"; 
+import { ConfirmModal } from "@/shared/components/ConfirmModal"; 
 import { toast } from "react-hot-toast";
 &nbsp;
 type RenameTarget = {

@@ -16,7 +16,7 @@ vi.mock("react-icons/fi", () => {
 });
 
 /* ---------- mock Document child component ---------- */
-vi.mock("@/components/Document/Document", () => ({
+vi.mock("@/features/document/components/Document", () => ({
   Document: ({ documento }: { documento: DocumentoGiurisprudenziale }) => (
     <div data-testid="mock-document-item">
       <span>{documento.id}</span>
@@ -43,7 +43,7 @@ vi.mock("framer-motion", () => ({
 }));
 
 /* ---------- component ---------- */
-import { VectorSearchResults } from "@/components/Profile/VectorSearchResults"; // <-- adegua il path se necessario
+import { VectorSearchResults } from "@/features/profile/components/VectorSearchResults"; // <-- adegua il path se necessario
 
 describe("VectorSearchResults Component Suite", () => {
   const mockHandleVectorSearch = vi.fn<() => void>();

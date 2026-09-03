@@ -1,10 +1,10 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
-import type { SortBy } from "@/hooks/searchBarTypes";
+import type { SortBy } from "@/features/search/hooks/searchBarTypes";
 
 /* ---------- mock types & searchBarTypes ---------- */
-vi.mock("@/hooks/searchBarTypes", () => ({
+vi.mock("@/features/search/hooks/searchBarTypes", () => ({
   CORTI_SUPREME: ["Cassazione Civile", "Cassazione Penale", "Consiglio di Stato"],
   TIPI_MASSIMA: ["CONFORME", "DIFFORME"],
   SEZIONI_CASSAZIONE_CIVILE: ["SEZ_1", "SEZ_2"],
@@ -35,7 +35,7 @@ vi.mock("lucide-react", () => {
 });
 
 /* ---------- component ---------- */
-import { SearchFilters } from "@/components/Search/SearchFilters"; // <-- adegua il path se necessario
+import { SearchFilters } from "@/features/search/components/SearchFilters"; // <-- adegua il path se necessario
 
 describe("SearchFilters Component Suite", () => {
   const mockSetFilterGrado = vi.fn<(val: string) => void>();

@@ -50,19 +50,19 @@ vi.mock("framer-motion", () => ({
 }));
 
 /* ---------- mock navigation helper ---------- */
-vi.mock("@/hooks/navigation", () => ({
+vi.mock("@/routes/navigation", () => ({
   __esModule: true,
   navigateItem: (...args: unknown[]) => mockNavigateItem(...args),
 }));
 
 /* ---------- mock auth service ---------- */
-vi.mock("@/services/auth", () => ({
+vi.mock("@/features/auth/hooks/auth", () => ({
   __esModule: true,
   logout: () => mockLogout(),
 }));
 
 /* ---------- mock subcomponents ---------- */
-vi.mock("@/components/Profile/HeaderProfile", () => ({
+vi.mock("@/features/profile/components/HeaderProfile", () => ({
   __esModule: true,
   HeaderProfile: ({
     name,
@@ -96,17 +96,17 @@ vi.mock("@/components/Profile/HeaderProfile", () => ({
   ),
 }));
 
-vi.mock("@/components/Profile/UploadSentences", () => ({
+vi.mock("@/features/profile/components/UploadSentences", () => ({
   __esModule: true,
   Upload: () => <div data-testid="upload-sentences">Upload Sentenze Component</div>,
 }));
 
-vi.mock("@/components/Document/YourDocument.tsx", () => ({
+vi.mock("@/shared/components//YourDocument.tsx", () => ({
   __esModule: true,
   YourDocument: () => <div data-testid="your-document">I Tuoi Documenti Component</div>,
 }));
 
-vi.mock("@/components/ConfirmModal", () => ({
+vi.mock("@/shared/components/ConfirmModal", () => ({
   __esModule: true,
   ConfirmModal: ({
     isOpen,
@@ -158,13 +158,13 @@ let mockProfileState = {
   exportAccount: mockExportAccount,
 };
 
-vi.mock("@/hooks/useProfile", () => ({
+vi.mock("@/features/profile/hooks/useProfile", () => ({
   __esModule: true,
   useProfile: () => mockProfileState,
 }));
 
 /* ---------- component under test ---------- */
-import { Profile } from "@/pages/Profile";
+import { Profile } from "@/features/profile/Profile";
 
 describe("Profile Page Suite", () => {
   beforeEach(() => {

@@ -23,7 +23,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- mock guideConfig ---------- */
-vi.mock("@/hooks/guideConfig", () => ({
+vi.mock("@/features/guide/hooks/guideConfig", () => ({
   __esModule: true,
   guideNavigation: [
     {
@@ -41,7 +41,7 @@ vi.mock("@/hooks/guideConfig", () => ({
 }));
 
 /* ---------- component ---------- */
-import GuideLayout from "@/components/Guida/GuideLayout";
+import GuideLayout from "@/features/guide/components/GuideLayout";
 
 describe("GuideLayout Component Suite", () => {
   beforeEach(() => {

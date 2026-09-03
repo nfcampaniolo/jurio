@@ -20,7 +20,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import GestionePiano from "@/components/Guida/GestionePiano"; // <-- adegua il path se necessario
+import GestionePiano from "@/features/guide/components/GestionePiano"; // <-- adegua il path se necessario
 
 describe("Guida - GestionePiano Component Suite", () => {
   beforeEach(() => {

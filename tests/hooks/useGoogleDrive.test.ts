@@ -53,7 +53,7 @@ vi.mock("@/config/env", () => ({
   getCloudUrl: () => mockGetCloudUrl(),
 }));
 
-vi.mock("@/hooks/utilsGoogleDrive", () => ({
+vi.mock("@/features/profile/hooks/utilsGoogleDrive", () => ({
   __esModule: true,
   GOOGLE_DRIVE_SCOPE: "https://www.googleapis.com/auth/drive.readonly",
   GOOGLE_TOKEN_SCRIPT: "https://accounts.google.com/gsi/client",
@@ -74,7 +74,7 @@ vi.mock("./utilsGoogleDrive", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { useGoogleDrive } from "@/hooks/useGoogleDrive";
+import { useGoogleDrive } from "@/features/profile/hooks/useGoogleDrive";
 
 describe("useGoogleDrive Hook Suite", () => {
   let tokenCallback: ((resp: Record<string, unknown>) => void) | null = null;

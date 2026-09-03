@@ -16,7 +16,7 @@ vi.mock("framer-motion", async () => ({
 }));
 
 /* ---------- component ---------- */
-import { MessageTimeline } from "@/components/Chat/MessageTimeline"; // <-- adegua il path se necessario
+import { MessageTimeline } from "@/features/chat/components/MessageTimeline"; // <-- adegua il path se necessario
 import type { Message } from "@/interfaces/interfaces";
 
 describe("MessageTimeline", () => {

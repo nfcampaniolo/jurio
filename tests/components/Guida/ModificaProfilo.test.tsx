@@ -21,7 +21,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import ModificaProfilo from "@/components/Guida/ModificaProfilo"; // <-- adegua il path se necessario
+import ModificaProfilo from "@/features/guide/components/ModificaProfilo"; // <-- adegua il path se necessario
 
 describe("Guida - ModificaProfilo Component Suite", () => {
   beforeEach(() => {

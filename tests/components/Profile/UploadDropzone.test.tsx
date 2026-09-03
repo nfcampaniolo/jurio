@@ -15,7 +15,7 @@ vi.mock("react-icons/fi", () => {
 });
 
 /* ---------- component ---------- */
-import { UploadDropzone } from "@/components/Profile/UploadDropzone"; // <-- adegua il path se necessario
+import { UploadDropzone } from "@/features/profile/components/UploadDropzone"; // <-- adegua il path se necessario
 
 describe("UploadDropzone Component Suite", () => {
   const mockHandleDrag = vi.fn<(e: React.SyntheticEvent) => void>();

@@ -16,7 +16,7 @@ vi.mock("react-hot-toast", () => ({
 }));
 
 /* ---------- mock child components ---------- */
-vi.mock("@/components/Document/SaveSentenzaButton", () => ({
+vi.mock("@/features/document/components/SaveSentenzaButton", () => ({
   SaveSentenzaButton: ({ userId, sentenzaId }: { userId: string; sentenzaId: string }) => (
     <div data-testid="mock-save-sentenza-button">
       <span>User: {userId}</span>
@@ -25,7 +25,7 @@ vi.mock("@/components/Document/SaveSentenzaButton", () => ({
   ),
 }));
 
-vi.mock("@/components/FeedbackComponent", () => ({
+vi.mock("@/shared/components/FeedbackComponent", () => ({
   FeedbackComponent: ({ sourceIds }: { sourceIds: string }) => (
     <div data-testid="mock-feedback-component">
       <span>Source: {sourceIds}</span>
@@ -60,7 +60,7 @@ vi.mock("react-icons/fi", () => {
 });
 
 /* ---------- component ---------- */
-import { PdfPreviewSidebar } from "@/components/Document/PdfPreviewSidebar";
+import { PdfPreviewSidebar } from "@/features/document/components/PdfPreviewSidebar";
 
 describe("PdfPreviewSidebar Component Suite", () => {
   const mockPlay = vi.fn().mockResolvedValue(undefined);

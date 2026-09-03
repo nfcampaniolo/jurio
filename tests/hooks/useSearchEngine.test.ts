@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import type { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 import type { DocumentoGiurisprudenziale } from "@/interfaces/interfaces";
-import type { useSearchFilters } from "@/hooks/useSearchFilters";
+import type { useSearchFilters } from "@/features/search/hooks/useSearchFilters";
 
 /* ---------- hoisted mocks ---------- */
 const {
@@ -64,23 +64,23 @@ vi.mock("firebase/app", () => {
   return { FirebaseError };
 });
 
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   __esModule: true,
   trackEvent: (...args: unknown[]) => mockTrackEvent(...args),
 }));
 
-vi.mock("@/services/perf", () => ({
+vi.mock("@/infrastructure/perf", () => ({
   __esModule: true,
   withTrace: (...args: unknown[]) =>
     mockWithTrace(args[0] as string, args[1], args[2] as () => Promise<unknown>),
 }));
 
-vi.mock("@/services/vectorSearch", () => ({
+vi.mock("@/features/search/hooks/vectorSearch", () => ({
   __esModule: true,
   vectorSearch: (...args: unknown[]) => mockVectorSearch(...args),
 }));
 
-vi.mock("@/services/search", () => ({
+vi.mock("@/features/search/hooks/search", () => ({
   __esModule: true,
   loadUserSearchTerms: (...args: unknown[]) => mockLoadUserSearchTerms(...args),
   saveUserSearchTerm: (...args: unknown[]) => mockSaveUserSearchTerm(...args),
@@ -99,14 +99,14 @@ vi.mock("./useSearchFilters", () => ({
   useSearchFilters: vi.fn(),
 }));
 
-vi.mock("@/hooks/useSearchFilters", () => ({
+vi.mock("@/features/search/hooks/useSearchFilters", () => ({
   __esModule: true,
   mapGradoToDbFields: (grado?: string) => mockMapGradoToDbFields(grado),
   useSearchFilters: vi.fn(),
 }));
 
 /* ---------- subject under test ---------- */
-import { useSearchHistory, useSearchEngine } from "@/hooks/useSearchEngine";
+import { useSearchHistory, useSearchEngine } from "@/features/search/hooks/useSearchEngine";
 
 describe("useSearchHistory Hook Suite", () => {
   const currentUid = "usr_flv_2026";

@@ -16,7 +16,7 @@ vi.mock("framer-motion", async () => ({
 }));
 
 /* ---------- component ---------- */
-import { TitlePromptModal } from "@/components/Chat/TitlePromptModal"; 
+import { TitlePromptModal } from "@/features/chat/components/TitlePromptModal"; 
 
 describe("TitlePromptModal Component Suite", () => {
   const mockOnClose = vi.fn();

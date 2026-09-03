@@ -6,17 +6,17 @@ import { renderHook, act, waitFor } from "@testing-library/react";
 ========================= */
 
 const loginWithGoogle = vi.fn<() => Promise<{ uid: string }>>();
-vi.mock("@/services/auth", () => ({
+vi.mock("@/features/auth/hooks/auth", () => ({
   loginWithGoogle,
 }));
 
 const userExists = vi.fn<(uid: string) => Promise<boolean>>();
-vi.mock("@/services/user", () => ({
+vi.mock("@/shared/services/user", () => ({
   userExists,
 }));
 
 const setUserMock = vi.fn<(u: { uid: string }) => void>();
-vi.mock("@/stores/userStore", () => ({
+vi.mock("@/infrastructure/userStore", () => ({
   useUserStore: (selector: (s: { setUser: typeof setUserMock }) => unknown) =>
     selector({ setUser: setUserMock }),
 }));
@@ -31,7 +31,7 @@ vi.mock("react-router-dom", () => ({
 ========================= */
 
 async function importFresh() {
-  return import("@/hooks/useGoogleAuthLogic"); // <-- adatta path
+  return import("@/features/auth/hooks/useGoogleAuthLogic"); // <-- adatta path
 }
 
 beforeEach(() => {

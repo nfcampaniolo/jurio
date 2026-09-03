@@ -3,63 +3,63 @@ import { render, screen } from "@testing-library/react";
 import React from "react";
 
 /* ---------- mock dei singoli componenti della guida ---------- */
-vi.mock("@/components/Guida/Introduzione", () => ({
+vi.mock("@/features/guide/components/Introduzione", () => ({
   default: () => <div data-testid="guida-introduzione">Introduzione</div>,
 }));
-vi.mock("@/components/Guida/InterfacceNavigazione", () => ({
+vi.mock("@/features/guide/components/InterfacceNavigazione", () => ({
   default: () => <div data-testid="guida-interfacce">Interfacce Navigazione</div>,
 }));
-vi.mock("@/components/Guida/RicercaSemantica", () => ({
+vi.mock("@/features/guide/components/RicercaSemantica", () => ({
   default: () => <div data-testid="guida-ricerca-semantica">Ricerca Semantica</div>,
 }));
-vi.mock("@/components/Guida/ConsulenteLegale", () => ({
+vi.mock("@/features/guide/components/ConsulenteLegale", () => ({
   default: () => <div data-testid="guida-consulente-legale">Consulente Legale</div>,
 }));
-vi.mock("@/components/Guida/AnalisiDocumenti", () => ({
+vi.mock("@/features/guide/components/AnalisiDocumenti", () => ({
   default: () => <div data-testid="guida-analisi-documenti">Analisi Documenti</div>,
 }));
-vi.mock("@/components/Guida/Accesso", () => ({
+vi.mock("@/features/guide/components/Accesso", () => ({
   default: () => <div data-testid="guida-accesso">Accesso</div>,
 }));
-vi.mock("@/components/Guida/ProvaGratuita", () => ({
+vi.mock("@/features/guide/components/ProvaGratuita", () => ({
   default: () => <div data-testid="guida-prova-gratuita">Prova Gratuita</div>,
 }));
-vi.mock("@/components/Guida/GestionePiano", () => ({
+vi.mock("@/features/guide/components/GestionePiano", () => ({
   default: () => <div data-testid="guida-gestione-piano">Gestione Piano</div>,
 }));
-vi.mock("@/components/Guida/ModificaProfilo", () => ({
+vi.mock("@/features/guide/components/ModificaProfilo", () => ({
   default: () => <div data-testid="guida-preferenze">Modifica Profilo</div>,
 }));
-vi.mock("@/components/Guida/PianiLicenze", () => ({
+vi.mock("@/features/guide/components/PianiLicenze", () => ({
   default: () => <div data-testid="guida-piani">Piani e Licenze</div>,
 }));
-vi.mock("@/components/Guida/AssistenzaSupporto", () => ({
+vi.mock("@/features/guide/components/AssistenzaSupporto", () => ({
   default: () => <div data-testid="guida-assistenza">Assistenza Supporto</div>,
 }));
-vi.mock("@/components/Guida/AggiornamentoForzato", () => ({
+vi.mock("@/features/guide/components/AggiornamentoForzato", () => ({
   default: () => <div data-testid="guida-aggiornamento-forzato">Aggiornamento Forzato</div>,
 }));
-vi.mock("@/components/Guida/GestioneTeam", () => ({
+vi.mock("@/features/guide/components/GestioneTeam", () => ({
   default: () => <div data-testid="guida-gestione-team">Gestione Team</div>,
 }));
-vi.mock("@/components/Guida/Cassazione", () => ({
+vi.mock("@/features/guide/components/Cassazione", () => ({
   default: () => <div data-testid="guida-cassazione">Cassazione</div>,
 }));
-vi.mock("@/components/Guida/ConsiglioStato", () => ({
+vi.mock("@/features/guide/components/ConsiglioStato", () => ({
   default: () => <div data-testid="guida-consiglio-di-stato">Consiglio di Stato</div>,
 }));
-vi.mock("@/components/Guida/CorteCostituzionale", () => ({
+vi.mock("@/features/guide/components/CorteCostituzionale", () => ({
   default: () => <div data-testid="guida-corte-costituzionale">Corte Costituzionale</div>,
 }));
-vi.mock("@/components/Guida/QuoteUtilizzo", () => ({
+vi.mock("@/features/guide/components/QuoteUtilizzo", () => ({
   default: () => <div data-testid="guida-quote">Quote Utilizzo</div>,
 }));
-vi.mock("@/components/Guida/ConfigurazioneLeChat", () => ({
+vi.mock("@/features/guide/components/ConfigurazioneLeChat", () => ({
   default: () => <div data-testid="guida-mcp-vibe">Configurazione MCP</div>,
 }));
 
 /* ---------- subject under test ---------- */
-import { guideContent } from "@/hooks/guideContent"; // <-- adegua il path di import se necessario
+import { guideContent } from "@/features/guide/hooks/guideContent"; // <-- adegua il path di import se necessario
 
 describe("Guide Content Registry Suite", () => {
   beforeEach(() => {

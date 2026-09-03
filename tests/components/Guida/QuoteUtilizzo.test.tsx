@@ -21,7 +21,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import QuoteUtilizzo from "@/components/Guida/QuoteUtilizzo"; // <-- adegua il path se necessario
+import QuoteUtilizzo from "@/features/guide/components/QuoteUtilizzo"; // <-- adegua il path se necessario
 
 describe("Guida - QuoteUtilizzo Component Suite", () => {
   beforeEach(() => {

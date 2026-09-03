@@ -25,7 +25,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import { EditProfileConsents } from "@/components/Profile/EditProfileConsents"; // <-- adegua il path se necessario
+import { EditProfileConsents } from "@/features/profile/components/EditProfileConsents"; // <-- adegua il path se necessario
 
 describe("EditProfileConsents Component Suite", () => {
   const mockHandleConsentChange = vi.fn<(key: "comms" | "marketing") => void>();

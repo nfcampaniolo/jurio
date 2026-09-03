@@ -66,12 +66,12 @@ vi.mock("framer-motion", () => ({
 }));
 
 /* ---------- mock child components ---------- */
-vi.mock("@/components/Info/Header", () => ({
+vi.mock("@/shared/components/Header", () => ({
   __esModule: true,
   Header: () => <header data-testid="main-header">Header</header>,
 }));
 
-vi.mock("@/components/ConfirmModal", () => ({
+vi.mock("@/shared/components/ConfirmModal", () => ({
   __esModule: true,
   ConfirmModal: ({
     isOpen,
@@ -100,7 +100,7 @@ vi.mock("@/components/ConfirmModal", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/Chat/PastFascicoli", () => ({
+vi.mock("@/features/chat/components/PastFascicoli", () => ({
   __esModule: true,
   PastFascicoli: ({
     fascicoli,
@@ -203,13 +203,13 @@ let mockLegalChatState = {
   renameChat: mockRenameChat,
 };
 
-vi.mock("@/hooks/useLegalChat", () => ({
+vi.mock("@/features/chat/hooks/useLegalChat", () => ({
   __esModule: true,
   useLegalChat: () => mockLegalChatState,
 }));
 
 /* ---------- component under test ---------- */
-import { HistoryPage } from "@/pages/HistoryPage"; // <-- adegua il path se necessario
+import { HistoryPage } from "@/features/chat/components/HistoryPage"; // <-- adegua il path se necessario
 import { toast } from "react-hot-toast";
 
 describe("HistoryPage Suite", () => {

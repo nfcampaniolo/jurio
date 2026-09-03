@@ -41,7 +41,7 @@ vi.mock("react-hot-toast", () => ({
 }));
 
 /* ---------- mock useGoogleDrive ---------- */
-vi.mock("@/hooks/useGoogleDrive", () => ({
+vi.mock("@/features/profile/hooks/useGoogleDrive", () => ({
   useGoogleDrive: () => mockGoogleDriveState,
 }));
 
@@ -86,7 +86,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import { CloudPickerModal } from "@/components/Profile/CloudPickerModal"; // <-- adegua il path se necessario
+import { CloudPickerModal } from "@/features/profile/components/CloudPickerModal"; // <-- adegua il path se necessario
 
 describe("CloudPickerModal Component Suite", () => {
   const mockOnClose = vi.fn<() => void>();

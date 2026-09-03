@@ -40,7 +40,7 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { usePromptSelector } from "@/hooks/usePromptSelector"; // <-- adegua il path di import se necessario
+import { usePromptSelector } from "@/shared/hooks/usePromptSelector"; // <-- adegua il path di import se necessario
 
 describe("usePromptSelector Hook Suite", () => {
   const originalWindowOpen = window.open;

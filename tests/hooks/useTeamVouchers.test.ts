@@ -23,7 +23,7 @@ vi.mock("@/config/env", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { useTeamVouchers } from "@/hooks/useTeamVouchers"; // <-- adegua il path se necessario
+import { useTeamVouchers } from "@/features/teams/hooks/useTeamVouchers"; // <-- adegua il path se necessario
 
 describe("useTeamVouchers Hook Suite", () => {
   const originalClipboard = navigator.clipboard;

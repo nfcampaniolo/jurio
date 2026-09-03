@@ -21,14 +21,14 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- mock sessionLogic ---------- */
-vi.mock("@/services/sessionLogic", () => ({
+vi.mock("@/features/auth/hooks/sessionLogic", () => ({
   __esModule: true,
   forceSessionTakeover: () => mockForceSessionTakeover(),
   clearLocalSession: () => mockClearLocalSession(),
 }));
 
 /* ---------- component under test ---------- */
-import Session from "@/pages/Session"; // <-- adegua il path se necessario
+import Session from "@/features/auth/Session"; // <-- adegua il path se necessario
 
 describe("Session Page Suite", () => {
   beforeEach(() => {

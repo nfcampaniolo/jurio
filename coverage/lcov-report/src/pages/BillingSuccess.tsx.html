@@ -482,7 +482,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { doc, onSnapshot } from "firebase/firestore";
-import { getDb } from "@/services/db";
+import { getDb } from "@/infrastructure/db";
 import { useAuth } from "@/context/useAuth";
 &nbsp;
 type RegisterDoc = {

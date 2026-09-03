@@ -45,7 +45,7 @@ describe("Firebase App Initialization Suite", () => {
   test("inizializza una nuova app Firebase se getApps() è vuoto", async () => {
     mockGetApps.mockReturnValue([]);
 
-    const { firebaseApp } = await import("@/services/firebase");
+    const { firebaseApp } = await import("@/infrastructure/firebase");
 
     expect(mockGetApps).toHaveBeenCalledTimes(1);
     expect(mockInitializeApp).toHaveBeenCalledTimes(1);
@@ -65,7 +65,7 @@ describe("Firebase App Initialization Suite", () => {
   test("recupera l'app già esistente tramite getApp() se getApps() ha elementi", async () => {
     mockGetApps.mockReturnValue([fakeExistingApp]);
 
-    const { firebaseApp } = await import("@/services/firebase");
+    const { firebaseApp } = await import("@/infrastructure/firebase");
 
     expect(mockGetApps).toHaveBeenCalledTimes(1);
     expect(mockGetApp).toHaveBeenCalledTimes(1);
@@ -79,7 +79,7 @@ describe("Firebase App Initialization Suite", () => {
     vi.stubEnv("VITE_FIREBASE_API_KEY", "");
     vi.stubEnv("VITE_FIREBASE_MEASUREMENT_ID", "");
 
-    const { firebaseApp } = await import("@/services/firebase");
+    const { firebaseApp } = await import("@/infrastructure/firebase");
 
     expect(mockInitializeApp).toHaveBeenCalledWith(
       expect.objectContaining({

@@ -4,13 +4,13 @@ import { render } from "@testing-library/react";
 /* ---------- mock optionalService ---------- */
 const mockInitializeOptionalServices = vi.fn();
 
-vi.mock("@/services/optionalService", () => ({
+vi.mock("@/infrastructure/optionalService", () => ({
   __esModule: true,
   initializeOptionalServices: () => mockInitializeOptionalServices(),
 }));
 
 /* ---------- component ---------- */
-import FirebaseInit from "@/components/FirebaseInit"; // <-- adegua il path se necessario
+import FirebaseInit from "@/context/FirebaseInit"; // <-- adegua il path se necessario
 
 describe("FirebaseInit Component Suite", () => {
   beforeEach(() => {

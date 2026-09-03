@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
-import type { ChatMessage, SourceItem } from "@/services/chatLogic";
+import type { ChatMessage, SourceItem } from "@/features/chat/hooks/chatLogic";
 
 /* ---------- tipi mock hook ---------- */
 interface MockHookState {
@@ -32,7 +32,7 @@ const mockHookState = vi.hoisted<MockHookState>(() => ({
 }));
 
 /* ---------- mock useJurioChatbot ---------- */
-vi.mock("@/hooks/useJurioChatbot", () => ({
+vi.mock("@/features/info/hooks/useJurioChatbot", () => ({
   useJurioChatbot: () => mockHookState,
 }));
 
@@ -60,14 +60,14 @@ vi.mock("react-markdown", () => ({
 }));
 
 /* ---------- mock Typewriter ---------- */
-vi.mock("@/components/Typewriter", () => ({
+vi.mock("@/shared/components/Typewriter", () => ({
   Typewriter: ({ text }: { text: string; speed?: number }) => (
     <div data-testid="typewriter-content">{text}</div>
   ),
 }));
 
 /* ---------- component ---------- */
-import JurioChatbot from "@/components/Info/JurioChatbot"; // <-- adegua il path se necessario
+import JurioChatbot from "@/features/info/components/JurioChatbot"; // <-- adegua il path se necessario
 
 describe("JurioChatbot Component Suite", () => {
   const scrollIntoViewMock = vi.fn();

@@ -17,7 +17,7 @@ vi.mock("./MassimaHeader", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/MassimaHeader", () => ({
+vi.mock("@/features/document/components/MassimaHeader", () => ({
   MassimaHeader: ({
     result,
     isGenerico,
@@ -56,7 +56,7 @@ vi.mock("./PdfPreviewSidebar", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/PdfPreviewSidebar", () => ({
+vi.mock("@/features/document/components/PdfPreviewSidebar", () => ({
   PdfPreviewSidebar: ({
     file,
     share,
@@ -101,7 +101,7 @@ vi.mock("./RenderGiurisprudenza", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/RenderGiurisprudenza", () => ({
+vi.mock("@/features/document/components/RenderGiurisprudenza", () => ({
   RenderGiurisprudenza: ({
     data,
     share,
@@ -130,7 +130,7 @@ vi.mock("./RenderContratto", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/RenderContratto", () => ({
+vi.mock("@/features/document/components/RenderContratto", () => ({
   RenderContratto: ({ data }: { data: Record<string, unknown> }) => (
     <div data-testid="mock-render-contratto">
       <span>Contratto: {Array.isArray(data.obbligazioni) ? data.obbligazioni.length : 0} obbligazioni</span>
@@ -146,7 +146,7 @@ vi.mock("./RenderDueDiligence", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/RenderDueDiligence", () => ({
+vi.mock("@/features/document/components/RenderDueDiligence", () => ({
   RenderDueDiligence: ({ data }: { data: Record<string, unknown> }) => (
     <div data-testid="mock-render-due-diligence">
       <span>Due Diligence: {Array.isArray(data.diritti) ? data.diritti.length : 0} diritti</span>
@@ -162,7 +162,7 @@ vi.mock("./RenderPreparazioneCaso", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/RenderPreparazioneCaso", () => ({
+vi.mock("@/features/document/components/RenderPreparazioneCaso", () => ({
   RenderPreparazioneCaso: ({ data }: { data: Record<string, unknown> }) => (
     <div data-testid="mock-render-preparazione-caso">
       <span>Caso: {String(data.obiettivo_processuale || "Strategia")}</span>
@@ -176,14 +176,14 @@ vi.mock("./RenderFallback", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/RenderFallback", () => ({
+vi.mock("@/features/document/components/RenderFallback", () => ({
   RenderFallback: () => (
     <div data-testid="mock-render-fallback">Fallback Generico</div>
   ),
 }));
 
 /* ---------- component ---------- */
-import { MassimaCard } from "@/components/Document/Massima";
+import { MassimaCard } from "@/features/document/components/Massima";
 
 describe("MassimaCard Component Suite", () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import React from "react";
-import type { PreparazioneCasoData } from "@/components/Document/RenderPreparazioneCaso";
+import type { PreparazioneCasoData } from "@/features/document/components/RenderPreparazioneCaso";
 
 /* ---------- mock react-icons/fa ---------- */
 vi.mock("react-icons/fa", () => {
@@ -50,7 +50,7 @@ vi.mock("./SharedUI", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/SharedUI", () => ({
+vi.mock("@/features/document/components/SharedUI", () => ({
   SectionContainer: ({
     children,
     className,
@@ -83,7 +83,7 @@ vi.mock("@/components/Document/SharedUI", () => ({
 }));
 
 /* ---------- component ---------- */
-import { RenderPreparazioneCaso } from "@/components/Document/RenderPreparazioneCaso";
+import { RenderPreparazioneCaso } from "@/features/document/components/RenderPreparazioneCaso";
 
 describe("RenderPreparazioneCaso Component Suite", () => {
   beforeEach(() => {

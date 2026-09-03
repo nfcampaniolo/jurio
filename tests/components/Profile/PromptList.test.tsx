@@ -2,7 +2,7 @@ import React from "react";
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import type { SavedPrompt } from "@/interfaces/interfaces";
-import { PromptList } from "@/components/Profile/PromptList";
+import { PromptList } from "@/features/prompt/components/PromptList";
 
 /* ---------- hoisted mocks ---------- */
 const { mockToast } = vi.hoisted(() => ({

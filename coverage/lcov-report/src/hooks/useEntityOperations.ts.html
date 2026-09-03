@@ -464,11 +464,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useCallback } from "react";
 import { toast } from "react-hot-toast";
 import type { DocumentReference, DocumentData, UpdateData } from "firebase/firestore";
-import { deleteDocument, renameDocument } from "@/services/document";
-import { deleteDocumentStorage } from "@/services/storage";
-import { trackEvent } from "@/services/analytics";
+import { deleteDocument, renameDocument } from "@/shared/services/document";
+import { deleteDocumentStorage } from "@/shared/services/storage";
+import { trackEvent } from "@/infrastructure/analytics";
 import type { AttachedDocument, PastChat, PastFascicolo } from "@/interfaces/interfaces";
-import { getDb } from "@/services/db";
+import { getDb } from "@/infrastructure/db";
 &nbsp;
 export interface EntityOperationsProps {
   archiveDocs: AttachedDocument[];
@@ -488,7 +488,7 @@ export const useEntityOperations = ({
   const renameFascicolo = async (id: string, newTitle: string) =&gt; {
     try {
       const [{ doc, updateDoc, serverTimestamp }, { getDb }] = await Promise.all([
-        import("firebase/firestore"), import("@/services/db")
+        import("firebase/firestore"), import("@/infrastructure/db")
       ]);
       const db = await getDb();
       const fascicoloRef = doc(db, "fascicoli", id);
@@ -503,7 +503,7 @@ export const useEntityOperations = ({
   const renameChat = async (id: string, newTitle: string) =&gt; {
     try {
       const [{ doc, updateDoc, serverTimestamp }, { getDb }] = await Promise.all([
-        import("firebase/firestore"), import("@/services/db")
+        import("firebase/firestore"), import("@/infrastructure/db")
       ]);
       const db = await getDb();
       const chatRef = doc(db, "chats", id);
@@ -517,7 +517,7 @@ export const useEntityOperations = ({
 &nbsp;
   const deleteFascicolo = async (id: string) =&gt; {
     try {
-      const { getCurrentUserId } = await import("@/services/security");
+      const { getCurrentUserId } = await import("@/infrastructure/security");
       const userId = await getCurrentUserId();
       if (!userId) { toast.error("Utente non autenticato."); return; }
       
@@ -606,7 +606,7 @@ export const useEntityOperations = ({
     const previousDocs = [...archiveDocs];
     try {
       const [{ doc, updateDoc, arrayUnion, arrayRemove, collection, query, where, getDocs, writeBatch }, { getCurrentUserId }] = await Promise.all([
-        import("firebase/firestore"), import("@/services/security")
+        import("firebase/firestore"), import("@/infrastructure/security")
       ]);
       const db = await getDb();
       const userId = await getCurrentUserId();
@@ -636,7 +636,7 @@ export const useEntityOperations = ({
   const handleDeleteDocumento = useCallback(async (id: string) =&gt; {
     try {
       setArchiveDocs(prev =&gt; prev.filter(doc =&gt; doc.id !== id));
-      const { getCurrentUserId } = await import("@/services/security");
+      const { getCurrentUserId } = await import("@/infrastructure/security");
       const userId = await getCurrentUserId();
       await deleteDocument("documents", id);
       await deleteDocumentStorage(id, `users/${userId}/documents`);

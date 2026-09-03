@@ -14,7 +14,7 @@ vi.mock("lucide-react", () => {
 });
 
 /* ---------- component ---------- */
-import { SourcesSection } from "@/components/Chat/SourcesSection"; // <-- adegua il path se necessario
+import { SourcesSection } from "@/features/chat/components/SourcesSection"; // <-- adegua il path se necessario
 import type { Message, Source } from "@/interfaces/interfaces";
 
 /* ---------- helper mock message ---------- */

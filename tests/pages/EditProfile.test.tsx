@@ -46,21 +46,21 @@ vi.mock("framer-motion", () => ({
 }));
 
 /* ---------- mock subcomponents ---------- */
-vi.mock("@/components/Profile/EditProfileAvatar", () => ({
+vi.mock("@/features/profile/components/EditProfileAvatar", () => ({
   __esModule: true,
   EditProfileAvatar: ({ name }: { name: string }) => (
     <div data-testid="edit-profile-avatar">Avatar per {name}</div>
   ),
 }));
 
-vi.mock("@/components/Profile/EditProfileForm", () => ({
+vi.mock("@/features/profile/components/EditProfileForm", () => ({
   __esModule: true,
   EditProfileForm: ({ name, surname }: { name: string; surname: string }) => (
     <div data-testid="edit-profile-form">Form Dati: {name} {surname}</div>
   ),
 }));
 
-vi.mock("@/components/Profile/EditProfileConsents", () => ({
+vi.mock("@/features/profile/components/EditProfileConsents", () => ({
   __esModule: true,
   EditProfileConsents: () => (
     <div data-testid="edit-profile-consents">Consensi Trattamento Dati</div>
@@ -98,13 +98,13 @@ let mockProfileState = {
   setRoleOther: mockSetRoleOther,
 };
 
-vi.mock("@/hooks/useProfile", () => ({
+vi.mock("@/features/profile/hooks/useProfile", () => ({
   __esModule: true,
   useProfile: () => mockProfileState,
 }));
 
 /* ---------- component under test ---------- */
-import { EditProfile } from "@/pages/EditProfile"; // <-- adegua il path se necessario
+import { EditProfile } from "@/features/profile/EditProfile"; // <-- adegua il path se necessario
 import { toast } from "react-hot-toast";
 
 describe("EditProfile Page Suite", () => {

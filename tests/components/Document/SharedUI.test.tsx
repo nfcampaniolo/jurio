@@ -8,7 +8,7 @@ import {
   SectionTitle,
   SectionText,
   SectionContainer,
-} from "@/components/Document/SharedUI";
+} from "@/features/document/components/SharedUI";
 
 describe("SharedUI Component Suite", () => {
   const DummyIcon: IconType = (props: React.SVGProps<SVGSVGElement>) => (

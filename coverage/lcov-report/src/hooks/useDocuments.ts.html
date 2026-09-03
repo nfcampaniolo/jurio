@@ -424,16 +424,16 @@ import {
   deleteDocument,
   listDocumentsByUser,
   renameDocument,
-} from "@/services/document";
+} from "@/shared/services/document";
 import {
   deleteSaveSentence,
   listSavedSentenzeByUser,
-} from "@/services/saveSentences";
-import { deleteDocumentStorage } from "@/services/storage";
+} from "@/features/document/hooks/saveSentences";
+import { deleteDocumentStorage } from "@/shared/services/storage";
 import { type Documento} from "@/interfaces/interfaces";
 import { FirebaseError } from "firebase/app";
 import { useAuth } from "@/context/useAuth";
-import { trackEvent } from "@/services/analytics";
+import { trackEvent } from "@/infrastructure/analytics";
 import type{ Sentenza, Ordinanza, Decreto, DocumentoGiurisprudenzaGenerico } from "@/interfaces/interfaces";
 &nbsp;
 type DocumentoAny =

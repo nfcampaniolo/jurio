@@ -463,7 +463,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { ensureAnonAuth } from "@/services/auth";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { ensureAnonAuth } from "@/features/auth/hooks/auth";
 import type {
   SearchFilter,
   DocumentoGiurisprudenza,
@@ -597,7 +597,7 @@ async function executeVectorSearch(
     // -------------------------------------------------------------------------
 &nbsp;
     const { getSecurityTokens } = await import(
-      "@/services/security"
+      "@/infrastructure/security"
     );
 &nbsp;
     const {

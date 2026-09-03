@@ -37,7 +37,7 @@ vi.mock("framer-motion", () => ({
 type PromptItem = { id: string; title: string };
 type TemplateItem = { id: string; name: string };
 
-vi.mock("@/components/Profile/PromptList", () => ({
+vi.mock("@/features/prompt/components/PromptList", () => ({
   __esModule: true,
   PromptList: ({
     prompts,
@@ -70,7 +70,7 @@ vi.mock("@/components/Profile/PromptList", () => ({
   ),
 }));
 
-vi.mock("@/components/Profile/PromptCreator", () => ({
+vi.mock("@/features/prompt/components/PromptCreator", () => ({
   __esModule: true,
   PromptCreator: ({
     onBack,
@@ -88,7 +88,7 @@ vi.mock("@/components/Profile/PromptCreator", () => ({
   ),
 }));
 
-vi.mock("@/components/ConfirmModal", () => ({
+vi.mock("@/shared/components/ConfirmModal", () => ({
   __esModule: true,
   ConfirmModal: ({
     isOpen,
@@ -147,13 +147,13 @@ let mockDashboardState: PromptDashboardState = {
   cancelDelete: mockCancelDelete,
 };
 
-vi.mock("@/hooks/usePromptGenerator", () => ({
+vi.mock("@/features/prompt/hooks/usePromptGenerator", () => ({
   __esModule: true,
   usePromptDashboard: () => mockDashboardState,
 }));
 
 /* ---------- component under test ---------- */
-import { PromptDashboard } from "@/pages/PromptBuilder"; // <-- adegua il path se necessario
+import { PromptDashboard } from "@/features/prompt/PromptBuilder"; // <-- adegua il path se necessario
 
 describe("PromptDashboard Suite", () => {
   beforeEach(() => {

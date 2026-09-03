@@ -34,18 +34,18 @@ vi.mock("framer-motion", () => ({
 }));
 
 /* ---------- mock subcomponents ---------- */
-vi.mock("@/components/Info/Header", () => ({
+vi.mock("@/shared/components/Header", () => ({
   __esModule: true,
   Header: () => <header data-testid="main-header">Header</header>,
 }));
 
-vi.mock("@/components/Info/Footer", () => ({
+vi.mock("@/shared/components/Footer", () => ({
   __esModule: true,
   Footer: () => <footer data-testid="main-footer">Footer</footer>,
 }));
 
 /* ---------- component under test ---------- */
-import SupportoWord from "@/pages/SupportoWord"; // <-- adegua il path se necessario
+import SupportoWord from "@/features/guide/components/SupportoWord"; // <-- adegua il path se necessario
 
 describe("SupportoWord Page Suite", () => {
   beforeEach(() => {

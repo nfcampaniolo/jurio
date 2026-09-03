@@ -45,7 +45,7 @@ vi.mock("@/config/env", () => ({
   getAssign: () => mockGetAssign(),
 }));
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: () => mockGetDb(),
 }));
@@ -57,7 +57,7 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { useTeamSettings } from "@/hooks/useTeamSettings"; // <-- adegua il path di import se necessario
+import { useTeamSettings } from "@/features/teams/hooks/useTeamSettings"; // <-- adegua il path di import se necessario
 
 describe("useTeamSettings Hook Suite", () => {
   const sampleTeam: Team = {

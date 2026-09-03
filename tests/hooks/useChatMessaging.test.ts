@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import type { User } from "firebase/auth";
 import type { Message, AttachedDocument } from "@/interfaces/interfaces";
-import type { MessagingProps } from "@/hooks/useChatMessaging"; // <-- adegua il path di import se necessario
+import type { MessagingProps } from "@/features/chat/hooks/useChatMessaging"; // <-- adegua il path di import se necessario
 
 /* ---------- hoisted mocks ---------- */
 const {
@@ -41,17 +41,17 @@ vi.mock("uuid", () => ({
   v4: () => `test-uuid-${++uuidIndex}`,
 }));
 
-vi.mock("@/services/auth", () => ({
+vi.mock("@/features/auth/hooks/auth", () => ({
   __esModule: true,
   ensureAnonAuth: () => mockEnsureAnonAuth(),
 }));
 
-vi.mock("@/services/security", () => ({
+vi.mock("@/infrastructure/security", () => ({
   __esModule: true,
   getSecurityTokens: () => mockGetSecurityTokens(),
 }));
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: () => mockGetDb(),
 }));
@@ -62,7 +62,7 @@ vi.mock("firebase/firestore", () => ({
   getDoc: (ref: unknown) => mockGetDoc(ref),
 }));
 
-vi.mock("@/hooks/searchBarTypes", () => ({
+vi.mock("@/features/search/hooks/searchBarTypes", () => ({
   __esModule: true,
   buildGenkitFilters: () => mockBuildGenkitFilters(),
 }));
@@ -81,7 +81,7 @@ function createSseStream(chunks: string[]) {
 }
 
 /* ---------- subject under test ---------- */
-import { useChatMessaging } from "@/hooks/useChatMessaging";
+import { useChatMessaging } from "@/features/chat/hooks/useChatMessaging";
 
 describe("useChatMessaging Hook Suite", () => {
   let messagesState: Message[] = [];

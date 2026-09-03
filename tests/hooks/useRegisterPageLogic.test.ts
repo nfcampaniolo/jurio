@@ -12,12 +12,12 @@ vi.mock("react-hot-toast", () => ({
 }));
 
 const saveUserDataMock = vi.fn();
-vi.mock("@/services/user", () => ({
+vi.mock("@/shared/services/user", () => ({
   saveUserData: (...args: unknown[]) => saveUserDataMock(...args),
 }));
 
 const trackEventMock = vi.fn();
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   trackEvent: (...args: unknown[]) => trackEventMock(...args),
 }));
 
@@ -38,7 +38,7 @@ vi.mock("@/config/apiClient", () => ({
 const setupRecaptchaMock = vi.fn().mockResolvedValue(undefined);
 const sendPhoneVerificationMock = vi.fn();
 const confirmPhoneVerificationMock = vi.fn();
-vi.mock("@/services/auth", () => ({
+vi.mock("@/features/auth/hooks/auth", () => ({
   setupRecaptcha: () => setupRecaptchaMock(),
   sendPhoneVerification: (...args: unknown[]) => sendPhoneVerificationMock(...args),
   confirmPhoneVerification: (...args: unknown[]) => confirmPhoneVerificationMock(...args),
@@ -71,7 +71,7 @@ function makeResponse(ok: boolean, status: number, body: string): Response {
 
 async function importFreshHook() {
   vi.resetModules();
-  return import("@/hooks/useRegisterPageLogic"); 
+  return import("@/features/auth/hooks/useRegisterPageLogic"); 
 }
 
 /* =========================

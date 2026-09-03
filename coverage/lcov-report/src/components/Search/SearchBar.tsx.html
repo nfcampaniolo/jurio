@@ -1250,13 +1250,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useRef, useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Typewriter } from "../Typewriter";
-import { useSearchBar } from "@/hooks/useSearchBar";
+import { useSearchBar } from "@/features/search/hooks/useSearchBar";
 import { 
   Search, Sliders, X, Loader2, BookOpen, TextSearch, 
   CheckCircle2, ArrowLeft, MoreVertical, Mic 
 } from "lucide-react";
 import { LeftPickerPanel } from "@/components/Search/LeftPickerPanel";
-import { AccessDenied } from "@/components/AccessDenied";
+import { AccessDenied } from "@/shared/components/AccessDenied";
 import { SearchFilters } from "./SearchFilters";
 import { SearchResultsList } from "./SearchResultsList";
 &nbsp;

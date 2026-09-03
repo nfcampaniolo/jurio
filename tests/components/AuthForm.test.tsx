@@ -5,7 +5,7 @@ import { render, screen, fireEvent } from "@/test/test-utils";
 /* ---------- mocks ---------- */
 
 // Input: lo trasformo in <input> reale così posso cambiare value e triggerare onChange
-vi.mock("@/components/Input", () => ({
+vi.mock("@/shared/components/Input", () => ({
   Input: ({
     type,
     placeholder,
@@ -31,7 +31,7 @@ vi.mock("@/components/Input", () => ({
 }));
 
 // ButtonCTA: <button>
-vi.mock("@/components/ButtonCTA", () => ({
+vi.mock("@/shared/components/ButtonCTA", () => ({
   ButtonCTA: ({
     children,
     disabled,
@@ -93,12 +93,12 @@ type AuthLogic = {
 const logicMock = vi.fn<(initialMode: "login" | "register") => AuthLogic>();
 
 // IMPORTANTE: deve matchare l'import reale dentro AuthForm
-vi.mock("@/hooks/useAuthFormLogic", () => ({
+vi.mock("@/features/auth/hooks/useAuthFormLogic", () => ({
   useAuthFormLogic: (initialMode: "login" | "register") => logicMock(initialMode),
 }));
 
 /* ---------- component ---------- */
-import { AuthForm } from "@/components/AuthForm";
+import { AuthForm } from "@/features/auth/components/AuthForm";
 
 describe("AuthForm", () => {
   const setEmail = vi.fn<(v: string) => void>();

@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from "vitest";
-import { useUserStore } from "@/stores/userStore";
+import { useUserStore } from "@/infrastructure/userStore";
 import type { User } from "firebase/auth";
 
 describe("useUserStore (zustand)", () => {

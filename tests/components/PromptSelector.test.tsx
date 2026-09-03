@@ -13,7 +13,7 @@ beforeEach(() => {
 });
 
 /* ---------- mock FilterSelect ---------- */
-vi.mock("@/components/FilterSelect", () => ({
+vi.mock("@/shared/components/FilterSelect", () => ({
   __esModule: true,
   FilterSelect: ({
     id,
@@ -50,13 +50,13 @@ let mockSelectorReturn = {
   handleChange: mockHandleChange,
 };
 
-vi.mock("@/hooks/usePromptSelector", () => ({
+vi.mock("@/shared/hooks/usePromptSelector", () => ({
   __esModule: true,
   usePromptSelector: () => mockSelectorReturn,
 }));
 
 /* ---------- component ---------- */
-import { PromptSelector } from "@/components/PromptSelector"; // <-- adegua il path se necessario
+import { PromptSelector } from "@/shared/components/PromptSelector"; // <-- adegua il path se necessario
 
 describe("PromptSelector Component Suite", () => {
   const mockOnChange = vi.fn();

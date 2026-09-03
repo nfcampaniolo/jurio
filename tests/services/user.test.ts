@@ -37,11 +37,11 @@ const {
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   getDb: () => mockGetDb(),
 }));
 
-vi.mock("@/services/storageClient", () => ({
+vi.mock("@/infrastructure/storageClient", () => ({
   getStorageClient: () => mockGetStorageClient(),
 }));
 
@@ -81,7 +81,7 @@ import {
   getRegisterPlanId,
   fetchRegisterDoc,
   exportUserData,
-} from "@/services/user";
+} from "@/shared/services/user";
 
 describe("User Service Suite", () => {
   beforeEach(() => {

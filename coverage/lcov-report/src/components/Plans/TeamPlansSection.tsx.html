@@ -502,12 +502,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React from "react";
-import type { PlanUI } from "@/services/plans";
-import type { CouponData } from "@/hooks/discount";
-import { getDynamicPricing } from "@/hooks/usePlans";
+import type { PlanUI } from "@/features/plans/hooks/plans";
+import type { CouponData } from "@/features/plans/hooks/discount";
+import { getDynamicPricing } from "@/features/plans/hooks/usePlans";
 import { Loader2 } from "lucide-react";
-import { ConfirmModal } from "@/components/ConfirmModal";
-import { useTeamPlans } from "@/hooks/useTeamPlans"; // Importa la logica sopra
+import { ConfirmModal } from "@/shared/components/ConfirmModal";
+import { useTeamPlans } from "@/features/plans/hooks/useTeamPlans"; // Importa la logica sopra
 import { useAuth } from "@/context/useAuth";
 &nbsp;
 interface TeamPlansSectionProps {

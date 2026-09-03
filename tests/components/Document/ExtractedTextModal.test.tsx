@@ -31,7 +31,7 @@ vi.mock("framer-motion", () => ({
 }));
 
 /* ---------- component ---------- */
-import { ExtractedTextModal } from "@/components/Document/ExtractedTextModal"; // <-- adegua il path se necessario
+import { ExtractedTextModal } from "@/features/profile/components/ExtractedTextModal"; // <-- adegua il path se necessario
 
 describe("ExtractedTextModal Component Suite", () => {
   const mockSetShowText = vi.fn<(show: boolean) => void>();

@@ -29,7 +29,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import { EditProfileAvatar } from "@/components/Profile/EditProfileAvatar"; // <-- adegua il path se necessario
+import { EditProfileAvatar } from "@/features/profile/components/EditProfileAvatar"; // <-- adegua il path se necessario
 
 describe("EditProfileAvatar Component Suite", () => {
   const mockSetAvatar = vi.fn<(url: string) => void>();

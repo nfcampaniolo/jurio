@@ -215,7 +215,7 @@ export async function withTrace&lt;T&gt;(
 ): Promise&lt;T&gt; {
   const {
     getPerf,
-  } = await import("@/services/optionalService");
+  } = await import("@/infrastructure/optionalService");
 &nbsp;
   const perf = getPerf();
 &nbsp;

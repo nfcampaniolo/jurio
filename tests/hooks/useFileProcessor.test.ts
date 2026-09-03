@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import type { User } from "firebase/auth";
 import type { AttachedDocument } from "@/interfaces/interfaces";
-import type { FileProcessorProps } from "@/hooks/useFileProcessor"; // <-- adegua il path di import se necessario
+import type { FileProcessorProps } from "@/features/chat/hooks/useFileProcessor"; // <-- adegua il path di import se necessario
 
 /* ---------- hoisted mocks ---------- */
 const {
@@ -63,13 +63,13 @@ vi.mock("react-hot-toast", () => ({
   toast: mockToast,
 }));
 
-vi.mock("@/services/perf", () => ({
+vi.mock("@/infrastructure/perf", () => ({
   __esModule: true,
   withTrace: (...args: unknown[]) =>
     mockWithTrace(args[0] as string, args[1], args[2] as () => Promise<unknown>),
 }));
 
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   __esModule: true,
   trackEvent: (event: string, payload?: Record<string, unknown>) =>
     mockTrackEvent(event, payload),
@@ -81,19 +81,19 @@ vi.mock("@/config/apiClient", () => ({
   fetchWithSecurity: (...args: unknown[]) => mockFetchWithSecurity(...args),
 }));
 
-vi.mock("@/services/document", () => ({
+vi.mock("@/shared/services/document", () => ({
   __esModule: true,
   checkDuplicateDocument: (uid: string, name: string) =>
     mockCheckDuplicateDocument(uid, name),
   loadMaxima: (...args: unknown[]) => mockLoadMaxima(...args),
 }));
 
-vi.mock("@/services/storage", () => ({
+vi.mock("@/shared/services/storage", () => ({
   __esModule: true,
   loadSentence: (...args: unknown[]) => mockLoadSentence(...args),
 }));
 
-vi.mock("@/hooks/extractors", () => ({
+vi.mock("@/shared/services/extractors", () => ({
   __esModule: true,
   extractTextFromMedia: (file: File) => mockExtractTextFromMedia(file),
   extractTextFromFile: (file: File) => mockExtractTextFromFile(file),
@@ -106,7 +106,7 @@ vi.mock("tesseract.js", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { useFileProcessor } from "@/hooks/useFileProcessor";
+import { useFileProcessor } from "@/features/chat/hooks/useFileProcessor";
 
 describe("useFileProcessor Hook Suite", () => {
   let attachedDocsState: AttachedDocument[] = [];

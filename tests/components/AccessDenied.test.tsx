@@ -56,7 +56,7 @@ vi.mock("react-icons/fa", () => ({
 }));
 
 /* ---------- component ---------- */
-import { AccessDenied } from "@/components/AccessDenied"; // <-- adegua il path se necessario
+import { AccessDenied } from "@/shared/components/AccessDenied"; // <-- adegua il path se necessario
 import { useReducedMotion } from "framer-motion";
 
 describe("AccessDenied Component Suite", () => {

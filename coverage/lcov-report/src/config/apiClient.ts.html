@@ -315,7 +315,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { firebaseApp } from '@/services/firebase';
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { firebaseApp } from '@/infrastructure/firebase';
 &nbsp;
 type JsonRecord = Record&lt;string, unknown&gt;;
 &nbsp;
@@ -335,7 +335,7 @@ async function getAuthToken(): Promise&lt;string&gt; {
 async function getAppCheckToken(): Promise&lt;string&gt; {
   try {
     const { initializeFirebaseAppCheck } =
-      await import('@/services/appCheck');
+      await import('@/infrastructure/appCheck');
 &nbsp;
     const appCheck = initializeFirebaseAppCheck();
 &nbsp;

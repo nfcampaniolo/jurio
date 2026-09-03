@@ -1,8 +1,8 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import React from "react";
-import type { PlanUI } from "@/services/plans";
-import type { CouponData } from "@/hooks/discount";
+import type { PlanUI } from  "@/features/plans/hooks/plans";
+import type { CouponData } from "@/features/plans/hooks/discount";
 
 /* ---------- tipi mock pricing ---------- */
 interface DynamicPricingResult {
@@ -18,7 +18,7 @@ const { mockGetDynamicPricing } = vi.hoisted(() => ({
 }));
 
 /* ---------- mock hook usePlans ---------- */
-vi.mock("@/hooks/usePlans", () => ({
+vi.mock("@/features/plans/hooks/usePlans", () => ({
   getDynamicPricing: (plan: PlanUI, coupon: CouponData | null) =>
     mockGetDynamicPricing(plan, coupon),
 }));
@@ -52,7 +52,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import { PlansGrid } from "@/components/Plans/PlansGrid"; // <-- adegua il path se necessario
+import { PlansGrid } from "@/features/plans/components/PlansGrid"; // <-- adegua il path se necessario
 
 describe("PlansGrid Component Suite", () => {
   const mockSetBilling = vi.fn<(val: "monthly" | "yearly") => void>();

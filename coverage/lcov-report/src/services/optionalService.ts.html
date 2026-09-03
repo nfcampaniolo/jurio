@@ -189,7 +189,7 @@
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { Analytics } from "firebase/analytics";
 import type { FirebasePerformance } from "firebase/performance";
-import { firebaseApp } from "@/services/firebase"; // Il tuo file dove fai initializeApp()
+import { firebaseApp } from "@/infrastructure/firebase"; // Il tuo file dove fai initializeApp()
 &nbsp;
 let analyticsInstance: Analytics | null = null;
 let perfInstance: FirebasePerformance | null = null;

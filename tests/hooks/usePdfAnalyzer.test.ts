@@ -69,12 +69,12 @@ vi.mock("@/context/useAuth", () => ({
   useAuth: () => mockAuthState,
 }));
 
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   __esModule: true,
   trackEvent: (name: string, payload?: Record<string, unknown>) => mockTrackEvent(name, payload),
 }));
 
-vi.mock("@/services/perf", () => ({
+vi.mock("@/infrastructure/perf", () => ({
   __esModule: true,
   withTrace: async (_name: string, _meta: unknown, fn: () => Promise<unknown>) => fn(),
 }));
@@ -84,7 +84,7 @@ vi.mock("@/config/apiClient", () => ({
   fetchWithSecurity: (...args: unknown[]) => mockFetchWithSecurity(...args),
 }));
 
-vi.mock("@/hooks/extractors", () => ({
+vi.mock("@/shared/services/extractors", () => ({
   __esModule: true,
   extractTextFromFile: (file: File) => mockExtractTextFromFile(file),
   extractTextFromMedia: (file: File) => mockExtractTextFromMedia(file),
@@ -98,14 +98,14 @@ vi.mock("tesseract.js", () => ({
   PSM: { AUTO: 3 },
 }));
 
-vi.mock("@/services/document", () => ({
+vi.mock("@/shared/services/document", () => ({
   __esModule: true,
   checkDuplicateDocument: (uid: string, name: string) => mockCheckDuplicateDocument(uid, name),
   loadMaxima: (...args: unknown[]) => mockLoadMaxima(...args),
   deleteDocument: (...args: unknown[]) => mockDeleteDocument(...args),
 }));
 
-vi.mock("@/services/storage", () => ({
+vi.mock("@/shared/services/storage", () => ({
   __esModule: true,
   loadSentence: (...args: unknown[]) => mockLoadSentence(...args),
 }));
@@ -123,7 +123,7 @@ const createMockFileList = (files: File[]): FileList => {
 };
 
 /* ---------- subject under test ---------- */
-import { usePdfAnalyzer } from "@/hooks/usePdfAnalyzer";
+import { usePdfAnalyzer } from "@/features/profile/hooks/usePdfAnalyzer";
 
 describe("usePdfAnalyzer Hook Suite", () => {
   beforeEach(() => {

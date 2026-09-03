@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import type { DocumentoGiurisprudenziale } from "@/interfaces/interfaces";
-import type { WithRiferimenti } from "@/services/documentsHelpers";
+import type { WithRiferimenti } from "@/shared/services/documentsHelpers";
 
 /* ---------- hoisted mocks ---------- */
 const {
@@ -92,7 +92,7 @@ vi.mock("./db", () => ({
   getDb: mockGetDb,
 }));
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: mockGetDb,
 }));
@@ -131,7 +131,7 @@ vi.mock("./riferimentiTranslator", () => ({
   makeRiferimentiNormativiKeys: mockMakeRiferimentiNormativiKeys,
 }));
 
-vi.mock("@/services/riferimentiTranslator", () => ({
+vi.mock("@/shared/hooks/riferimentiTranslator", () => ({
   __esModule: true,
   makeRiferimentiNormativiKeys: mockMakeRiferimentiNormativiKeys,
 }));
@@ -144,7 +144,7 @@ vi.mock("./documentsHelpers", () => ({
   _mapFirestoreDocToMassima: mockMapFirestoreDocToMassima,
 }));
 
-vi.mock("@/services/documentsHelpers", () => ({
+vi.mock("@/shared/services/documentsHelpers", () => ({
   __esModule: true,
   buildNumeroSentenza: mockBuildNumeroSentenza,
   buildUrnFromMassima: mockBuildUrnFromMassima,
@@ -160,7 +160,7 @@ import {
   getDocumentMassima,
   listDocumentsByUser,
   checkDuplicateDocument,
-} from "@/services/documentsCore";
+} from "@/shared/services/documentsCore";
 
 describe("Documents Core Service Suite", () => {
   const fakeDb = { id: "firestore_instance" };

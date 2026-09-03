@@ -968,11 +968,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useEffect, useState, useMemo } from "react";
 import { FaCheck, FaInfoCircle } from "react-icons/fa";
 import { Tooltip } from "react-tooltip";
-import { ButtonCTA, ButtonSecondCTA } from "@/components/ButtonCTA";
+import { ButtonCTA, ButtonSecondCTA } from "@/shared/components/ButtonCTA";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/useAuth";
-import { fetchPlansFromDb, getPreloadedPlans, type PlanUI } from "@/services/plans";
+import { fetchPlansFromDb, getPreloadedPlans, type PlanUI } from "@/features/plans/hooks/plans";
 &nbsp;
 type BillingCycle = "monthly" | "yearly";
 &nbsp;

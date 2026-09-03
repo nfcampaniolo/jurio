@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import React from "react";
-import type { GiurisprudenzaData } from "@/components/Document/RenderGiurisprudenza";
+import type { GiurisprudenzaData } from "@/features/document/components/RenderGiurisprudenza";
 
 /* ---------- mock react-icons/fa ---------- */
 vi.mock("react-icons/fa", () => {
@@ -55,7 +55,7 @@ vi.mock("./SharedUI", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/SharedUI", () => ({
+vi.mock("@/features/document/components/SharedUI", () => ({
   SectionContainer: ({
     children,
     className,
@@ -88,7 +88,7 @@ vi.mock("@/components/Document/SharedUI", () => ({
 }));
 
 /* ---------- mock CitationTree & RelatedDocuments ---------- */
-vi.mock("@/components/Document/CitationGraph", () => ({
+vi.mock("@/features/document/components/CitationGraph", () => ({
   default: ({ precedenti }: { precedenti: string[] }) => (
     <div data-testid="mock-citation-tree">
       <span>{precedenti.length} precedenti graficati</span>
@@ -96,7 +96,7 @@ vi.mock("@/components/Document/CitationGraph", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/LinkedSentences", () => ({
+vi.mock("@/features/document/components/LinkedSentences", () => ({
   RelatedDocuments: ({
     uid,
     massima,
@@ -115,7 +115,7 @@ vi.mock("@/components/Document/LinkedSentences", () => ({
 }));
 
 /* ---------- component ---------- */
-import { RenderGiurisprudenza } from "@/components/Document/RenderGiurisprudenza";
+import { RenderGiurisprudenza } from "@/features/document/components/RenderGiurisprudenza";
 
 describe("RenderGiurisprudenza Component Suite", () => {
   beforeEach(() => {

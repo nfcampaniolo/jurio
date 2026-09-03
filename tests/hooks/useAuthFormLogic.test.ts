@@ -6,17 +6,17 @@ type UserLike = { uid: string };
 const loginWithEmail = vi.fn<(email: string, password: string) => Promise<{ user: UserLike }>>();
 const registerWithEmail = vi.fn<(email: string, password: string) => Promise<unknown>>();
 const resetPassword = vi.fn<(email: string) => Promise<unknown>>();
-vi.mock("@/services/auth", () => ({
+vi.mock("@/features/auth/hooks/auth", () => ({
   loginWithEmail,
   registerWithEmail,
   resetPassword,
 }));
 
 const userExists = vi.fn<(uid: string) => Promise<boolean>>();
-vi.mock("@/services/user", () => ({ userExists }));
+vi.mock("@/shared/services/user", () => ({ userExists }));
 
 const setUserMock = vi.fn<(u: UserLike) => void>();
-vi.mock("@/stores/userStore", () => ({
+vi.mock("@/infrastructure/userStore", () => ({
   useUserStore: (selector: (s: { setUser: typeof setUserMock }) => unknown) =>
     selector({ setUser: setUserMock }),
 }));
@@ -33,7 +33,7 @@ vi.mock("react-hot-toast", () => ({
 }));
 
 async function importFresh() {
-  return import("@/hooks/useAuthFormLogic"); // <-- cambia path
+  return import("@/features/auth/hooks/useAuthFormLogic"); // <-- cambia path
 }
 
 function mkEvt(): { preventDefault: () => void } {

@@ -10,8 +10,8 @@ vi.mock("lucide-react", () => ({
 }));
 
 /* ---------- component ---------- */
-import { AdminMaintenanceSection } from "@/components/Admin/AdminMaintenanceSection"; // <-- adegua il path se necessario
-import type { AdminMaintenanceParams, MaintenanceProgressData } from "@/services/admin";
+import { AdminMaintenanceSection } from "@/features/admin/components/AdminMaintenanceSection"; // <-- adegua il path se necessario
+import type { AdminMaintenanceParams, MaintenanceProgressData } from "@/features/admin/hooks/admin";
 
 describe("AdminMaintenanceSection", () => {
   const defaultParams: AdminMaintenanceParams = {

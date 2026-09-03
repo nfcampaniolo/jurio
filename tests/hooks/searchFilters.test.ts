@@ -38,7 +38,7 @@ import {
   parseDocDateMs,
   hasSezione,
   mapGradoToDbFields,
-} from "@/hooks/useSearchFilters";
+} from "@/features/search/hooks/useSearchFilters";
 
 describe("useSearchFilters & Search Utilities Suite", () => {
   const localStorageStore: Record<string, string> = {};

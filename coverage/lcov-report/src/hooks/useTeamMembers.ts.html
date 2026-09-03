@@ -377,8 +377,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { fetchWithSecurity } from "@/config/apiClient";
 import { getAssign } from "@/config/env";
-import { getDb } from "@/services/db";
-import { getAvatar } from "@/services/storage";
+import { getDb } from "@/infrastructure/db";
+import { getAvatar } from "@/shared/services/storage";
 import type { TeamMember } from "@/interfaces/interfaces";
 &nbsp;
 export interface EnrichedTeamMember extends TeamMember {

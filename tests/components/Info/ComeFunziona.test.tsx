@@ -45,7 +45,7 @@ vi.mock("framer-motion", async () => ({
 }));
 
 /* ---------- component ---------- */
-import { ComeFunziona } from "@/components/Info/ComeFunziona";
+import { ComeFunziona } from "@/features/search/components/ComeFunziona";
 
 describe("ComeFunziona Component Suite", () => {
   beforeEach(() => {

@@ -16,11 +16,11 @@ const {
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/auth", () => ({
+vi.mock("@/features/auth/hooks/auth", () => ({
   getAuthClient: () => mockGetAuthClient(),
 }));
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   getDb: () => mockGetDb(),
 }));
 
@@ -34,7 +34,7 @@ vi.mock("firebase/auth", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { forceSessionTakeover, clearLocalSession } from "@/services/sessionLogic";
+import { forceSessionTakeover, clearLocalSession } from "@/features/auth/hooks/sessionLogic"; // <-- adegua il path se necessario
 
 describe("session Service Suite", () => {
   let setItemSpy: ReturnType<typeof vi.spyOn>;

@@ -40,7 +40,7 @@ const { mockJoinTeamState } = vi.hoisted(() => ({
 }));
 
 /* ---------- mock hook teams ---------- */
-vi.mock("@/hooks/teams", () => ({
+vi.mock("@/features/teams/hooks/useJoinTeamWithVoucher", () => ({
   useJoinTeamWithVoucher: () => mockJoinTeamState,
 }));
 
@@ -88,7 +88,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import JoinTeamWithVoucher from "@/components/Profile/JoinTeamWithVoucher"; // <-- adegua il path se necessario
+import JoinTeamWithVoucher from "@/features/teams/components/JoinTeamWithVoucher"; // <-- adegua il path se necessario
 
 describe("JoinTeamWithVoucher Component Suite", () => {
   const mockOnJoinSuccess = vi.fn<() => void>();

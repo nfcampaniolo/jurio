@@ -16,7 +16,7 @@ const {
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/firebase", () => ({
+vi.mock("@/infrastructure/firebase", () => ({
   __esModule: true,
   firebaseApp: mockFirebaseApp,
 }));
@@ -64,7 +64,7 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
 
       try {
         const { initializeOptionalServices, getAnalyticsInstance, getPerf } =
-          await import("@/services/optionalService");
+          await import("@/infrastructure/optionalService");
 
         await initializeOptionalServices();
 
@@ -84,7 +84,7 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
   describe("Inizializzazione Firebase Performance", () => {
     test("inizializza Performance immediatamente e popola il getter getPerf()", async () => {
       const { initializeOptionalServices, getPerf } = await import(
-        "@/services/optionalService"
+        "@/infrastructure/optionalService"
       );
 
       await initializeOptionalServices();
@@ -101,7 +101,7 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
       });
 
       const { initializeOptionalServices, getPerf } = await import(
-        "@/services/optionalService"
+        "@/infrastructure/optionalService"
       );
 
       await initializeOptionalServices();
@@ -126,7 +126,7 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
       };
 
       const { initializeOptionalServices, getAnalyticsInstance } = await import(
-        "@/services/optionalService"
+        "@/infrastructure/optionalService"
       );
 
       await initializeOptionalServices();
@@ -144,7 +144,7 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
       };
 
       const { initializeOptionalServices, getAnalyticsInstance } = await import(
-        "@/services/optionalService"
+        "@/infrastructure/optionalService"
       );
 
       await initializeOptionalServices();
@@ -162,7 +162,7 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
       const addEventListenerSpy = vi.spyOn(window, "addEventListener");
 
       const { initializeOptionalServices, getAnalyticsInstance } = await import(
-        "@/services/optionalService"
+        "@/infrastructure/optionalService"
       );
 
       await initializeOptionalServices();
@@ -192,7 +192,7 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
       mockIsSupported.mockResolvedValueOnce(false);
 
       const { initializeOptionalServices, getAnalyticsInstance } = await import(
-        "@/services/optionalService"
+        "@/infrastructure/optionalService"
       );
 
       await initializeOptionalServices();
@@ -214,7 +214,7 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
       });
 
       const { initializeOptionalServices, getAnalyticsInstance } = await import(
-        "@/services/optionalService"
+        "@/infrastructure/optionalService"
       );
 
       await initializeOptionalServices();
@@ -234,7 +234,7 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
       };
 
       const { initializeOptionalServices } = await import(
-        "@/services/optionalService"
+        "@/infrastructure/optionalService"
       );
 
       await initializeOptionalServices();

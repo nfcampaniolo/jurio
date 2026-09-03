@@ -28,7 +28,7 @@ interface CaseMetadataMockProps {
   isReadOnly?: boolean;
 }
 
-vi.mock("@/components/Chat/CaseMetadataSection", () => ({
+vi.mock("@/features/chat/components/CaseMetadataSection", () => ({
   CaseMetadataSection: ({
     activeFascicoloId,
     initialMetadati,
@@ -55,7 +55,7 @@ interface ThreadSectionMockProps {
   isReadOnly?: boolean;
 }
 
-vi.mock("@/components/Chat/ThreadSection", () => ({
+vi.mock("@/features/chat/components/ThreadSection", () => ({
   ThreadSection: ({
     threads = [],
     activeThreadId,
@@ -95,7 +95,7 @@ interface SourcesSectionMockProps {
   onSourceClick?: (e: React.MouseEvent, source: { id: string }) => void;
 }
 
-vi.mock("@/components/Chat/SourcesSection", () => ({
+vi.mock("@/features/chat/components/SourcesSection", () => ({
   SourcesSection: ({
     messages = [],
     activeSourceId,
@@ -121,7 +121,7 @@ vi.mock("@/components/Chat/SourcesSection", () => ({
 }));
 
 /* ---------- component ---------- */
-import { RightSidebar } from "@/components/Chat/RightSidebar";
+import { RightSidebar } from "@/features/chat/components/RightSidebar";
 import type { Message, Source, ThreadItem } from "@/interfaces/interfaces";
 
 describe("RightSidebar Component Suite", () => {

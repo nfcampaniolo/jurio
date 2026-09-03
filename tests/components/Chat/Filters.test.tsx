@@ -28,7 +28,7 @@ vi.mock("framer-motion", async () => ({
 }));
 
 /* ---------- mock searchBarTypes ---------- */
-vi.mock("@/hooks/searchBarTypes", () => ({
+vi.mock("@/features/search/hooks/searchBarTypes", () => ({
   CORTI_SUPREME: [
     "Cassazione Civile",
     "Cassazione Penale",
@@ -70,7 +70,7 @@ vi.mock("@/hooks/searchBarTypes", () => ({
 }));
 
 /* ---------- components ---------- */
-import { FilterModal, FilterSelect, type FilterStateValues, type FilterStateSetters } from "@/components/Chat/Filters";
+import { FilterModal, FilterSelect, type FilterStateValues, type FilterStateSetters } from "@/features/chat/components/Filters";
 
 describe("Filters Component Suite", () => {
   const mockSetFilterGrado = vi.fn();

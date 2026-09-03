@@ -21,7 +21,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import InterfacceNavigazione from "@/components/Guida/InterfacceNavigazione"; // <-- adegua il path se necessario
+import InterfacceNavigazione from "@/features/guide/components/InterfacceNavigazione"; // <-- adegua il path se necessario
 
 describe("Guida - InterfacceNavigazione Component Suite", () => {
   beforeEach(() => {

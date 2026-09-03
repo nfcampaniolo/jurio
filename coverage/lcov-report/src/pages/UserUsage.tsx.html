@@ -718,7 +718,7 @@ import { motion, type Variants } from "framer-motion";
 import { FiArrowLeft, FiSearch, FiFileText, FiEdit3, FiMessageSquare, FiClock, FiStar } from "react-icons/fi";
 import { Loader2 } from "lucide-react";
 &nbsp;
-import { type UsageDoc, formatMonth, calculateTimeSaved } from "@/hooks/usageUtils"; 
+import { type UsageDoc, formatMonth, calculateTimeSaved } from "@/features/profile/hooks/usageUtils"; 
 &nbsp;
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 15 },
@@ -753,7 +753,7 @@ export default function UserUsage() {
         // Dynamic import: carichiamo Firestore e getDb on-demand
         const [firestoreModule, dbModule] = await Promise.all([
           import("firebase/firestore"),
-          import("@/services/db")
+          import("@/infrastructure/db")
         ]);
 &nbsp;
         const { collection, getDocs, query, orderBy } = firestoreModule;

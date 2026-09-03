@@ -338,8 +338,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { toast } from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 import { getReasonUrl } from "@/config/env";
-import { trackEvent } from "@/services/analytics";
-import { withTrace } from "@/services/perf";
+import { trackEvent } from "@/infrastructure/analytics";
+import { withTrace } from "@/infrastructure/perf";
 import type { DocumentoGiurisprudenziale, AttachedDocument } from "@/interfaces/interfaces";
 import type { User } from "firebase/auth";
 &nbsp;
@@ -363,9 +363,9 @@ export const useFileProcessor = ({ user, setIsProcessingFiles, setAttachedDocs, 
     
     try {
       const { fetchWithSecurity } = await import("@/config/apiClient");
-      const { loadMaxima, checkDuplicateDocument } = await import("@/services/document");
-      const { loadSentence } = await import("@/services/storage");
-      const { extractTextFromMedia, extractTextFromFile } = await import("@/hooks/extractors"); 
+      const { loadMaxima, checkDuplicateDocument } = await import("@/shared/services/document");
+      const { loadSentence } = await import("@/shared/services/storage");
+      const { extractTextFromMedia, extractTextFromFile } = await import("@/shared/services/extractors"); 
 &nbsp;
       interface ParsedMessage extends Record&lt;string, unknown&gt; { warning?: string; tipo_documento?: string; sottotipo_documento?: string; massima?: string; dataSentenza?: string; }
 &nbsp;

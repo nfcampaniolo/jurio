@@ -15,7 +15,7 @@ const { mockUnsubscribe, mockOnUserStateChange } = vi.hoisted(() => {
 });
 
 /* ---------- mock auth service ---------- */
-vi.mock("@/services/auth", () => ({
+vi.mock("@/features/auth/hooks/auth", () => ({
   __esModule: true,
   onUserStateChange: (
     cb: (user: User | null, conflict: boolean) => void

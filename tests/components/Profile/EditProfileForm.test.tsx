@@ -18,7 +18,7 @@ vi.mock("@/interfaces/interfaces", () => ({
   roleOptions: mockRoleOptions,
 }));
 
-vi.mock("@/components/Input", () => ({
+vi.mock("@/shared/components/Input", () => ({
   __esModule: true,
   Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
     <input {...props} />
@@ -36,7 +36,7 @@ vi.mock("framer-motion", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { EditProfileForm } from "@/components/Profile/EditProfileForm";
+import { EditProfileForm } from "@/features/profile/components/EditProfileForm";
 
 describe("EditProfileForm Component Suite", () => {
   const mockSetName = vi.fn();

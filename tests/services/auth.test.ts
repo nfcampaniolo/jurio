@@ -52,22 +52,22 @@ const {
 });
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/appCheck", () => ({
+vi.mock("@/infrastructure/appCheck", () => ({
   __esModule: true,
   initializeFirebaseAppCheck: mockInitializeFirebaseAppCheck,
 }));
 
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   __esModule: true,
   trackEvent: mockTrackEvent,
 }));
 
-vi.mock("@/services/firebase", () => ({
+vi.mock("@/infrastructure/firebase", () => ({
   __esModule: true,
   firebaseApp: { name: "[AUTH_APP]" },
 }));
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: mockGetDb,
 }));
@@ -108,7 +108,7 @@ import {
   setupRecaptcha,
   sendPhoneVerification,
   confirmPhoneVerification,
-} from "@/services/auth";
+} from "@/features/auth/hooks/auth";
 
 describe("Auth Service Suite", () => {
   const fakeDbInstance = { id: "mock-firestore" };

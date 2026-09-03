@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import React from "react";
-import type { DueDiligenceData } from "@/components/Document/RenderDueDiligence";
+import type { DueDiligenceData } from "@/features/document/components/RenderDueDiligence";
 
 /* ---------- mock react-icons/fa ---------- */
 vi.mock("react-icons/fa", () => {
@@ -51,7 +51,7 @@ vi.mock("./SharedUI", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/SharedUI", () => ({
+vi.mock("@/features/document/components/SharedUI", () => ({
   SectionContainer: ({
     children,
     className,
@@ -84,7 +84,7 @@ vi.mock("@/components/Document/SharedUI", () => ({
 }));
 
 /* ---------- component ---------- */
-import { RenderDueDiligence } from "@/components/Document/RenderDueDiligence";
+import { RenderDueDiligence } from "@/features/document/components/RenderDueDiligence";
 
 describe("RenderDueDiligence Component Suite", () => {
   beforeEach(() => {

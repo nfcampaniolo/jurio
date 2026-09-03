@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import type { AttachedDocument, PastChat, PastFascicolo } from "@/interfaces/interfaces";
-import type { EntityOperationsProps } from "@/hooks/useEntityOperations"; // <-- adegua il path se necessario
+import type { EntityOperationsProps } from "@/features/document/hooks/useEntityOperations"; // <-- adegua il path se necessario
 
 /* ---------- hoisted mocks ---------- */
 const {
@@ -69,28 +69,28 @@ vi.mock("react-hot-toast", () => ({
   toast: mockToast,
 }));
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: () => mockGetDb(),
 }));
 
-vi.mock("@/services/security", () => ({
+vi.mock("@/infrastructure/security", () => ({
   __esModule: true,
   getCurrentUserId: () => mockGetCurrentUserId(),
 }));
 
-vi.mock("@/services/document", () => ({
+vi.mock("@/shared/services/document", () => ({
   __esModule: true,
   deleteDocument: (col: string, id: string) => mockDeleteDocument(col, id),
   renameDocument: (id: string, name: string) => mockRenameDocument(id, name),
 }));
 
-vi.mock("@/services/storage", () => ({
+vi.mock("@/shared/services/storage", () => ({
   __esModule: true,
   deleteDocumentStorage: (id: string, path: string) => mockDeleteDocumentStorage(id, path),
 }));
 
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   __esModule: true,
   trackEvent: (event: string, payload?: Record<string, unknown>) =>
     mockTrackEvent(event, payload),
@@ -111,7 +111,7 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { useEntityOperations } from "@/hooks/useEntityOperations";
+import { useEntityOperations } from "@/features/document/hooks/useEntityOperations";
 
 describe("useEntityOperations Hook Suite", () => {
   let pastFascicoliState: PastFascicolo[] = [];

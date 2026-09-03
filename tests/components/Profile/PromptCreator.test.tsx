@@ -2,7 +2,7 @@ import React from "react";
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import type { PromptBuilderForm } from "@/interfaces/interfaces";
-import { PromptCreator } from "@/components/Profile/PromptCreator";
+import { PromptCreator } from "@/features/prompt/components/PromptCreator";
 
 /* ---------- hoisted mocks ---------- */
 const {
@@ -19,7 +19,7 @@ const {
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/hooks/usePromptGenerator", () => ({
+vi.mock("@/features/prompt/hooks/usePromptGenerator", () => ({
   __esModule: true,
   usePromptGenerator: () => ({
     ...mockHookState,
@@ -27,7 +27,7 @@ vi.mock("@/hooks/usePromptGenerator", () => ({
   }),
 }));
 
-vi.mock("@/components/AccessDenied", () => ({
+vi.mock("@/shared/components/AccessDenied", () => ({
   __esModule: true,
   AccessDenied: () => <div data-testid="access-denied-component">Accesso Negato</div>,
 }));

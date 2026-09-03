@@ -30,11 +30,11 @@ const {
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   getDb: () => mockGetDb(),
 }));
 
-vi.mock("@/services/document", () => ({
+vi.mock("@/shared/services/document", () => ({
   _mapFirestoreDocToMassima: (id: string, data: unknown) =>
     mockMapToMassima(id, data as Record<string, unknown>),
   toDateSafe: (val: unknown) => mockToDateSafe(val),
@@ -60,7 +60,7 @@ import {
   removeSentenza,
   deleteSaveSentence,
   listSavedSentenzeByUser,
-} from "@/services/saveSentences";
+} from "@/features/document/hooks/saveSentences";
 
 describe("savedSentenze Service Suite", () => {
   beforeEach(() => {

@@ -21,18 +21,18 @@ vi.mock("@/config/env", () => ({
   getVectorSearchUrl: () => mockGetVectorSearchUrl(),
 }));
 
-vi.mock("@/services/auth", () => ({
+vi.mock("@/features/auth/hooks/auth", () => ({
   ensureAnonAuth: () => mockEnsureAnonAuth(),
 }));
 
-vi.mock("@/services/security", () => ({
+vi.mock("@/infrastructure/security", () => ({
   getSecurityTokens: () => mockGetSecurityTokens(),
 }));
 
 vi.stubGlobal("fetch", mockFetch);
 
 /* ---------- subject under test ---------- */
-import { vectorSearch } from "@/services/vectorSearch";
+import { vectorSearch } from "@/features/search/hooks/vectorSearch";
 
 describe("VectorSearch Service Suite", () => {
   beforeEach(() => {
@@ -142,7 +142,7 @@ describe("VectorSearch Service Suite", () => {
   test("lancia un errore se VECTOR_SEARCH_ENDPOINT non è configurato", async () => {
     mockGetVectorSearchUrl.mockReturnValueOnce("");
     vi.resetModules();
-    const { vectorSearch: dynamicVectorSearch } = await import("@/services/vectorSearch");
+    const { vectorSearch: dynamicVectorSearch } = await import("@/features/search/hooks/vectorSearch");
 
     await expect(dynamicVectorSearch("test")).rejects.toThrow(
       "VECTOR_SEARCH_ENDPOINT non configurato."

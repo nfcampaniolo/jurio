@@ -18,7 +18,7 @@ vi.mock("@/config/apiClient", () => ({
 }));
 
 /* ---------- mock perf ---------- */
-vi.mock("@/services/perf", () => ({
+vi.mock("@/infrastructure/perf", () => ({
   withTrace: vi.fn(async (_name, _meta, fn: () => Promise<unknown>) => await fn()),
 }));
 
@@ -47,7 +47,7 @@ vi.mock("framer-motion", async () => ({
 }));
 
 /* ---------- component ---------- */
-import { DocumentViewer } from "@/components/Chat/DocumentViewer"; // <-- adegua il path se necessario
+import { DocumentViewer } from "@/features/chat/components/DocumentViewer"; // <-- adegua il path se necessario
 import type { AttachedDocument } from "@/interfaces/interfaces";
 
 describe("DocumentViewer", () => {

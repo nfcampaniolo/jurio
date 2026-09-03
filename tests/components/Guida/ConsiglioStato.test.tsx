@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 /* ---------- component ---------- */
-import ConsiglioStato from "@/components/Guida/ConsiglioStato"; // <-- adegua il path se necessario
+import ConsiglioStato from "@/features/guide/components/ConsiglioStato"; // <-- adegua il path se necessario
 
 describe("Guida - ConsiglioStato Component Suite", () => {
   beforeEach(() => {

@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
 
 /* ---------- component ---------- */
-import { SupportSidebar } from "@/components/Info/SupportSidebar"; // <-- adegua il path se necessario
+import { SupportSidebar } from "@/features/info/components/SupportSidebar"; // <-- adegua il path se necessario
 
 type IdleCallback = (cb: () => void, opts?: { timeout: number }) => number;
 type CancelIdleCallback = (id: number) => void;

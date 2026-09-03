@@ -37,7 +37,7 @@ vi.mock("@/context/useAuth", () => ({
 }));
 
 /* ---------- mock user service ---------- */
-vi.mock("@/services/user", () => ({
+vi.mock("@/shared/services/user", () => ({
   __esModule: true,
   userExists: (uid: string) => mockUserExists(uid),
 }));

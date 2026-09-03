@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
-import type { ChatMessage, SourceItem } from "@/services/chatLogic";
+import type { ChatMessage, SourceItem } from "@/features/chat/hooks/chatLogic";
 
 /* ---------- hoisted mocks ---------- */
 const { mockFetchWithAppCheckOnly, mockGetSupportUrl } = vi.hoisted(() => ({
@@ -19,7 +19,7 @@ vi.mock("@/config/env", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { chatCache, sendSupportMessage } from "@/services/chatLogic";
+import { chatCache, sendSupportMessage } from "@/features/chat/hooks/chatLogic";
 
 describe("Chat Support Logic & Cache Suite", () => {
   const CACHE_KEY = "jurio_support_chat_cache";
@@ -140,7 +140,7 @@ describe("Chat Support Logic & Cache Suite", () => {
       vi.resetModules();
       mockGetSupportUrl.mockReturnValueOnce("");
 
-      const { sendSupportMessage: dynamicSendSupport } = await import("@/services/chatLogic");
+      const { sendSupportMessage: dynamicSendSupport } = await import("@/features/chat/hooks/chatLogic");
 
       await expect(dynamicSendSupport(inputMessages)).rejects.toThrow(
         "Servizio non disponibile"

@@ -69,7 +69,7 @@ vi.mock("@/context/useAuth", () => ({
 }));
 
 /* ---------- mock ButtonCTA (alias e relativo) ---------- */
-vi.mock("@/components/ButtonCTA", () => ({
+vi.mock("@/shared/components/ButtonCTA", () => ({
   ButtonCTA: ({
     children,
     onClick,
@@ -124,7 +124,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- mock db & firestore ---------- */
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   getDb: () => getDbMock(),
 }));
 
@@ -146,7 +146,7 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 /* ---------- component ---------- */
-import { Header } from "@/components/Info/Header";
+import { Header } from "@/shared/components/Header";
 
 const renderHeader = () =>
   render(

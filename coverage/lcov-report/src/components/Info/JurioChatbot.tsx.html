@@ -597,7 +597,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useEffect, useRef } from 'react';
 import { useJurioChatbot } from '@/hooks/useJurioChatbot';
-import { Typewriter } from '@/components/Typewriter';
+import { Typewriter } from '@/shared/components/Typewriter';
 import ReactMarkdown from 'react-markdown';
 import { 
   MessageSquare, 
@@ -608,7 +608,7 @@ import {
   Loader2,
   ExternalLink 
 } from 'lucide-react';
-import type { ChatMessage, SourceItem } from '@/services/chatLogic';
+import type { ChatMessage, SourceItem } from '@/features/chat/hooks/chatLogic';
 &nbsp;
 const JurioChatbot: React.FC = () =&gt; {
   const {

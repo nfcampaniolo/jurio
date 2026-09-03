@@ -269,9 +269,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { trackEvent } from "@/services/analytics";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { trackEvent } from "@/infrastructure/analytics";
 import { fetchWithSecurity } from "@/config/apiClient"; 
-import { getDb } from "@/services/db";
+import { getDb } from "@/infrastructure/db";
 &nbsp;
 export interface CouponData {
   code: string;

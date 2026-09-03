@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     let cancelled = false;
 
     (async () => {
-      const mod = await import("@/services/auth");
+      const mod = await import("@/features/auth/hooks/auth");
     
       unsubscribe = mod.onUserStateChange((u: FirebaseUser | null, conflict: boolean) => {
         if (cancelled) return;

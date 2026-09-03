@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
-import type { SentenceMatch } from "@/services/vectorSearch";
+import type { SentenceMatch } from "@/features/search/hooks/vectorSearch";
 
 /* ---------- hoisted mocks ---------- */
 const { mockVectorSearch, mockCercaPrecedentiPerNorme } = vi.hoisted(() => ({
@@ -9,18 +9,18 @@ const { mockVectorSearch, mockCercaPrecedentiPerNorme } = vi.hoisted(() => ({
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/vectorSearch", () => ({
+vi.mock("@/features/search/hooks/vectorSearch", () => ({
   __esModule: true,
   vectorSearch: (...args: unknown[]) => mockVectorSearch(...args),
 }));
 
-vi.mock("@/hooks/cercaPrecedenti", () => ({
+vi.mock("@/features/document/hooks/cercaPrecedenti", () => ({
   __esModule: true,
   cercaPrecedentiPerNorme: (...args: unknown[]) => mockCercaPrecedentiPerNorme(...args),
 }));
 
 /* ---------- subject under test ---------- */
-import { useRelatedDocuments } from "@/hooks/useRelatedDocuments"; // <-- adegua il path se necessario
+import { useRelatedDocuments } from "@/features/document/hooks/useRelatedDocuments"; // <-- adegua il path se necessario
 
 describe("useRelatedDocuments Hook Suite", () => {
   const currentDocUid = "doc_target_100";

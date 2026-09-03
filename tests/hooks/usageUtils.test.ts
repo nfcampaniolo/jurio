@@ -3,7 +3,7 @@ import {
   formatMonth,
   calculateTimeSaved,
   type UsageDoc,
-} from "@/hooks/usageUtils"; // <-- adegua il path di import se necessario
+} from "@/features/profile/hooks/usageUtils"; // <-- adegua il path di import se necessario
 
 describe("Usage Utils Suite", () => {
   describe("formatMonth", () => {

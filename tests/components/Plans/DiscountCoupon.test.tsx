@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
-import type { CouponData } from "@/hooks/discount";
+import type { CouponData } from "@/features/plans/hooks/discount";
 
 /* ---------- tipi mock ---------- */
 interface FetchCouponResponse {
@@ -16,7 +16,7 @@ const { mockFetchApplyCoupon } = vi.hoisted(() => ({
 }));
 
 /* ---------- mock hook discount ---------- */
-vi.mock("@/hooks/discount", () => ({
+vi.mock("@/features/plans/hooks/discount", () => ({
   fetchApplyCoupon: (code: string) => mockFetchApplyCoupon(code),
 }));
 
@@ -55,7 +55,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import { DiscountCoupon } from "@/components/Plans/DiscountCoupon"; // <-- adegua il path se necessario
+import { DiscountCoupon } from "@/features/plans/components/DiscountCoupon"; // <-- adegua il path se necessario
 
 describe("DiscountCoupon Component Suite", () => {
   const mockOnApplyCoupon = vi.fn<(coupon: CouponData) => void>();

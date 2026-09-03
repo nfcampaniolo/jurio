@@ -47,17 +47,17 @@ vi.mock("lucide-react", () => ({
 }));
 
 /* ---------- mock child components ---------- */
-vi.mock("@/components/Info/Header", () => ({
+vi.mock("@/shared/components/Header", () => ({
   __esModule: true,
   Header: () => <header data-testid="main-header">Header Navigation</header>,
 }));
 
-vi.mock("@/components/AccessDenied", () => ({
+vi.mock("@/shared/components/AccessDenied", () => ({
   __esModule: true,
   AccessDenied: () => <div data-testid="access-denied-component">Access Denied Modal</div>,
 }));
 
-vi.mock("@/components/Chat/Filters", () => ({
+vi.mock("@/features/chat/components/Filters", () => ({
   __esModule: true,
   FilterModal: ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) =>
     isOpen ? (
@@ -69,7 +69,7 @@ vi.mock("@/components/Chat/Filters", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/Chat/DocumentSelectorPanel", () => ({
+vi.mock("@/features/chat/components/DocumentSelectorPanel", () => ({
   __esModule: true,
   DocumentSelectorPanel: ({
     isOpen,
@@ -87,7 +87,7 @@ vi.mock("@/components/Chat/DocumentSelectorPanel", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/Chat/TitlePromptModal", () => ({
+vi.mock("@/features/chat/components/TitlePromptModal", () => ({
   __esModule: true,
   TitlePromptModal: ({
     isOpen,
@@ -113,7 +113,7 @@ vi.mock("@/components/Chat/TitlePromptModal", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/Chat/SelectionScreen", () => ({
+vi.mock("@/features/chat/components/SelectionScreen", () => ({
   __esModule: true,
   SelectionScreen: ({
     startTempChat,
@@ -133,7 +133,7 @@ vi.mock("@/components/Chat/SelectionScreen", () => ({
   ),
 }));
 
-vi.mock("@/components/Chat/ChatWorkspace", () => ({
+vi.mock("@/features/chat/components/ChatWorkspace", () => ({
   __esModule: true,
   ChatWorkspace: ({
     handleDocumentAction,
@@ -168,7 +168,7 @@ vi.mock("@/components/Chat/ChatWorkspace", () => ({
   ),
 }));
 
-vi.mock("@/components/Chat/ChatHeader", () => ({
+vi.mock("@/features/chat/components/ChatHeader", () => ({
   __esModule: true,
   ChatHeader: ({
     sessionTitle,
@@ -199,7 +199,7 @@ vi.mock("@/components/Chat/ChatHeader", () => ({
   ),
 }));
 
-vi.mock("@/components/Chat/MessageList", () => ({
+vi.mock("@/features/chat/components/MessageList", () => ({
   __esModule: true,
   MessageList: ({
     messages,
@@ -214,12 +214,12 @@ vi.mock("@/components/Chat/MessageList", () => ({
   ),
 }));
 
-vi.mock("@/components/Chat/MessageTimeline", () => ({
+vi.mock("@/features/chat/components/MessageTimeline", () => ({
   __esModule: true,
   MessageTimeline: () => <div data-testid="message-timeline">Timeline Component</div>,
 }));
 
-vi.mock("@/components/Chat/ChatInput", () => ({
+vi.mock("@/features/chat/components/ChatInput", () => ({
   __esModule: true,
   ChatInput: ({
     inputValue,
@@ -253,7 +253,7 @@ vi.mock("@/components/Chat/ChatInput", () => ({
   ),
 }));
 
-vi.mock("@/components/Chat/RightSidebar", () => ({
+vi.mock("@/features/chat/components/RightSidebar", () => ({
   __esModule: true,
   RightSidebar: ({
     onThreadSelect,
@@ -351,13 +351,13 @@ let mockLegalChatState = {
   deleteThread: mockDeleteThread,
 };
 
-vi.mock("@/hooks/useLegalChat", () => ({
+vi.mock("@/features/chat/hooks/useLegalChat", () => ({
   __esModule: true,
   useLegalChat: () => mockLegalChatState,
 }));
 
 /* ---------- component under test ---------- */
-import { LegalChatPage } from "@/pages/Chat";
+import { LegalChatPage } from "@/features/chat/Chat";
 
 describe("LegalChatPage Suite", () => {
   beforeEach(() => {

@@ -290,7 +290,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 &nbsp;
 // Importiamo la logica dal nostro file separato
-import { forceSessionTakeover, clearLocalSession } from '@/services/sessionLogic'; 
+import { forceSessionTakeover, clearLocalSession } from '@/features/auth/hooks/sessionLogic'; 
 &nbsp;
 export default function Session() {
   const navigate = useNavigate();

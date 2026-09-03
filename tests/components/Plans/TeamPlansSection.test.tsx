@@ -1,8 +1,8 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import React from "react";
-import type { PlanUI } from "@/services/plans";
-import type { CouponData } from "@/hooks/discount";
+import type { PlanUI } from  "@/features/plans/hooks/plans";
+import type { CouponData } from "@/features/plans/hooks/discount";
 
 /* ---------- tipi mock pricing ---------- */
 interface DynamicPricingResult {
@@ -49,12 +49,12 @@ vi.mock("@/context/useAuth", () => ({
 }));
 
 /* ---------- mock useTeamPlans ---------- */
-vi.mock("@/hooks/useTeamPlans", () => ({
+vi.mock("@/features/teams/hooks/useTeamPlans", () => ({
   useTeamPlans: () => mockTeamPlansState,
 }));
 
 /* ---------- mock hook usePlans ---------- */
-vi.mock("@/hooks/usePlans", () => ({
+vi.mock("@/features/plans/hooks/usePlans", () => ({
   getDynamicPricing: (plan: PlanUI, coupon: CouponData | null) =>
     mockGetDynamicPricing(plan, coupon),
 }));
@@ -77,7 +77,7 @@ interface MockConfirmModalProps {
   onCancel: () => void;
 }
 
-vi.mock("@/components/ConfirmModal", () => ({
+vi.mock("@/shared/components/ConfirmModal", () => ({
   ConfirmModal: ({
     isOpen,
     title,
@@ -102,7 +102,7 @@ vi.mock("@/components/ConfirmModal", () => ({
 }));
 
 /* ---------- component ---------- */
-import { TeamPlansSection } from "@/components/Plans/TeamPlansSection"; // <-- adegua il path se necessario
+import { TeamPlansSection } from "@/features/plans/components/TeamPlansSection"; // <-- adegua il path se necessario
 
 describe("TeamPlansSection Component Suite", () => {
   const mockOpenPaymentForPlan = vi.fn<(planName: string) => void>();

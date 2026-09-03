@@ -19,7 +19,7 @@ vi.mock("lucide-react", () => {
 });
 
 /* ---------- component ---------- */
-import { ChatHeader } from "@/components/Chat/ChatHeader"; // <-- adegua il path se necessario
+import { ChatHeader } from "@/features/chat/components/ChatHeader"; // <-- adegua il path se necessario
 
 describe("ChatHeader", () => {
   const mockSetViewMode = vi.fn();

@@ -33,7 +33,7 @@ vi.mock("framer-motion", async () => ({
 }));
 
 /* ---------- component ---------- */
-import { PastFascicoli } from "@/components/Chat/PastFascicoli"; // <-- adegua il path se necessario
+import { PastFascicoli } from "@/features/chat/components/PastFascicoli"; // <-- adegua il path se necessario
 import type { PastFascicolo, PastChat } from "@/interfaces/interfaces";
 
 describe("PastFascicoli Component Suite", () => {

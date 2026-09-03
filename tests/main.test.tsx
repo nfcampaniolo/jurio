@@ -1,80 +1,77 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
+import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import React from "react";
 
-/* ---------- hoisted mocks ---------- */
-const { mockRender, mockCreateRoot } = vi.hoisted(() => {
-  const renderFn = vi.fn();
-  const createRootFn = vi.fn<(container: Element | DocumentFragment) => { render: typeof renderFn }>(
-    () => ({
-      render: renderFn,
-    })
-  );
-  return {
-    mockRender: renderFn,
-    mockCreateRoot: createRootFn,
-  };
-});
+/* ---------- mock react-dom/client ---------- */
 
 /* ---------- mock react-dom/client ---------- */
+const mockRender = vi.fn();
+const mockCreateRoot = vi.fn();
+
 vi.mock("react-dom/client", () => ({
-  __esModule: true,
-  createRoot: (container: Element | DocumentFragment) => mockCreateRoot(container),
+  createRoot: (container: Element | DocumentFragment) => {
+    mockCreateRoot(container);
+    return { render: mockRender };
+  },
 }));
 
-/* ---------- mock components & providers ---------- */
-vi.mock("./App", () => ({
-  __esModule: true,
-  default: () => <div data-testid="mock-app">App Component</div>,
+/* ---------- mock css e componenti radice ---------- */
+vi.mock("@/index.css", () => ({}));
+
+vi.mock("@/App", () => ({
+  default: () => <div data-testid="mock-app">Jurio App</div>,
 }));
 
 vi.mock("@/context/AuthProvider", () => ({
-  __esModule: true,
-  AuthProvider: ({ children }: { children?: React.ReactNode }) => (
+  AuthProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="mock-auth-provider">{children}</div>
   ),
 }));
 
-vi.mock("@/components/FirebaseInit", () => ({
-  __esModule: true,
-  default: () => <div data-testid="mock-firebase-init" />,
-}));
-
 vi.mock("@dr.pogodin/react-helmet", () => ({
-  __esModule: true,
-  HelmetProvider: ({ children }: { children?: React.ReactNode }) => (
+  HelmetProvider: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="mock-helmet-provider">{children}</div>
   ),
 }));
 
+vi.mock("@/context/FirebaseInit", () => ({
+  default: () => <div data-testid="mock-firebase-init" />,
+}));
+
 vi.mock("react-hot-toast", () => ({
-  __esModule: true,
   Toaster: () => <div data-testid="mock-toaster" />,
 }));
 
-vi.mock("./index.css", () => ({}));
-
-describe("Main Entry Point Suite", () => {
+describe("Index / Root Bootstrap Suite", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
     vi.resetModules();
+    vi.clearAllMocks();
     document.body.innerHTML = "";
   });
 
-  test("inizializza createRoot e renderizza l'albero React quando #root è presente nel DOM", async () => {
+  afterEach(() => {
+    document.body.innerHTML = "";
+  });
+
+  test("inizializza createRoot e renderizza l'albero applicativo quando il container #root esiste", async () => {
     const rootContainer = document.createElement("div");
     rootContainer.id = "root";
     document.body.appendChild(rootContainer);
 
-    await import("@/main");
+    // Import dinamico per eseguire il codice top-level del file
+    await import("@/main"); // adegua il path al tuo file entry point (es: "@/main")
 
-    expect(mockCreateRoot).toHaveBeenCalledTimes(1);
     expect(mockCreateRoot).toHaveBeenCalledWith(rootContainer);
     expect(mockRender).toHaveBeenCalledTimes(1);
+
+    // Verifica che l'albero React passato contenga il wrapping atteso
+    const renderedTree = mockRender.mock.calls[0][0];
+    expect(React.isValidElement(renderedTree)).toBe(true);
+    expect(renderedTree.type).toBe(React.StrictMode);
   });
 
-  test("solleva un'eccezione esplicita se l'elemento #root non è presente nel DOM", async () => {
+  test("solleva un'eccezione se il nodo #root è assente nel DOM", async () => {
+    // Il body è privo di div#root
     await expect(import("@/main")).rejects.toThrow("Elemento #root non trovato");
-
     expect(mockCreateRoot).not.toHaveBeenCalled();
     expect(mockRender).not.toHaveBeenCalled();
   });

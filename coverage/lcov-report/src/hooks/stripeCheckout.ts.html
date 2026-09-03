@@ -280,7 +280,7 @@
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// stripeCheckout.ts (hook/module)
-import { trackEvent } from "@/services/analytics";
+import { trackEvent } from "@/infrastructure/analytics";
 import { fetchWithSecurity } from "@/config/apiClient";
 import { getStripe} from "@/config/env";
 export type StripeCurrency = "EUR" | "USD" | "GBP";

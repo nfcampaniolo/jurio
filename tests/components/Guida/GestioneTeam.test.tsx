@@ -20,7 +20,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import GestioneTeam from "@/components/Guida/GestioneTeam"; // <-- adegua il path se necessario
+import GestioneTeam from "@/features/guide/components/GestioneTeam"; // <-- adegua il path se necessario
 
 describe("Guida - GestioneTeam Component Suite", () => {
   beforeEach(() => {

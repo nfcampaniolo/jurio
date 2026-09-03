@@ -395,7 +395,7 @@
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { makeRiferimentiNormativiKeys } from '@/services/riferimentiTranslator'; 
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { makeRiferimentiNormativiKeys } from '@/shared/hooks/riferimentiTranslator'; 
 &nbsp;
 // --- 1. METODI DI NORMALIZZAZIONE ---
 function normalizzaSezioneCassazione(citazione: string, isPenale: boolean): string {
@@ -491,7 +491,7 @@ export async function cercaPrecedente(citazione: string) {
   try {
     // Il browser scaricherà/eseguirà questi moduli solo arrivato a questo punto
     const { collection, query, where, limit, getDocs } = await import('firebase/firestore');
-    const { getDb } = await import('@/services/db');
+    const { getDb } = await import('@/infrastructure/db');
     const db = await getDb();
     const sentenzeRef = collection(db, 'sentences');
     
@@ -531,7 +531,7 @@ export async function cercaPrecedentiPerNorme(norme: string[], maxResults: numbe
   try {
     // 2. Importazione Dinamica di Firebase (stesso pattern di cercaPrecedente)
     const { collection, query, where, limit, getDocs, orderBy } = await import('firebase/firestore');
-    const { getDb } = await import('@/services/db'); // Assicurati che il path sia corretto
+    const { getDb } = await import('@/infrastructure/db'); // Assicurati che il path sia corretto
     const db = await getDb();
     
     // NOTA: Sostituisci 'sentences' o 'giurisprudenza' col nome reale della tua collection

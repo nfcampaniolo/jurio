@@ -20,7 +20,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import CorteCostituzionale from "@/components/Guida/CorteCostituzionale"; // <-- adegua il path se necessario
+import CorteCostituzionale from "@/features/guide/components/CorteCostituzionale"; // <-- adegua il path se necessario
 
 describe("Guida - CorteCostituzionale Component Suite", () => {
   beforeEach(() => {

@@ -30,7 +30,7 @@ vi.mock("@/config/env", () => ({
   getStripePublishableKey: () => mockGetStripePublishableKey(),
 }));
 
-vi.mock("@/hooks/stripeCheckout", () => ({
+vi.mock("@/features/plans/hooks/stripeCheckout", () => ({
   fetchPlanPrice: (planId: string) => mockFetchPlanPrice(planId),
   createCheckoutSessionServer: (params: unknown) => mockCreateCheckoutSessionServer(params),
 }));
@@ -40,7 +40,7 @@ vi.mock("lucide-react", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import StripeCheckout from "@/components/Plans/StripeCheckout"; // Adatta il path in base alla struttura delle cartelle
+import StripeCheckout from "@/features/plans/components/StripeCheckout"; // Adatta il path in base alla struttura delle cartelle
 
 describe("StripeCheckout Component Suite", () => {
   const originalLocation = window.location;

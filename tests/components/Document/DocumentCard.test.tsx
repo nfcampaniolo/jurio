@@ -30,7 +30,7 @@ vi.mock("lucide-react", () => {
 });
 
 /* ---------- component ---------- */
-import { DocumentCard } from "@/components/Document/DocumentCard"; // <-- adegua il path se necessario
+import { DocumentCard } from "@/features/chat/components/DocumentCard"; // <-- adegua il path se necessario
 
 describe("DocumentCard Component Suite", () => {
   const mockOnToggleDoc = vi.fn<(doc: AttachedDocument) => void>();

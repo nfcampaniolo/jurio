@@ -13,12 +13,12 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- mock subcomponents ---------- */
-vi.mock("@/components/Profile/JoinTeamWithVoucher", () => ({
+vi.mock("@/features/teams/components/JoinTeamWithVoucher", () => ({
   __esModule: true,
   default: () => <div data-testid="join-team-voucher">Join Team With Voucher</div>,
 }));
 
-vi.mock("@/components/Profile/TeamMembers", () => ({
+vi.mock("@/features/teams/components/TeamMembers", () => ({
   __esModule: true,
   default: ({
     teamId,
@@ -40,12 +40,12 @@ vi.mock("@/components/Profile/TeamMembers", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/YourDocument", () => ({
+vi.mock("@/shared/components/YourDocument", () => ({
   __esModule: true,
   YourDocument: () => <div data-testid="your-document">I Tuoi Documenti</div>,
 }));
 
-vi.mock("@/components/Profile/TeamSettings", () => ({
+vi.mock("@/features/teams/components/TeamSettings", () => ({
   __esModule: true,
   default: ({
     team,
@@ -60,7 +60,7 @@ vi.mock("@/components/Profile/TeamSettings", () => ({
   ),
 }));
 
-vi.mock("@/components/Profile/TeamVouchers", () => ({
+vi.mock("@/features/teams/components/TeamVouchers", () => ({
   __esModule: true,
   default: ({ team }: { team: { id: string; name?: string } }) => (
     <div data-testid="team-vouchers" data-team-id={team.id}>
@@ -87,13 +87,13 @@ let mockDashboardState: TeamDashboardState = {
   isManager: false,
 };
 
-vi.mock("@/hooks/teams", () => ({
+vi.mock("@/features/teams/hooks/useTeamDashboard", () => ({
   __esModule: true,
   useTeamDashboard: () => mockDashboardState,
 }));
 
 /* ---------- component under test ---------- */
-import TeamDashboard from "@/pages/TeamDashboard"; // <-- adegua il path se necessario
+import TeamDashboard from "@/features/teams/TeamDashboard"; // <-- adegua il path se necessario
 
 describe("TeamDashboard Page Suite", () => {
   beforeEach(() => {

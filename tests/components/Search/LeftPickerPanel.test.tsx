@@ -66,7 +66,7 @@ const getTestWeekNumber = (date: Date): string => {
 };
 
 /* ---------- subject under test ---------- */
-import { LeftPickerPanel } from "@/components/Search/LeftPickerPanel";
+import { LeftPickerPanel } from "@/features/search/components/LeftPickerPanel";
 
 describe("LeftPickerPanel Component Suite", () => {
   beforeEach(() => {

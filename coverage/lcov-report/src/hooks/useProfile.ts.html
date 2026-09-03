@@ -547,14 +547,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getUser, saveUserData, deleteUser, userExists, getRegisterPlanId, exportUserData } from "@/services/user";
+import { getUser, saveUserData, deleteUser, userExists, getRegisterPlanId, exportUserData } from "@/shared/services/user";
 import { toast } from "react-hot-toast";
 import type { UserData } from "@/interfaces/interfaces";
 import { useAuth } from "@/context/useAuth";
-import { logout } from "@/services/auth";
-import { deleteAccountFolder } from "@/services/storage";
+import { logout } from "@/features/auth/hooks/auth";
+import { deleteAccountFolder } from "@/shared/services/storage";
 import { roleOptions } from "@/interfaces/interfaces";
-import { trackEvent } from "@/services/analytics";
+import { trackEvent } from "@/infrastructure/analytics";
 &nbsp;
 export const useProfile = () =&gt; {
   const { user, loading } = useAuth();
@@ -647,7 +647,7 @@ export const useProfile = () =&gt; {
       try {
         // Lazy import: non trascina firebase/storage nel bundle iniziale
         const [{ getStorageClient }, storageFns] = await Promise.all([
-          import("@/services/storageClient"),
+          import("@/infrastructure/storageClient"),
           import("firebase/storage"),
         ]);
 &nbsp;
@@ -680,7 +680,7 @@ export const useProfile = () =&gt; {
       let avatarPathOrUrl = avatar;
 &nbsp;
       if (avatarFile) {
-        const { uploadAvatar } = await import("@/services/storage");
+        const { uploadAvatar } = await import("@/shared/services/storage");
         await uploadAvatar(avatarFile, user.uid);
         avatarPathOrUrl = `users/${user.uid}/image_1080x1080.jpeg`;
       }

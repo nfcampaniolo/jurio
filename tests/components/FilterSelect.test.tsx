@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 
 /* ---------- component ---------- */
-import { FilterSelect } from "@/components/FilterSelect"; // <-- adegua il path se necessario
+import { FilterSelect } from "@/shared/components/FilterSelect"; // <-- adegua il path se necessario
 
 describe("FilterSelect Component Suite", () => {
   const mockOnChange = vi.fn();
