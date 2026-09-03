@@ -34,7 +34,7 @@ vi.mock("react-hot-toast", () => ({
 }));
 
 /* ---------- mock services/contact ---------- */
-vi.mock("@/services/contact", () => ({
+vi.mock("@/features/info/hooks/contact", () => ({
   createContact: (payload: CreateContactPayload) => mockCreateContact(payload),
 }));
 
@@ -58,7 +58,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import { SupportForm } from "@/components/Info/SupportForm"; // <-- adegua il path se necessario
+import { SupportForm } from "@/features/info/components/SupportForm"; // <-- adegua il path se necessario
 
 describe("SupportForm Component Suite", () => {
   beforeEach(() => {

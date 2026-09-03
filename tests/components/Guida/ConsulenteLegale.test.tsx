@@ -2,7 +2,7 @@ import { describe, test, expect, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 
 /* ---------- component ---------- */
-import ConsulenteLegale from "@/components/Guida/ConsulenteLegale"; // <-- adegua il path se necessario
+import ConsulenteLegale from "@/features/guide/components/ConsulenteLegale"; // <-- adegua il path se necessario
 
 describe("Guida - ConsulenteLegale Component Suite", () => {
   beforeEach(() => {

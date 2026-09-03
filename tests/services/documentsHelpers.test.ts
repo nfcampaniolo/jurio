@@ -10,7 +10,7 @@ import {
   normalizeNumeroSentenzaFirstPart,
   buildUrnFromMassima,
   lowerArrayOrString,
-} from "@/services/documentsHelpers";
+} from "@/shared/services/documentsHelpers";
 
 describe("Documents Helpers Service Suite", () => {
   /* -------------------------------------------------------------------------- */

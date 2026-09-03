@@ -37,7 +37,7 @@ vi.mock("framer-motion", () => ({
 }));
 
 /* ---------- component ---------- */
-import { Document } from "@/components/Document/Document"; // <-- adegua il path se necessario
+import { Document } from "@/features/document/components/Document"; // <-- adegua il path se necessario
 
 describe("Document Component Suite", () => {
   beforeEach(() => {

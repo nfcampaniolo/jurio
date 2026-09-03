@@ -20,7 +20,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import Cassazione from "@/components/Guida/Cassazione"; // <-- adegua il path se necessario
+import Cassazione from "@/features/guide/components/Cassazione"; // <-- adegua il path se necessario
 
 describe("Guida - Cassazione Component Suite", () => {
   beforeEach(() => {

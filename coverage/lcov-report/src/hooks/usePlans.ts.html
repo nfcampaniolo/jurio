@@ -280,10 +280,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// /services/trial/useTrialInfo.ts
 import * as React from "react";
 import { FirebaseError } from "firebase/app";
-import { fetchRegisterDoc } from "@/services/user";
+import { fetchRegisterDoc } from "@/shared/services/user";
 import { toStartDate, trialDaysLeft } from "./planlDomain";
-import type { PlanUI } from "@/services/plans";
-import type { CouponData } from "@/hooks/discount";
+import type { PlanUI } from "@/features/plans/hooks/plans";
+import type { CouponData } from "@/features/plans/hooks/discount";
 &nbsp;
 export function useTrialInfo(params: { isTrial: boolean; uid: string | null }): {
   trialLoading: boolean;

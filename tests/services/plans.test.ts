@@ -7,7 +7,7 @@ const { mockGetDb, mockGetDocs } = vi.hoisted(() => ({
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   getDb: () => mockGetDb(),
 }));
 
@@ -31,7 +31,7 @@ import {
   formatPriceEUR,
   getPreloadedPlans,
   fetchPlansFromDb,
-} from "@/services/plans";
+} from "@/features/plans/hooks/plans";
 
 describe("Plans Service Suite", () => {
   beforeEach(() => {

@@ -44,7 +44,7 @@ vi.mock("./SharedUI", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/SharedUI", () => ({
+vi.mock("@/features/document/components/SharedUI", () => ({
   SectionContainer: ({
     children,
     className,
@@ -74,7 +74,7 @@ vi.mock("@/components/Document/SharedUI", () => ({
 }));
 
 /* ---------- component ---------- */
-import { RenderFallback } from "@/components/Document/RenderFallback";
+import { RenderFallback } from "@/features/document/components/RenderFallback";
 
 describe("RenderFallback Component Suite", () => {
   beforeEach(() => {

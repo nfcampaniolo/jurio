@@ -29,13 +29,13 @@ vi.mock("./documentsCore", () => mockCore);
 vi.mock("./documentsFascicoli", () => mockFascicoli);
 vi.mock("./documentsChats", () => mockChats);
 
-vi.mock("@/services/documentsHelpers", () => mockHelpers);
-vi.mock("@/services/documentsCore", () => mockCore);
-vi.mock("@/services/documentsFascicoli", () => mockFascicoli);
-vi.mock("@/services/documentsChats", () => mockChats);
+vi.mock("@/shared/services/documentsHelpers", () => mockHelpers);
+vi.mock("@/shared/services/documentsCore", () => mockCore);
+vi.mock("@/shared/services/documentsFascicoli", () => mockFascicoli);
+vi.mock("@/shared/services/documentsChats", () => mockChats);
 
 /* ---------- subject under test ---------- */
-import * as DocumentsService from "@/services/document";
+import * as DocumentsService from "@/shared/services/document";
 
 describe("Documents Barrel Export Suite", () => {
   test("riesporta correttamente tutti i membri da documentsHelpers", () => {

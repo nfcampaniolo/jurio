@@ -94,7 +94,7 @@ const createMockSseResponse = (chunks: string[], status = 200) => {
 };
 
 /* ---------- subject under test ---------- */
-import { usePromptGenerator, usePromptDashboard } from "@/hooks/usePromptGenerator"; // <-- adegua il path di import se necessario
+import { usePromptGenerator, usePromptDashboard } from "@/features/prompt/hooks/usePromptGenerator"; // <-- adegua il path di import se necessario
 
 describe("Prompt Hooks Suite", () => {
   beforeEach(() => {

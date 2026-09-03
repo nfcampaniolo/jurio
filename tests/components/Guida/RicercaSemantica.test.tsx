@@ -21,7 +21,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import RicercaSemantica from "@/components/Guida/RicercaSemantica"; // <-- adegua il path se necessario
+import RicercaSemantica from "@/features/guide/components/RicercaSemantica"; // <-- adegua il path se necessario
 
 describe("Guida - RicercaSemantica Component Suite", () => {
   beforeEach(() => {

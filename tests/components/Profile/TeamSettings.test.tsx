@@ -44,7 +44,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- mock hook useTeamSettings ---------- */
-vi.mock("@/hooks/teams", () => ({
+vi.mock("@/features/teams/hooks/useTeamSettings", () => ({
   useTeamSettings: () => mockTeamSettingsState,
 }));
 
@@ -83,7 +83,7 @@ vi.mock("../ConfirmModal", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/ConfirmModal", () => ({
+vi.mock("@/shared/components/ConfirmModal", () => ({
   ConfirmModal: ({
     isOpen,
     title,
@@ -152,7 +152,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import TeamSettings from "@/components/Profile/TeamSettings"; // <-- adegua il path se necessario
+import TeamSettings from "@/features/teams/components/TeamSettings"; // <-- adegua il path se necessario
 
 describe("TeamSettings Component Suite", () => {
   const dummyTeam: Team = {

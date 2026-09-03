@@ -31,13 +31,13 @@ const { mockHookReturn, mockUseRelatedDocuments } = vi.hoisted(() => {
 });
 
 /* ---------- mock useRelatedDocuments hook ---------- */
-vi.mock("@/hooks/useRelatedDocuments", () => ({
+vi.mock("@/features/document/hooks/useRelatedDocuments", () => ({
   useRelatedDocuments: (params: Parameters<typeof mockUseRelatedDocuments>[0]) =>
     mockUseRelatedDocuments(params),
 }));
 
 /* ---------- mock Document child component ---------- */
-vi.mock("@/components/Document/Document", () => ({
+vi.mock("@/features/document/components/Document", () => ({
   Document: ({ documento }: { documento: DocumentoGiurisprudenziale }) => (
     <div data-testid={`mock-document-${documento.id || documento.urn}`}>
       <span>{documento.massima || documento.id}</span>
@@ -56,7 +56,7 @@ vi.mock("lucide-react", () => {
 });
 
 /* ---------- component ---------- */
-import { RelatedDocuments } from "@/components/Document/LinkedSentences"; // <-- adegua il path se necessario
+import { RelatedDocuments } from "@/features/document/components/LinkedSentences"; // <-- adegua il path se necessario
 
 describe("RelatedDocuments Component Suite", () => {
   const originalOpen = window.open;

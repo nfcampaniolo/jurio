@@ -762,12 +762,12 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MassimaCard } from "@/components/Document/Massima";
-import { AccessDenied } from "@/components/AccessDenied";
-import { ConfirmModal } from "@/components/ConfirmModal";
-import { vectorSearch } from "@/services/vectorSearch"; 
+import { AccessDenied } from "@/shared/components/AccessDenied";
+import { ConfirmModal } from "@/shared/components/ConfirmModal";
+import { vectorSearch } from "@/features/search/hooks/vectorSearch"; 
 import type { DocumentoGiurisprudenziale } from "@/interfaces/interfaces";
-import { trackEvent } from "@/services/analytics";
-import { usePdfAnalyzer } from "@/hooks/usePdfAnalyzer";
+import { trackEvent } from "@/infrastructure/analytics";
+import { usePdfAnalyzer } from "@/features/profile/hooks/usePdfAnalyzer";
 import { Loader2 } from "lucide-react";
 import { FaCloud } from "react-icons/fa";
 &nbsp;

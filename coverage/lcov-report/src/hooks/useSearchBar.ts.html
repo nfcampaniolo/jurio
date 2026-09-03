@@ -219,8 +219,8 @@
 import type { KeyboardEvent } from "react";
 import type { DocumentoGiurisprudenziale } from "@/interfaces/interfaces";
 import { useAuth } from "@/context/useAuth";
-import { trackEvent } from "@/services/analytics";
-import { loadDistinctSottocategorie } from "@/services/search";
+import { trackEvent } from "@/infrastructure/analytics";
+import { loadDistinctSottocategorie } from "@/features/search/hooks/search";
 &nbsp;
 import { useSearchFilters } from "./useSearchFilters";
 import { useSearchHistory, useSearchEngine } from "./useSearchEngine";

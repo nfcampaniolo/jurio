@@ -15,7 +15,7 @@ vi.mock("lucide-react", () => {
 });
 
 /* ---------- mock Document component ---------- */
-vi.mock("../Document/Document", () => ({
+vi.mock("@/features/document/components/Document", () => ({
   Document: ({ documento }: { documento: { id: string; numero_documento?: string } }) => (
     <div data-testid={`mock-document-${documento.id}`}>
       {documento.numero_documento || documento.id}
@@ -23,7 +23,7 @@ vi.mock("../Document/Document", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/Document", () => ({
+vi.mock("@/features/document/components/Document", () => ({
   Document: ({ documento }: { documento: { id: string; numero_documento?: string } }) => (
     <div data-testid={`mock-document-${documento.id}`}>
       {documento.numero_documento || documento.id}
@@ -48,7 +48,7 @@ vi.mock("framer-motion", () => ({
 }));
 
 /* ---------- component ---------- */
-import { SearchResultsList } from "@/components/Search/SearchResultsList"; // <-- adegua il path se necessario
+import { SearchResultsList } from "@/features/search/components/SearchResultsList"; // <-- adegua il path se necessario
 
 describe("SearchResultsList Component Suite", () => {
   const mockHandleClick = vi.fn();

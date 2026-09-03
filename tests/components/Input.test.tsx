@@ -1,7 +1,7 @@
 import { describe, test, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 /* ---------- component ---------- */
-import { Input } from "@/components/Input"; // <-- adegua il path se necessario
+import { Input } from "@/shared/components/Input"; // <-- adegua il path se necessario
 
 describe("Input Component Suite", () => {
   test("renderizza un elemento input con le classi di stile base", () => {

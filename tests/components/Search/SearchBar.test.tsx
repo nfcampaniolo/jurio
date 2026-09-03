@@ -108,12 +108,12 @@ const { mockSearchBarState } = vi.hoisted(() => ({
 }));
 
 /* ---------- mock hook useSearchBar ---------- */
-vi.mock("@/hooks/useSearchBar", () => ({
+vi.mock("@/features/search/hooks/useSearchBar", () => ({
   useSearchBar: () => mockSearchBarState,
 }));
 
 /* ---------- mock child components ---------- */
-vi.mock("@/components/Search/LeftPickerPanel", () => ({
+vi.mock("@/features/search/components/LeftPickerPanel", () => ({
   LeftPickerPanel: ({
     open,
     onClose,
@@ -135,15 +135,11 @@ vi.mock("@/components/Search/LeftPickerPanel", () => ({
     ) : null,
 }));
 
-vi.mock("./SearchFilters", () => ({
+vi.mock("@/features/search/components/SearchFilters", () => ({
   SearchFilters: () => <div data-testid="mock-search-filters">SearchFilters Mock</div>,
 }));
 
-vi.mock("@/components/Search/SearchFilters", () => ({
-  SearchFilters: () => <div data-testid="mock-search-filters">SearchFilters Mock</div>,
-}));
-
-vi.mock("./SearchResultsList", () => ({
+vi.mock("@/features/search/components/SearchResultsList", () => ({
   SearchResultsList: ({
     totalResultsCount,
     handleLoadMore,
@@ -160,32 +156,11 @@ vi.mock("./SearchResultsList", () => ({
   ),
 }));
 
-vi.mock("@/components/Search/SearchResultsList", () => ({
-  SearchResultsList: ({
-    totalResultsCount,
-    handleLoadMore,
-  }: {
-    totalResultsCount: number;
-    handleLoadMore: () => void;
-  }) => (
-    <div data-testid="mock-search-results-list">
-      <span>Risultati: {totalResultsCount}</span>
-      <button type="button" onClick={handleLoadMore}>
-        Carica Altri Risultati
-      </button>
-    </div>
-  ),
-}));
-
-vi.mock("@/components/AccessDenied", () => ({
+vi.mock("@/shared/components/AccessDenied", () => ({
   AccessDenied: () => <div data-testid="mock-access-denied">Accesso Negato</div>,
 }));
 
-vi.mock("@/components/Typewriter", () => ({
-  Typewriter: ({ text }: { text: string }) => <div data-testid="mock-typewriter">{text}</div>,
-}));
-
-vi.mock("../Typewriter", () => ({
+vi.mock("@/shared/components/Typewriter", () => ({
   Typewriter: ({ text }: { text: string }) => <div data-testid="mock-typewriter">{text}</div>,
 }));
 
@@ -249,7 +224,7 @@ class MockSpeechRecognition {
 }
 
 /* ---------- component ---------- */
-import { SearchBar } from "@/components/Search/SearchBar";
+import { SearchBar } from "@/features/search/components/SearchBar";
 
 describe("SearchBar Component Suite", () => {
   beforeEach(() => {

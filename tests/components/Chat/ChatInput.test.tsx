@@ -54,7 +54,7 @@ class MockSpeechRecognition {
 }
 
 /* ---------- component ---------- */
-import { ChatInput } from "@/components/Chat/ChatInput"; // <-- adegua il path se necessario
+import { ChatInput } from "@/features/chat/components/ChatInput"; // <-- adegua il path se necessario
 import type { AttachedDocument } from "@/interfaces/interfaces";
 
 describe("ChatInput", () => {

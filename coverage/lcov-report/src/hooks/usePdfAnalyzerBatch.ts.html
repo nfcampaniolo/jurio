@@ -1024,10 +1024,10 @@ import { toast } from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 import type { DocumentoGiurisprudenziale } from "@/interfaces/interfaces";
 import { useAuth } from "@/context/useAuth";
-import { trackEvent } from "@/services/analytics";
-import { withTrace } from "@/services/perf";
+import { trackEvent } from "@/infrastructure/analytics";
+import { withTrace } from "@/infrastructure/perf";
 import { fetchWithSecurity } from "@/config/apiClient";
-import { extractTextFromFile, getFileType, ocrFileWithTesseract, SUPPORTED_FORMATS_MSG } from "@/hooks/extractors";  
+import { extractTextFromFile, getFileType, ocrFileWithTesseract, SUPPORTED_FORMATS_MSG } from "@/shared/services/extractors";  
 &nbsp;
 type TipoDocumento =
   | "sentenza"
@@ -1229,8 +1229,8 @@ export const usePdfAnalyzerAdminBatch = () =&gt; {
     setLoading(true);
     setProgress("Avvio batch…");
 &nbsp;
-    const { loadMaxima } = await import("@/services/document");
-    const { loadSentence } = await import("@/services/storage");
+    const { loadMaxima } = await import("@/shared/services/document");
+    const { loadSentence } = await import("@/shared/services/storage");
 &nbsp;
     const { createWorker, PSM } = await import("tesseract.js");
     const worker = await createWorker("ita");

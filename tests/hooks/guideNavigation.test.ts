@@ -1,5 +1,5 @@
 import { describe, test, expect } from "vitest";
-import { guideNavigation } from "@/hooks/guideConfig"; // <-- adegua il path di import se necessario
+import { guideNavigation } from "@/features/guide/hooks/guideConfig"; // <-- adegua il path di import se necessario
 
 describe("Guide Navigation Config Suite", () => {
   const allHrefs: string[] = [];

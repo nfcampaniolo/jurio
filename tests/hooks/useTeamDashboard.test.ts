@@ -40,7 +40,7 @@ vi.mock("@/context/useAuth", () => ({
   useAuth: () => mockAuthState,
 }));
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: () => mockGetDb(),
 }));
@@ -56,7 +56,7 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { useTeamDashboard } from "@/hooks/useTeamDashboard"; // <-- adegua il path di import se necessario
+import { useTeamDashboard } from "@/features/teams/hooks/useTeamDashboard"; // <-- adegua il path di import se necessario
 
 describe("useTeamDashboard Hook Suite", () => {
   const mockUserInstance = {

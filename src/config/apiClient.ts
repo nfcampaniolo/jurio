@@ -1,4 +1,4 @@
-import { firebaseApp } from '@/services/firebase';
+import { firebaseApp } from '@/infrastructure/firebase';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -18,7 +18,7 @@ async function getAuthToken(): Promise<string> {
 async function getAppCheckToken(): Promise<string> {
   try {
     const { initializeFirebaseAppCheck } =
-      await import('@/services/appCheck');
+      await import('@/infrastructure/appCheck');
 
     const appCheck = initializeFirebaseAppCheck();
 

@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
-import type { UsageDoc } from "@/hooks/usageUtils";
+import type { UsageDoc } from "@/features/profile/hooks/usageUtils";
 
 /* ---------- hoisted mocks ---------- */
 const { mockNavigate, mockAuthState, mockGetDocs } = vi.hoisted(() => ({
@@ -50,7 +50,7 @@ vi.mock("framer-motion", () => {
 });
 
 /* ---------- mock usageUtils ---------- */
-vi.mock("@/hooks/usageUtils", () => ({
+vi.mock("@/features/profile/hooks/usageUtils", () => ({
   __esModule: true,
   formatMonth: (id: string) => {
     if (id === "2026_08") return "Agosto 2026";
@@ -69,7 +69,7 @@ vi.mock("@/hooks/usageUtils", () => ({
 /* ---------- mock firestore & db ---------- */
 const mockGetDb = vi.fn().mockResolvedValue({ type: "firestore-db" });
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: () => mockGetDb(),
 }));
@@ -115,7 +115,7 @@ const sampleUsageData: Array<{ id: string } & Partial<UsageDoc>> = [
 ];
 
 /* ---------- component under test ---------- */
-import UserUsage from "@/pages/UserUsage";
+import UserUsage from "@/features/profile/UserUsage";
 
 describe("UserUsage Page Suite", () => {
   beforeEach(() => {

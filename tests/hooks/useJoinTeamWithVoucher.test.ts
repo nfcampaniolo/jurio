@@ -34,7 +34,7 @@ vi.mock("@/config/env", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { useJoinTeamWithVoucher } from "@/hooks/useJoinTeamWithVoucher"; // <-- adegua il path di import se necessario
+import { useJoinTeamWithVoucher } from "@/features/teams/hooks/useJoinTeamWithVoucher"; // <-- adegua il path di import se necessario
 
 describe("useJoinTeamWithVoucher Hook Suite", () => {
   const createMockFormEvent = () =>

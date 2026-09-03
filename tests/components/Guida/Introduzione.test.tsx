@@ -21,7 +21,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import Introduzione from "@/components/Guida/Introduzione"; // <-- adegua il path se necessario
+import Introduzione from "@/features/guide/components/Introduzione"; // <-- adegua il path se necessario
 
 describe("Guida - Introduzione Component Suite", () => {
   beforeEach(() => {

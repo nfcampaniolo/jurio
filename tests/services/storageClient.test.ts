@@ -6,7 +6,7 @@ const { mockGetStorage } = vi.hoisted(() => ({
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/firebase", () => ({
+vi.mock("@/infrastructure/firebase", () => ({
   firebaseApp: "mock_firebase_app",
 }));
 
@@ -15,7 +15,7 @@ vi.mock("firebase/storage", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { getStorageClient } from "@/services/storageClient";
+import { getStorageClient } from "@/infrastructure/storageClient";
 
 describe("StorageClient Service Suite", () => {
   beforeEach(() => {

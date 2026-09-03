@@ -514,22 +514,22 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState } from "react";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
-import { ConfirmModal } from "@/components/ConfirmModal";
-import { HeaderProfile } from "@/components/Profile/HeaderProfile";
+import { ConfirmModal } from "@/shared/components/ConfirmModal";
+import { HeaderProfile } from "@/features/profile/components/HeaderProfile";
 import type { Action } from "@/interfaces/interfaces";
 import { FiHome, FiSearch, FiDatabase, FiTag, FiUploadCloud, FiEdit3 } from "react-icons/fi";
-import { navigateItem } from "@/hooks/navigation";
+import { navigateItem } from "@/routes/navigation";
 &nbsp;
 // --- COMPONENTI ADMIN ---
-import { UploadMaxima } from "@/components/Admin/UploadMaxima";
-import { AdminMaintenanceSection } from "@/components/Admin/AdminMaintenanceSection";
-import { AdminTaxonomySection } from "@/components/Admin/AdminTaxonomySection";
-import FirebaseManual from "@/components/Admin/FirebaseManual";
-import { AdminFooterLinks } from "@/components/Admin/AdminFooterLinks";
+import { UploadMaxima } from "@/features/admin/components//UploadMaxima";
+import { AdminMaintenanceSection } from "@/features/admin/components//AdminMaintenanceSection";
+import { AdminTaxonomySection } from "@/features/admin/components//AdminTaxonomySection";
+import FirebaseManual from "@/features/admin/components//FirebaseManual";
+import { AdminFooterLinks } from "@/features/admin/components//AdminFooterLinks";
 &nbsp;
 import { 
   executeAdminMaintenanceTask, 

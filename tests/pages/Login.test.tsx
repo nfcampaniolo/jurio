@@ -32,7 +32,7 @@ vi.mock("framer-motion", () => ({
 }));
 
 /* ---------- mock subcomponents ---------- */
-vi.mock("@/components/AuthForm", () => ({
+vi.mock("@/features/auth/components/AuthForm", () => ({
   __esModule: true,
   AuthForm: ({ initialMode }: { initialMode: string }) => (
     <div data-testid="auth-form" data-mode={initialMode}>
@@ -41,7 +41,7 @@ vi.mock("@/components/AuthForm", () => ({
   ),
 }));
 
-vi.mock("@/components/GoogleButton", () => ({
+vi.mock("@/features/auth/components/GoogleButton", () => ({
   __esModule: true,
   GoogleButton: () => (
     <button type="button" data-testid="google-button">
@@ -51,7 +51,7 @@ vi.mock("@/components/GoogleButton", () => ({
 }));
 
 /* ---------- component under test ---------- */
-import { Login } from "@/pages/Login"; // <-- adegua il path se necessario
+import { Login } from "@/features/auth/Login"; // <-- adegua il path se necessario
 
 describe("Login Page Suite", () => {
   beforeEach(() => {

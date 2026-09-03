@@ -22,7 +22,7 @@ const { mockIsSentenzaSaved, mockSaveSentenza, mockRemoveSentenza } = vi.hoisted
   mockRemoveSentenza: vi.fn<(userId: string, sentenzaId: string) => Promise<void>>(),
 }));
 
-vi.mock("@/services/saveSentences", () => ({
+vi.mock("@/features/document/hooks/saveSentences", () => ({
   isSentenzaSaved: mockIsSentenzaSaved,
   saveSentenza: mockSaveSentenza,
   removeSentenza: mockRemoveSentenza,
@@ -39,7 +39,7 @@ vi.mock("react-icons/fa", () => {
 });
 
 /* ---------- component ---------- */
-import { SaveSentenzaButton } from "@/components/Document/SaveSentenzaButton";
+import { SaveSentenzaButton } from "@/features/document/components/SaveSentenzaButton";
 
 describe("SaveSentenzaButton Component Suite", () => {
   beforeEach(() => {

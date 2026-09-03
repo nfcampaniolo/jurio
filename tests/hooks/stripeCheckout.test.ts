@@ -15,7 +15,7 @@ const {
 }));
 
 /* ---------- mock dependencies ---------- */
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   __esModule: true,
   trackEvent: (event: string, payload: Record<string, unknown>) =>
     mockTrackEvent(event, payload),
@@ -37,7 +37,7 @@ import {
   fetchPlanPrice,
   createCheckoutSessionServer,
   type PlanId,
-} from "@/hooks/stripeCheckout"; // <-- adegua il path se necessario
+} from "@/features/plans/hooks/stripeCheckout"; // <-- adegua il path se necessario
 
 describe("Stripe Checkout Service Suite", () => {
   beforeEach(() => {

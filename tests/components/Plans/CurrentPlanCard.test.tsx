@@ -1,8 +1,8 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
-import type { PlanUI } from "@/services/plans";
-import type { StatusNormalized } from "@/hooks/planlDomain";
+import type { PlanUI } from "@/features/plans/hooks/plans";
+import type { StatusNormalized } from "@/features/plans/hooks/planlDomain";
 import type { Variants } from "framer-motion";
 
 /* ---------- mock react-icons/fa ---------- */
@@ -30,7 +30,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import { CurrentPlanCard } from "@/components/Plans/CurrentPlanCard";
+import { CurrentPlanCard } from "@/features/plans/components/CurrentPlanCard";
 
 describe("CurrentPlanCard Component Suite", () => {
   const mockOpenPaymentForPlan = vi.fn<(planName: string) => void>();

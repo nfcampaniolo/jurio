@@ -905,9 +905,9 @@ import { FirebaseError } from "firebase/app";
 import type { QueryDocumentSnapshot, DocumentData } from "firebase/firestore";
 &nbsp;
 import type { DocumentoGiurisprudenziale } from "@/interfaces/interfaces";
-import type { SentenceMatch, WebFallbackData } from "@/services/vectorSearch";
-import { trackEvent } from "@/services/analytics";
-import { withTrace } from "@/services/perf";
+import type { SentenceMatch, WebFallbackData } from "@/features/search/hooks/vectorSearch";
+import { trackEvent } from "@/infrastructure/analytics";
+import { withTrace } from "@/infrastructure/perf";
 &nbsp;
 import {
   loadUserSearchTerms,
@@ -919,7 +919,7 @@ import {
   isUnavailableError,
   isNetworkError,
   fetchCortePaginata
-} from "@/services/search";
+} from "@/features/search/hooks/search";
 &nbsp;
 import { mapGradoToDbFields, useSearchFilters } from "./useSearchFilters";
 &nbsp;
@@ -1024,7 +1024,7 @@ export function useSearchEngine(
   const [deny, setDeny] = useState(false);
 &nbsp;
   const executeVectorSearch = async (query: string): Promise&lt;VectorSearchResult&gt; =&gt; {
-    const { vectorSearch } = await import("@/services/vectorSearch");
+    const { vectorSearch } = await import("@/features/search/hooks/vectorSearch");
     const activeFilters = filters.buildVectorFilters();
     
     const vectorOut = await withTrace(

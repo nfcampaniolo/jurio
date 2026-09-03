@@ -394,10 +394,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useEffect, useState } from "react";
-import { PromptList } from "@/components/Profile/PromptList";
-import { PromptCreator } from "@/components/Profile/PromptCreator";
-import { ConfirmModal } from "@/components/ConfirmModal";
-import { usePromptDashboard } from "@/hooks/usePromptGenerator";
+import { PromptList } from "@/features/profile/components/PromptList";
+import { PromptCreator } from "@/features/profile/components/PromptCreator";
+import { ConfirmModal } from "@/shared/components/ConfirmModal";
+import { usePromptDashboard } from "@/features/prompt/hooks/usePromptGenerator";
 import { motion, AnimatePresence, useReducedMotion, type TargetAndTransition, type Transition } from "framer-motion";
 import { FaShieldAlt, FaArrowLeft, FaInfoCircle, FaFolderOpen, FaChevronRight } from "react-icons/fa";
 &nbsp;

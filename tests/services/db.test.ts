@@ -29,7 +29,7 @@ vi.mock("./firebase", () => ({
   firebaseApp: mockFirebaseApp,
 }));
 
-vi.mock("@/services/firebase", () => ({
+vi.mock("@/infrastructure/firebase", () => ({
   __esModule: true,
   firebaseApp: mockFirebaseApp,
 }));
@@ -52,7 +52,7 @@ describe("Database Service - getDb Suite", () => {
   });
 
   test("inizializza Firestore configurando cache persistente multi-tab e ritorna l'istanza corretta", async () => {
-    const { getDb } = await import("@/services/db");
+    const { getDb } = await import("@/infrastructure/db");
 
     const db = await getDb();
 
@@ -77,7 +77,7 @@ describe("Database Service - getDb Suite", () => {
   });
 
   test("mantiene la stessa Promise e non re-inizializza Firestore nelle chiamate successive (singleton)", async () => {
-    const { getDb } = await import("@/services/db");
+    const { getDb } = await import("@/infrastructure/db");
 
     const promise1 = getDb();
     const promise2 = getDb();
@@ -99,7 +99,7 @@ describe("Database Service - getDb Suite", () => {
       throw new Error("Failed to initialize Firestore cache");
     });
 
-    const { getDb } = await import("@/services/db");
+    const { getDb } = await import("@/infrastructure/db");
 
     await expect(getDb()).rejects.toThrow("Failed to initialize Firestore cache");
   });

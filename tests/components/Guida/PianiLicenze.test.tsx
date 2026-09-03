@@ -21,7 +21,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import PianiLicenze from "@/components/Guida/PianiLicenze"; // <-- adegua il path se necessario
+import PianiLicenze from "@/features/guide/components/PianiLicenze"; // <-- adegua il path se necessario
 
 describe("Guida - PianiLicenze Component Suite", () => {
   beforeEach(() => {

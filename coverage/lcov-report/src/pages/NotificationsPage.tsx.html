@@ -808,7 +808,7 @@ export default function NotificationsPage() {
     (async () =&gt; {
       try {
         const { collection, doc, query, where, orderBy, limit, onSnapshot } = await import("firebase/firestore");
-        const { getDb } = await import("@/services/db");
+        const { getDb } = await import("@/infrastructure/db");
         const db = await getDb();
 &nbsp;
         <span class="missing-if-branch" title="if path not taken" >I</span>if (isCancelled) <span class="cstat-no" title="statement not covered" >return;</span>
@@ -894,7 +894,7 @@ export default function NotificationsPage() {
     <span class="missing-if-branch" title="else path not taken" >E</span>if (!notif.isRead &amp;&amp; user) {
       try {
         const { doc, updateDoc, arrayUnion } = await import("firebase/firestore");
-        const { getDb } = await import("@/services/db");
+        const { getDb } = await import("@/infrastructure/db");
         const db = await getDb();
         
         if (notif.isGlobal) {
@@ -929,7 +929,7 @@ export default function NotificationsPage() {
 &nbsp;
     try {
       const { writeBatch, doc, updateDoc, arrayUnion } = await import("firebase/firestore");
-      const { getDb } = await import("@/services/db");
+      const { getDb } = await import("@/infrastructure/db");
       const db = await getDb();
       
       // 1. Aggiorniamo quelle personali tramite Batch

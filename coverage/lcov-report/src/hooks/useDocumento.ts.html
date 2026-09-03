@@ -330,10 +330,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">25x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useEffect, useMemo, useRef, useState } from "react";
-import { getDocumentMassima } from "@/services/document";
-import { getDocumentStorage } from "@/services/storage";
+import { getDocumentMassima } from "@/shared/services/document";
+import { getDocumentStorage } from "@/shared/services/storage";
 import type { Sentenza, Ordinanza, Decreto, DocumentoGiurisprudenzaGenerico } from "@/interfaces/interfaces";
-import { trackEvent } from "@/services/analytics";
+import { trackEvent } from "@/infrastructure/analytics";
 &nbsp;
 type DocumentoAny =
   | Sentenza

@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import React from "react";
-import type { PaymentRecord } from "@/services/paymentService";
+import type { PaymentRecord } from "@/features/plans/hooks/paymentService";
 
 /* ---------- hoisted mocks ---------- */
 const { mockFetchUserPayments } = vi.hoisted(() => ({
@@ -9,7 +9,7 @@ const { mockFetchUserPayments } = vi.hoisted(() => ({
 }));
 
 /* ---------- mock paymentService ---------- */
-vi.mock("@/services/paymentService", () => ({
+vi.mock("@/features/plans/hooks/paymentService", () => ({
   fetchUserPayments: (uid: string) => mockFetchUserPayments(uid),
 }));
 
@@ -45,7 +45,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import { PaymentHistory } from "@/components/Plans/PaymentHistory";
+import { PaymentHistory } from "@/features/plans/components/PaymentHistory";
 
 describe("PaymentHistory Component Suite", () => {
   const mockPaymentsList: PaymentRecord[] = [

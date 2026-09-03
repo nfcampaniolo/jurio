@@ -11,7 +11,7 @@ interface MockStripeCheckoutProps {
 }
 
 /* ---------- mock StripeCheckout ---------- */
-vi.mock("@/components/Plans/StripeCheckout", () => ({
+vi.mock("@/features/plans/components/StripeCheckout", () => ({
   default: ({ planId, activeCoupon, onSuccess, onError }: MockStripeCheckoutProps) => (
     <div data-testid="mock-stripe-checkout" data-plan-id={planId}>
       <span>Piano Selezionato: {planId}</span>
@@ -46,7 +46,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import PaymentModal from "@/components/Plans/PaymentModal"; // <-- adegua il path se necessario
+import PaymentModal from "@/features/plans/components/PaymentModal"; // <-- adegua il path se necessario
 
 describe("PaymentModal Component Suite", () => {
   const mockOnClose = vi.fn<() => void>();

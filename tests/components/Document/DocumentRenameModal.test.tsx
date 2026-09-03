@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 
-import { DocumentRenameModal } from "@/components/Document/YourDocumentRenameModal";
+import { DocumentRenameModal } from "@/shared/components/YourDocumentRenameModal";
 import type { DocumentoGiurisprudenziale } from "@/interfaces/interfaces";
 
 describe("DocumentRenameModal Component Suite", () => {

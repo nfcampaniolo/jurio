@@ -40,7 +40,7 @@ vi.mock("@/config/env", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { useFeedback } from "@/hooks/useFeedback"; // <-- adegua il path di import se necessario
+import { useFeedback } from "@/shared/hooks/useFeedback"; // <-- adegua il path di import se necessario
 
 describe("useFeedback Hook Suite", () => {
   const defaultEndpoint = "https://api.jurio.it/feedback";

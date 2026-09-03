@@ -32,7 +32,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import { HeaderProfile } from "@/components/Profile/HeaderProfile"; // <-- adegua il path se necessario
+import { HeaderProfile } from "@/features/profile/components/HeaderProfile"; // <-- adegua il path se necessario
 
 describe("HeaderProfile Component Suite", () => {
   const mockEditClick = vi.fn<() => void>();

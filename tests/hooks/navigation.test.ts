@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import type { NavigateFunction } from "react-router-dom";
-import { navigateItem, type NavItem } from "@/hooks/navigation"; // <-- adegua il path se necessario
+import { navigateItem, type NavItem } from "@/routes/navigation"; // <-- adegua il path se necessario
 
 describe("navigateItem Suite", () => {
   const mockNavigate = vi.fn() as unknown as NavigateFunction;

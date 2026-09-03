@@ -15,7 +15,7 @@ vi.mock("lucide-react", () => {
 });
 
 /* ---------- component ---------- */
-import { DropZoneUploader } from "@/components/Document/DropZoneUploader"; // <-- adegua il path se necessario
+import { DropZoneUploader } from "@/features/chat/components/DropZoneUploader"; // <-- adegua il path se necessario
 
 describe("DropZoneUploader Component Suite", () => {
   const mockOnDrag = vi.fn<(e: React.DragEvent) => void>();

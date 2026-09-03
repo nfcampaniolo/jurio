@@ -1,7 +1,7 @@
 import React from "react";
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import type { SentenceNode } from "@/components/Document/CitationGraph";
+import type { SentenceNode } from "@/features/document/components/CitationGraph";
 
 /* ---------- hoisted mocks ---------- */
 const { mockCercaPrecedente } = vi.hoisted(() => ({
@@ -9,7 +9,7 @@ const { mockCercaPrecedente } = vi.hoisted(() => ({
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/hooks/cercaPrecedenti", () => ({
+vi.mock("@/features/document/hooks/cercaPrecedenti", () => ({
   __esModule: true,
   cercaPrecedente: mockCercaPrecedente,
 }));
@@ -25,7 +25,7 @@ vi.mock("framer-motion", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import CitationTree from "@/components/Document/CitationGraph";
+import CitationTree from "@/features/document/components/CitationGraph";
 
 describe("CitationTree & CitationBranch Component Suite", () => {
   beforeEach(() => {

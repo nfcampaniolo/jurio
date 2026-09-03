@@ -62,7 +62,7 @@ vi.mock("framer-motion", async () => ({
 }));
 
 /* ---------- mock DocumentSelectorPanel ---------- */
-vi.mock("@/components/Chat/DocumentSelectorPanel", () => ({
+vi.mock("@/features/chat/components/DocumentSelectorPanel", () => ({
   DocumentSelectorPanel: (props: {
     isOpen: boolean;
     onClose: () => void;
@@ -88,12 +88,12 @@ vi.mock("@/components/Chat/DocumentSelectorPanel", () => ({
 }));
 
 /* ---------- mock useLegalChat ---------- */
-vi.mock("@/hooks/useLegalChat", () => ({
+vi.mock("@/features/chat/hooks/useLegalChat", () => ({
   useLegalChat: () => mockUseLegalChat(),
 }));
 
 /* ---------- component ---------- */
-import { FascicoloSetupPage } from "@/components/Chat/FascicoloSetupPage"; // <-- adegua il path se necessario
+import { FascicoloSetupPage } from "@/features/chat/components/FascicoloSetupPage"; // <-- adegua il path se necessario
 import type { AttachedDocument } from "@/interfaces/interfaces";
 
 describe("FascicoloSetupPage", () => {

@@ -18,7 +18,7 @@ import {
   getGoogleConfig,
   loadScript,
   loadGoogleLibraries,
-} from "@/hooks/utilsGoogleDrive"; // <-- adegua il path di import se necessario
+} from "@/features/profile/hooks/utilsGoogleDrive"; // <-- adegua il path di import se necessario
 
 describe("Google Drive Config & Loader Suite", () => {
   const originalGapi = window.gapi;

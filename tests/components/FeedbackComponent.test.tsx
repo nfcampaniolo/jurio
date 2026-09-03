@@ -51,13 +51,13 @@ let mockFeedbackState = {
   closeModal: mockCloseModal,
 };
 
-vi.mock("@/hooks/useFeedback", () => ({
+vi.mock("@/shared/hooks/useFeedback", () => ({
   __esModule: true,
   useFeedback: () => mockFeedbackState,
 }));
 
 /* ---------- component ---------- */
-import { FeedbackComponent } from "@/components/FeedbackComponent"; // <-- adegua il path se necessario
+import { FeedbackComponent } from "@/shared/components/FeedbackComponent"; // <-- adegua il path se necessario
 
 describe("FeedbackComponent Suite", () => {
   beforeEach(() => {

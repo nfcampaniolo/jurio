@@ -49,15 +49,6 @@ const CFG = {
   ],
 } as const;
 
-const TOOL_STATUS_MAP: Record<string, string> = {
-  ricercaPuntuale: "Recupero provvedimento...",
-  ricercaMirataSingoloDocumento: "Analisi approfondita del documento...",
-  ricercaArchivio: "Ricerca nel tuo archivio/fascicolo...",
-  ricercaWebLegale: "Ricerca sul web...",
-  supportJurio: "Consultazione manuale Jurio...",
-  ricercaSemantica: "Scansione banca dati...",
-};
-
 // ─────────────────────────────────────────────
 // SCHEMAS
 // ─────────────────────────────────────────────
@@ -188,23 +179,20 @@ export const ricercaDatabaseInterno = ai.defineTool(
     }),
     outputSchema: z.any(),
   },
-  // INIETTIAMO IL CONTESTO QUI
   async (input, { context }) => {
     try {
       const { tipo_ricerca, query, numero_sentenza } = input;
-      const safeLimit = CFG.SEMANTIC_SAFE_LIMIT;
+
+      const safeLimit = 3; 
       
-      // LA NOSTRA VARIABILE BLINDATA (Mai undefined)
       const finalQuery = (query || numero_sentenza || "").trim();
       
       if (!finalQuery) {
         return [{ messaggio: "ERRORE DI SISTEMA: Devi fornire obbligatoriamente un parametro di ricerca (query o numero_sentenza)." }];
       }
       
-      // RECUPERO FILTRI UI DAL CONTESTO
       const uiFilters = context?.uiFilters || [];
 
-      // FUNZIONE HELPER PER APPLICARE I FILTRI
       const applyFilters = (baseQuery: FirebaseFirestore.Query) => {
         let q = baseQuery;
         uiFilters.forEach((f: any) => {
@@ -215,57 +203,44 @@ export const ricercaDatabaseInterno = ai.defineTool(
         return q;
       };
 
-      // 1. BRANCH: Ricerca Puntuale (es. 123/2024)
+      // 1. BRANCH: Ricerca Puntuale
       if (tipo_ricerca === "puntuale") {
-        const identificativo = finalQuery; // Usiamo finalQuery per coprire l'errore del LLM!
-        
-        // 1. Pulizia tramite Regex per estrarre SOLO il pattern num/anno
+        const identificativo = finalQuery; 
         const match = identificativo.match(/\d+\/\d+/);
-        // Se c'è il match usa quello (es. "9741/2023"), altrimenti usa la stringa intera (utile per ECLI o URN)
         const sanitizedNumero = match ? match[0] : identificativo;
 
         const sentencesRef = db.collection("sentences");
         
-        // 2. Query parallele
         const [snapNumero, snapEcli, snapUrn] = await Promise.all([
-          sentencesRef.where("numero_sentenza", "==", sanitizedNumero).limit(5).get(),
-          sentencesRef.where("ecli", "==", identificativo).limit(5).get(),
-          sentencesRef.where("urn", "==", identificativo).limit(5).get()
+          sentencesRef.where("numero_sentenza", "==", sanitizedNumero).limit(3).get(), // CRITICO: Ridotto a 3
+          sentencesRef.where("ecli", "==", identificativo).limit(3).get(),
+          sentencesRef.where("urn", "==", identificativo).limit(3).get()
         ]);
 
         const uniqueDocs = new Map();
-        
-        // 3. Unione e deduplicazione
         [...snapNumero.docs, ...snapEcli.docs, ...snapUrn.docs].forEach((doc) => {
           uniqueDocs.set(doc.id, doc);
         });
 
-        // 4. Blocco uscita se non trova nulla (per istruire il LLM)
         if (uniqueDocs.size === 0) {
           return [{ messaggio: `Nessuna sentenza trovata nel database interno per l'identificativo: ${identificativo}.` }];
         }
 
         return Array.from(uniqueDocs.values()).map(doc => {
           const data = doc.data();
-          return { 
-            id: doc.id, 
-            ...data, 
-            organo_giudicante: data.organo_giudicante, 
-            _type: "giurisprudenza_puntuale" 
-          };
+          return { id: doc.id, ...data, organo_giudicante: data.organo_giudicante, _type: "giurisprudenza_puntuale" };
         });
       }
 
-      // 2. BRANCH: Ricerca Normativa (es. Art. 2043 cc)
+      // 2. BRANCH: Ricerca Normativa
       if (tipo_ricerca === "normativa") {
-        const trimmed = finalQuery; // Usiamo finalQuery per evitare il crash
-        const keys = makeRiferimentiNormativiKeys(trimmed); 
+        const keys = makeRiferimentiNormativiKeys(finalQuery); 
         
         if (keys.length === 0) {
            return [{ messaggio: `Non è stato possibile estrarre un riferimento normativo valido da: "${finalQuery}". Riprova formattando meglio (es. "Art. 2043 cc").` }];
         }
 
-        let baseQuery = db.collection("sentences").where("riferimenti_normativi_key", "array-contains-any", keys.slice(0, 10));
+        let baseQuery = db.collection("sentences").where("riferimenti_normativi_key", "array-contains-any", keys.slice(0, 5));
         baseQuery = applyFilters(baseQuery as FirebaseFirestore.Query);
         
         const snap = await baseQuery.limit(safeLimit).get();
@@ -280,14 +255,12 @@ export const ricercaDatabaseInterno = ai.defineTool(
         });
       }
 
-      // 3. BRANCH: Ricerca Semantica / Sottocategoria (Default)
-      const queryVector = await createEmbedding(finalQuery); // Usiamo finalQuery per evitare il crash
-      
-      // APPLICHIAMO I FILTRI ALLA BASE QUERY PRIMA DELLA RICERCA VETTORIALE
+      // 3. BRANCH: Ricerca Semantica
+      const queryVector = await createEmbedding(finalQuery); 
       let baseQuery = applyFilters(db.collection("sentences") as FirebaseFirestore.Query);
 
       const sSnap = await (baseQuery as any)
-        .findNearest("embedding", FieldValue.vector(queryVector), { limit: CFG.VECTOR_FETCH_LIMIT, distanceMeasure: "COSINE" })
+        .findNearest("embedding", FieldValue.vector(queryVector), { limit: safeLimit, distanceMeasure: "COSINE" })
         .get();
 
       const results = sSnap.docs.map((doc: any) => {
@@ -315,10 +288,10 @@ export const ricercaDatabaseInterno = ai.defineTool(
 export const ricercaFascicoloUtente = ai.defineTool(
   {
     name: 'ricercaFascicoloUtente',
-    description: "Cerca nei documenti, PDF e file caricati privatamente dall'utente o condivisi con lui. Usalo quando l'utente fa domande sui SUOI documenti, sul fascicolo o sui file condivisi.",
+    description: "Cerca nei documenti o PDF caricati dall'utente. TASSATIVO: usalo sempre quando l'utente fa domande sui SUOI documenti o ha appena allegato un file.",
     inputSchema: z.object({
       query: z.string().describe("Il testo o concetto da cercare nei documenti dell'utente."),
-      documentId_specifico: z.string().optional().describe("Inserisci l'ID del documento SOLO SE l'utente chiede di cercare in un file specifico, altrimenti lascia vuoto."),
+      documentId_specifico: z.string().optional().describe("Lascia vuoto, ci pensa il sistema."),
     }),
     outputSchema: z.any(),
   },
@@ -326,79 +299,58 @@ export const ricercaFascicoloUtente = ai.defineTool(
     try {
       const userId = context?.userId;
       const fascicoloId = context?.fascicoloId;
+      const attachedDocs: string[] = context?.docs || []; // Recuperiamo i documenti allegati!
 
       if (!userId) return [{ error: "Errore di autenticazione interno." }];
 
       const sanitizedQuery = input.query.trim();
       const queryVector = await createEmbedding(sanitizedQuery);
+      const safeLimit = context?.dbLimit || 5;
       
-      // ==========================================
-      // QUERY 1: Documenti di proprietà dell'utente
-      // ==========================================
-      let qOwner: FirebaseFirestore.Query = db.collection("document_chunks")
-        .where("user", "==", userId);
-
-      if (input.documentId_specifico) {
+      let qOwner: FirebaseFirestore.Query = db.collection("document_chunks").where("user", "==", userId);
+      
+      // FIX: Precedenza ASSOLUTA ai documenti inviati nel payload
+      if (attachedDocs.length > 0) {
+        qOwner = qOwner.where("parentId", "in", attachedDocs.slice(0, 10));
+      } else if (input.documentId_specifico) {
         qOwner = qOwner.where("parentId", "==", input.documentId_specifico);
       } else if (fascicoloId) {
         qOwner = qOwner.where("fascicoloIds", "array-contains", fascicoloId);
       }
 
       const promiseOwner = (qOwner as any)
-        .findNearest("embedding", FieldValue.vector(queryVector), { limit: CFG.SEMANTIC_SAFE_LIMIT, distanceMeasure: "COSINE" })
+        .findNearest("embedding", FieldValue.vector(queryVector), { limit: safeLimit, distanceMeasure: "COSINE" })
         .get();
 
-      // ==========================================
-      // QUERY 2: Documenti condivisi (visibleTo)
-      // ==========================================
-      let qShared: FirebaseFirestore.Query = db.collection("document_chunks")
-        .where("visibleTo", "array-contains", userId);
-
-      if (input.documentId_specifico) {
+      let qShared: FirebaseFirestore.Query = db.collection("document_chunks").where("visibleTo", "array-contains", userId);
+      
+      if (attachedDocs.length > 0) {
+        qShared = qShared.where("parentId", "in", attachedDocs.slice(0, 10));
+      } else if (input.documentId_specifico) {
         qShared = qShared.where("parentId", "==", input.documentId_specifico);
       }
 
       const promiseShared = (qShared as any)
-        .findNearest("embedding", FieldValue.vector(queryVector), { limit: 10, distanceMeasure: "COSINE" })
+        .findNearest("embedding", FieldValue.vector(queryVector), { limit: safeLimit, distanceMeasure: "COSINE" })
         .get();
 
-      // Eseguiamo entrambe le ricerche vettoriali in parallelo
       const [snapOwner, snapShared] = await Promise.all([promiseOwner, promiseShared]);
-
-      // ==========================================
-      // UNIONE E FILTRAGGIO IN MEMORIA (DOPPIONI)
-      // ==========================================
       const uniqueDocsMap = new Map<string, FirebaseFirestore.DocumentData>();
 
-      // 1. Aggiungiamo i chunk dell'owner
-      snapOwner.docs.forEach((doc: any) => {
-        uniqueDocsMap.set(doc.id, doc.data());
-      });
-
-      // 2. Aggiungiamo i chunk condivisi
+      snapOwner.docs.forEach((doc: any) => uniqueDocsMap.set(doc.id, doc.data()));
       snapShared.docs.forEach((doc: any) => {
         const data = doc.data();
-        
-        // Se siamo in un fascicolo specifico, filtriamo in memoria per assicurarci che il chunk vi appartenga
-        if (fascicoloId && (!data.fascicoloIds || !data.fascicoloIds.includes(fascicoloId))) {
-          return; 
-        }
-        
-        // Evita i doppioni basandosi sull'ID del documento chunk
-        if (!uniqueDocsMap.has(doc.id)) {
-          uniqueDocsMap.set(doc.id, data);
-        }
+        // Se ci sono allegati espliciti, skippiamo il controllo sul fascicolo condiviso
+        if (fascicoloId && attachedDocs.length === 0 && (!data.fascicoloIds || !data.fascicoloIds.includes(fascicoloId))) return; 
+        if (!uniqueDocsMap.has(doc.id)) uniqueDocsMap.set(doc.id, data);
       });
 
       const combinedDocs = Array.from(uniqueDocsMap.values());
-
-      if (combinedDocs.length === 0) {
-        return [{ messaggio: "Nessun paragrafo rilevante trovato nei documenti dell'utente o in quelli condivisi." }];
-      }
+      if (combinedDocs.length === 0) return [{ messaggio: "Nessun paragrafo rilevante trovato nei documenti. Attendi qualche istante se il file è stato appena caricato." }];
 
       return combinedDocs
         .sort((a, b) => ((a.index as number) || 0) - ((b.index as number) || 0))
-        .slice(0, 15)
+        .slice(0, safeLimit)
         .map(c => ({
           documento_id: c.parentId,
           nome_file: c.nome_file || c.titolo || "Documento utente",
@@ -413,7 +365,6 @@ export const ricercaFascicoloUtente = ai.defineTool(
     }
   }
 );
-
 export const webSearchTool = ai.defineTool(
   {
     name: 'ricercaWebLegale',
@@ -439,9 +390,9 @@ export const webSearchTool = ai.defineTool(
         body: JSON.stringify({
           api_key: apiKey,
           query: input.query,
-          search_depth: "advanced",
+          search_depth: "basic",
           include_domains: finalDomains,
-          max_results: 3,
+          max_results: 2,
           include_answer: false,
           include_raw_content: false,
         }),
@@ -476,11 +427,10 @@ export const analizzaDistinguishFattispecie = ai.defineTool(
   async (input, { context }) => {
     try {
       const { query } = input;
-      const safeLimit = 5; // Ne bastano meno, ma super pertinenti sui fatti
+      const safeLimit = 3;
       
       const uiFilters = context?.uiFilters || [];
 
-      // HELPER FILTRI (Stessa logica della ricerca interna)
       const applyFilters = (baseQuery: FirebaseFirestore.Query) => {
         let q = baseQuery;
         uiFilters.forEach((f: any) => {
@@ -491,25 +441,15 @@ export const analizzaDistinguishFattispecie = ai.defineTool(
         return q;
       };
 
-      // 1. Creiamo il vettore direttamente sui FATTI dell'utente
-      // Dato che il DB contiene "Fattispecie + Massima", il vector match cercherà
-      // le sentenze che hanno la fattispecie più identica a quella descritta.
       const queryVector = await createEmbedding(query.trim());
-      
       let baseQuery = applyFilters(db.collection("sentences") as FirebaseFirestore.Query);
 
       const sSnap = await (baseQuery as any)
-        .findNearest("embedding", FieldValue.vector(queryVector), { 
-          limit: safeLimit, 
-          distanceMeasure: "COSINE" 
-        })
+        .findNearest("embedding", FieldValue.vector(queryVector), { limit: safeLimit, distanceMeasure: "COSINE" })
         .get();
 
-      if (sSnap.empty) {
-        return [{ messaggio: "Nessun precedente fattualmente simile trovato nel database per effettuare il distinguish." }];
-      }
+      if (sSnap.empty) return [{ messaggio: "Nessun precedente fattualmente simile trovato nel database per effettuare il distinguish." }];
 
-      // 2. Formattazione mirata per il Ragionamento del LLM
       const results = sSnap.docs.map((doc: any) => {
         const data = doc.data();
         let rawDistance = doc.distance ?? getSafeDistance(queryVector, data.embedding);
@@ -602,16 +542,18 @@ export const ricercaManualeTool = ai.defineTool(
   }
 );
 
-
 // ─────────────────────────────────────────────
-// HELPER: Build system prompt
+// FLOW PRINCIPALE
 // ─────────────────────────────────────────────
 
-function buildLegalAgentSystemPrompt({
+// ============================================================================
+// 1. MODULI DI SUPPORTO ALL'ORCHESTRATORE
+// ============================================================================
+
+export function buildLegalAgentSystemPrompt({
   uiFiltersString,
   docs,
   alreadySeenIds,
-  userId,
   fascicoloId,
   metadatiFascicolo
 }: {
@@ -622,64 +564,249 @@ function buildLegalAgentSystemPrompt({
   fascicoloId?: string | null;
   metadatiFascicolo?: Record<string, string>;
 }): string {
-let fascicoloBlock = "";
-if (fascicoloId) {
-  const metadatiString = metadatiFascicolo && Object.keys(metadatiFascicolo).length > 0 
-    ? Object.entries(metadatiFascicolo).map(([k, v]) => `- ${k}: ${v}`).join('\n')
-    : "Nessun metadato ancora estratto.";
+  const staticPrompt = `# IDENTITÀ E SCOPO
+Sei Jurio, assistente legale AI specializzato esclusivamente nel diritto italiano.
+Rispondi in modo tecnico e oggettivo, non integrare conoscenze esterne non presenti nei tool.
 
-  fascicoloBlock = `
----
-# CONTESTO FASCICOLO (ID: ${fascicoloId})
+# REGOLE VINCOLANTI (CRITICO)
+- DIVIETO ASSOLUTO: Non inserire MAI nella risposta all'utente "ID tecnici", UUID o stringhe alfanumeriche di sistema.
+- Usa SOLO riferimenti discorsivi e testuali (es. "Il documento caricato", "La sentenza n. 123/2024").
+- Inventare sentenze o fatti giuridici è severamente vietato.
+
+# GESTIONE FILTRI E RICERCHE
+I filtri richiesti dall'utente (es. Data, Organo, Materia) vengono APPLICATI AUTOMATICAMENTE DAL SISTEMA a livello di database.
+- NON dire MAI all'utente "non posso applicare il filtro", "i filtri sono attivi" o frasi simili.
+- Esegui le ricerche tramite i tool dando per scontato che i risultati ricevuti rispettino già i filtri imposti.
+
+# POLITICA DI UTILIZZO DEI TOOL
+- Usa i tool SOLO se le informazioni presenti nella cronologia o nel 'CONTESTO DINAMICO' non sono sufficienti per rispondere.
+- Se la domanda è un follow-up logico su documenti o sentenze già discussi, RISPONDI DIRETTAMENTE senza invocare tool.
+- Prediligi database interni e riferimenti normativi. Usa 'ricercaWebLegale' solo se esplicitamente richiesto o per news.
+
+# ASSISTENZA APPLICATIVO
+Nel caso di richieste sull'applicativo rimanda alla sezione contatti: https://jurio.it/contatti#bot`;
+
+  let dynamicContext = `\n\n--- \n# CONTESTO DINAMICO CORRENTE\n`;
+  dynamicContext += `- Filtri UI attivi: ${uiFiltersString}\n`;
+  dynamicContext += `- Documenti allegati: ${docs.length > 0 ? docs.join(", ") : "Nessuno"}\n`;
+  dynamicContext += `- Pronunce già utilizzate in chat: ${alreadySeenIds.length > 0 ? alreadySeenIds.join(", ") : "Nessuna"}\n`;
+
+  if (fascicoloId) {
+    const metadatiString = metadatiFascicolo && Object.keys(metadatiFascicolo).length > 0 
+      ? Object.entries(metadatiFascicolo).map(([k, v]) => `- ${k}: ${v}`).join('\n')
+      : "Nessun metadato ancora estratto.";
+
+    dynamicContext += `\n# FASCICOLO (ID: ${fascicoloId})
 Questi sono i dati strutturati (metadati) attuali del caso:
 ${metadatiString}
 
-GESTIONE METADATI:
-Hai a disposizione il tool 'aggiornaMetadatiFascicolo'.
-- Se l'utente chiede di ricordare un dato (es. "segnati che il giudice è Rossi"), usa il tool.
-- Se analizzando i documenti o la chat emergono nomi chiave, valori economici, date o estremi che NON sono presenti nei metadati, usa il tool per salvarli in autonomia.`;
+(Nota operativa: hai a disposizione il tool 'aggiornaMetadatiFascicolo'. Se dalla chat o dai documenti emergono nuovi nomi chiave, valori economici o date non presenti nei metadati, usa il tool per salvarli in autonomia).`;
   }
-  
-  return `# IDENTITÀ
-Sei Jurio, assistente legale AI specializzato esclusivamente nel diritto italiano.
-Rispondi in modo tecnico, non integrare conoscenze esterne non presenti nei tool.
 
----
-# CONTESTO OPERATIVO
-
-- Filtri UI attivi: ${uiFiltersString}
-- Documenti allegati: ${docs.length > 0 ? docs.join(", ") : "Nessuno"}
-- Pronunce già utilizzate: ${alreadySeenIds.join(", ") || "Nessuno"}
-
----
-# CONTESTO UTENTE
-- ID utente: ${userId}
-- Fascicolo corrente: ${fascicoloId ?? "Nessuno"}
-${fascicoloBlock}
-
-----
-# REGOLA SUI FILTRI (MOLTO IMPORTANTE)
-I filtri richiesti dall'utente (es. Data, Organo, Materia) vengono **APPLICATI AUTOMATICAMENTE DAL SISTEMA** a livello di database.
-- NON dire MAI all'utente "non posso applicare il filtro", "i filtri sono attivi" o frasi simili. 
-- Esegui semplicemente la ricerca tramite i tool. Il sistema filtrerà i risultati prima di consegnarteli. Dai per scontato che i risultati che ricevi rispettino già i filtri.
-
----
-# REGOLE VINCOLANTI SUI RIFERIMENTI E ID
-- DIVIETO ASSOLUTO: Non inserire MAI nella risposta all'utente gli "ID tecnici", UUID, o stringhe alfanumeriche di sistema (es. "9f3ab12...").
-- Usa esclusivamente riferimenti discorsivi e testuali (es. "Il documento caricato", "La sentenza n. 123/2024", "La Cassazione ha stabilito...").
-- Inventare sentenze è severamente vietato.
-
-# STRATEGIA E UTILIZZO DEL WEB
-- Prediligi i database interni e i riferimenti normativi.
-- Usa ricercaWebLegale solo se esplicitamente richiesto o se l'archivio interno è completamente privo di risultati utili.
-
-# NEL CASO DI RICHIESTE SULL'APPLICATIVO RIMANDA ALLA SEZIONE CONTATTI: https://jurio.it/contatti#bot`;
-
+  return staticPrompt + dynamicContext;
 }
 
-// ─────────────────────────────────────────────
-// FLOW PRINCIPALE
-// ─────────────────────────────────────────────
+async function generateChatTitle(prompt: string, isFirstMessage?: boolean): Promise<string | undefined> {
+  if (!isFirstMessage) return undefined;
+  
+  const generateTask = ai.generate({
+    prompt: `Genera un titolo riassuntivo di max 4 parole per questa richiesta legale: "${prompt}". REGOLE TASSATIVE: Niente ragionamenti, niente prefissi (no "Titolo:"), niente virgolette. Solo le parole.`,
+    config: { temperature: 0.1 },
+  }).then(res => res.text.trim()).catch(e => {
+    console.warn("Errore generazione titolo:", e);
+    return undefined;
+  });
+
+  const timeout = new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 4000));
+  return Promise.race([generateTask, timeout]);
+}
+
+function prepareContextAndMessages(input: any): any[] {
+  const trimmedHistory = (input.history ?? []).slice(-4);
+  const uiFiltersString = input.filters && Object.keys(input.filters).length > 0
+    ? JSON.stringify(input.filters, null, 2) : "Nessun filtro imposto.";
+
+  const alreadySeenIds: string[] = trimmedHistory.length > 0
+    ? Array.from(new Set<string>(
+      trimmedHistory
+        .filter((msg: { role: string }) => msg.role === 'model')
+        .flatMap((msg: { content: string }) => {
+           if (typeof msg.content !== 'string') return [];
+           return msg.content.match(/[a-zA-Z0-9]{20,}/g) ?? [];
+        })
+    )) : [];
+
+  const systemPrompt = buildLegalAgentSystemPrompt({
+    uiFiltersString,
+    docs: input.docs ?? [],
+    alreadySeenIds,
+    fascicoloId: input.fascicoloId,
+    userId: input.userId,
+    metadatiFascicolo: input.metadatiFascicolo,
+  });
+
+  const chatContext = trimmedHistory.map((msg: { role: string; content: string }) => ({
+    role: msg.role === 'user' ? 'user' : 'model',
+    content: [{ text: msg.content }],
+  }));
+
+  return [
+    { role: "system" as const, content: [{ text: systemPrompt }] },
+    ...chatContext,
+    { role: "user" as const, content: [{ text: input.prompt }] },
+  ];
+}
+
+export interface ExecutionProfile {
+  model: string;
+  dbLimit: number;
+  webLimit: number;
+}
+
+export function getExecutionProfile(promptLower: string): ExecutionProfile {
+  if (promptLower.length < 150) {
+    return { model: "googleai/gemini-2.5-flash", dbLimit: 3, webLimit: 2 };
+  }
+  const hasComparison = /confronta|compara|differenz|distingu|paragon/i.test(promptLower);
+  const hasApplicability = /si applica|applicabil|caso concreto|caso di specie|fattispecie|distinguishing/i.test(promptLower);
+  const hasConflict = /conflitto|contrasto|orientament|tesi contrapposte|sezioni unite|prevale/i.test(promptLower);
+  const hasLegalReasoning = /argomenta|ragionamento|spiega il perché|valuta l'esito|ricostruisci|alla luce (dei|della)/i.test(promptLower);
+
+  const complexityScore = [hasComparison, hasApplicability, hasConflict, hasLegalReasoning].filter(Boolean).length;
+  const needsDeepReasoning = complexityScore >= 3;
+
+  if (needsDeepReasoning) {
+    return { model: "googleai/gemini-1.5-pro", dbLimit: 5, webLimit: 3 };
+  } else {
+    return { model: "googleai/gemini-2.5-flash", dbLimit: 3, webLimit: 2 };
+  }
+}
+
+async function executeDeterministicRetrieval(input: any, promptLower: string, toolContext: any, sendChunk: any) {
+  const isConversational = promptLower.length < 25 && /^(grazie|ok|chiaro|perfetto|ciao|va bene|ottimo|esatto)/.test(promptLower);
+  
+  const isDatabaseQuery = /(sentenza|ordinanza|cassazione|tribunale|tar|provvediment|art\.|articolo|legge|codice|decreto|direttiva|giurisprudenza|massima)/i.test(promptLower);
+  
+  // Rileviamo se ci sono allegati nel payload
+  const hasDocs = toolContext.docs && toolContext.docs.length > 0;
+  const isFascicoloQuery = (input.fascicoloId && /(questo documento|il contratto|il file|fascicolo|allegato|caricato|documentazione)/i.test(promptLower)) || hasDocs;
+  
+  const needsWebSearch = /(recente|news|novità|aggiornament|oggi|notizi|tempo reale|ultim'ora)/i.test(promptLower);
+  const isDistinguishQuery = /(fattispecie|caso concreto|mio caso|differenz|analizza i fatti|applicabil|distinguish)/i.test(promptLower);
+
+  const matchPuntuale = promptLower.match(/\b\d{1,6}\/\d{4}\b/);
+  const matchNormativa = promptLower.match(/(?:art|articolo)\.?\s*\d+(?:\s*(?:bis|ter|quater|quinquies))?/i);
+
+  let preRetrievalOutput: any = null;
+  let preRetrievalToolName = "";
+
+  if (!isConversational) {
+    try {
+      if (hasDocs) {
+        // TASSATIVO: Se ci sono allegati, forziamo immediatamente la lettura
+        sendChunk({ status: "Lettura dei documenti allegati..." });
+        preRetrievalToolName = "ricercaFascicoloUtente";
+        preRetrievalOutput = await ricercaFascicoloUtente({ query: input.prompt }, { context: toolContext });
+      } else if (matchPuntuale) {
+        sendChunk({ status: `Ricerca sentenza ${matchPuntuale[0]}...` });
+        preRetrievalToolName = "ricercaDatabaseInterno";
+        preRetrievalOutput = await ricercaDatabaseInterno({ tipo_ricerca: "puntuale", numero_sentenza: matchPuntuale[0], query: input.prompt }, { context: toolContext });
+      } else if (matchNormativa) {
+        sendChunk({ status: `Ricerca riferimento ${matchNormativa[0]}...` });
+        preRetrievalToolName = "ricercaDatabaseInterno";
+        preRetrievalOutput = await ricercaDatabaseInterno({ tipo_ricerca: "normativa", query: matchNormativa[0] }, { context: toolContext });
+      } else if (isFascicoloQuery) {
+        sendChunk({ status: "Consultazione documenti utente..." });
+        preRetrievalToolName = "ricercaFascicoloUtente";
+        preRetrievalOutput = await ricercaFascicoloUtente({ query: input.prompt }, { context: toolContext });
+      }
+    } catch (err) {
+      console.warn("Errore pre-retrieval deterministico:", err);
+    }
+  }
+
+  let dynamicTools: any[] = [];
+  let skipTurn1 = false;
+
+  // FIX RACE CONDITION: Se il retrieval documentale deterministico è "vuoto" (documenti in elaborazione in background), 
+  // non saltiamo il turno 1. Così l'Agente riproverà da solo concedendo tempo al DB.
+  const isEmptyRetrieval = preRetrievalOutput && Array.isArray(preRetrievalOutput) && preRetrievalOutput[0]?.messaggio?.includes("Nessun paragrafo");
+
+  if (preRetrievalOutput && (!Array.isArray(preRetrievalOutput) || !preRetrievalOutput[0]?.error) && !isEmptyRetrieval) {
+    skipTurn1 = true;
+  } else if (!isConversational) {
+    // ABILITAZIONE CHIRURGICA DEI TOOL
+    if (isDatabaseQuery) dynamicTools.push(ricercaDatabaseInterno);
+    if (isFascicoloQuery || hasDocs) dynamicTools.push(ricercaFascicoloUtente);
+    if (isDistinguishQuery) dynamicTools.push(analizzaDistinguishFattispecie);
+    if (needsWebSearch) dynamicTools.push(webSearchTool);
+    if (hasDocs && !dynamicTools.includes(ricercaFascicoloUtente)) {
+      dynamicTools.push(ricercaFascicoloUtente);
+    }
+  }
+
+  return { skipTurn1, preRetrievalOutput, preRetrievalToolName, dynamicTools };
+}
+
+function extractAndFormatSources(messages: any[]) {
+  const fontiUniche = new Map<string, unknown>();
+  
+  try {
+    messages.forEach((msg: any) => {
+      if (msg.role !== 'tool') return;
+      (msg.content || []).forEach((part: any) => {
+        const output = part.toolResponse?.output;
+        if (!output) return;
+        const items: any[] = Array.isArray(output) ? output : (output.topMatches || []);
+        items.forEach((fonte: any) => {
+          if (!fonte || fonte.error || fonte.messaggio) return; 
+          const baseKey = fonte.documento_id ?? fonte.id ?? fonte._id_interno ?? fonte.urn ?? fonte.link;
+          const fallbackKey = typeof fonte.titolo === 'string' ? fonte.titolo : (fonte.numero_sentenza || Math.random().toString(36));
+          const key = baseKey ? String(baseKey) : fallbackKey;
+          if (!fontiUniche.has(key)) fontiUniche.set(key, fonte);
+        });
+      });
+    });
+  } catch (parseError) {
+    console.warn("⚠️ Errore parsing fonti:", parseError);
+  }
+
+  return Array.from(fontiUniche.values())
+    .map((f: any) => {
+      let rawScore = f.score ?? null;
+      if (rawScore === null) {
+        if (f._rankingDistance !== undefined) rawScore = 1 - f._rankingDistance;
+        else if (f._distance !== undefined) rawScore = 1 - f._distance;
+      }
+
+      const isExactMatch = f._type === 'giurisprudenza_puntuale' || f._type === 'giurisprudenza_normativa';
+      let matchPercentage = isExactMatch ? 100 : (rawScore !== null ? Math.max(0, Math.min(100, Math.round(rawScore * 100))) : 0);
+
+      return {
+        _type: f._type || (f.fonte ? 'web_search' : 'database_interno'),
+        documento_id: f.documento_id ?? f.id ?? f._id_interno ?? f.parentId ?? null,
+        posizione_originale: f.posizione_originale ?? f.index ?? null,
+        timestamp: f.timestamp ?? new Date().toISOString(),
+        identificativo: f.nome_file || f.numero_sentenza || f.titolo || "Documento",
+        score: rawScore !== null ? rawScore : (isExactMatch ? 1 : null), 
+        match_percentage: matchPercentage,          
+        organo_giudicante: f.organo_giudicante ?? null,
+        data_pubblicazione: f.dataSentenza ?? f.data ?? f.date ?? null,
+        fonte_web: f.fonte ?? null,
+        url_riferimento: f.link ?? f.urn ?? f.url ?? null
+      };
+    })
+    .filter((f: any) => 
+      f._type === 'web_search' || f._type === 'documento_allegato' || f._type === 'document_chunk' || 
+      f._type?.startsWith('giurisprudenza_') || f.fonte_web || f.match_percentage >= 75
+    )
+    .sort((a: any, b: any) => b.match_percentage - a.match_percentage)
+    .slice(0, CFG.MAX_SOURCES);
+}
+
+// ============================================================================
+// 2. ORCHESTRATORE PRINCIPALE (FLOW)
+// ============================================================================
 
 export const legalAgentFlow = ai.defineFlow(
   {
@@ -708,184 +835,117 @@ export const legalAgentFlow = ai.defineFlow(
   async (input, { sendChunk }) => {
     sendChunk({ status: "Analisi della richiesta..." });
 
-    // 1. TIMEOUT SICURO PER IL TITOLO
-    let titlePromise: Promise<string | undefined> = Promise.resolve(undefined);
-    if (input.isFirstMessage) {
-      const generateTitle = ai.generate({
-        prompt: `Genera un titolo riassuntivo di max 4 parole per questa richiesta legale: "${input.prompt}". REGOLE TASSATIVE: Niente ragionamenti, niente prefissi (no "Titolo:"), niente virgolette. Solo le parole.`,
-        config: { temperature: 0.1 },
-      }).then(res => res.text.trim()).catch(e => {
-        console.warn("Errore titolo:", e);
-        return undefined;
-      });
+    const titlePromise = generateChatTitle(input.prompt, input.isFirstMessage);
+    const messages = prepareContextAndMessages(input);
+    const promptLower = input.prompt.toLowerCase().trim();
 
-      const timeout = new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 4000));
-      titlePromise = Promise.race([generateTitle, timeout]); 
+    const profile = getExecutionProfile(promptLower);
+    const selectedModel = profile.model;
+
+    const toolContext = { 
+      userId: input.userId, 
+      fascicoloId: input.fascicoloId ?? null, 
+      uiFilters: input.filters ?? [],
+      docs: input.docs ?? [],
+      dbLimit: profile.dbLimit,
+      webLimit: profile.webLimit
+    };
+
+    const { skipTurn1, preRetrievalOutput, preRetrievalToolName, dynamicTools } = 
+      await executeDeterministicRetrieval(input, promptLower, toolContext, sendChunk);
+
+    if (skipTurn1) {
+      messages.push({ role: "model" as const, content: [{ toolRequest: { name: preRetrievalToolName, ref: "deterministic-route", input: { query: input.prompt } } }] });
+      messages.push({ role: "tool" as const, content: [{ toolResponse: { name: preRetrievalToolName, ref: "deterministic-route", output: preRetrievalOutput } }] });
     }
 
-    const uiFiltersString = input.filters && Object.keys(input.filters).length > 0
-      ? JSON.stringify(input.filters, null, 2) : "Nessun filtro imposto.";
-
-    const alreadySeenIds: string[] = input.history
-      ? Array.from(new Set<string>(
-        input.history
-          .filter((msg: { role: string }) => msg.role === 'model')
-          .flatMap((msg: { content: string }) => {
-             if (typeof msg.content !== 'string') return [];
-             return msg.content.match(/[a-zA-Z0-9]{20,}/g) ?? [];
-          })
-      )) : [];
-
-    // Invio dei dati epurati dagli ID Tecnici al prompt di sistema
-    const systemPrompt = buildLegalAgentSystemPrompt({
-      uiFiltersString,
-      docs: input.docs ?? [],
-      alreadySeenIds,
-      fascicoloId: input.fascicoloId,
-      userId: input.userId,
-      metadatiFascicolo: input.metadatiFascicolo,
-    });
-
-    const chatContext = (input.history ?? []).map((msg: { role: string; content: string }) => ({
-      role: msg.role === 'user' ? 'user' : 'model' as 'user' | 'model',
-      content: [{ text: msg.content }],
-    }));
-
-    const messages = [
-      { role: "system" as const, content: [{ text: systemPrompt }] },
-      ...chatContext,
-      { role: "user" as const, content: [{ text: input.prompt }] },
-    ];
-
-    // 2. GENERAZIONE SICURA CON TRY/CATCH E CONTEXT INJECTION
-    let response;
-
-    const baseTools = [
-        ricercaDatabaseInterno, 
-        ricercaFascicoloUtente,
-        analizzaDistinguishFattispecie,
-        webSearchTool           
-      ];
+    let finalResponse;
 
     try {
-      response = await ai.generate({
-        messages: messages as any,
-        // FASE 2: Modello sbloccato dal sovraccarico. Solo 3 opzioni chiare.
-        tools: baseTools,
-        config: { temperature: 0.05 },
-          
-        // FASE 1: Iniezione del contesto. Il LLM non "indovina" più questi dati.
-        context: {
-          userId: input.userId,
-          fascicoloId: input.fascicoloId ?? null,
-          uiFilters: input.filters ?? []
-        },
+      if (!skipTurn1) {
+        // --- TURNO 1: Triage Agentico ---
+        const turn1Response = await ai.generate({
+          model: selectedModel,
+          messages: messages,
+          tools: dynamicTools,
+          returnToolRequests: true,
+          config: { temperature: 0.05 },
+          context: toolContext, // Contesto dinamico coi limiti iniettato
+          onChunk: (chunk) => {
+            try {
+              const toolName = chunk.content?.find(part => part.toolRequest)?.toolRequest?.name;
+              if (toolName) sendChunk({ status: `Ricerca in corso: ${toolName}...` });
+              if (chunk.text) sendChunk({ text: chunk.text });
+            } catch (e) {}
+          },
+        });
 
-        onChunk: (chunk) => {
-          try {
-            const toolName = chunk.content?.find(part => part.toolRequest)?.toolRequest?.name;
-            if (toolName) sendChunk({ status: TOOL_STATUS_MAP[toolName] ?? "Ricerca in corso..." });
-            if (chunk.text) sendChunk({ text: chunk.text });
-          } catch (chunkErr) {
-             console.warn("Errore elaborazione chunk:", chunkErr);
-          }
-        },
-      });
+        finalResponse = turn1Response;
+
+        if (turn1Response.toolRequests && turn1Response.toolRequests.length > 0) {
+          sendChunk({ status: "Consultazione archivi in corso..." });
+          const executedTools = new Set<string>();
+
+          const toolResponses = await Promise.all(
+            turn1Response.toolRequests.map(async (part: any) => {
+              const req = part.toolRequest;
+              if (!req || !req.name) return null;
+              if (executedTools.has(req.name)) return { toolResponse: { name: req.name, ref: req.ref, output: { messaggio: "Tool già eseguito." } } };
+              
+              executedTools.add(req.name);
+
+              try {
+                // BUGFIX APPLICATO: Controllo robusto sui metadati Genkit dell'Action
+                const toolDef = dynamicTools.find(t => 
+                  t.name === req.name || 
+                  t.__action?.name === req.name || 
+                  t.__action?.name?.endsWith(req.name)
+                );
+                
+                if (!toolDef) throw new Error(`Tool non trovato: ${req.name}`);
+                
+                const output = await toolDef(req.input, { context: toolContext });
+                return { toolResponse: { name: req.name, ref: req.ref, output: output } };
+              } catch (err) {
+                console.error(`[Orchestrator] Errore tool ${req.name}:`, err);
+                return { toolResponse: { name: req.name, ref: req.ref, output: { error: "Errore temporaneo." } } };
+              }
+            })
+          );
+
+          messages.push(turn1Response.message);
+          messages.push({ role: "tool" as const, content: toolResponses.filter(Boolean) });
+        }
+      }
+
+      // --- TURNO 2: Sintesi Finale (Tools Off) ---
+      if (skipTurn1 || (finalResponse?.toolRequests && finalResponse.toolRequests.length > 0)) {
+        sendChunk({ status: "Sintesi finale..." });
+        
+        finalResponse = await ai.generate({
+          model: selectedModel,
+          messages: messages,
+          tools: [], // Forza la generazione testuale
+          config: { temperature: 0.05 },
+          onChunk: (chunk) => { if (chunk.text) sendChunk({ text: chunk.text }); }
+        });
+      }
+
     } catch (generateErr) {
       console.error("Schianto su ai.generate:", generateErr);
       throw new Error("Il motore neurale ha incontrato un errore imprevisto.");
     }
 
-    sendChunk({ status: "Sintesi finale..." });
-
     const titoloGenerato = await titlePromise;
-
-    // 3. PARSING SICURO DELLE FONTI E GESTIONE ERRORI
-    const fontiUniche = new Map<string, unknown>();
-
-    try {
-      // FASE 3a: Estrazione ultra-difensiva per evitare crash su oggetti non definiti
-      const resultMessages = (response as any).request?.messages || (response as any).messages || [];
-      
-      resultMessages.forEach((msg: any) => {
-        if (msg.role !== 'tool') return;
-        
-        const content = msg.content || [];
-        content.forEach((part: any) => {
-          const output = part.toolResponse?.output;
-          if (!output) return;
-
-          // Gestisce sia il nuovo formato (Array diretto) che fallback
-          const items: any[] = Array.isArray(output) ? output : (output.topMatches || []);
-
-          items.forEach((fonte: any) => {
-            if (!fonte || fonte.error || fonte.messaggio) return; 
-            
-            // Creazione chiave primaria per deduplicare documenti identici
-            const baseKey = fonte.documento_id ?? fonte.id ?? fonte._id_interno ?? fonte.urn ?? fonte.link;
-            const fallbackKey = typeof fonte.titolo === 'string' ? fonte.titolo : (fonte.numero_sentenza || Math.random().toString(36));
-            const key = baseKey ? String(baseKey) : fallbackKey;
-            
-            if (!fontiUniche.has(key)) fontiUniche.set(key, fonte);
-          });
-        });
-      });
-    } catch (parseError) {
-      console.warn("⚠️ Errore non bloccante durante il parsing delle fonti:", parseError);
-    }
-
-    const fontiFinali = Array.from(fontiUniche.values())
-          .map((f: any) => {
-            let rawScore = f.score ?? null;
-            if (rawScore === null) {
-              if (f._rankingDistance !== undefined) rawScore = 1 - f._rankingDistance;
-              else if (f._distance !== undefined) rawScore = 1 - f._distance;
-            }
-
-            // Se è una ricerca puntuale o normativa, il match è esatto per definizione (100%)
-            const isExactMatch = f._type === 'giurisprudenza_puntuale' || f._type === 'giurisprudenza_normativa';
-            let matchPercentage = 0;
-            
-            if (isExactMatch) {
-              matchPercentage = 100;
-            } else {
-              matchPercentage = rawScore !== null ? Math.max(0, Math.min(100, Math.round(rawScore * 100))) : 0;
-            }
-
-            return {
-              _type: f._type || (f.fonte ? 'web_search' : 'database_interno'),
-              documento_id: f.documento_id ?? f.id ?? f._id_interno ?? f.parentId ?? null,
-              posizione_originale: f.posizione_originale ?? f.index ?? null,
-              timestamp: f.timestamp ?? new Date().toISOString(),
-              identificativo: f.nome_file || f.numero_sentenza || f.titolo || "Documento",
-              score: rawScore !== null ? rawScore : (isExactMatch ? 1 : null), 
-              match_percentage: matchPercentage,          
-              organo_giudicante: f.organo_giudicante ?? null,
-              data_pubblicazione: f.dataSentenza ?? f.data ?? f.date ?? null,
-              fonte_web: f.fonte ?? null,
-              url_riferimento: f.link ?? f.urn ?? f.url ?? null
-            };
-          })
-          // FIX: Accettiamo tutti i nuovi tipi di giurisprudenza e i documenti
-          .filter((f: any) => 
-            f._type === 'web_search' || 
-            f._type === 'documento_allegato' || 
-            f._type === 'document_chunk' || 
-            f._type?.startsWith('giurisprudenza_') || // <- Aggiunto questo!
-            f.fonte_web || 
-            f.match_percentage >= 75
-          )
-          .sort((a: any, b: any) => b.match_percentage - a.match_percentage)
-          .slice(0, CFG.MAX_SOURCES);
+    const fontiFinali = extractAndFormatSources(messages);
 
     return {
-      risposta: response?.text ?? "Nessuna risposta generata.", // fallback finale
+      risposta: finalResponse?.text ?? "Nessuna risposta generata.",
       fonti: fontiFinali,
       titoloGenerato,
     };
   }
 );
-
 // ─────────────────────────────────────────────
 // FLOW — Legal Agent Support (Jurio Assistant)
 // ─────────────────────────────────────────────

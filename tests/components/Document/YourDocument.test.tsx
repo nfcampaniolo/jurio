@@ -61,7 +61,7 @@ vi.mock("@/context/useAuth", () => ({
 }));
 
 /* ---------- mock useDocuments hooks ---------- */
-vi.mock("@/hooks/useDocuments", () => ({
+vi.mock("@/shared/hooks/useDocuments", () => ({
   __esModule: true,
   useDocuments: () => mockUploadedDocsState,
   useSavedSentenze: () => mockSavedDocsState,
@@ -118,7 +118,7 @@ vi.mock("@headlessui/react", () => ({
 }));
 
 /* ---------- mock componenti figli ---------- */
-vi.mock("@/components/ConfirmModal", () => ({
+vi.mock("@/shared/components/ConfirmModal", () => ({
   __esModule: true,
   ConfirmModal: ({
     isOpen,
@@ -143,12 +143,12 @@ vi.mock("@/components/ConfirmModal", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/AccessDenied", () => ({
+vi.mock("@/shared/components/AccessDenied", () => ({
   __esModule: true,
   AccessDenied: () => <div data-testid="mock-access-denied">Accesso Negato</div>,
 }));
 
-vi.mock("@/components/Document/YourDocumentCard", () => ({
+vi.mock("@/shared/components/YourDocumentCard", () => ({
   __esModule: true,
   DocumentCard: ({
     doc,
@@ -173,7 +173,7 @@ vi.mock("@/components/Document/YourDocumentCard", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/YourDocumentRenameModal", () => ({
+vi.mock("@/shared/components/YourDocumentRenameModal", () => ({
   __esModule: true,
   DocumentRenameModal: ({
     isOpen,
@@ -206,7 +206,7 @@ vi.mock("@/components/Document/YourDocumentRenameModal", () => ({
 }));
 
 /* ---------- component ---------- */
-import { YourDocument } from "@/components/Document/YourDocument";
+import { YourDocument } from "@/shared/components/YourDocument";
 
 describe("YourDocument Component Suite", () => {
   const originalOpen = window.open;

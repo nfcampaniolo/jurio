@@ -48,34 +48,34 @@ vi.mock("@/context/useAuth", () => ({
   useAuth: () => mockAuthState,
 }));
 
-vi.mock("@/services/document", () => ({
+vi.mock("@/shared/services/document", () => ({
   __esModule: true,
   listDocumentsByUser: (uid: string) => mockListDocumentsByUser(uid),
   deleteDocument: (col: string, id: string) => mockDeleteDocument(col, id),
   renameDocument: (id: string, name: string) => mockRenameDocument(id, name),
 }));
 
-vi.mock("@/services/saveSentences", () => ({
+vi.mock("@/features/document/hooks/saveSentences", () => ({
   __esModule: true,
   listSavedSentenzeByUser: (uid: string) => mockListSavedSentenzeByUser(uid),
   deleteSaveSentence: (uid: string, sentenceId: string) =>
     mockDeleteSaveSentence(uid, sentenceId),
 }));
 
-vi.mock("@/services/storage", () => ({
+vi.mock("@/shared/services/storage", () => ({
   __esModule: true,
   deleteDocumentStorage: (id: string, path: string) =>
     mockDeleteDocumentStorage(id, path),
 }));
 
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   __esModule: true,
   trackEvent: (event: string, payload?: Record<string, unknown>) =>
     mockTrackEvent(event, payload),
 }));
 
 /* ---------- subjects under test ---------- */
-import { useDocuments, useSavedSentenze } from "@/hooks/useDocuments"; // <-- adegua il path se necessario
+import { useDocuments, useSavedSentenze } from "@/shared/hooks/useDocuments"; // <-- adegua il path se necessario
 
 describe("Document & Saved Sentences Hooks Suite", () => {
   beforeEach(() => {

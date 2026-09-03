@@ -20,7 +20,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import AssistenzaSupporto from "@/components/Guida/AssistenzaSupporto"; // <-- adegua il path se necessario
+import AssistenzaSupporto from "@/features/guide/components/AssistenzaSupporto"; // <-- adegua il path se necessario
 
 describe("Guida - AssistenzaSupporto Component Suite", () => {
   beforeEach(() => {

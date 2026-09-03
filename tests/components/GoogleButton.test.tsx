@@ -18,13 +18,13 @@ type GoogleLogic = {
 
 const logicMock = vi.fn<() => GoogleLogic>();
 
-vi.mock("@/hooks/useGoogleAuthLogic", () => ({
+vi.mock("@/features/auth/hooks/useGoogleAuthLogic", () => ({
   useGoogleAuthLogic: () => logicMock(),
 }));
 
 /* ---------- component ---------- */
 
-import { GoogleButton } from "@/components/GoogleButton";
+import { GoogleButton } from "@/features/auth/components/GoogleButton";
 
 describe("GoogleButton", () => {
   const handleGoogleLogin = vi.fn<() => void>();

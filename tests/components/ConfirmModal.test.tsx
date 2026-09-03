@@ -20,7 +20,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import { ConfirmModal } from "@/components/ConfirmModal"; // <-- aggiorna path se serve
+import { ConfirmModal } from "@/shared/components/ConfirmModal"; // <-- aggiorna path se serve
 
 describe("ConfirmModal", () => {
   test("non renderizza quando isOpen=false", () => {

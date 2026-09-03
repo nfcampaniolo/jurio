@@ -12,7 +12,7 @@ vi.mock("framer-motion", async () => {
   };
 });
 
-import { ButtonCTA, ButtonSecondCTA } from "@/components/ButtonCTA"; // <-- aggiorna path se serve
+import { ButtonCTA, ButtonSecondCTA } from "@/shared/components/ButtonCTA"; // <-- aggiorna path se serve
 
 describe("ButtonCTA", () => {
   test("renderizza children e type di default = button", () => {

@@ -13,7 +13,7 @@ vi.mock("react-icons/fa", () => ({
 }));
 
 /* ---------- component ---------- */
-import { MassimaHeader } from "@/components/Document/MassimaHeader"; // <-- adegua il path se necessario
+import { MassimaHeader } from "@/features/document/components/MassimaHeader"; // <-- adegua il path se necessario
 
 describe("MassimaHeader Component Suite", () => {
   beforeEach(() => {

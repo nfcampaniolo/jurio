@@ -67,7 +67,7 @@ const {
 }));
 
 /* ---------- mock internal services ---------- */
-vi.mock("@/services/perf", () => ({
+vi.mock("@/infrastructure/perf", () => ({
   __esModule: true,
   withTrace: (...args: unknown[]) =>
     mockWithTrace(args[0] as string, args[1], args[2] as () => Promise<unknown>),
@@ -144,7 +144,7 @@ import {
   extractTextFromFile,
   extractTextFromMedia,
   ocrFileWithTesseract,
-} from "@/hooks/extractors";
+} from "@/shared/services/extractors";
 
 describe("File Processing Service Suite", () => {
   beforeEach(() => {

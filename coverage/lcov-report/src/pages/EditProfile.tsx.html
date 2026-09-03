@@ -492,10 +492,10 @@ import { useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiCopy } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import { motion, type Variants, useReducedMotion } from "framer-motion";
-import { useProfile } from "@/hooks/useProfile";
-import { EditProfileAvatar } from "@/components/Profile/EditProfileAvatar";
-import { EditProfileForm } from "@/components/Profile/EditProfileForm";
-import { EditProfileConsents } from "@/components/Profile/EditProfileConsents";
+import { useProfile } from "@/features/profile/hooks/useProfile";
+import { EditProfileAvatar } from "@/features/profile/components/EditProfileAvatar";
+import { EditProfileForm } from "@/features/profile/components/EditProfileForm";
+import { EditProfileConsents } from "@/features/profile/components/EditProfileConsents";
 import { Loader2 } from "lucide-react";
 &nbsp;
 const fadeUp: Variants = {

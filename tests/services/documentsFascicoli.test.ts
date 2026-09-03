@@ -42,7 +42,7 @@ vi.mock("./db", () => ({
   getDb: mockGetDb,
 }));
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: mockGetDb,
 }));
@@ -52,7 +52,7 @@ vi.mock("./documentsHelpers", () => ({
   toDateSafe: mockToDateSafe,
 }));
 
-vi.mock("@/services/documentsHelpers", () => ({
+vi.mock("@/shared/services/documentsHelpers", () => ({
   __esModule: true,
   toDateSafe: mockToDateSafe,
 }));
@@ -68,7 +68,7 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { listFascicoliByUser, fetchFascicoloData } from "@/services/documentsFascicoli";
+import { listFascicoliByUser, fetchFascicoloData } from "@/shared/services/documentsFascicoli";
 
 describe("Documents & Fascicoli Service Suite", () => {
   const fakeDbInstance = { _db: "firestore_mock_fascicoli" };

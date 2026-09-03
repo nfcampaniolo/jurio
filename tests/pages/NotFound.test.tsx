@@ -10,7 +10,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component under test ---------- */
-import NotFound from "@/pages/NotFound"; // <-- adegua il path se necessario
+import NotFound from "@/shared/NotFound"; // <-- adegua il path se necessario
 
 describe("NotFound Page Suite", () => {
   beforeEach(() => {

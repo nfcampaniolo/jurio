@@ -184,7 +184,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) =&gt; {
     let cancelled = false;
 &nbsp;
     (async () =&gt; {
-      const mod = await import("@/services/auth");
+      const mod = await import("@/features/auth/hooks/auth");
     
       unsubscribe = mod.onUserStateChange((u: FirebaseUser | null, conflict: boolean) =&gt; {
         <span class="missing-if-branch" title="if path not taken" >I</span>if (cancelled) <span class="cstat-no" title="statement not covered" >return;</span>

@@ -428,14 +428,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import React, { useState } from "react";
-import { useProfile } from "@/hooks/useProfile";
+import { useProfile } from "@/features/profile/hooks/useProfile";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { motion } from "framer-motion";
-import { ConfirmModal } from "@/components/ConfirmModal";
-import { Upload } from "@/components/Profile/UploadSentences";
+import { ConfirmModal } from "@/shared/components/ConfirmModal";
+import { Upload } from "@/features/profile/components/UploadSentences";
 import { YourDocument } from "@/components/Document/YourDocument.tsx";
-import { HeaderProfile } from "@/components/Profile/HeaderProfile";
+import { HeaderProfile } from "@/features/profile/components/HeaderProfile";
 import type { Action } from "@/interfaces/interfaces";
 import {
   FiSearch,
@@ -447,7 +447,7 @@ import {
   FiActivity,
   FiLayout
 } from "react-icons/fi";
-import { navigateItem } from "@/hooks/navigation";
+import { navigateItem } from "@/routes/navigation";
 import { Loader2 } from "lucide-react";
 &nbsp;
 export const Profile: React.FC = () =&gt; {
@@ -533,7 +533,7 @@ export const Profile: React.FC = () =&gt; {
       icon: &lt;FiLogOut /&gt;,
       onClick: () =&gt; {
         void (async () =&gt; {
-          const { logout } = await import("@/services/auth");
+          const { logout } = await import("@/features/auth/hooks/auth");
           await logout();
           navigate("/login", { replace: true });
         })();

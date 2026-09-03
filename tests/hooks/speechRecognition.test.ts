@@ -4,7 +4,7 @@ import type {
   SpeechWindow,
   SpeechRecognitionEvent,
   SpeechRecognitionErrorEvent,
-} from "@/hooks/speech-recognition"; // <-- adegua il path del file di tipi
+} from "@/shared/hooks/speech-recognition"; // <-- adegua il path del file di tipi
 
 /**
  * Mock class per simulare l'implementazione del browser (JSDOM non include la Web Speech API)

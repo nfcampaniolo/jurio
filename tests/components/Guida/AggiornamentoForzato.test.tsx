@@ -20,7 +20,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import AggiornamentoForzato from "@/components/Guida/AggiornamentoForzato"; // <-- adegua il path se necessario
+import AggiornamentoForzato from "@/features/guide/components/AggiornamentoForzato"; // <-- adegua il path se necessario
 
 describe("Guida - AggiornamentoForzato Component Suite", () => {
   beforeEach(() => {

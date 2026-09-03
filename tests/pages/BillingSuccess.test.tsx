@@ -25,7 +25,7 @@ vi.mock("@/context/useAuth", () => ({
 
 /* ---------- mock services/db & firebase/firestore ---------- */
 const mockGetDb = vi.fn().mockResolvedValue({ type: "firestore-db" });
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: () => mockGetDb(),
 }));
@@ -45,7 +45,7 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 /* ---------- component ---------- */
-import BillingSuccess from "@/pages/BillingSuccess";
+import BillingSuccess from "@/features/plans/BillingSuccess";
 
 describe("BillingSuccess Page Suite", () => {
   beforeEach(() => {

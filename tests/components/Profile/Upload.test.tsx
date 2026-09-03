@@ -52,29 +52,26 @@ const { mockPdfAnalyzerState, mockVectorSearch, mockTrackEvent } = vi.hoisted(()
 }));
 
 /* ---------- mock hook usePdfAnalyzer ---------- */
-vi.mock("@/hooks/usePdfAnalyzer", () => ({
+vi.mock("@/features/profile/hooks/usePdfAnalyzer", () => ({
   usePdfAnalyzer: () => mockPdfAnalyzerState,
 }));
 
 /* ---------- mock services ---------- */
-vi.mock("@/services/vectorSearch", () => ({
+vi.mock("@/features/search/hooks/vectorSearch", () => ({
   vectorSearch: (...args: unknown[]) => mockVectorSearch(...args),
 }));
 
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   trackEvent: (...args: unknown[]) => mockTrackEvent(...args),
 }));
 
 /* ---------- mock child components ---------- */
-vi.mock("./UploadDropzone", () => ({
+
+vi.mock("@/features/profile/components/UploadDropzone", () => ({
   UploadDropzone: () => <div data-testid="mock-upload-dropzone">UploadDropzone Mock</div>,
 }));
 
-vi.mock("@/components/Profile/UploadDropzone", () => ({
-  UploadDropzone: () => <div data-testid="mock-upload-dropzone">UploadDropzone Mock</div>,
-}));
-
-vi.mock("./CloudPickerModal", () => ({
+vi.mock("@/features/profile/components/CloudPickerModal", () => ({
   CloudPickerModal: ({
     isOpen,
     onClose,
@@ -104,47 +101,13 @@ vi.mock("./CloudPickerModal", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/Profile/CloudPickerModal", () => ({
-  CloudPickerModal: ({
-    isOpen,
-    onClose,
-    onSelectFile,
-  }: {
-    isOpen: boolean;
-    onClose: () => void;
-    onSelectFile: (file: { name: string; blob: Blob }) => void;
-  }) =>
-    isOpen ? (
-      <div data-testid="mock-cloud-picker-modal">
-        <button type="button" onClick={onClose}>
-          Chiudi Cloud Modal
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            onSelectFile({
-              name: "sentenza_drive.pdf",
-              blob: new Blob(["cloud-bytes"], { type: "application/pdf" }),
-            })
-          }
-        >
-          Seleziona File Cloud
-        </button>
-      </div>
-    ) : null,
-}));
-
-vi.mock("../Document/ExtractedTextModal", () => ({
+vi.mock("@/features/profile/components/ExtractedTextModal", () => ({
   ExtractedTextModal: ({ showText }: { showText: boolean }) =>
     showText ? <div data-testid="mock-extracted-text-modal">ExtractedTextModal Mock</div> : null,
 }));
 
-vi.mock("@/components/Document/ExtractedTextModal", () => ({
-  ExtractedTextModal: ({ showText }: { showText: boolean }) =>
-    showText ? <div data-testid="mock-extracted-text-modal">ExtractedTextModal Mock</div> : null,
-}));
 
-vi.mock("@/components/PromptSelector", () => ({
+vi.mock("@/shared/components/PromptSelector", () => ({
   PromptSelector: ({
     value,
     onChange,
@@ -167,13 +130,13 @@ vi.mock("@/components/PromptSelector", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/Massima", () => ({
+vi.mock("@/features/document/components/Massima", () => ({
   MassimaCard: ({ result }: { result: unknown }) => (
     <div data-testid="mock-massima-card">{JSON.stringify(result)}</div>
   ),
 }));
 
-vi.mock("./VectorSearchResults", () => ({
+vi.mock("@/features/profile/components/VectorSearchResults", () => ({
   VectorSearchResults: ({
     handleVectorSearch,
     handleClick,
@@ -200,38 +163,12 @@ vi.mock("./VectorSearchResults", () => ({
   ),
 }));
 
-vi.mock("@/components/Profile/VectorSearchResults", () => ({
-  VectorSearchResults: ({
-    handleVectorSearch,
-    handleClick,
-  }: {
-    handleVectorSearch: () => void;
-    handleClick: (doc: DocumentoGiurisprudenziale) => void;
-  }) => (
-    <div data-testid="mock-vector-search-results">
-      <button type="button" onClick={handleVectorSearch}>
-        Avvia Ricerca Vettoriale
-      </button>
-      <button
-        type="button"
-        onClick={() =>
-          handleClick({
-            id: "sent-cass-2026-100",
-            numero_documento: "100/2026",
-          } as unknown as DocumentoGiurisprudenziale)
-        }
-      >
-        Apri Sentenza
-      </button>
-    </div>
-  ),
-}));
 
-vi.mock("@/components/AccessDenied", () => ({
+vi.mock("@/shared/components/AccessDenied", () => ({
   AccessDenied: () => <div data-testid="mock-access-denied">Access Denied Mock</div>,
 }));
 
-vi.mock("@/components/ConfirmModal", () => ({
+vi.mock("@/shared/components/ConfirmModal", () => ({
   ConfirmModal: ({
     isOpen,
     title,
@@ -299,7 +236,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import { Upload } from "@/components/Profile/UploadSentences"; // <-- adegua il path se necessario
+import { Upload } from "@/features/profile/components/UploadSentences"; // <-- adegua il path se necessario
 
 describe("Upload Component Suite", () => {
   const originalOpen = window.open;

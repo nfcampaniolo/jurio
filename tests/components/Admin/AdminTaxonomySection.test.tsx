@@ -10,7 +10,7 @@ vi.mock("lucide-react", () => ({
 }));
 
 /* ---------- component ---------- */
-import { AdminTaxonomySection } from "@/components/Admin/AdminTaxonomySection"; // <-- adegua il path se necessario
+import { AdminTaxonomySection } from "@/features/admin/components/AdminTaxonomySection"; // <-- adegua il path se necessario
 
 describe("AdminTaxonomySection", () => {
   const defaultMergeParams = {

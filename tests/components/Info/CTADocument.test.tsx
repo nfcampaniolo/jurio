@@ -20,7 +20,7 @@ vi.mock("react-icons/fa", () => ({
 }));
 
 /* ---------- mock ButtonCTA ---------- */
-vi.mock("@/components/ButtonCTA", () => ({
+vi.mock("@/shared/components/ButtonCTA", () => ({
   ButtonCTA: ({
     children,
     onClick,
@@ -33,7 +33,7 @@ vi.mock("@/components/ButtonCTA", () => ({
 }));
 
 /* ---------- component ---------- */
-import { CTADocument } from "@/components/Info/CTADocument"; // <-- adegua il path se necessario
+import { CTADocument } from "@/features/search/components/CTADocument"; // <-- adegua il path se necessario
 
 describe("CTADocument Component Suite", () => {
   beforeEach(() => {

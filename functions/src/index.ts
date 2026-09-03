@@ -425,11 +425,11 @@ export const legalAgent = onRequest(
   { 
     secrets: ["GOOGLE_GENAI_API_KEY", "OPENAI_API_KEY", "TAVILY_API_KEY"],
     timeoutSeconds: 300,
-    memory: "2GiB"
+    memory: "2GiB",
+    concurrency: 80 // Consigliato per scalare meglio su singola istanza
   }, 
   async (req, res) => {
     return corsHandlerDomain(req, res, async (): Promise<void> => {
-      // 1. GESTIONE CORS E METODO
       if (req.method === "OPTIONS") { res.status(204).end(); return; }
       if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
 
@@ -437,10 +437,9 @@ export const legalAgent = onRequest(
         await requireAppCheck(req);
         const uid = await requireUidFromAuthHeader(req);
 
-        // 1. ANTICIPIAMO IL PARSING DEL BODY per avere i riferimenti
         const { prompt, context, filters, docs, metadatiFascicolo, action, old_chat_uuid, new_fascicolo_uuid, title } = req.body;
         
-        // GESTIONE AZIONE DI MIGRAZIONE (Early exit se è una migrazione)
+        // GESTIONE MIGRAZIONE 
         if (action === "migrate") {
           const batch = db.batch();
           const oldChatDoc = await db.collection('chats').doc(old_chat_uuid).get();
@@ -456,19 +455,12 @@ export const legalAgent = onRequest(
 
           if (!oldChatSnap.empty) {
             const threadRef = db.collection('fascicoli').doc(new_fascicolo_uuid).collection('threads').doc(old_chat_uuid);
-            batch.set(threadRef, { 
-              title: oldChatTitle, 
-              createdAt: admin.firestore.FieldValue.serverTimestamp(), 
-              updatedAt: admin.firestore.FieldValue.serverTimestamp() 
-            });
+            batch.set(threadRef, { title: oldChatTitle, createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
             
             const newMsgRef = threadRef.collection('messages');
             oldChatSnap.forEach((doc) => {
               const data = doc.data();
-              batch.set(newMsgRef.doc(doc.id), {
-                ...sanitize(data),
-                timestamp: data.timestamp || data.createdAt || admin.firestore.FieldValue.serverTimestamp()
-              });
+              batch.set(newMsgRef.doc(doc.id), { ...sanitize(data), timestamp: data.timestamp || data.createdAt || admin.firestore.FieldValue.serverTimestamp() });
               batch.delete(doc.ref);
             });
             batch.delete(db.collection('chats').doc(old_chat_uuid));
@@ -478,30 +470,23 @@ export const legalAgent = onRequest(
           return;
         }
 
-        // 2. PREPARIAMO LE REF PER LA HISTORY
         const isFascicolo = context?.type === 'fascicolo';
         const fascicoloId = isFascicolo ? context.fascicolo_uuid : null;
         const parentId = isFascicolo ? context.fascicolo_uuid : context.chat_uuid;
         const threadId = isFascicolo ? context.thread_uuid : null;
 
-        if (!parentId || typeof parentId !== 'string') {
-          res.status(400).json({ error: "Bad Request", details: "Identificativo sessione mancante." });
-          return;
-        }
-        if (isFascicolo && (!threadId || typeof threadId !== 'string')) {
-          res.status(400).json({ error: "Bad Request", details: "Thread UUID richiesto per i fascicoli." });
-          return;
-        }
+        if (!parentId || typeof parentId !== 'string') { res.status(400).json({ error: "Bad Request", details: "Identificativo sessione mancante." }); return; }
 
         let messagesRef: FirebaseFirestore.CollectionReference;
+        const backgroundTasks: Promise<any>[] = []; // Gestione sicura dei task pendenti
+
         if (isFascicolo && threadId) {
           messagesRef = db.collection('fascicoli').doc(parentId).collection('threads').doc(threadId).collection('messages');
-          processFascicoloDocs(fascicoloId!, docs || []); // Lasciato asincrono in background intenzionalmente
+          backgroundTasks.push(processFascicoloDocs(fascicoloId!, docs || []).catch(e => console.error("Errore processFascicoloDocs:", e)));
         } else {
           messagesRef = db.collection('chats').doc(parentId).collection('messages');
         }
 
-        // 3. ESECUZIONE PARALLELA (Utente + History) = -300/400ms di latenza
         const userPromise = db.collection("register").doc(uid).get();
         const historyPromise = messagesRef.orderBy('timestamp', 'desc').limit(6).get();
 
@@ -515,11 +500,13 @@ export const legalAgent = onRequest(
                      : ["business", "business_m"].includes(planId) ? { perMinute: 20, perDay: 200 }
                      : { perMinute: 60, perDay: 10_000 };
         
-        // 4. ESECUZIONE LIMITI (in parallelo)
-        await Promise.all([
-          consumePerMinuteFeature(uid, "legal_agent" as any, limits.perMinute),
-          consumeDailyFeature(uid, "legal_agent" as any, limits.perDay)
-        ]);
+        // RATE LIMITING NON BLOCCANTE (Eseguito in background)
+        backgroundTasks.push(
+          Promise.all([
+            consumePerMinuteFeature(uid, "legal_agent" as any, limits.perMinute),
+            consumeDailyFeature(uid, "legal_agent" as any, limits.perDay)
+          ]).catch(e => console.error("Errore limiti:", e))
+        );
 
         const dbHistory = historySnap.docs.map((doc) => {
           const data = doc.data();
@@ -527,54 +514,38 @@ export const legalAgent = onRequest(
         }).reverse();
         const isFirstMessage = historySnap.empty;
 
-        // 5. CONFIGURAZIONE SSE PER LO STREAMING
+        // FLUSH HEADER SSE: Apre la connessione istantaneamente
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders(); 
 
-        // 6. AVVIO FLOW AI
-        // Passiamo docs (ID allegati), userId (per filtri RAG) e fascicoloId (per ricerca mirata)
         const flowStream = legalAgentFlow.stream({
-          prompt,
-          filters,
-          docs: docs || [], 
-          history: dbHistory,
-          isFirstMessage,
-          userId: uid,
-          fascicoloId: fascicoloId,
-          metadatiFascicolo: metadatiFascicolo || {}
+          prompt, filters, docs: docs || [], history: dbHistory, isFirstMessage, userId: uid, fascicoloId: fascicoloId, metadatiFascicolo: metadatiFascicolo || {}
         });
 
         for await (const chunk of flowStream.stream) {
           res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
         }
 
-        // 7. ELABORAZIONE OUTPUT FINALE
         const finalOutput = await flowStream.output; 
         const sanitizedResult = sanitize(finalOutput);
         
-        // 8. CHIUSURA STREAM IMMMEDIATA (Risparmia latenza al client)
         res.write(`data: ${JSON.stringify({ result: sanitizedResult })}\n\n`);
         res.write(`data: [DONE]\n\n`);
-        res.end(); // Il client riceve la risposta qui e chiude il caricamento
+        res.end(); // Libera la UI del client immediatamente
 
-        // 9. SALVATAGGIO BATCH IN BACKGROUND (Il processo Cloud Run continua finché la Promise esterna non risolve)
+        // PREPARAZIONE BATCH UPDATE
         const batch = db.batch();
-        batch.set(messagesRef.doc(), {
-          role: 'user', content: prompt, timestamp: admin.firestore.FieldValue.serverTimestamp()
-        });
-        batch.set(messagesRef.doc(), {
-          role: 'model', content: sanitizedResult.risposta, sources: sanitizedResult.fonti || [], timestamp: admin.firestore.FieldValue.serverTimestamp()
-        });
+        batch.set(messagesRef.doc(), { role: 'user', content: prompt, timestamp: admin.firestore.FieldValue.serverTimestamp() });
+        batch.set(messagesRef.doc(), { role: 'model', content: sanitizedResult.risposta, sources: sanitizedResult.fonti || [], timestamp: admin.firestore.FieldValue.serverTimestamp() });
         
         const parentRef = db.collection(isFascicolo ? 'fascicoli' : 'chats').doc(parentId);
         const parentUpdate: any = { updatedAt: admin.firestore.FieldValue.serverTimestamp(), ownerId: uid };
 
         if (isFirstMessage && sanitizedResult.titoloGenerato) {
           if (isFascicolo && threadId) {
-            batch.set(db.collection('fascicoli').doc(parentId).collection('threads').doc(threadId), {
-              title: sanitizedResult.titoloGenerato, createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp()
-            }, { merge: true });
+            batch.set(db.collection('fascicoli').doc(parentId).collection('threads').doc(threadId), { title: sanitizedResult.titoloGenerato, createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
             if (context.title) parentUpdate.title = context.title;
           } else {
             parentUpdate.title = sanitizedResult.titoloGenerato;
@@ -585,7 +556,10 @@ export const legalAgent = onRequest(
         }
         
         batch.set(parentRef, parentUpdate, { merge: true });
-        await batch.commit(); // Eseguito mentre il client sta già leggendo
+
+        // Aggiungiamo la scrittura DB ai task in background e attendiamo la fine sicura
+        backgroundTasks.push(batch.commit().catch(e => console.error("Errore batch:", e)));
+        await Promise.all(backgroundTasks);
 
       } catch (err: any) {
         const msg = err instanceof Error ? err.message : "Internal error";
@@ -1716,73 +1690,71 @@ export const submitFeedback = onRequest(
       if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
       try {
-        // 1. Verifiche di sicurezza standard
         await requireAppCheck(req);
         const uid = await requireUidFromAuthHeader(req);
         
-        // 2. Estrazione e validazione del payload dal componente React
         const body: any = req.body ?? {};
         const isThumbsUp = typeof body?.isThumbsUp === "boolean" ? body.isThumbsUp : null;
-        const ids: string[] = Array.isArray(body?.ids) ? body.ids : [];
         const notes = typeof body?.notes === "string" ? body.notes.trim() : "";
+        
+        // Qui facciamo solo una pulizia base degli ID arrivati
+        const rawIds: any[] = Array.isArray(body?.ids) ? body.ids : [];
+        const ids = rawIds.map(id => String(id || "").trim()).filter(id => id.length > 0);
 
         if (isThumbsUp === null) return res.status(400).json({ error: "Missing or invalid 'isThumbsUp'" });
+        
         if (ids.length === 0) {
-          return res.status(200).json({ 
-            success: true, 
-            message: "Nessun ID fornito, nessuna operazione eseguita." 
-          });
+          return res.status(200).json({ success: true, message: "Nessun ID valido fornito." });
         }
 
+        // ==========================================
         // 3. LOGICA FEEDBACK POSITIVO
+        // ==========================================
         if (isThumbsUp) {
-          // Creiamo i riferimenti ai documenti
-          const refs = ids.map(id=> db.collection("sentences").doc(id));
+          // CRITICO: Qui scartiamo i link web! Firestore crasherebbe e non possiamo 
+          // aggiornare documenti che non risiedono nel nostro DB.
+          const validDbIds = ids.filter(id => !id.includes("/"));
           
-          // Li recuperiamo per verificare che esistano effettivamente ("se li trova")
+          if (validDbIds.length === 0) {
+             return res.status(200).json({ success: true, message: "Feedback ignorato: erano solo link esterni." });
+          }
+
+          const refs = validDbIds.map(id => db.collection("sentences").doc(id));
           const snaps = await db.getAll(...refs);
           const batch = db.batch();
           
           let updatedCount = 0;
           snaps.forEach(snap => {
             if (snap.exists) {
-              // Aggiungiamo o incrementiamo il contatore dei feedback
               batch.update(snap.ref, { feedbacks: FieldValue.increment(1) });
               updatedCount++;
             }
           });
 
-          // Eseguiamo l'aggiornamento in blocco solo se ci sono documenti trovati
-          if (updatedCount > 0) {
-            await batch.commit();
-          }
+          if (updatedCount > 0) await batch.commit();
 
-          return res.status(200).json({ 
-            success: true, 
-            message: `Feedback positivo registrato per ${updatedCount} documenti.` 
-          });
+          return res.status(200).json({ success: true, message: `Feedback positivo per ${updatedCount} doc.` });
         } 
         
+        // ==========================================
         // 4. LOGICA FEEDBACK NEGATIVO
+        // ==========================================
         else {
-          // Controlli di routine sulla lunghezza del testo integrativo
           if (notes.length > MAX_NOTES_CHARS) {
-            return res.status(413).json({ error: "Notes length exceeds maximum allowed limit" });
+            return res.status(413).json({ error: "Notes length exceeds maximum limit" });
           }
 
-          // Aggiungiamo un nuovo record nella collection complaints
+          // Qui INCLUDIAMO anche i link web! Così nel pannello di amministrazione
+          // vedi esattamente quale URL ha fatto arrabbiare l'utente.
           await db.collection("complaints").add({
             uid: uid,
-            urls: ids,
+            urls: ids, // Passiamo tutto, URL compresi
             reason: notes,    
             status: "pending",  
             createdAt: FieldValue.serverTimestamp()
           });
 
-          return res.status(200).json({ 
-            success: true, 
-            message: "Reclamo/feedback negativo registrato con successo." 
-          });
+          return res.status(200).json({ success: true, message: "Reclamo registrato con successo." });
         }
 
       } catch (err: any) {
@@ -1790,7 +1762,12 @@ export const submitFeedback = onRequest(
         console.error("Error in submitFeedback:", msg);
         
         const isAuth = msg.toLowerCase().includes("auth") || msg.toLowerCase().includes("bearer");
-        return res.status(isAuth ? 401 : 500).json({ error: "Process failed", details: msg });
+        if (isAuth) {
+          return res.status(401).json({ error: "Unauthorized", details: msg });
+        }
+        
+        // Fallback silenzioso per non rompere la UI utente
+        return res.status(200).json({ success: false, message: "Feedback scartato per anomalia." });
       }
     });
   }

@@ -14,7 +14,7 @@ const {
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/firebase", () => ({
+vi.mock("@/infrastructure/firebase", () => ({
   firebaseApp: "mock_firebase_app",
 }));
 
@@ -22,7 +22,7 @@ vi.mock("firebase/auth", () => ({
   getAuth: (app: unknown) => mockGetAuth(app),
 }));
 
-vi.mock("@/services/appCheck", () => ({
+vi.mock("@/infrastructure/appCheck", () => ({
   initializeFirebaseAppCheck: () => mockInitAppCheck(),
 }));
 
@@ -36,7 +36,7 @@ import {
   getCurrentUser,
   getCurrentUserId,
   getSecurityTokens,
-} from "@/services/security";
+} from "@/infrastructure/security";
 
 describe("Security Service Suite", () => {
   beforeEach(() => {

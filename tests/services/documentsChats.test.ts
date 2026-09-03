@@ -18,7 +18,7 @@ const {
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: mockGetDb,
 }));
@@ -34,7 +34,7 @@ vi.mock("firebase/firestore", () => ({
 
 /* ---------- subject under test ---------- */
 // Adeguare il path se il file si chiama documentsChats.ts o chatService.ts
-import { listChatsByUser, fetchChatMessages } from "@/services/documentsChats";
+import { listChatsByUser, fetchChatMessages } from "@/shared/services/documentsChats";
 
 describe("Documents & Chats Service Suite", () => {
   const fakeDbInstance = { _db: "firestore_mock" };

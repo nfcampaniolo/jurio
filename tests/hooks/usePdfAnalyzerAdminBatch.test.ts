@@ -59,12 +59,12 @@ vi.mock("@/context/useAuth", () => ({
   useAuth: () => mockAuthState,
 }));
 
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   __esModule: true,
   trackEvent: (name: string, payload?: Record<string, unknown>) => mockTrackEvent(name, payload),
 }));
 
-vi.mock("@/services/perf", () => ({
+vi.mock("@/infrastructure/perf", () => ({
   __esModule: true,
   withTrace: async (_name: string, _meta: unknown, fn: () => Promise<unknown>) => fn(),
 }));
@@ -74,7 +74,7 @@ vi.mock("@/config/apiClient", () => ({
   fetchWithSecurity: (...args: unknown[]) => mockFetchWithSecurity(...args),
 }));
 
-vi.mock("@/hooks/extractors", () => ({
+vi.mock("@/shared/services/extractors", () => ({
   __esModule: true,
   SUPPORTED_FORMATS_MSG: "Formato documento non supportato.",
   extractTextFromFile: (file: File) => mockExtractTextFromFile(file),
@@ -88,12 +88,12 @@ vi.mock("tesseract.js", () => ({
   PSM: { AUTO: 3 },
 }));
 
-vi.mock("@/services/document", () => ({
+vi.mock("@/shared/services/document", () => ({
   __esModule: true,
   loadMaxima: (...args: unknown[]) => mockLoadMaxima(...args),
 }));
 
-vi.mock("@/services/storage", () => ({
+vi.mock("@/shared/services/storage", () => ({
   __esModule: true,
   loadSentence: (...args: unknown[]) => mockLoadSentence(...args),
 }));
@@ -111,7 +111,7 @@ const createMockFileList = (files: File[]): FileList => {
 };
 
 /* ---------- subject under test ---------- */
-import { usePdfAnalyzerAdminBatch } from "@/hooks/usePdfAnalyzerBatch";
+import { usePdfAnalyzerAdminBatch } from "@/features/admin/hooks/usePdfAnalyzerBatch";
 
 describe("usePdfAnalyzerAdminBatch Hook Suite", () => {
   let objectUrlCount = 0;

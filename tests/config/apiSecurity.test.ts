@@ -6,7 +6,7 @@ let mockCurrentUser: { getIdToken: typeof mockGetIdToken } | null = {
   getIdToken: mockGetIdToken,
 };
 
-vi.mock("@/services/firebase", () => ({
+vi.mock("@/infrastructure/firebase", () => ({
   __esModule: true,
   firebaseApp: {},
 }));
@@ -19,7 +19,7 @@ vi.mock("firebase/auth", () => ({
 }));
 
 const mockInitializeFirebaseAppCheck = vi.fn();
-vi.mock("@/services/appCheck", () => ({
+vi.mock("@/infrastructure/appCheck", () => ({
   __esModule: true,
   initializeFirebaseAppCheck: () => mockInitializeFirebaseAppCheck(),
 }));

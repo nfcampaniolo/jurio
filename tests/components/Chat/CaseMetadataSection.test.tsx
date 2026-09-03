@@ -35,7 +35,7 @@ vi.mock("react-hot-toast", () => ({
 /* ---------- mock getDb ---------- */
 const mockDbInstance = {};
 const mockGetDb = vi.fn().mockResolvedValue(mockDbInstance);
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   getDb: () => mockGetDb(),
 }));
 
@@ -58,7 +58,7 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 /* ---------- component ---------- */
-import { CaseMetadataSection } from "@/components/Chat/CaseMetadataSection"; // <-- adegua il path se necessario
+import { CaseMetadataSection } from "@/features/chat/components/CaseMetadataSection"; // <-- adegua il path se necessario
 
 describe("CaseMetadataSection", () => {
   beforeEach(() => {

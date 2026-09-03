@@ -26,7 +26,7 @@ vi.mock("react-icons/fi", () => ({
 }));
 
 /* ---------- component ---------- */
-import ConfigurazioneLeChat from "@/components/Guida/ConfigurazioneLeChat"; // <-- adegua il path se necessario
+import ConfigurazioneLeChat from "@/features/guide/components/ConfigurazioneLeChat"; // <-- adegua il path se necessario
 
 describe("Guida - ConfigurazioneLeChat Component Suite", () => {
   const originalClipboard = navigator.clipboard;

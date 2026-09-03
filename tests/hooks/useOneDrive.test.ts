@@ -50,7 +50,7 @@ vi.mock("@/config/apiClient", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { useOneDrive, type OneDriveFile } from "@/hooks/useOneDrive";
+import { useOneDrive, type OneDriveFile } from "@/features/profile/hooks/useOneDrive";
 
 describe("useOneDrive Hook Suite", () => {
   beforeEach(() => {

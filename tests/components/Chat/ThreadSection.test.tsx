@@ -17,7 +17,7 @@ vi.mock("lucide-react", () => {
 });
 
 /* ---------- component ---------- */
-import { ThreadSection } from "@/components/Chat/ThreadSection";
+import { ThreadSection } from "@/features/chat/components/ThreadSection";
 import type { ThreadItem } from "@/interfaces/interfaces";
 
 describe("ThreadSection Component Suite", () => {

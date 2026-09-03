@@ -20,7 +20,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import Accesso from "@/components/Guida/Accesso"; // <-- adegua il path se necessario
+import Accesso from "@/features/guide/components/Accesso"; // <-- adegua il path se necessario
 
 describe("Guida - Accesso Component Suite", () => {
   beforeEach(() => {

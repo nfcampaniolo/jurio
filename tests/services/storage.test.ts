@@ -19,7 +19,7 @@ const {
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/storageClient", () => ({
+vi.mock("@/infrastructure/storageClient", () => ({
   getStorageClient: () => mockGetStorageClient(),
 }));
 
@@ -49,7 +49,7 @@ import {
   getDocumentStorage,
   deleteDocumentStorage,
   getAvatar,
-} from "@/services/storage";
+} from "@/shared/services/storage";
 
 describe("Storage Service Suite", () => {
   beforeEach(() => {

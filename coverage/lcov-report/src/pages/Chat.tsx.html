@@ -725,21 +725,21 @@ import { Helmet } from "@dr.pogodin/react-helmet";
 &nbsp;
 // --- Componenti Esistenti ---
 import { Header } from "@/components/Info/Header";
-import { FilterModal } from "@/components/Chat/Filters";
-import { DocumentSelectorPanel } from "@/components/Chat/DocumentSelectorPanel";
-import { TitlePromptModal } from "@/components/Chat/TitlePromptModal";
-import { AccessDenied } from "@/components/AccessDenied";
-import { RightSidebar } from "@/components/Chat/RightSidebar";
+import { FilterModal } from "@/features/chat/components/Filters";
+import { DocumentSelectorPanel } from "@/features/chat/components/DocumentSelectorPanel";
+import { TitlePromptModal } from "@/features/chat/components/TitlePromptModal";
+import { AccessDenied } from "@/shared/components/AccessDenied";
+import { RightSidebar } from "@/features/chat/components/RightSidebar";
 &nbsp;
 // --- Componenti Estratti ---
-import { SelectionScreen } from "@/components/Chat/SelectionScreen";
-import { ChatWorkspace } from "@/components/Chat/ChatWorkspace";
-import { ChatHeader } from "@/components/Chat/ChatHeader";
-import { MessageList } from "@/components/Chat/MessageList";
-import { ChatInput } from "@/components/Chat/ChatInput";
-import { MessageTimeline } from "@/components/Chat/MessageTimeline";
+import { SelectionScreen } from "@/features/chat/components/SelectionScreen";
+import { ChatWorkspace } from "@/features/chat/components/ChatWorkspace";
+import { ChatHeader } from "@/features/chat/components/ChatHeader";
+import { MessageList } from "@/features/chat/components/MessageList";
+import { ChatInput } from "@/features/chat/components/ChatInput";
+import { MessageTimeline } from "@/features/chat/components/MessageTimeline";
 &nbsp;
-import { useLegalChat } from "@/hooks/useLegalChat";
+import { useLegalChat } from "@/features/chat/hooks/useLegalChat";
 import { type AttachedDocument } from "@/interfaces/interfaces";
 &nbsp;
 interface LocationState {

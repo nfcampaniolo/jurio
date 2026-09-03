@@ -15,7 +15,7 @@ const {
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/chatLogic", () => ({
+vi.mock("@/features/chat/hooks/chatLogic", () => ({
   __esModule: true,
   chatCache: {
     get: () => mockChatCacheGet(),
@@ -26,7 +26,7 @@ vi.mock("@/services/chatLogic", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { useJurioChatbot } from "@/hooks/useJurioChatbot"; // <-- adegua il path di import se necessario
+import { useJurioChatbot } from "@/features/info/hooks/useJurioChatbot"; // <-- adegua il path di import se necessario
 
 describe("useJurioChatbot Hook Suite", () => {
   beforeEach(() => {

@@ -27,7 +27,7 @@ vi.mock("framer-motion", async () => ({
 }));
 
 /* ---------- mock Typewriter ---------- */
-vi.mock("@/components/Typewriter", () => ({
+vi.mock("@/shared/components/Typewriter", () => ({
   Typewriter: ({ text, animate }: { text: string; animate: boolean }) => (
     <div data-testid="typewriter" data-animate={animate ? "true" : "false"}>
       {text}
@@ -36,7 +36,7 @@ vi.mock("@/components/Typewriter", () => ({
 }));
 
 /* ---------- mock FeedbackComponent ---------- */
-vi.mock("@/components/FeedbackComponent", () => ({
+vi.mock("@/shared/components/FeedbackComponent", () => ({
   FeedbackComponent: ({ sourceIds }: { sourceIds: string[] }) => (
     <div data-testid="feedback-component" data-source-ids={sourceIds.join(",")}>
       Feedback Mock
@@ -45,7 +45,7 @@ vi.mock("@/components/FeedbackComponent", () => ({
 }));
 
 /* ---------- component ---------- */
-import { MessageList } from "@/components/Chat/MessageList";
+import { MessageList } from "@/features/chat/components/MessageList";
 import type { Message, Source } from "@/interfaces/interfaces";
 
 describe("MessageList", () => {

@@ -20,7 +20,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import AnalisiDocumenti from "@/components/Guida/AnalisiDocumenti"; // <-- adegua il path se necessario
+import AnalisiDocumenti from "@/features/guide/components/AnalisiDocumenti"; // <-- adegua il path se necessario
 
 describe("Guida - AnalisiDocumenti Component Suite", () => {
   beforeEach(() => {

@@ -10,7 +10,7 @@ import {
   detectSource,
   translateRiferimento,
   makeRiferimentiNormativiKeys,
-} from "@/services/riferimentiTranslator";
+} from "@/shared/hooks/riferimentiTranslator";
 
 describe("Riferimenti Normativi Utility Suite", () => {
   test("normalize pulisce correttamente gli spazi e i trattini", () => {

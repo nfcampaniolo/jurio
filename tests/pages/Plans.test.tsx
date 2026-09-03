@@ -1,8 +1,8 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
-import type { PlanUI } from "@/services/plans";
-import type { CouponData } from "@/hooks/discount";
+import type { PlanUI } from "@/features/plans/hooks/plans";
+import type { CouponData } from "@/features/plans/hooks/discount";
 
 /* ---------- mock react-router-dom ---------- */
 const mockNavigate = vi.fn();
@@ -62,20 +62,20 @@ let mockProfileState = {
   assignedTeamId: null as string | null,
 };
 
-vi.mock("@/hooks/useProfile", () => ({
+vi.mock("@/features/profile/hooks/useProfile", () => ({
   __esModule: true,
   useProfile: () => mockProfileState,
 }));
 
 /* ---------- mock services & hooks ---------- */
 const mockFetchPlansFromDb = vi.fn<() => Promise<PlanUI[]>>();
-vi.mock("@/services/plans", () => ({
+vi.mock("@/features/plans/hooks/plans", () => ({
   __esModule: true,
   fetchPlansFromDb: () => mockFetchPlansFromDb(),
 }));
 
 const mockFetchUserCoupon = vi.fn<(uid: string) => Promise<CouponData | null>>();
-vi.mock("@/hooks/discount", () => ({
+vi.mock("@/features/plans/hooks/discount", () => ({
   __esModule: true,
   fetchUserCoupon: (uid: string) => mockFetchUserCoupon(uid),
 }));
@@ -86,13 +86,13 @@ let mockTrialState = {
   trialLeft: 5 as number | null,
 };
 
-vi.mock("@/hooks/usePlans", () => ({
+vi.mock("@/features/plans/hooks/usePlans", () => ({
   __esModule: true,
   useTrialInfo: () => mockTrialState,
 }));
 
 /* ---------- mock planDomain ---------- */
-vi.mock("@/hooks/planlDomain", () => ({
+vi.mock("@/features/plans/hooks/planlDomain", () => ({
   __esModule: true,
   normalizeStatus: (status: string) => status ?? "nessuno",
   isTrialStatus: (status: string) => status === "prova" || status === "trial",
@@ -104,7 +104,7 @@ vi.mock("@/hooks/planlDomain", () => ({
 }));
 
 /* ---------- mock subcomponents ---------- */
-vi.mock("@/components/Plans/PaymentModal", () => ({
+vi.mock("@/features/plans/components/PaymentModal", () => ({
   __esModule: true,
   default: ({
     open,
@@ -125,7 +125,7 @@ vi.mock("@/components/Plans/PaymentModal", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/Plans/DiscountCoupon", () => ({
+vi.mock("@/features/plans/components/DiscountCoupon", () => ({
   __esModule: true,
   DiscountCoupon: ({
     activeCoupon,
@@ -152,7 +152,7 @@ vi.mock("@/components/Plans/DiscountCoupon", () => ({
   ),
 }));
 
-vi.mock("@/components/Plans/CurrentPlanCard", () => ({
+vi.mock("@/features/plans/components/CurrentPlanCard", () => ({
   __esModule: true,
   CurrentPlanCard: ({
     openPaymentForPlan,
@@ -175,7 +175,7 @@ vi.mock("@/components/Plans/CurrentPlanCard", () => ({
   ),
 }));
 
-vi.mock("@/components/Plans/PlansGrid", () => ({
+vi.mock("@/features/plans/components/PlansGrid", () => ({
   __esModule: true,
   PlansGrid: ({
     billing,
@@ -211,7 +211,7 @@ vi.mock("@/components/Plans/PlansGrid", () => ({
   ),
 }));
 
-vi.mock("@/components/Plans/TeamPlansSection", () => ({
+vi.mock("@/features/plans/components/TeamPlansSection", () => ({
   __esModule: true,
   TeamPlansSection: ({
     userHasTeam,
@@ -228,7 +228,7 @@ vi.mock("@/components/Plans/TeamPlansSection", () => ({
   ),
 }));
 
-vi.mock("@/components/Plans/PaymentHistory", () => ({
+vi.mock("@/features/plans/components/PaymentHistory", () => ({
   __esModule: true,
   PaymentHistory: ({ uid }: { uid: string }) => (
     <div data-testid="payment-history" data-uid={uid}>
@@ -274,7 +274,7 @@ const samplePlans: PlanUI[] = [
 ];
 
 /* ---------- component under test ---------- */
-import { Plans } from "@/pages/Plans";
+import { Plans } from "@/features/plans/Plans";
 
 describe("Plans Page Suite", () => {
   beforeEach(() => {

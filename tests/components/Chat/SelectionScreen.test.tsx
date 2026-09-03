@@ -46,12 +46,12 @@ vi.mock("framer-motion", async () => ({
 }));
 
 /* ---------- mock Footer ---------- */
-vi.mock("@/components/Info/Footer", () => ({
+vi.mock("@/shared/components/Footer", () => ({
   Footer: () => <footer data-testid="footer-mock">Footer Mock</footer>,
 }));
 
 /* ---------- component ---------- */
-import { SelectionScreen } from "@/components/Chat/SelectionScreen"; // <-- adegua il path se necessario
+import { SelectionScreen } from "@/features/chat/components/SelectionScreen"; // <-- adegua il path se necessario
 
 describe("SelectionScreen Component Suite", () => {
   const mockStartTempChat = vi.fn();

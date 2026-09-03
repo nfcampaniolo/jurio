@@ -31,10 +31,9 @@ const { mockTeamMembersState } = vi.hoisted(() => ({
 }));
 
 /* ---------- mock hook useTeamMembers ---------- */
-vi.mock("@/hooks/teams", () => ({
+vi.mock("@/features/teams/hooks/useTeamMembers", () => ({ // <-- Update this path
   useTeamMembers: () => mockTeamMembersState,
 }));
-
 /* ---------- mock react-icons/fi ---------- */
 vi.mock("react-icons/fi", () => {
   const Icon = (name: string) => (props: React.SVGProps<SVGSVGElement> & { size?: number }) => (
@@ -75,7 +74,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import TeamMembers from "@/components/Profile/TeamMembers"; // <-- adegua il path se necessario
+import TeamMembers from "@/features/teams/components/TeamMembers"; // <-- adegua il path se necessario
 
 describe("TeamMembers Component Suite", () => {
   const dummyMembers: MockTeamMember[] = [

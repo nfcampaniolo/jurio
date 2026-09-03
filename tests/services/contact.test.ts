@@ -45,14 +45,14 @@ vi.mock("./db", () => ({
   getDb: mockGetDb,
 }));
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: mockGetDb,
 }));
 
 /* ---------- subject under test ---------- */
 // Adeguare il path di import se il file ha un nome specifico (es. contact.ts o register.ts)
-import { createContact } from "@/services/contact";
+import { createContact } from "@/features/info/hooks/contact";
 
 describe("Contact Service - createContact Suite", () => {
   const fakeDb = { id: "firestore_test_db" };

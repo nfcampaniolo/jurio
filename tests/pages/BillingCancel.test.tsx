@@ -9,7 +9,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import BillingCancel from "@/pages/BillingCancel"; // <-- adegua il path se necessario
+import BillingCancel from "@/features/plans/BillingCancel"; // <-- adegua il path se necessario
 
 describe("BillingCancel Page Suite", () => {
   beforeEach(() => {

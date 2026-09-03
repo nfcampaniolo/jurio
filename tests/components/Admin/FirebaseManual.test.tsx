@@ -18,12 +18,12 @@ const mockHandleUpload = vi.fn();
 
 const mockUseContentUploader = vi.fn();
 
-vi.mock("@/services/admin", () => ({
+vi.mock("@/features/admin/hooks/admin", () => ({
   useContentUploader: () => mockUseContentUploader(),
 }));
 
 /* ---------- component ---------- */
-import FirebaseManual from "@/components/Admin/FirebaseManual"; // <-- aggiorna il path se necessario
+import FirebaseManual from "@/features/admin/components/FirebaseManual"; // <-- aggiorna il path se necessario
 
 describe("FirebaseManual", () => {
   beforeEach(() => {

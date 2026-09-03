@@ -219,8 +219,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useParams } from 'react-router-dom';
 import { Helmet } from "@dr.pogodin/react-helmet";
-import GuideLayout from '@/components/Guida/GuideLayout';
-import { guideContent } from '@/hooks/guideContent';
+import GuideLayout from '@/features/guide/components/GuideLayout';
+import { guideContent } from '@/features/guide/hooks/guideContent';
 &nbsp;
 export default function Guida() {
   const { slug } = useParams&lt;{ slug: string }&gt;();

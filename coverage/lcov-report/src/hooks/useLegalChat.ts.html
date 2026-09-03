@@ -571,7 +571,7 @@ import type { Timestamp } from "firebase/firestore";
 &nbsp;
 import type { SessionType, Source, Message, AttachedDocument, PastFascicolo, PastChat, DBThreadPayload } from "@/interfaces/interfaces";
 import { useAuth } from "@/context/useAuth";
-import { listDocumentsByUser, listFascicoliByUser, listChatsByUser, fetchChatMessages, fetchFascicoloData } from "@/services/document";
+import { listDocumentsByUser, listFascicoliByUser, listChatsByUser, fetchChatMessages, fetchFascicoloData } from "@/shared/services/document";
 import { getChatUrl } from "@/config/env";
 &nbsp;
 // Import dei sotto-hook
@@ -769,7 +769,7 @@ export const useLegalChat = (initialData?: { docs?: AttachedDocument[] }) =&gt; 
     setIsConverting(true);
     const newFascicoloId = uuidv4(); const newThreadId = <span class="branch-1 cbranch-no" title="branch not covered" >chatId || uuidv4();</span>
     try {
-      const { getSecurityTokens } = await import('@/services/security');
+      const { getSecurityTokens } = await import('@/infrastructure/security');
       const { authToken, appCheckToken } = await getSecurityTokens();
       const headers: HeadersInit = { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` };
       <span class="missing-if-branch" title="else path not taken" >E</span>if (appCheckToken) headers['X-Firebase-AppCheck'] = appCheckToken;

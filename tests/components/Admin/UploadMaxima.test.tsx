@@ -28,12 +28,12 @@ let mockInputRef: { current: HTMLInputElement | null };
 
 const mockUsePdfAnalyzerAdminBatch = vi.fn();
 
-vi.mock("@/hooks/usePdfAnalyzerBatch", () => ({
+vi.mock("@/features/admin/hooks/usePdfAnalyzerBatch", () => ({
   usePdfAnalyzerAdminBatch: () => mockUsePdfAnalyzerAdminBatch(),
 }));
 
 /* ---------- subject under test ---------- */
-import { UploadMaxima } from "@/components/Admin/UploadMaxima";
+import { UploadMaxima } from "@/features/admin/components/UploadMaxima";
 
 describe("UploadMaxima", () => {
   beforeEach(() => {

@@ -35,41 +35,29 @@ vi.mock("@/context/useAuth", () => ({
   useAuth: () => mockUseAuth(),
 }));
 
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   __esModule: true,
   trackEvent: (...args: unknown[]) => mockTrackEvent(...args),
 }));
 
-vi.mock("@/services/search", () => ({
+vi.mock("@/features/search/hooks/search", () => ({
   __esModule: true,
   loadDistinctSottocategorie: mockLoadDistinctSottocategorie,
 }));
 
-vi.mock("@/hooks/useSearchFilters", () => ({
+vi.mock("@/features/search/hooks/useSearchFilters", () => ({
   __esModule: true,
   useSearchFilters: () => mockFilters,
 }));
 
-vi.mock("@/hooks/useSearchEngine", () => ({
-  __esModule: true,
-  useSearchHistory: () => mockHistory,
-  useSearchEngine: () => mockEngine,
-}));
-
-// Fallback per risoluzione percorsi relativi interni al modulo
-vi.mock("./useSearchFilters", () => ({
-  __esModule: true,
-  useSearchFilters: () => mockFilters,
-}));
-
-vi.mock("./useSearchEngine", () => ({
+vi.mock("@/features/search/hooks/useSearchEngine", () => ({
   __esModule: true,
   useSearchHistory: () => mockHistory,
   useSearchEngine: () => mockEngine,
 }));
 
 /* ---------- subject under test ---------- */
-import { useSearchBar } from "@/hooks/useSearchBar";
+import { useSearchBar } from "@/features/search/hooks/useSearchBar";
 
 describe("useSearchBar Hook Suite", () => {
   const originalWindowOpen = window.open;

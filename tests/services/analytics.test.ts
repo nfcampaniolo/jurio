@@ -18,7 +18,7 @@ vi.mock("firebase/analytics", () => ({
   logEvent: (...args: unknown[]) => mockLogEvent(...args),
 }));
 
-vi.mock("@/services/optionalService", () => ({
+vi.mock("@/infrastructure/optionalService", () => ({
   __esModule: true,
   initializeOptionalServices: () => mockInitializeOptionalServices(),
   getAnalyticsInstance: () => mockGetAnalyticsInstance(),
@@ -26,7 +26,7 @@ vi.mock("@/services/optionalService", () => ({
 
 describe("Analytics Service Suite", () => {
   const fakeAnalyticsInstance = { app: { name: "jurio-app" } } as unknown as Analytics;
-  let trackEvent: typeof import("@/services/analytics").trackEvent;
+  let trackEvent: typeof import("@/infrastructure/analytics").trackEvent;
 
   beforeEach(async () => {
     vi.resetModules();
@@ -37,7 +37,7 @@ describe("Analytics Service Suite", () => {
     mockGetAnalyticsInstance.mockReturnValue(fakeAnalyticsInstance);
 
     // Import dinamico per garantire un modulo isolato con cachedAnalytics resettato ad undefined
-    const analyticsModule = await import("@/services/analytics");
+    const analyticsModule = await import("@/infrastructure/analytics");
     trackEvent = analyticsModule.trackEvent;
   });
 

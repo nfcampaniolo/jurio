@@ -202,7 +202,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { collection, query, where, getDocs } from "firebase/firestore";
-import { getDb } from "@/services/db";
+import { getDb } from "@/infrastructure/db";
 import { toast } from "react-hot-toast";
 &nbsp;
 export const useTeamPlans = (userUid?: string, userHasTeam: boolean = false) =&gt; {

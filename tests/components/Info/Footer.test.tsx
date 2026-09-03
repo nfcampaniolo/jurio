@@ -26,7 +26,7 @@ vi.mock("react-icons/fa", () => ({
 }));
 
 /* ---------- component ---------- */
-import { Footer } from "@/components/Info/Footer"; // <-- adegua il path se necessario
+import { Footer } from "@/shared/components/Footer"; // <-- adegua il path se necessario
 
 describe("Footer Component Suite", () => {
   beforeEach(() => {

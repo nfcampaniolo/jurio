@@ -281,7 +281,7 @@
 import { loginWithEmail, registerWithEmail, resetPassword } from "../services/auth";
 import { useUserStore } from "../stores/userStore";
 import { useNavigate } from "react-router-dom";
-import { userExists } from "@/services/user";
+import { userExists } from "@/shared/services/user";
 import { toast } from "react-hot-toast";
 &nbsp;
 export function useAuthFormLogic(initialMode: "login" | "register") {

@@ -16,7 +16,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import ScrollToTop from "@/components/ScrollToTop"; // <-- adegua il path se necessario
+import ScrollToTop from "@/shared/components/ScrollToTop"; // <-- adegua il path se necessario
 
 describe("ScrollToTop Component Suite", () => {
   const originalScrollTo = window.scrollTo;

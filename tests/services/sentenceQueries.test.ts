@@ -40,16 +40,16 @@ const {
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   getDb: () => mockGetDb(),
 }));
 
-vi.mock("@/services/document", () => ({
+vi.mock("@/shared/services/document", () => ({
   _mapFirestoreDocToMassima: (id: string, data: unknown) =>
     mockMapToMassima(id, data as Record<string, unknown>),
 }));
 
-vi.mock("@/services/riferimentiTranslator", () => ({
+vi.mock("@/shared/hooks/riferimentiTranslator", () => ({
   makeRiferimentiNormativiKeys: (input: unknown) => mockMakeRiferimentiKeys(input),
 }));
 
@@ -91,7 +91,7 @@ import {
   isAuthzError,
   isUnavailableError,
   isNetworkError,
-} from "@/services/search";
+} from "@/features/search/hooks/search";
 
 describe("sentenceQueries Service Suite", () => {
   beforeEach(() => {

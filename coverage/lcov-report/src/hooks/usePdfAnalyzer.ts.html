@@ -1170,10 +1170,10 @@ import { toast } from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 import type { DocumentoGiurisprudenziale } from "@/interfaces/interfaces";
 import { useAuth } from "@/context/useAuth";
-import { trackEvent } from "@/services/analytics";
-import { withTrace } from "@/services/perf";
+import { trackEvent } from "@/infrastructure/analytics";
+import { withTrace } from "@/infrastructure/perf";
 import { fetchWithSecurity } from "@/config/apiClient";
-import { extractTextFromFile, getFileType, type DocumentFileType, ocrFileWithTesseract, extractTextFromMedia } from "@/hooks/extractors";  
+import { extractTextFromFile, getFileType, type DocumentFileType, ocrFileWithTesseract, extractTextFromMedia } from "@/shared/services/extractors";  
 &nbsp;
 /* ===========================
    COSTANTI
@@ -1353,7 +1353,7 @@ export const usePdfAnalyzer = () =&gt; {
 &nbsp;
     try {
       <span class="missing-if-branch" title="else path not taken" >E</span>if (file &amp;&amp; file.name) {
-        const { checkDuplicateDocument } = await import("@/services/document");
+        const { checkDuplicateDocument } = await import("@/shared/services/document");
         // ATTENZIONE: checkDuplicateDocument ora deve restituire l'ID (stringa) o null/false
         const existingDocId = await checkDuplicateDocument(user.uid, file.name);
         if (existingDocId) {
@@ -1375,8 +1375,8 @@ export const usePdfAnalyzer = () =&gt; {
   
   const executeAnalysis = async (promptId?:string, overwriteId?: string, ) =&gt; {
     <span class="missing-if-branch" title="if path not taken" >I</span>if (!extractedText || !user) <span class="cstat-no" title="statement not covered" >return;</span>
-    const { loadMaxima } = await import("@/services/document");
-    const { loadSentence } = await import("@/services/storage");
+    const { loadMaxima } = await import("@/shared/services/document");
+    const { loadSentence } = await import("@/shared/services/storage");
 &nbsp;
     const startedAt = performance.now();
     
@@ -1632,7 +1632,7 @@ export const usePdfAnalyzer = () =&gt; {
       // 2. SOVRASCRITTURA: ELIMINAZIONE DEL VECCHIO DOCUMENTO (Se richiesto)
       if (overwriteId) {
         try {
-          const { deleteDocument } = await import("@/services/document"); 
+          const { deleteDocument } = await import("@/shared/services/document"); 
           // Assicurati che "deleteDocument" accetti l'ID del documento da eliminare.
           await deleteDocument("documents",overwriteId);
           

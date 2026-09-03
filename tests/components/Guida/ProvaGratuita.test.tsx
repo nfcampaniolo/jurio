@@ -21,7 +21,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component ---------- */
-import ProvaGratuita from "@/components/Guida/ProvaGratuita"; // <-- adegua il path se necessario
+import ProvaGratuita from "@/features/guide/components/ProvaGratuita"; // <-- adegua il path se necessario
 
 describe("Guida - ProvaGratuita Component Suite", () => {
   beforeEach(() => {

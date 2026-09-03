@@ -37,7 +37,7 @@ interface DocumentViewerMockProps {
   onRemoveQuote: (index: number) => void;
 }
 
-vi.mock("@/components/Chat/DocumentViewer", () => ({
+vi.mock("@/features/chat/components/DocumentViewer", () => ({
   DocumentViewer: ({
     documents,
     onClose,
@@ -65,7 +65,7 @@ vi.mock("@/components/Chat/DocumentViewer", () => ({
 }));
 
 /* ---------- component ---------- */
-import { ChatWorkspace } from "@/components/Chat/ChatWorkspace"; // <-- adegua il path se necessario
+import { ChatWorkspace } from "@/features/chat/components/ChatWorkspace"; // <-- adegua il path se necessario
 import type { AttachedDocument } from "@/interfaces/interfaces";
 
 describe("ChatWorkspace", () => {

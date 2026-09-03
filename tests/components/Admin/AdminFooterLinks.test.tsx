@@ -1,6 +1,6 @@
 import { describe, test, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { AdminFooterLinks } from "@/components/Admin/AdminFooterLinks";
+import { AdminFooterLinks } from "@/features/admin/components/AdminFooterLinks";
 
 describe("AdminFooterLinks", () => {
   test("renderizza correttamente tutti i link con i relativi attributi href e classi", () => {

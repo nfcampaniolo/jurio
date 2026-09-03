@@ -71,7 +71,7 @@ vi.mock("react-router-dom", async () => {
 });
 
 /* ---------- mock hook ---------- */
-vi.mock("@/hooks/useRegisterPageLogic", () => ({
+vi.mock("@/features/auth/hooks/useRegisterPageLogic", () => ({
   useRegisterPageLogic: () => ({
     name: hookState.name,
     setName: mockSetName,
@@ -113,7 +113,7 @@ vi.mock("@/interfaces/interfaces", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { Register } from "@/pages/Register";
+import { Register } from "@/features/auth/Register";
 
 describe("Register Component Suite", () => {
   beforeEach(() => {

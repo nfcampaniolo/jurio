@@ -759,7 +759,7 @@ export interface MaintenanceProgressData {
 &nbsp;
 async function getSecureHeaders(): Promise&lt;HeadersInit&gt; {
   const { getSecurityTokens } = await import(
-    "@/services/security"
+    "@/infrastructure/security"
   );
 &nbsp;
   const {

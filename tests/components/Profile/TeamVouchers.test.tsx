@@ -53,7 +53,7 @@ const { mockTeamVouchersState } = vi.hoisted(() => ({
 }));
 
 /* ---------- mock hook useTeamVouchers ---------- */
-vi.mock("@/hooks/teams", () => ({
+vi.mock("@/features/teams/hooks/useTeamVouchers", () => ({
   useTeamVouchers: () => mockTeamVouchersState,
 }));
 
@@ -107,7 +107,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import TeamVouchers from "@/components/Profile/TeamVouchers"; // <-- adegua il path se necessario
+import TeamVouchers from "@/features/teams/components/TeamVouchers"; // <-- adegua il path se necessario
 
 describe("TeamVouchers Component Suite", () => {
   const dummyTeam: Team = {

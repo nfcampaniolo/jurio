@@ -38,7 +38,7 @@ import {
   findPlanByStatus,
   findPlanByKey,
   planCellClass,
-} from "@/hooks/planlDomain"; // <-- adegua il path se necessario
+} from "@/features/plans/hooks/planlDomain"; // <-- adegua il path se necessario
 
 describe("Subscription Utilities Suite", () => {
   describe("isTimestampLike", () => {

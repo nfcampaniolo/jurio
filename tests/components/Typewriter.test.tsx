@@ -1,6 +1,6 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, act } from "@testing-library/react";
-import { Typewriter } from "@/components/Typewriter";
+import { Typewriter } from "@/shared/components/Typewriter";
 
 /* =========================
    MOCKS

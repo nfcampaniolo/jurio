@@ -18,7 +18,7 @@ vi.mock("@/config/env", () => ({
   getAdminUrl: () => mockGetAdminUrl(),
 }));
 
-vi.mock("@/services/security", () => ({
+vi.mock("@/infrastructure/security", () => ({
   getSecurityTokens: () => mockGetSecurityTokens(),
 }));
 
@@ -27,7 +27,7 @@ import {
   executeAdminMaintenanceTask,
   executeAdminMergeCategoryTask,
   useContentUploader,
-} from "@/services/admin";
+} from "@/features/admin/hooks/admin";
 
 describe("Admin Maintenance & Content Uploader Suite", () => {
   beforeEach(() => {

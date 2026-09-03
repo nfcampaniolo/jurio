@@ -20,7 +20,7 @@ vi.mock("firebase/app-check", () => ({
   }),
 }));
 
-vi.mock("@/services/firebase", () => ({
+vi.mock("@/infrastructure/firebase", () => ({
   __esModule: true,
   firebaseApp: mockFirebaseApp,
 }));
@@ -52,7 +52,7 @@ describe("Firebase App Check Service Suite", () => {
     delete globalThis.window;
 
     try {
-      const { initializeFirebaseAppCheck } = await import("@/services/appCheck");
+      const { initializeFirebaseAppCheck } = await import("@/infrastructure/appCheck");
       const instance = initializeFirebaseAppCheck();
 
       expect(instance).toBeUndefined();
@@ -65,7 +65,7 @@ describe("Firebase App Check Service Suite", () => {
   test("emette un warning e restituisce undefined se VITE_RECAPTCHA_SITE_KEY manca", async () => {
     vi.stubEnv("VITE_RECAPTCHA_SITE_KEY", "");
 
-    const { initializeFirebaseAppCheck } = await import("@/services/appCheck");
+    const { initializeFirebaseAppCheck } = await import("@/infrastructure/appCheck");
     const instance = initializeFirebaseAppCheck();
 
     expect(instance).toBeUndefined();
@@ -80,7 +80,7 @@ describe("Firebase App Check Service Suite", () => {
     vi.stubEnv("DEV", true);
     vi.stubEnv("VITE_APPCHECK_DEBUG_TOKEN", "debug-token-guid-456");
 
-    const { initializeFirebaseAppCheck } = await import("@/services/appCheck");
+    const { initializeFirebaseAppCheck } = await import("@/infrastructure/appCheck");
     const instance = initializeFirebaseAppCheck();
 
     expect(
@@ -100,7 +100,7 @@ describe("Firebase App Check Service Suite", () => {
     vi.stubEnv("DEV", true);
     vi.stubEnv("VITE_APPCHECK_DEBUG_TOKEN", "");
 
-    const { initializeFirebaseAppCheck } = await import("@/services/appCheck");
+    const { initializeFirebaseAppCheck } = await import("@/infrastructure/appCheck");
     initializeFirebaseAppCheck();
 
     expect(console.warn).toHaveBeenCalledWith("⚠️ VITE_APPCHECK_DEBUG_TOKEN mancante.");
@@ -115,7 +115,7 @@ describe("Firebase App Check Service Suite", () => {
     vi.stubEnv("DEV", false);
     vi.stubEnv("VITE_APPCHECK_DEBUG_TOKEN", "debug-token-ignorato");
 
-    const { initializeFirebaseAppCheck } = await import("@/services/appCheck");
+    const { initializeFirebaseAppCheck } = await import("@/infrastructure/appCheck");
     initializeFirebaseAppCheck();
 
     expect(
@@ -128,7 +128,7 @@ describe("Firebase App Check Service Suite", () => {
     vi.stubEnv("VITE_RECAPTCHA_SITE_KEY", "recaptcha-v3-public-key");
     vi.stubEnv("DEV", false);
 
-    const { initializeFirebaseAppCheck } = await import("@/services/appCheck");
+    const { initializeFirebaseAppCheck } = await import("@/infrastructure/appCheck");
     const instance = initializeFirebaseAppCheck();
 
     expect(mockInitializeAppCheck).toHaveBeenCalledWith(
@@ -148,7 +148,7 @@ describe("Firebase App Check Service Suite", () => {
   test("riutilizza l'istanza singleton creata senza re-inizializzare nelle chiamate successive", async () => {
     vi.stubEnv("VITE_RECAPTCHA_SITE_KEY", "recaptcha-key-singleton");
 
-    const { initializeFirebaseAppCheck } = await import("@/services/appCheck");
+    const { initializeFirebaseAppCheck } = await import("@/infrastructure/appCheck");
 
     const firstCall = initializeFirebaseAppCheck();
     const secondCall = initializeFirebaseAppCheck();

@@ -89,7 +89,7 @@ vi.mock("@headlessui/react", () => ({
 }));
 
 /* ---------- mock DropZoneUploader ---------- */
-vi.mock("@/components/Document/DropZoneUploader", () => ({
+vi.mock("@/features/chat/components/DropZoneUploader", () => ({
   DropZoneUploader: (props: {
     pendingFiles: File[];
     onDrag: (e: React.DragEvent) => void;
@@ -161,7 +161,7 @@ vi.mock("@/components/Document/DropZoneUploader", () => ({
 }));
 
 /* ---------- mock DocumentCard ---------- */
-vi.mock("@/components/Document/DocumentCard", () => ({
+vi.mock("@/features/chat/components/DocumentCard", () => ({
   DocumentCard: (props: {
     doc: { id: string; name: string };
     fallbackIndex: number;
@@ -193,7 +193,7 @@ vi.mock("@/components/Document/DocumentCard", () => ({
 }));
 
 /* ---------- mock DocumentModals ---------- */
-vi.mock("@/components/Document/DocumentModals", () => ({
+vi.mock("@/features/chat/components/DocumentModals", () => ({
   DocumentModals: (props: {
     isRenameOpen: boolean;
     isDeleteOpen: boolean;
@@ -235,7 +235,7 @@ vi.mock("@/components/Document/DocumentModals", () => ({
 }));
 
 /* ---------- mock PromptSelector ---------- */
-vi.mock("@/components/PromptSelector", () => ({
+vi.mock("@/shared/components/PromptSelector", () => ({
   PromptSelector: (props: { value: string; onChange: (val: string) => void }) => (
     <div data-testid="prompt-selector">
       <input
@@ -248,7 +248,7 @@ vi.mock("@/components/PromptSelector", () => ({
 }));
 
 /* ---------- component ---------- */
-import { DocumentSelectorPanel } from "@/components/Chat/DocumentSelectorPanel"; // <-- adegua il path se necessario
+import { DocumentSelectorPanel } from "@/features/chat/components/DocumentSelectorPanel"; // <-- adegua il path se necessario
 import type { AttachedDocument } from "@/interfaces/interfaces";
 
 describe("DocumentSelectorPanel", () => {

@@ -564,13 +564,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useRef, useState, useEffect } from "react";
 import { type Consents } from "@/interfaces/interfaces";
 import { toast } from "react-hot-toast";
-import { saveUserData } from "@/services/user";
+import { saveUserData } from "@/shared/services/user";
 import { useAuth } from "@/context/useAuth";
 import { useNavigate } from "react-router-dom";
-import { trackEvent } from "@/services/analytics";
+import { trackEvent } from "@/infrastructure/analytics";
 import { fetchWithSecurity } from "@/config/apiClient";
 &nbsp;
-import { setupRecaptcha, sendPhoneVerification, confirmPhoneVerification } from "@/services/auth"; 
+import { setupRecaptcha, sendPhoneVerification, confirmPhoneVerification } from "@/features/auth/hooks/auth"; 
 import type { ConfirmationResult } from "firebase/auth";
 &nbsp;
 const GET_REGISTER_URL = import.meta.env.VITE_GET_REGISTER_URL as string;

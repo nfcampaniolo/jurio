@@ -1,341 +1,224 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
+import React from "react";
+import type { NotificationType } from "@/interfaces/interfaces";
 
-/* ---------- mock react-router-dom ---------- */
-const mockNavigate = vi.fn();
-vi.mock("react-router-dom", () => ({
-  __esModule: true,
-  useNavigate: () => mockNavigate,
-}));
+/* ---------- tipi mock notifica ---------- */
+interface MockNotification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  isRead: boolean;
+  isGlobal?: boolean;
+  createdAt: string | Date;
+}
 
-/* ---------- mock @dr.pogodin/react-helmet ---------- */
+/* ---------- mock helmet ---------- */
 vi.mock("@dr.pogodin/react-helmet", () => ({
-  __esModule: true,
-  Helmet: () => null,
-}));
-
-/* ---------- mock useAuth ---------- */
-let mockAuthState = {
-  user: { uid: "usr_flv_2026" } as { uid: string } | null,
-  loading: false,
-};
-
-vi.mock("@/context/useAuth", () => ({
-  __esModule: true,
-  useAuth: () => mockAuthState,
-}));
-
-/* ---------- mock firestore & db ---------- */
-const mockGetDb = vi.fn().mockResolvedValue({ type: "firestore-db" });
-vi.mock("@/services/db", () => ({
-  __esModule: true,
-  getDb: () => mockGetDb(),
-}));
-
-let personalSnapshotListener: ((snap: unknown) => void) | null = null;
-let broadcastSnapshotListener: ((snap: unknown) => void) | null = null;
-let userSnapshotListener: ((snap: unknown) => void) | null = null;
-
-const mockUpdateDoc = vi.fn().mockResolvedValue(undefined);
-const mockBatchCommit = vi.fn().mockResolvedValue(undefined);
-const mockBatchUpdate = vi.fn();
-const mockArrayUnion = vi.fn((...args: unknown[]) => ({ _type: "arrayUnion", elements: args }));
-
-type MockFirestoreTarget = {
-  _type?: string;
-  name?: string;
-  path?: string;
-  coll?: string | { name?: string };
-};
-
-vi.mock("firebase/firestore", () => ({
-  __esModule: true,
-  initializeFirestore: vi.fn(() => ({ type: "firestore-db" })),
-  getFirestore: vi.fn(() => ({ type: "firestore-db" })),
-  persistentLocalCache: vi.fn(),
-  persistentMultipleTabManager: vi.fn(),
-  collection: vi.fn((_db, name: string) => ({ _type: "collection", name })),
-  doc: vi.fn((_db, coll: string, id: string) => ({ _type: "doc", path: `${coll}/${id}`, id, coll })),
-  query: vi.fn((coll: unknown) => ({ _type: "query", coll })),
-  where: vi.fn(),
-  orderBy: vi.fn(),
-  limit: vi.fn(),
-  arrayUnion: (...args: unknown[]) => mockArrayUnion(...args),
-  updateDoc: (...args: unknown[]) => mockUpdateDoc(...args),
-  writeBatch: () => ({
-    update: mockBatchUpdate,
-    commit: mockBatchCommit,
-  }),
-  onSnapshot: vi.fn(
-    (target: MockFirestoreTarget, callback: (snap: unknown) => void) => {
-      const collName =
-        target.name ??
-        (typeof target.coll === "object" ? target.coll?.name : target.coll) ??
-        "";
-      const path = target.path ?? "";
-
-      if (collName === "notification") {
-        personalSnapshotListener = callback;
-      } else if (collName === "broadcast") {
-        broadcastSnapshotListener = callback;
-      } else if (path.startsWith("users") || collName === "users") {
-        userSnapshotListener = callback;
-      }
-      return vi.fn();
-    }
+  Helmet: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="mock-helmet">{children}</div>
   ),
 }));
 
-/* ---------- component under test ---------- */
-import NotificationsPage from "@/pages/NotificationsPage";
+/* ---------- mock lucide-react icons ---------- */
+vi.mock("lucide-react", () => {
+  const mockIcon = (name: string) => (props: React.SVGProps<SVGSVGElement>) => (
+    <svg data-testid={`icon-${name}`} {...props} />
+  );
+  return {
+    Bell: mockIcon("bell"),
+    CreditCard: mockIcon("credit-card"),
+    Users: mockIcon("users"),
+    UserCircle: mockIcon("user-circle"),
+    FileText: mockIcon("file-text"),
+    LifeBuoy: mockIcon("life-buoy"),
+    Info: mockIcon("info"),
+    Check: mockIcon("check"),
+    CheckCheck: mockIcon("check-check"),
+    Loader2: mockIcon("loader-2"),
+    Megaphone: mockIcon("megaphone"),
+  };
+});
 
-describe("NotificationsPage Suite", () => {
+/* ---------- state & mock custom hook ---------- */
+const mockUseNotificationsState = {
+  user: null as { uid: string; email?: string } | null,
+  authLoading: false,
+  dbLoading: false,
+  feedCompleto: [] as MockNotification[],
+  unreadCount: 0,
+  handleNotificationClick: vi.fn(),
+  markAllAsRead: vi.fn(),
+  formatTime: vi.fn(() => "10 min fa"),
+};
+
+// Adeguare il path relativo al modulo reale di useNotifications
+vi.mock("@/features/notifications/hooks/useNotifications", () => ({
+  useNotifications: () => mockUseNotificationsState,
+}));
+
+/* ---------- subject under test ---------- */
+import NotificationsPage from "@/features/notifications/NotificationsPage"; // adegua il path se necessario
+
+describe("NotificationsPage Component Suite", () => {
+  const dummyNotifications: MockNotification[] = [
+    {
+      id: "notif-1",
+      type: "billing",
+      title: "Rinnovo abbonamento completato",
+      message: "La fattura mensile è disponibile nella sezione Piani.",
+      isRead: false,
+      isGlobal: false,
+      createdAt: "2026-09-01T10:00:00Z",
+    },
+    {
+      id: "notif-2",
+      type: "team",
+      title: "Nuovo membro aggiunto al team",
+      message: "Giulia Bianchi si è unita al workspace.",
+      isRead: true,
+      isGlobal: false,
+      createdAt: "2026-08-30T14:30:00Z",
+    },
+    {
+      id: "notif-3",
+      type: "support",
+      title: "Manutenzione programmata",
+      message: "I servizi saranno offline domenica notte per aggiornamenti.",
+      isRead: false,
+      isGlobal: true,
+      createdAt: "2026-09-02T08:00:00Z",
+    },
+  ];
+
   beforeEach(() => {
     vi.clearAllMocks();
-    personalSnapshotListener = null;
-    broadcastSnapshotListener = null;
-    userSnapshotListener = null;
-    mockAuthState = {
-      user: { uid: "usr_flv_2026" },
-      loading: false,
-    };
-    mockGetDb.mockResolvedValue({ type: "firestore-db" });
+
+    mockUseNotificationsState.user = { uid: "usr_flv_2026", email: "flavio@jurio.it" };
+    mockUseNotificationsState.authLoading = false;
+    mockUseNotificationsState.dbLoading = false;
+    mockUseNotificationsState.feedCompleto = [...dummyNotifications];
+    mockUseNotificationsState.unreadCount = 2;
+    mockUseNotificationsState.formatTime = vi.fn(() => "Oggi, 12:00");
   });
 
-  test("mostra lo stato di caricamento quando authLoading o dbLoading è attivo", () => {
-    mockAuthState.loading = true;
-    render(<NotificationsPage />);
+  describe("Stati di Caricamento e Autenticazione", () => {
+    test("mostra lo stato di caricamento quando authLoading o dbLoading è true", () => {
+      mockUseNotificationsState.authLoading = true;
 
-    expect(screen.getByText("Caricamento notifiche...")).toBeInTheDocument();
-  });
+      const { rerender } = render(<NotificationsPage />);
+      expect(screen.getByText(/Caricamento notifiche\.\.\./i)).toBeInTheDocument();
+      expect(screen.getByTestId("icon-loader-2")).toBeInTheDocument();
 
-  test("mostra il messaggio di accesso richiesto se l'utente non è autenticato", async () => {
-    mockAuthState = { user: null, loading: false };
-    render(<NotificationsPage />);
+      // Test con dbLoading attivo
+      mockUseNotificationsState.authLoading = false;
+      mockUseNotificationsState.dbLoading = true;
+      rerender(<NotificationsPage />);
+      expect(screen.getByText(/Caricamento notifiche\.\.\./i)).toBeInTheDocument();
+    });
 
-    await waitFor(() => {
+    test("mostra il messaggio di accesso richiesto se l'utente non è autenticato", () => {
+      mockUseNotificationsState.user = null;
+
+      render(<NotificationsPage />);
+
       expect(
         screen.getByText("Devi effettuare l'accesso per vedere le notifiche.")
       ).toBeInTheDocument();
+      expect(screen.queryByRole("heading", { name: "Notifiche" })).toBeNull();
     });
   });
 
-  test("renderizza lo stato vuoto se non ci sono notifiche personali né avvisi globali", async () => {
-    render(<NotificationsPage />);
+  describe("Stato Vuoto (Empty Feed)", () => {
+    test("renderizza il segnaposto 'Nessuna notifica' se la lista è vuota", () => {
+      mockUseNotificationsState.feedCompleto = [];
+      mockUseNotificationsState.unreadCount = 0;
 
-    await waitFor(() => {
-      expect(personalSnapshotListener).not.toBeNull();
-    });
+      render(<NotificationsPage />);
 
-    act(() => {
-      personalSnapshotListener?.({ docs: [] });
-      broadcastSnapshotListener?.({ docs: [] });
-      userSnapshotListener?.({
-        exists: () => true,
-        data: () => ({ readBroadcasts: [] }),
-      });
-    });
-
-    expect(screen.getByRole("heading", { name: "Notifiche", level: 1 })).toBeInTheDocument();
-    expect(screen.getByText("Nessuna notifica")).toBeInTheDocument();
-    expect(screen.getByText("Non hai ancora ricevuto aggiornamenti.")).toBeInTheDocument();
-    expect(screen.queryByText(/Segna tutte come lette/i)).not.toBeInTheDocument();
-  });
-
-  test("unisce, ordina e renderizza notifiche personali e broadcast con badge contatore", async () => {
-    render(<NotificationsPage />);
-
-    await waitFor(() => {
-      expect(personalSnapshotListener).not.toBeNull();
-    });
-
-    const makeTimestamp = (millis: number) => ({
-      toMillis: () => millis,
-      toDate: () => new Date(millis),
-    });
-
-    act(() => {
-      personalSnapshotListener?.({
-        docs: [
-          {
-            id: "notif-1",
-            data: () => ({
-              title: "Fattura disponibile",
-              message: "La fattura di settembre 2026 è pronta.",
-              type: "billing",
-              isRead: false,
-              createdAt: makeTimestamp(10000),
-              link: "/profilo/piani",
-            }),
-          },
-        ],
-      });
-
-      broadcastSnapshotListener?.({
-        docs: [
-          {
-            id: "broad-1",
-            data: () => ({
-              title: "Manutenzione programmata",
-              message: "I server saranno in manutenzione stanotte.",
-              type: "system",
-              createdAt: makeTimestamp(20000),
-            }),
-          },
-        ],
-      });
-
-      userSnapshotListener?.({
-        exists: () => true,
-        data: () => ({ readBroadcasts: [] }),
-      });
-    });
-
-    expect(screen.getByText("2 nuove")).toBeInTheDocument();
-    expect(screen.getByText("Manutenzione programmata")).toBeInTheDocument();
-    expect(screen.getByText("Fattura disponibile")).toBeInTheDocument();
-    expect(screen.getByText("Segna tutte come lette")).toBeInTheDocument();
-  });
-
-  test("gestisce il click su una notifica personale non letta: segna letta e naviga al link", async () => {
-    render(<NotificationsPage />);
-
-    await waitFor(() => {
-      expect(personalSnapshotListener).not.toBeNull();
-    });
-
-    act(() => {
-      personalSnapshotListener?.({
-        docs: [
-          {
-            id: "notif-1",
-            data: () => ({
-              title: "Verifica account",
-              message: "Conferma la tua email.",
-              type: "account",
-              isRead: false,
-              link: "/impostazioni",
-              createdAt: { toMillis: () => 1000, toDate: () => new Date(1000) },
-            }),
-          },
-        ],
-      });
-      broadcastSnapshotListener?.({ docs: [] });
-      userSnapshotListener?.({ exists: () => true, data: () => ({ readBroadcasts: [] }) });
-    });
-
-    const notifCard = screen.getByText("Verifica account").closest("div[class*='cursor-pointer']");
-    expect(notifCard).not.toBeNull();
-
-    if (notifCard) {
-      fireEvent.click(notifCard);
-    }
-
-    await waitFor(() => {
-      expect(mockUpdateDoc).toHaveBeenCalledWith(
-        expect.objectContaining({ path: "notification/notif-1" }),
-        { isRead: true }
-      );
-      expect(mockNavigate).toHaveBeenCalledWith("/impostazioni");
+      expect(screen.getByRole("heading", { name: "Nessuna notifica" })).toBeInTheDocument();
+      expect(screen.getByText("Non hai ancora ricevuto aggiornamenti.")).toBeInTheDocument();
+      expect(screen.queryByText(/Segna tutte come lette/i)).toBeNull();
+      expect(screen.queryByText(/nuove/i)).toBeNull();
     });
   });
 
-  test("gestisce il click su un broadcast: salva l'ID nell'array utente", async () => {
-    render(<NotificationsPage />);
+  describe("Rendering Lista e Contatori", () => {
+    test("renderizza le notifiche con titolo, messaggio, timestamp e conteggio non lette", () => {
+      render(<NotificationsPage />);
 
-    await waitFor(() => {
-      expect(broadcastSnapshotListener).not.toBeNull();
+      expect(screen.getByText("2 nuove")).toBeInTheDocument();
+      expect(screen.getByText("Rinnovo abbonamento completato")).toBeInTheDocument();
+      expect(screen.getByText("Nuovo membro aggiunto al team")).toBeInTheDocument();
+      expect(screen.getByText("Manutenzione programmata")).toBeInTheDocument();
+      expect(screen.getAllByText("Oggi, 12:00")).toHaveLength(3);
     });
 
-    act(() => {
-      personalSnapshotListener?.({ docs: [] });
-      broadcastSnapshotListener?.({
-        docs: [
-          {
-            id: "broad-99",
-            data: () => ({
-              title: "Nuova funzione AI",
-              message: "Disponibile la ricerca vettoriale.",
-              type: "system",
-              createdAt: { toMillis: () => 1000, toDate: () => new Date(1000) },
-            }),
-          },
-        ],
-      });
-      userSnapshotListener?.({ exists: () => true, data: () => ({ readBroadcasts: [] }) });
+    test("renderizza le icone corrette per tipo e per notifiche globali", () => {
+      render(<NotificationsPage />);
+
+      // notif-1 (billing)
+      expect(screen.getByTestId("icon-credit-card")).toBeInTheDocument();
+      // notif-2 (team)
+      expect(screen.getByTestId("icon-users")).toBeInTheDocument();
+      // notif-3 (isGlobal = true, prioritaria su tipo support)
+      expect(screen.getByTestId("icon-megaphone")).toBeInTheDocument();
     });
 
-    const broadcastCard = screen.getByText("Nuova funzione AI").closest("div[class*='cursor-pointer']");
-    expect(broadcastCard).not.toBeNull();
+    test("mostra l'indicatore di spunta per lette e l'invito all'azione per non lette", () => {
+      render(<NotificationsPage />);
 
-    if (broadcastCard) {
-      fireEvent.click(broadcastCard);
-    }
+      // 1 letta -> icona check
+      expect(screen.getByTestId("icon-check")).toBeInTheDocument();
+      // 2 non lette -> etichette "Controlla →"
+      expect(screen.getAllByText("Controlla →")).toHaveLength(2);
+    });
+  });
 
-    await waitFor(() => {
-      expect(mockUpdateDoc).toHaveBeenCalledWith(
-        expect.objectContaining({ path: "users/usr_flv_2026" }),
-        expect.objectContaining({
-          readBroadcasts: expect.objectContaining({ elements: ["broad-99"] }),
-        })
+  describe("Interazioni Utente", () => {
+    test("esegue markAllAsRead al click sul pulsante 'Segna tutte come lette'", () => {
+      render(<NotificationsPage />);
+
+      const markBtn = screen.getByRole("button", { name: /Segna tutte come lette/i });
+      fireEvent.click(markBtn);
+
+      expect(mockUseNotificationsState.markAllAsRead).toHaveBeenCalledTimes(1);
+    });
+
+    test("invoca handleNotificationClick al click sulla riga della notifica", () => {
+      render(<NotificationsPage />);
+
+      const firstNotification = screen.getByText("Rinnovo abbonamento completato");
+      fireEvent.click(firstNotification);
+
+      expect(mockUseNotificationsState.handleNotificationClick).toHaveBeenCalledWith(
+        dummyNotifications[0]
       );
     });
-  });
 
-  test("esegue 'Segna tutte come lette' per notifiche personali (batch) e broadcast", async () => {
-    render(<NotificationsPage />);
+    test("invoca handleNotificationClick alla pressione dei tasti Enter o Spazio", () => {
+      render(<NotificationsPage />);
 
-    await waitFor(() => {
-      expect(personalSnapshotListener).not.toBeNull();
-    });
+      const notifElements = screen.getAllByRole("button");
+      // Il primo elemento è il bottone "Segna tutte come lette", gli altri sono i container notifica
+      const secondNotifCard = notifElements[2]; 
 
-    act(() => {
-      personalSnapshotListener?.({
-        docs: [
-          {
-            id: "p-1",
-            data: () => ({
-              title: "Notifica P1",
-              message: "Msg 1",
-              type: "billing",
-              isRead: false,
-              createdAt: { toMillis: () => 1000, toDate: () => new Date(1000) },
-            }),
-          },
-        ],
-      });
-      broadcastSnapshotListener?.({
-        docs: [
-          {
-            id: "b-1",
-            data: () => ({
-              title: "Broadcast B1",
-              message: "Msg B1",
-              type: "system",
-              createdAt: { toMillis: () => 2000, toDate: () => new Date(2000) },
-            }),
-          },
-        ],
-      });
-      userSnapshotListener?.({ exists: () => true, data: () => ({ readBroadcasts: [] }) });
-    });
-
-    const markAllBtn = screen.getByRole("button", { name: /Segna tutte come lette/i });
-    fireEvent.click(markAllBtn);
-
-    await waitFor(() => {
-      expect(mockBatchUpdate).toHaveBeenCalledWith(
-        expect.objectContaining({ path: "notification/p-1" }),
-        { isRead: true }
+      // Pressione tasto Enter
+      fireEvent.keyDown(secondNotifCard, { key: "Enter" });
+      expect(mockUseNotificationsState.handleNotificationClick).toHaveBeenCalledWith(
+        dummyNotifications[1]
       );
-      expect(mockBatchCommit).toHaveBeenCalledTimes(1);
 
-      expect(mockUpdateDoc).toHaveBeenCalledWith(
-        expect.objectContaining({ path: "users/usr_flv_2026" }),
-        expect.objectContaining({
-          readBroadcasts: expect.objectContaining({ elements: ["b-1"] }),
-        })
+      // Pressione tasto Spazio
+      fireEvent.keyDown(secondNotifCard, { key: " " });
+      expect(mockUseNotificationsState.handleNotificationClick).toHaveBeenCalledWith(
+        dummyNotifications[1]
       );
+
+      // Nessuna chiamata per altri tasti (es: Escape)
+      fireEvent.keyDown(secondNotifCard, { key: "Escape" });
+      expect(mockUseNotificationsState.handleNotificationClick).toHaveBeenCalledTimes(2);
     });
   });
 });

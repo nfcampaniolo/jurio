@@ -71,7 +71,7 @@ vi.mock("@/config/env", () => ({
   getReasonUrl: () => mockGetReasonUrl(),
 }));
 
-vi.mock("@/services/document", () => ({
+vi.mock("@/shared/services/document", () => ({
   __esModule: true,
   listDocumentsByUser: (...args: unknown[]) => mockListDocumentsByUser(...args),
   listFascicoliByUser: (...args: unknown[]) => mockListFascicoliByUser(...args),
@@ -80,7 +80,7 @@ vi.mock("@/services/document", () => ({
   fetchFascicoloData: (...args: unknown[]) => mockFetchFascicoloData(...args),
 }));
 
-vi.mock("@/services/security", () => ({
+vi.mock("@/infrastructure/security", () => ({
   __esModule: true,
   getSecurityTokens: () => mockGetSecurityTokens(),
 }));
@@ -128,7 +128,7 @@ vi.mock("./useChatMessaging", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { useLegalChat } from "@/hooks/useLegalChat";
+import { useLegalChat } from "@/features/chat/hooks/useLegalChat";
 
 describe("useLegalChat Orchestrator Suite", () => {
   const originalWindowOpen = window.open;

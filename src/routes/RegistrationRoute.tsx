@@ -1,7 +1,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/useAuth";
-import { userExists } from "@/services/user";
+import { userExists } from "@/shared/services/user";
 import { AuthLoader } from "./AuthLoader";
 
 export const RegistrationRoute = ({ children }: { children: ReactNode }) => {

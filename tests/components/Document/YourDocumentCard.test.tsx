@@ -38,7 +38,7 @@ vi.mock("@/context/useAuth", () => ({
 }));
 
 /* ---------- mock storage service ---------- */
-vi.mock("@/services/storage", () => ({
+vi.mock("@/shared/services/storage", () => ({
   __esModule: true,
   getDocumentStorage: (id: string | number, path: string) => mockGetDocumentStorage(id, path),
 }));
@@ -57,7 +57,7 @@ vi.mock("react-icons/fa", () => ({
 }));
 
 /* ---------- component ---------- */
-import { DocumentCard } from "@/components/Document/YourDocumentCard";
+import { DocumentCard } from "@/shared/components/YourDocumentCard";
 
 describe("DocumentCard Component Suite", () => {
   const originalOpen = window.open;

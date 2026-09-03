@@ -30,7 +30,7 @@ vi.mock("framer-motion", () => ({
 }));
 
 /* ---------- component ---------- */
-import { DocumentModals } from "@/components/Document/DocumentModals"; // <-- adegua il path se necessario
+import { DocumentModals } from "@/features/chat/components/DocumentModals"; // <-- adegua il path se necessario
 
 describe("DocumentModals Component Suite", () => {
   const mockSetNewName = vi.fn<(name: string) => void>();

@@ -43,7 +43,7 @@ vi.mock("react-hot-toast", () => ({
   toast: mockToast,
 }));
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: () => mockGetDb(),
 }));
@@ -58,7 +58,7 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { useTeamPlans } from "@/hooks/useTeamPlans"; // <-- adegua il path se necessario
+import { useTeamPlans } from "@/features/teams/hooks/useTeamPlans"; // <-- adegua il path se necessario
 
 describe("useTeamPlans Hook Suite", () => {
   const currentUid = "usr_flv_2026";

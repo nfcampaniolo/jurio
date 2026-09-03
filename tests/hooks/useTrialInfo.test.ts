@@ -18,20 +18,20 @@ vi.mock("firebase/app", () => ({ FirebaseError: FirebaseErrorMock }));
 
 // ---- user mock ----
 const fetchRegisterDoc = vi.fn<(uid: string) => Promise<{ start?: unknown } | null>>();
-vi.mock("@/services/user", () => ({
+vi.mock("@/shared/services/user", () => ({
   fetchRegisterDoc: (...a: Parameters<typeof fetchRegisterDoc>) => fetchRegisterDoc(...a),
 }));
 
 // ---- plan domain mocks ----
 const toStartDate = vi.fn<(raw: unknown) => Date | null>();
 const trialDaysLeft = vi.fn<(d: Date) => number>();
-vi.mock("@/hooks/planlDomain", () => ({
+vi.mock("@/features/plans/hooks/planlDomain", () => ({
   toStartDate: (...a: Parameters<typeof toStartDate>) => toStartDate(...a),
   trialDaysLeft: (...a: Parameters<typeof trialDaysLeft>) => trialDaysLeft(...a),
 }));
 
 async function importFresh() {
-  return import("@/hooks/usePlans"); // src/services/trial/useTrialInfo.ts
+  return import("@/features/plans/hooks/usePlans"); // src/services/trial/useTrialInfo.ts
 }
 
 describe("useTrialInfo", () => {

@@ -49,13 +49,13 @@ let mockProfileReturn = {
   deleteAccount: mockDeleteAccount,
 };
 
-vi.mock("@/hooks/useProfile", () => ({
+vi.mock("@/features/profile/hooks/useProfile", () => ({
   __esModule: true,
   useProfile: () => mockProfileReturn,
 }));
 
 const mockNavigateItem = vi.fn();
-vi.mock("@/hooks/navigation", () => ({
+vi.mock("@/routes/navigation", () => ({
   __esModule: true,
   navigateItem: (...args: unknown[]) => mockNavigateItem(...args),
 }));
@@ -64,7 +64,7 @@ vi.mock("@/hooks/navigation", () => ({
 const mockExecuteAdminMaintenanceTask = vi.fn();
 const mockExecuteAdminMergeCategoryTask = vi.fn();
 
-vi.mock("@/services/admin", () => ({
+vi.mock("@/features/admin/hooks/admin", () => ({
   __esModule: true,
   executeAdminMaintenanceTask: (...args: unknown[]) =>
     mockExecuteAdminMaintenanceTask(...args),
@@ -73,7 +73,7 @@ vi.mock("@/services/admin", () => ({
 }));
 
 /* ---------- mock subcomponents ---------- */
-vi.mock("@/components/Profile/HeaderProfile", () => ({
+vi.mock("@/features/profile/components/HeaderProfile", () => ({
   __esModule: true,
   HeaderProfile: ({
     name,
@@ -97,12 +97,12 @@ vi.mock("@/components/Profile/HeaderProfile", () => ({
   ),
 }));
 
-vi.mock("@/components/Admin/UploadMaxima", () => ({
+vi.mock("@/features/admin/components//UploadMaxima", () => ({
   __esModule: true,
   UploadMaxima: () => <div data-testid="upload-maxima-section">Upload Maxima Content</div>,
 }));
 
-vi.mock("@/components/Admin/FirebaseManual", () => ({
+vi.mock("@/features/admin/components//FirebaseManual", () => ({
   __esModule: true,
   default: () => <div data-testid="firebase-manual-section">Firebase Manual Content</div>,
   FirebaseManual: () => (
@@ -110,7 +110,7 @@ vi.mock("@/components/Admin/FirebaseManual", () => ({
   ),
 }));
 
-vi.mock("@/components/Admin/AdminTaxonomySection", () => ({
+vi.mock("@/features/admin/components//AdminTaxonomySection", () => ({
   __esModule: true,
   AdminTaxonomySection: ({
     mergeParams,
@@ -147,7 +147,7 @@ vi.mock("@/components/Admin/AdminTaxonomySection", () => ({
   ),
 }));
 
-vi.mock("@/components/Admin/AdminMaintenanceSection", () => ({
+vi.mock("@/features/admin/components//AdminMaintenanceSection", () => ({
   __esModule: true,
   AdminMaintenanceSection: ({
     maintenanceParams,
@@ -174,12 +174,12 @@ vi.mock("@/components/Admin/AdminMaintenanceSection", () => ({
   ),
 }));
 
-vi.mock("@/components/Admin/AdminFooterLinks", () => ({
+vi.mock("@/features/admin/components//AdminFooterLinks", () => ({
   __esModule: true,
   AdminFooterLinks: () => <footer data-testid="admin-footer">Admin Footer Links</footer>,
 }));
 
-vi.mock("@/components/ConfirmModal", () => ({
+vi.mock("@/shared/components/ConfirmModal", () => ({
   __esModule: true,
   ConfirmModal: ({
     isOpen,
@@ -202,7 +202,7 @@ vi.mock("@/components/ConfirmModal", () => ({
 }));
 
 /* ---------- component ---------- */
-import { Admin } from "@/pages/Admin";
+import { Admin } from "@/features/admin/Admin";
 import { toast } from "react-hot-toast";
 
 describe("Admin Dashboard Component Suite", () => {

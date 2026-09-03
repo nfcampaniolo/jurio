@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import React from "react";
-import type { AnalisiContrattualeData } from "@/components/Document/RenderContratto";
+import type { AnalisiContrattualeData } from "@/features/document/components/RenderContratto";
 
 /* ---------- mock react-icons/fa ---------- */
 vi.mock("react-icons/fa", () => ({
@@ -46,7 +46,7 @@ vi.mock("./SharedUI", () => ({
   ),
 }));
 
-vi.mock("@/components/Document/SharedUI", () => ({
+vi.mock("@/features/document/components/SharedUI", () => ({
   SectionContainer: ({
     children,
     className,
@@ -76,7 +76,7 @@ vi.mock("@/components/Document/SharedUI", () => ({
 }));
 
 /* ---------- component ---------- */
-import { RenderContratto } from "@/components/Document/RenderContratto";
+import { RenderContratto } from "@/features/document/components/RenderContratto";
 
 describe("RenderContratto Component Suite", () => {
   beforeEach(() => {

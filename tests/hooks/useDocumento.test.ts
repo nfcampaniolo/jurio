@@ -13,24 +13,24 @@ const {
 }));
 
 /* ---------- mock services ---------- */
-vi.mock("@/services/document", () => ({
+vi.mock("@/shared/services/document", () => ({
   __esModule: true,
   getDocumentMassima: (id: string, col: string) => mockGetDocumentMassima(id, col),
 }));
 
-vi.mock("@/services/storage", () => ({
+vi.mock("@/shared/services/storage", () => ({
   __esModule: true,
   getDocumentStorage: (id: string, path: string) => mockGetDocumentStorage(id, path),
 }));
 
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   __esModule: true,
   trackEvent: (event: string, payload?: Record<string, unknown>) =>
     mockTrackEvent(event, payload),
 }));
 
 /* ---------- subject under test ---------- */
-import { useDocumento } from "@/hooks/useDocumento"; // <-- adegua il path di import se necessario
+import { useDocumento } from "@/features/document/hooks/useDocumento"; // <-- adegua il path di import se necessario
 
 describe("useDocumento Hook Suite", () => {
   const setLocationHref = (url: string) => {

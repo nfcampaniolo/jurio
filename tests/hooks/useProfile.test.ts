@@ -40,7 +40,7 @@ const {
   mockLogout: vi.fn(),
   mockDeleteAccountFolder: vi.fn(),
   mockUploadAvatar: vi.fn(),
-  mockGetStorageClient: vi.fn().mockResolvedValue({ storage: "mockStorage" }),
+  mockGetStorageClient: vi.fn().mockReturnValue({ storage: "mockStorage" }),
   mockRef: vi.fn((_storage: unknown, path: string) => ({ path })),
   mockGetDownloadURL: vi.fn(),
   mockTrackEvent: vi.fn(),
@@ -61,13 +61,13 @@ vi.mock("react-hot-toast", () => ({
   toast: mockToast,
 }));
 
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   __esModule: true,
   trackEvent: (name: string, payload?: Record<string, unknown>) => mockTrackEvent(name, payload),
 }));
 
 /* ---------- mock user & auth services ---------- */
-vi.mock("@/services/user", () => ({
+vi.mock("@/shared/services/user", () => ({
   __esModule: true,
   getUser: (uid: string) => mockGetUser(uid),
   saveUserData: (uid: string, data: unknown) => mockSaveUserData(uid, data),
@@ -77,19 +77,19 @@ vi.mock("@/services/user", () => ({
   exportUserData: (uid: string) => mockExportUserData(uid),
 }));
 
-vi.mock("@/services/auth", () => ({
+vi.mock("@/features/auth/hooks/auth", () => ({
   __esModule: true,
   logout: () => mockLogout(),
 }));
 
 /* ---------- mock storage & dynamic imports ---------- */
-vi.mock("@/services/storage", () => ({
+vi.mock("@/shared/services/storage", () => ({
   __esModule: true,
   deleteAccountFolder: (uid: string) => mockDeleteAccountFolder(uid),
   uploadAvatar: (file: File, uid: string) => mockUploadAvatar(file, uid),
 }));
 
-vi.mock("@/services/storageClient", () => ({
+vi.mock("@/infrastructure/storageClient", () => ({
   __esModule: true,
   getStorageClient: () => mockGetStorageClient(),
 }));
@@ -113,7 +113,7 @@ vi.mock("@/interfaces/interfaces", async (importOriginal) => {
 });
 
 /* ---------- subject under test ---------- */
-import { useProfile } from "@/hooks/useProfile"; // <-- adegua il path di import se necessario
+import { useProfile } from "@/features/profile/hooks/useProfile"; // <-- adegua il path di import se necessario
 
 describe("useProfile Hook Suite", () => {
   const mockUserInstance = {
@@ -266,6 +266,13 @@ describe("useProfile Hook Suite", () => {
     });
 
     test("recupera l'URL di download da Storage se l'avatar è un percorso relativo", async () => {
+      // 1. Disinnesca il photoURL di default dell'oggetto Auth per questo specifico test
+      mockAuthState.user = {
+        ...mockUserInstance,
+        photoURL: null,
+      } as unknown as User;
+
+      // 2. Inietta il percorso relativo simulando il ritorno da Firestore
       mockGetUser.mockResolvedValueOnce({
         ...mockValidUserData,
         avatar: "users/usr_flv_2026/image_1080x1080.jpeg",
@@ -273,6 +280,7 @@ describe("useProfile Hook Suite", () => {
 
       const { result } = renderHook(() => useProfile());
 
+      // 3. Verifica la corretta risoluzione asincrona tramite Firebase Storage
       await waitFor(() => {
         expect(result.current.avatar).toBe("https://storage.jurio.it/downloaded_avatar.jpg");
       });

@@ -15,7 +15,7 @@ const { mockGetPerf, mockTrace, mockTraceInstance } = vi.hoisted(() => {
 });
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/optionalService", () => ({
+vi.mock("@/infrastructure/optionalService", () => ({
   getPerf: () => mockGetPerf(),
 }));
 
@@ -24,7 +24,7 @@ vi.mock("firebase/performance", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { withTrace } from "@/services/perf";
+import { withTrace } from "@/infrastructure/perf";
 
 describe("withTrace Utility Suite", () => {
   beforeEach(() => {

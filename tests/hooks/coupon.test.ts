@@ -19,7 +19,7 @@ const {
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/analytics", () => ({
+vi.mock("@/infrastructure/analytics", () => ({
   __esModule: true,
   trackEvent: (event: string, payload: Record<string, unknown>) =>
     mockTrackEvent(event, payload),
@@ -31,7 +31,7 @@ vi.mock("@/config/apiClient", () => ({
     mockFetchWithSecurity(url, body),
 }));
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: () => mockGetDb(),
 }));
@@ -44,7 +44,7 @@ vi.mock("firebase/firestore", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { fetchApplyCoupon, fetchUserCoupon } from "@/hooks/discount"; // <-- adegua il path del file
+import { fetchApplyCoupon, fetchUserCoupon } from "@/features/plans/hooks/discount"; // <-- adegua il path del file
 
 describe("Coupon Service Suite", () => {
   const mockApiUrl = "https://api.jurio.it/apply-discount";

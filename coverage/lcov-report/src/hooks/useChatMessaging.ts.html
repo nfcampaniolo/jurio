@@ -373,9 +373,9 @@
 <span class="cline-any cline-yes">83x</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { toast } from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
-import { ensureAnonAuth } from "@/services/auth";
-import { getDb } from "@/services/db";
-import { buildGenkitFilters } from "@/hooks/searchBarTypes";
+import { ensureAnonAuth } from "@/features/auth/hooks/auth";
+import { getDb } from "@/infrastructure/db";
+import { buildGenkitFilters } from "@/features/search/hooks/searchBarTypes";
 import { getChatUrl } from "@/config/env";
 import type { AttachedDocument, Message, SessionType } from "@/interfaces/interfaces";
 import type { User } from "firebase/auth";
@@ -440,7 +440,7 @@ export const useChatMessaging = ({
 &nbsp;
     try {
       await ensureAnonAuth();
-      const { getSecurityTokens } = await import("@/services/security");
+      const { getSecurityTokens } = await import("@/infrastructure/security");
       const { authToken, appCheckToken } = await getSecurityTokens();
 &nbsp;
       let finalPrompt = userText;

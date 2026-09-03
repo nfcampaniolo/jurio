@@ -32,18 +32,18 @@ vi.mock("firebase/firestore", () => ({
   getDocs: (q: unknown) => mockGetDocs(q),
 }));
 
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   __esModule: true,
   getDb: () => mockGetDb(),
 }));
 
-vi.mock("@/services/riferimentiTranslator", () => ({
+vi.mock("@/shared/hooks/riferimentiTranslator", () => ({
   __esModule: true,
   makeRiferimentiNormativiKeys: (norme: string[]) => mockMakeRiferimentiNormativiKeys(norme),
 }));
 
 /* ---------- subject under test ---------- */
-import { cercaPrecedente, cercaPrecedentiPerNorme } from "@/hooks/cercaPrecedenti"; // <-- adegua il path del file
+import { cercaPrecedente, cercaPrecedentiPerNorme } from "@/features/document/hooks/cercaPrecedenti"; // <-- adegua il path del file
 
 describe("Precedenti Service Suite", () => {
   beforeEach(() => {

@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
-import type { PlanUI } from "@/services/plans";
+import type { PlanUI } from "@/features/plans/hooks/plans";
 
 /* ---------- mock react-router-dom ---------- */
 const mockNavigate = vi.fn();
@@ -62,7 +62,7 @@ vi.mock("react-tooltip", () => ({
 }));
 
 /* ---------- mock ButtonCTA components ---------- */
-vi.mock("@/components/ButtonCTA", () => ({
+vi.mock("@/shared/components/ButtonCTA", () => ({
   __esModule: true,
   ButtonCTA: ({
     children,
@@ -157,14 +157,14 @@ const samplePlans: PlanUI[] = [
 const mockFetchPlansFromDb = vi.fn<() => Promise<PlanUI[]>>();
 const mockGetPreloadedPlans = vi.fn<() => PlanUI[]>(() => samplePlans);
 
-vi.mock("@/services/plans", () => ({
+vi.mock("@/features/plans/hooks/plans", () => ({
   __esModule: true,
   fetchPlansFromDb: () => mockFetchPlansFromDb(),
   getPreloadedPlans: () => mockGetPreloadedPlans(),
 }));
 
 /* ---------- component under test ---------- */
-import Prezzi from "@/pages/Prezzi"; // <-- adegua il path se necessario
+import Prezzi from "@/features/plans/Prezzi"; // <-- adegua il path se necessario
 
 describe("Prezzi Component Suite", () => {
   beforeEach(() => {

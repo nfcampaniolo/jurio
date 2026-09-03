@@ -39,28 +39,28 @@ vi.mock("framer-motion", () => ({
 }));
 
 /* ---------- mock subcomponents ---------- */
-vi.mock("@/components/Info/Header", () => ({
+vi.mock("@/shared/components/Header", () => ({
   __esModule: true,
   Header: () => <header data-testid="support-header">Header Navigation</header>,
 }));
 
-vi.mock("@/components/Info/SupportForm", () => ({
+vi.mock("@/features/info/components/SupportForm", () => ({
   __esModule: true,
   SupportForm: () => <section data-testid="support-form">Modulo di Supporto</section>,
 }));
 
-vi.mock("@/components/Info/SupportSidebar", () => ({
+vi.mock("@/features/info/components/SupportSidebar", () => ({
   __esModule: true,
   SupportSidebar: () => <aside data-testid="support-sidebar">Sidebar Supporto & FAQ</aside>,
 }));
 
-vi.mock("@/components/Info/JurioChatbot", () => ({
+vi.mock("@/features/info/components/JurioChatbot", () => ({
   __esModule: true,
   default: () => <div data-testid="jurio-chatbot">Jurio AI Assistant Widget</div>,
 }));
 
 /* ---------- component ---------- */
-import Supporto from "@/pages/Contatti";
+import Supporto from "@/features/info/Contatti";
 import { useReducedMotion } from "framer-motion";
 
 describe("Supporto Page Suite", () => {

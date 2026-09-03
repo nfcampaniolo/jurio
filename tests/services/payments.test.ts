@@ -7,7 +7,7 @@ const { mockGetDb, mockGetDocs } = vi.hoisted(() => ({
 }));
 
 /* ---------- mock modules ---------- */
-vi.mock("@/services/db", () => ({
+vi.mock("@/infrastructure/db", () => ({
   getDb: () => mockGetDb(),
 }));
 
@@ -41,7 +41,7 @@ interface MockSnapshot {
 }
 
 /* ---------- subject under test ---------- */
-import { fetchUserPayments } from "@/services/paymentService";
+import { fetchUserPayments } from "@/features/plans/hooks/paymentService";
 import { Timestamp } from "firebase/firestore";
 
 describe("fetchUserPayments Service Suite", () => {
