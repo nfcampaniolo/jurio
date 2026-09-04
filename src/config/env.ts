@@ -61,3 +61,11 @@ export const getPrompt = (): string | undefined => {
 export const getFeedback = (): string | undefined => {
   return import.meta.env.VITE_FEEDBACK_ENDPOINT;
 };
+
+export function getSessionUrl() {
+  const env = import.meta.env as Record<string, unknown>;
+  return {
+    SYNC_USER_SESSION_ENDPOINT: String(env.VITE_SYNC_USER_SESSION_ENDPOINT ?? ""),
+    FORCE_TAKEOVER_SESSION_ENDPOINT: String(env.VITE_FORCE_TAKEOVER_SESSION_ENDPOINT ?? ""),
+  };
+};

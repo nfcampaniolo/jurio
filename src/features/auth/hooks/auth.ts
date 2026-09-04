@@ -1,6 +1,7 @@
 import type { ConfirmationResult, User, ApplicationVerifier } from "firebase/auth";
 import { firebaseApp } from "@/infrastructure/firebase";
 import { trackEvent } from "@/infrastructure/analytics";
+import { getSessionUrl } from "@/config/env";
 
 /** Carica e ritorna l'istanza Auth senza trascinare Firestore/Storage/Functions */
 export async function getAuthClient() {
@@ -31,7 +32,8 @@ async function syncSessionSecure() {
       appCheckToken = appCheckData.token;
     }
 
-    const response = await fetch(`https://syncusersession-vqoobrenua-ew.a.run.app`, {
+    const { SYNC_USER_SESSION_ENDPOINT } = getSessionUrl();
+    const response = await fetch(SYNC_USER_SESSION_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

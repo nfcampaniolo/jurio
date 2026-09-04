@@ -1,5 +1,6 @@
 import { getAuthClient } from "./auth";
 import { signOut } from "firebase/auth";
+import { getSessionUrl } from "@/config/env";
 
 export async function forceSessionTakeover() {
   const auth = await getAuthClient();
@@ -23,7 +24,8 @@ export async function forceSessionTakeover() {
       appCheckToken = appCheckData.token;
     }
 
-    const response = await fetch(`https://forcetakeoversession-vqoobrenua-ew.a.run.app`, {
+    const { FORCE_TAKEOVER_SESSION_ENDPOINT } = getSessionUrl();
+    const response = await fetch(FORCE_TAKEOVER_SESSION_ENDPOINT, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
