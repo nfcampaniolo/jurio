@@ -100,10 +100,11 @@ describe("Documento Page Component Suite", () => {
     });
   });
 
-  test("mostra lo spinner di caricamento se l'autenticazione è in corso (authLoading)", () => {
+test("mostra lo spinner di caricamento se l'autenticazione è in corso (authLoading)", () => {
     mockUseAuth.mockReturnValue({
       user: null,
       loading: true,
+      status: "loading", // <-- Aggiunto per allinearsi al nuovo AuthContext
     });
 
     const { container } = render(<Documento />);

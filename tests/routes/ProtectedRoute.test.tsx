@@ -41,7 +41,7 @@ vi.mock("react-router-dom", () => ({
 }));
 
 /* ---------- component under test ---------- */
-import { ProtectedRoute } from "@/routes/ProtectedRoute"; // <-- adegua il path se necessario
+import { ProtectedRoute } from "@/routes/ProtectedRoute"; 
 
 describe("ProtectedRoute Route Guard Suite", () => {
   beforeEach(() => {
@@ -55,25 +55,32 @@ describe("ProtectedRoute Route Guard Suite", () => {
     });
   });
 
+  // Helper per soddisfare i requisiti della nuova interfaccia AuthContextType
+  const baseContext: Partial<AuthContextType> = {
+    errorMessage: null,
+    resolveConflict: vi.fn(),
+  };
+
   const renderWithAuth = (
-    contextValue: AuthContextType,
+    contextValue: Partial<AuthContextType>,
     children: React.ReactNode = <div data-testid="protected-content">Contenuto Protetto</div>
   ) => {
     return render(
-      <AuthContext.Provider value={contextValue}>
+      <AuthContext.Provider value={{ ...baseContext, ...contextValue } as AuthContextType}>
         <ProtectedRoute>{children}</ProtectedRoute>
       </AuthContext.Provider>
     );
   };
 
-  test("restituisce null e non renderizza i figli né reindirizzamenti quando loading è true", () => {
-    const { container } = renderWithAuth({
+  test("mostra il componente di caricamento quando lo status è 'loading'", () => {
+    renderWithAuth({
       user: null,
-      loading: true,
+      status: "loading",
       hasConflict: false,
     });
 
-    expect(container.firstChild).toBeNull();
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.getByText("Caricamento…")).toBeInTheDocument();
     expect(screen.queryByTestId("protected-content")).not.toBeInTheDocument();
     expect(screen.queryByTestId("mock-navigate")).not.toBeInTheDocument();
   });
@@ -81,7 +88,7 @@ describe("ProtectedRoute Route Guard Suite", () => {
   test("reindirizza a '/sessione-attiva' con replace quando hasConflict è true", () => {
     renderWithAuth({
       user: { uid: "usr_flv_2026" } as User,
-      loading: false,
+      status: "authenticated",
       hasConflict: true,
     });
 
@@ -96,7 +103,7 @@ describe("ProtectedRoute Route Guard Suite", () => {
     );
   });
 
-  test("reindirizza a '/login' preservando la location corrente in state.from quando l'utente non è autenticato", () => {
+  test("reindirizza a '/login' preservando la location corrente in state.from quando lo status è 'unauthenticated'", () => {
     const currentLocation = {
       pathname: "/profilo/piani",
       search: "?ref=upgrade",
@@ -108,7 +115,7 @@ describe("ProtectedRoute Route Guard Suite", () => {
 
     renderWithAuth({
       user: null,
-      loading: false,
+      status: "unauthenticated",
       hasConflict: false,
     });
 
@@ -133,7 +140,7 @@ describe("ProtectedRoute Route Guard Suite", () => {
     renderWithAuth(
       {
         user: mockUser,
-        loading: false,
+        status: "authenticated",
         hasConflict: false,
       },
       <div data-testid="protected-dashboard">Pannello Utente Jurio</div>

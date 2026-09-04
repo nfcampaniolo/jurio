@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import React, { useContext } from "react";
-import { AuthContext } from "@/context/AuthContext";
+import { AuthContext, type AuthContextType } from "@/context/AuthContext";
 import type { User } from "firebase/auth";
 
 /* ---------- hoisted mocks ---------- */
@@ -24,12 +24,15 @@ vi.mock("@/features/auth/hooks/auth", () => ({
 
 /* ---------- test consumer component ---------- */
 const TestConsumer: React.FC = () => {
-  const { user, loading, hasConflict } = useContext(AuthContext);
+  // Forziamo il tipo perché nei test sappiamo che è sempre all'interno dell'AuthProvider
+  const { user, status, hasConflict, errorMessage } = useContext(AuthContext) as AuthContextType;
+  
   return (
     <div>
       <span data-testid="user-id">{user ? user.uid : "no-user"}</span>
-      <span data-testid="loading-state">{loading ? "loading" : "idle"}</span>
+      <span data-testid="status-state">{status}</span>
       <span data-testid="conflict-state">{hasConflict ? "conflict" : "no-conflict"}</span>
+      <span data-testid="error-state">{errorMessage || "no-error"}</span>
     </div>
   );
 };
@@ -53,7 +56,7 @@ describe("AuthProvider Suite", () => {
     );
   });
 
-  test("salta la sottoscrizione e imposta loading su false se la rotta è statica (/privacy, /termini, /gdpr)", () => {
+  test("salta la sottoscrizione e imposta status su 'unauthenticated' se la rotta è statica (/privacy, /termini, /gdpr)", () => {
     setLocationPath("/privacy");
 
     render(
@@ -62,7 +65,7 @@ describe("AuthProvider Suite", () => {
       </AuthProvider>
     );
 
-    expect(screen.getByTestId("loading-state")).toHaveTextContent("idle");
+    expect(screen.getByTestId("status-state")).toHaveTextContent("unauthenticated");
     expect(screen.getByTestId("user-id")).toHaveTextContent("no-user");
     expect(screen.getByTestId("conflict-state")).toHaveTextContent("no-conflict");
     expect(mockOnUserStateChange).not.toHaveBeenCalled();
@@ -88,7 +91,7 @@ describe("AuthProvider Suite", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading-state")).toHaveTextContent("idle");
+      expect(screen.getByTestId("status-state")).toHaveTextContent("authenticated");
       expect(screen.getByTestId("user-id")).toHaveTextContent("usr_flv_2026");
       expect(screen.getByTestId("conflict-state")).toHaveTextContent("no-conflict");
     });
@@ -115,13 +118,14 @@ describe("AuthProvider Suite", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading-state")).toHaveTextContent("idle");
+      expect(screen.getByTestId("status-state")).toHaveTextContent("authenticated");
       expect(screen.getByTestId("user-id")).toHaveTextContent("usr_flv_2026");
       expect(screen.getByTestId("conflict-state")).toHaveTextContent("conflict");
     });
   });
 
-  test("imposta loading su false se l'import dinamico o l'inizializzazione del modulo fallisce", async () => {
+  test("imposta status su 'error' se l'import dinamico o l'inizializzazione del modulo fallisce", async () => {
+    // Simuliamo un errore durante l'inizializzazione del listener
     mockOnUserStateChange.mockImplementation(() => {
       throw new Error("Auth module loading failure");
     });
@@ -133,7 +137,8 @@ describe("AuthProvider Suite", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading-state")).toHaveTextContent("idle");
+      expect(screen.getByTestId("status-state")).toHaveTextContent("error");
+      expect(screen.getByTestId("error-state")).toHaveTextContent("Auth module loading failure");
       expect(screen.getByTestId("user-id")).toHaveTextContent("no-user");
     });
   });
@@ -156,7 +161,7 @@ describe("AuthProvider Suite", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("loading-state")).toHaveTextContent("idle");
+      expect(screen.getByTestId("status-state")).toHaveTextContent("unauthenticated");
     });
 
     unmount();

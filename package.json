@@ -85,9 +85,17 @@
     "vite": "^7.2.4",
     "vitest": "^4.0.18"
   },
-  "description": "This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.",
+  "description": "Piattaforma LegalTech basata su intelligenza artificiale per la ricerca semantica, l'analisi e la sintesi di giurisprudenza e atti normativi.",
+  "keywords": [
+    "legaltech",
+    "ai",
+    "giurisprudenza",
+    "cassazione",
+    "genkit",
+    "legal-assistant",
+    "office-addin"
+  ],
+  "author": "Jurio",
   "main": "eslint.config.js",
-  "keywords": [],
-  "author": "",
   "license": "ISC"
 }

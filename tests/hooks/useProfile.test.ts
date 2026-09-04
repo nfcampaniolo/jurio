@@ -26,6 +26,7 @@ const {
   mockAuthState: {
     user: null as User | null,
     loading: false,
+    status: "authenticated" as 'loading' | 'authenticated' | 'unauthenticated' | 'error',
   },
   mockToast: {
     error: vi.fn(),
@@ -155,8 +156,10 @@ describe("useProfile Hook Suite", () => {
   });
 
   describe("Inizializzazione e Guardie di Reindirizzamento", () => {
+    
     test("non intraprende alcuna azione se lo stato di autenticazione è in loading", () => {
       mockAuthState.loading = true;
+      mockAuthState.status = "loading";
       mockAuthState.user = null;
 
       const { result } = renderHook(() => useProfile());
@@ -168,6 +171,7 @@ describe("useProfile Hook Suite", () => {
 
     test("reindirizza al login se l'utente non è autenticato", () => {
       mockAuthState.loading = false;
+      mockAuthState.status = "unauthenticated";
       mockAuthState.user = null;
 
       renderHook(() => useProfile());

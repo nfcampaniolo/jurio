@@ -1,39 +1,51 @@
 import { getAuthClient } from "./auth";
-import { getDb } from "@/infrastructure/db";
-import { doc, updateDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 
-/**
- * Ruba la sessione sovrascrivendo l'ID su Firestore
- */
 export async function forceSessionTakeover() {
   const auth = await getAuthClient();
   const user = auth.currentUser;
   
-  if (!user) {
-    throw new Error("no_user"); // Diciamo all'interfaccia che non c'è utente
-  }
+  if (!user) throw new Error("no_user");
 
-  const db = await getDb();
-  
-  // Genera un nuovo ID (usa un fallback per sicurezza)
-  const newSessionId = typeof crypto !== 'undefined' && crypto.randomUUID 
-    ? crypto.randomUUID() 
-    : Date.now().toString();
-  
-  // Salva in locale
-  localStorage.setItem('active_session_id', newSessionId);
-  
-  // Aggiorna Firestore
-  const userRef = doc(db, 'users', user.uid);
-  await updateDoc(userRef, {
-    currentSessionId: newSessionId,
-  });
+  try {
+    // 1. JWT
+    const idToken = await user.getIdToken();
+    
+    // 2. AppCheck
+    const { getToken } = await import("firebase/app-check");
+    const { initializeFirebaseAppCheck } = await import("@/infrastructure/appCheck");
+    
+    const appCheckInstance = initializeFirebaseAppCheck();
+    let appCheckToken = "";
+    
+    if (appCheckInstance) {
+      const appCheckData = await getToken(appCheckInstance, false);
+      appCheckToken = appCheckData.token;
+    }
+
+    const response = await fetch(`https://forcetakeoversession-vqoobrenua-ew.a.run.app`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${idToken}`,
+        "X-Firebase-AppCheck": appCheckToken
+      },
+      body: JSON.stringify({})
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    localStorage.setItem('active_session_id', data.newSessionId);
+
+  } catch (error) {
+    console.error("Errore durante il takeover della sessione:", error);
+    throw error; 
+  }
 }
 
-/**
- * Effettua il logout forzato e pulisce il dispositivo locale
- */
 export async function clearLocalSession() {
   const auth = await getAuthClient();
   localStorage.removeItem('active_session_id');

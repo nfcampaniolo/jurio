@@ -3,21 +3,33 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
 
 /* ---------- hoisted mocks ---------- */
-const { mockNavigate, mockForceSessionTakeover, mockClearLocalSession } = vi.hoisted(() => ({
+const { mockNavigate, mockForceSessionTakeover, mockClearLocalSession, mockResolveConflict } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
   mockForceSessionTakeover: vi.fn(),
   mockClearLocalSession: vi.fn(),
+  mockResolveConflict: vi.fn(),
 }));
 
 /* ---------- mock react-router-dom ---------- */
 vi.mock("react-router-dom", () => ({
   __esModule: true,
   useNavigate: () => mockNavigate,
+  useLocation: () => ({ pathname: "/sessione-attiva", search: "", hash: "", state: null }),
   Link: ({ to, children, className }: { to: string; children: React.ReactNode; className?: string }) => (
     <a href={to} className={className} data-testid="support-link">
       {children}
     </a>
   ),
+}));
+
+/* ---------- mock useAuth hook ---------- */
+vi.mock("@/context/useAuth", () => ({
+  __esModule: true,
+  useAuth: () => ({
+    hasConflict: true,
+    status: "authenticated",
+    resolveConflict: mockResolveConflict,
+  }),
 }));
 
 /* ---------- mock sessionLogic ---------- */
@@ -28,7 +40,7 @@ vi.mock("@/features/auth/hooks/sessionLogic", () => ({
 }));
 
 /* ---------- component under test ---------- */
-import Session from "@/features/auth/Session"; // <-- adegua il path se necessario
+import Session from "@/features/auth/Session";
 
 describe("Session Page Suite", () => {
   beforeEach(() => {
@@ -61,7 +73,7 @@ describe("Session Page Suite", () => {
     expect(supportLink).toHaveTextContent("Contatta il supporto");
   });
 
-  test("gestisce il takeover della sessione con successo e torna alla pagina precedente", async () => {
+  test("gestisce il takeover della sessione con successo e naviga verso la destinazione", async () => {
     render(<Session />);
 
     const takeoverBtn = screen.getByRole("button", { name: "Forza l'accesso qui" });
@@ -69,7 +81,8 @@ describe("Session Page Suite", () => {
 
     await waitFor(() => {
       expect(mockForceSessionTakeover).toHaveBeenCalledTimes(1);
-      expect(mockNavigate).toHaveBeenCalledWith(-1);
+      expect(mockResolveConflict).toHaveBeenCalledTimes(1);
+      expect(mockNavigate).toHaveBeenCalledWith("/profilo", { replace: true });
     });
   });
 

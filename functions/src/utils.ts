@@ -9,7 +9,7 @@ const auth = getAdminAuth();
 const ALLOWED_ORIGINS = [
   "https://jurio.it",
   "https://jurio-it.web.app",
-  "https://jurio-it.firebaseapp.com",
+  "https://jurio-it.firebaseapp.com"
 ];
 
 export const corsHandlerDomain = cors({

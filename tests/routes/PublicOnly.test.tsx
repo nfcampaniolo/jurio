@@ -8,8 +8,10 @@ import type { AuthContextType } from "@/context/AuthContext";
 const { mockAuthState, mockNavigateComponent } = vi.hoisted(() => ({
   mockAuthState: {
     user: null as User | null,
-    loading: false,
+    status: "unauthenticated",
     hasConflict: false,
+    errorMessage: null,
+    resolveConflict: vi.fn(),
   } as AuthContextType,
   mockNavigateComponent: vi.fn(),
 }));
@@ -42,12 +44,13 @@ describe("PublicOnly Route Guard Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthState.user = null;
-    mockAuthState.loading = false;
+    mockAuthState.status = "unauthenticated";
     mockAuthState.hasConflict = false;
+    mockAuthState.errorMessage = null;
   });
 
-  test("renderizza il loader (AuthLoader) quando lo stato di autenticazione è in caricamento", () => {
-    mockAuthState.loading = true;
+  test("renderizza il loader (AuthLoader) quando lo stato di autenticazione è in caricamento ('loading')", () => {
+    mockAuthState.status = "loading";
 
     render(
       <PublicOnly>
@@ -61,9 +64,9 @@ describe("PublicOnly Route Guard Suite", () => {
     expect(screen.queryByTestId("mock-navigate")).not.toBeInTheDocument();
   });
 
-  test("reindirizza alla pagina '/profilo' con replace quando l'utente è già autenticato", () => {
+  test("reindirizza alla pagina '/profilo' con replace quando l'utente è già autenticato ('authenticated')", () => {
     mockAuthState.user = { uid: "usr_flv_2026", email: "flavio@jurio.it" } as unknown as User;
-    mockAuthState.loading = false;
+    mockAuthState.status = "authenticated";
 
     render(
       <PublicOnly>
@@ -81,9 +84,9 @@ describe("PublicOnly Route Guard Suite", () => {
     });
   });
 
-  test("renderizza i children quando l'utente non è autenticato e il caricamento è completato", () => {
+  test("renderizza i children quando l'utente non è autenticato ('unauthenticated')", () => {
     mockAuthState.user = null;
-    mockAuthState.loading = false;
+    mockAuthState.status = "unauthenticated";
 
     render(
       <PublicOnly>

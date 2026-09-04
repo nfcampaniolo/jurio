@@ -33,8 +33,12 @@ vi.mock("firebase/auth", () => ({
   signOut: (auth: unknown) => mockSignOut(auth),
 }));
 
+vi.mock("@/infrastructure/appCheck", () => ({
+  initializeFirebaseAppCheck: vi.fn(() => null),
+}));
+
 /* ---------- subject under test ---------- */
-import { forceSessionTakeover, clearLocalSession } from "@/features/auth/hooks/sessionLogic"; // <-- adegua il path se necessario
+import { forceSessionTakeover, clearLocalSession } from "@/features/auth/hooks/sessionLogic";
 
 describe("session Service Suite", () => {
   let setItemSpy: ReturnType<typeof vi.spyOn>;
@@ -44,6 +48,16 @@ describe("session Service Suite", () => {
     vi.clearAllMocks();
     setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {});
     removeItemSpy = vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {});
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ newSessionId: "server-session-uuid-999" }),
+      })
+    );
+
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -55,33 +69,28 @@ describe("session Service Suite", () => {
       mockGetAuthClient.mockResolvedValueOnce({ currentUser: null });
 
       await expect(forceSessionTakeover()).rejects.toThrow("no_user");
-      expect(mockGetDb).not.toHaveBeenCalled();
     });
 
-    test("aggiorna la sessione su firestore e salva in localStorage usando crypto.randomUUID", async () => {
-      const mockUser = { uid: "user_123" };
+    test("richiede il token ID, invoca il server di takeover e salva la nuova sessione nel localStorage", async () => {
+      const mockUser = {
+        uid: "user_123",
+        getIdToken: vi.fn().mockResolvedValue("mock_id_token"),
+      };
       mockGetAuthClient.mockResolvedValueOnce({ currentUser: mockUser });
-
-      const originalCrypto = global.crypto;
-      const mockRandomUUID = vi.fn().mockReturnValue("mock-uuid-123");
-      Object.defineProperty(global, "crypto", {
-        value: { randomUUID: mockRandomUUID },
-        configurable: true,
-      });
 
       await forceSessionTakeover();
 
-      expect(mockGetDb).toHaveBeenCalledTimes(1);
-      expect(setItemSpy).toHaveBeenCalledWith("active_session_id", "mock-uuid-123");
-      expect(mockUpdateDoc).toHaveBeenCalledTimes(1);
-      expect(mockUpdateDoc).toHaveBeenCalledWith("users/user_123", {
-        currentSessionId: "mock-uuid-123",
-      });
-
-      Object.defineProperty(global, "crypto", {
-        value: originalCrypto,
-        configurable: true,
-      });
+      expect(mockUser.getIdToken).toHaveBeenCalledTimes(1);
+      expect(fetch).toHaveBeenCalledWith(
+        "https://forcetakeoversession-vqoobrenua-ew.a.run.app",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            "Authorization": "Bearer mock_id_token",
+          }),
+        })
+      );
+      expect(setItemSpy).toHaveBeenCalledWith("active_session_id", "server-session-uuid-999");
     });
   });
 

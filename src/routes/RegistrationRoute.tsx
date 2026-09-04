@@ -3,44 +3,59 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/useAuth";
 import { userExists } from "@/shared/services/user";
 import { AuthLoader } from "./AuthLoader";
+import { ErrorScreen } from "../shared/components/ErrorScreen";
 
 export const RegistrationRoute = ({ children }: { children: ReactNode }) => {
-  const { user, loading } = useAuth();
-  const [hasProfile, setHasProfile] = useState<boolean | null>(null);
+  const { user, status, errorMessage } = useAuth();
+  
+  // Tracciamo lo stato del profilo in modo esplicito per gestire gli errori della Promise
+  const [profileState, setProfileState] = useState<'loading' | 'exists' | 'missing' | 'error'>('loading');
 
   useEffect(() => {
-    // Se Firebase sta caricando o se l'utente non esiste, non facciamo nulla.
-    // L'effetto serve SOLO per interrogare Firestore se c'è un utente Auth.
-    if (loading || !user) return;
+    // Se non siamo autenticati o siamo in errore globale, non fare nulla
+    if (status !== 'authenticated' || !user) return;
     
     let isMounted = true;
     
     userExists(user.uid)
       .then(exists => {
-        if (isMounted) setHasProfile(exists);
+        if (isMounted) setProfileState(exists ? 'exists' : 'missing');
       })
-      .catch(() => {
-        if (isMounted) setHasProfile(false);
+      .catch((err) => {
+        console.error("Impossibile contattare Firestore per verificare l'esistenza:", err);
+        // Evitiamo che un errore di rete venga trattato come "profilo inesistente"
+        if (isMounted) setProfileState('error'); 
       });
 
-    // Cleanup function per evitare memory leaks se il componente viene smontato
     return () => {
       isMounted = false;
     };
-  }, [user, loading]);
+  }, [user, status]);
 
-  // 1. Firebase sta ancora inizializzando la sessione
-  if (loading) return <AuthLoader />;
+  // 1. Errore globale di Firebase o Auth
+  if (status === 'error') {
+    return <ErrorScreen message="Errore di connessione (Auth)." details={errorMessage} />;
+  }
 
-  // 2. È un ospite puro (non c'è user in Firebase): via libera immediato al form
-  if (!user) return <>{children}</>;
+  // 2. Auth sta ancora caricando
+  if (status === 'loading') return <AuthLoader />;
 
-  // 3. È loggato in Firebase, ma stiamo ancora aspettando la risposta da Firestore
-  if (hasProfile === null) return <AuthLoader />;
+  // 3. Utente ospite puro (Guest): Via libera al form
+  if (status === 'unauthenticated') return <>{children}</>;
 
-  // 4. È loggato in Firebase e ha già completato il setup su Firestore
-  if (hasProfile) return <Navigate to="/profilo" replace />;
+  // --- Da qui in poi l'utente è loggato su Firebase Auth ---
 
-  // 5. È loggato in Firebase ma la registrazione su Firestore non è completata
+  // 4. Errore specifico durante la fetch del profilo da Firestore
+  if (profileState === 'error') {
+    return <ErrorScreen message="Errore di rete. Impossibile verificare il tuo profilo. Riprova più tardi." />;
+  }
+
+  // 5. Verifica in corso su Firestore
+  if (profileState === 'loading') return <AuthLoader />;
+
+  // 6. Registrazione su Firestore completata in precedenza
+  if (profileState === 'exists') return <Navigate to="/profilo" replace />;
+
+  // 7. Utente in Auth ma manca il record su Firestore: Via libera al form
   return <>{children}</>;
 };

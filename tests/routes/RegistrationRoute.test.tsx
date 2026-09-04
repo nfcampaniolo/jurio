@@ -8,8 +8,10 @@ import type { AuthContextType } from "@/context/AuthContext";
 const { mockAuthState, mockNavigateComponent, mockUserExists } = vi.hoisted(() => ({
   mockAuthState: {
     user: null as User | null,
-    loading: false,
+    status: 'loading', // Ora usiamo lo status esplicito
     hasConflict: false,
+    errorMessage: null,
+    resolveConflict: vi.fn(),
   } as AuthContextType,
   mockNavigateComponent: vi.fn(),
   mockUserExists: vi.fn(),
@@ -42,6 +44,17 @@ vi.mock("@/shared/services/user", () => ({
   userExists: (uid: string) => mockUserExists(uid),
 }));
 
+/* ---------- mock ErrorScreen component ---------- */
+vi.mock("@/shared/components/ErrorScreen", () => ({
+  __esModule: true,
+  ErrorScreen: ({ message, details }: { message: string, details?: string }) => (
+    <div data-testid="error-screen">
+      <span>{message}</span>
+      {details && <span>{details}</span>}
+    </div>
+  ),
+}));
+
 /* ---------- component under test ---------- */
 import { RegistrationRoute } from "@/routes/RegistrationRoute";
 
@@ -49,13 +62,14 @@ describe("RegistrationRoute Route Guard Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthState.user = null;
-    mockAuthState.loading = false;
+    mockAuthState.status = 'loading';
     mockAuthState.hasConflict = false;
+    mockAuthState.errorMessage = null;
     mockUserExists.mockResolvedValue(false);
   });
 
-  test("mostra AuthLoader quando Firebase è in stato di inizializzazione della sessione (loading: true)", () => {
-    mockAuthState.loading = true;
+  test("mostra AuthLoader quando Firebase è in stato di inizializzazione (status: 'loading')", () => {
+    mockAuthState.status = 'loading';
 
     render(
       <RegistrationRoute>
@@ -69,9 +83,9 @@ describe("RegistrationRoute Route Guard Suite", () => {
     expect(mockUserExists).not.toHaveBeenCalled();
   });
 
-  test("renderizza immediatamente i children per utenti guest non autenticati senza interrogare Firestore", () => {
+  test("renderizza immediatamente i children per utenti guest non autenticati (status: 'unauthenticated')", () => {
     mockAuthState.user = null;
-    mockAuthState.loading = false;
+    mockAuthState.status = 'unauthenticated';
 
     render(
       <RegistrationRoute>
@@ -87,6 +101,7 @@ describe("RegistrationRoute Route Guard Suite", () => {
 
   test("mostra AuthLoader mentre è in corso la verifica del profilo su Firestore", () => {
     mockAuthState.user = { uid: "usr_flv_2026" } as unknown as User;
+    mockAuthState.status = 'authenticated';
     mockUserExists.mockImplementation(() => new Promise(() => {})); // Promise pendente
 
     render(
@@ -103,6 +118,7 @@ describe("RegistrationRoute Route Guard Suite", () => {
 
   test("reindirizza a '/profilo' con replace se l'utente è autenticato e ha già un profilo completato su Firestore", async () => {
     mockAuthState.user = { uid: "usr_flv_2026" } as unknown as User;
+    mockAuthState.status = 'authenticated';
     mockUserExists.mockResolvedValue(true);
 
     render(
@@ -124,6 +140,7 @@ describe("RegistrationRoute Route Guard Suite", () => {
 
   test("renderizza i children se l'utente è autenticato in Auth ma non ha ancora un record profilo su Firestore", async () => {
     mockAuthState.user = { uid: "usr_new_2026" } as unknown as User;
+    mockAuthState.status = 'authenticated';
     mockUserExists.mockResolvedValue(false);
 
     render(
@@ -140,9 +157,10 @@ describe("RegistrationRoute Route Guard Suite", () => {
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
-  test("consente l'accesso al form se la verifica su Firestore fallisce (catch handler)", async () => {
+  test("BLOCCA l'accesso mostrando ErrorScreen se la verifica su Firestore fallisce per errore di rete", async () => {
     mockAuthState.user = { uid: "usr_flv_2026" } as unknown as User;
-    mockUserExists.mockRejectedValue(new Error("Firestore lookup error"));
+    mockAuthState.status = 'authenticated';
+    mockUserExists.mockRejectedValue(new Error("Timeout Firestore"));
 
     render(
       <RegistrationRoute>
@@ -151,9 +169,29 @@ describe("RegistrationRoute Route Guard Suite", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId("register-form")).toBeInTheDocument();
+      expect(screen.getByTestId("error-screen")).toBeInTheDocument();
     });
 
+    // Assicuriamoci che venga mostrato l'errore e NON il form (Risoluzione del falso negativo)
+    expect(screen.getByText(/Errore di rete/i)).toBeInTheDocument();
+    expect(screen.queryByTestId("register-form")).not.toBeInTheDocument();
     expect(screen.queryByTestId("mock-navigate")).not.toBeInTheDocument();
+  });
+
+  test("BLOCCA l'accesso se il context di autenticazione globale è in stato di errore", () => {
+    mockAuthState.user = null;
+    mockAuthState.status = 'error';
+    mockAuthState.errorMessage = "Token revocato";
+
+    render(
+      <RegistrationRoute>
+        <div data-testid="register-form">Form Registrazione</div>
+      </RegistrationRoute>
+    );
+
+    expect(screen.getByTestId("error-screen")).toBeInTheDocument();
+    expect(screen.getByText(/Errore di connessione/i)).toBeInTheDocument();
+    expect(screen.getByText("Token revocato")).toBeInTheDocument();
+    expect(screen.queryByTestId("register-form")).not.toBeInTheDocument();
   });
 });

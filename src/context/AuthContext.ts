@@ -1,15 +1,12 @@
-// File: src/context/AuthContext.ts
 import { createContext } from "react";
-type FirebaseUser = import("firebase/auth").User;
+import type { User } from "firebase/auth";
 
 export interface AuthContextType {
-  user: FirebaseUser | null;
-  loading: boolean;
-  hasConflict: boolean; // <-- Aggiungi questo
+  user: User | null;
+  status: 'loading' | 'authenticated' | 'unauthenticated' | 'error';
+  hasConflict: boolean;
+  errorMessage: string | null;
+  resolveConflict: () => void; // Aggiunto per azzerare il conflitto all'istante
 }
 
-export const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  hasConflict: false,
-});
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);

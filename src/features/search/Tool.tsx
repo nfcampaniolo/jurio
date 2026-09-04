@@ -36,7 +36,8 @@ const InfoSkeleton = () => (
 );
 
 export const Tool = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, status } = useAuth();
+  const authLoading = status === 'loading';
 
   const seoData = useMemo(() => (
     <Helmet>

@@ -1,15 +1,17 @@
 import { Navigate, useLocation } from "react-router-dom";
-import { useContext, type ReactNode } from "react"; // <-- Aggiungi ReactNode
-import { AuthContext } from "@/context/AuthContext";
+import { type ReactNode } from "react";
+import { useAuth } from "@/context/useAuth";
+import { AuthLoader } from "./AuthLoader";
+import { ErrorScreen } from "../shared/components/ErrorScreen"; // Sostituisci con il tuo componente di errore
 
-// Sostituisci { children: JSX.Element } con { children: ReactNode }
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
-  const { user, loading, hasConflict } = useContext(AuthContext);
+  const { status, hasConflict, errorMessage } = useAuth();
   const location = useLocation();
 
-  if (loading) return null; 
+  if (status === 'error') return <ErrorScreen message="Errore di connessione. Impossibile verificare l'identità." details={errorMessage} />;
+  if (status === 'loading') return <AuthLoader />; 
   if (hasConflict) return <Navigate to="/sessione-attiva" replace />;
-  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
+  if (status === 'unauthenticated') return <Navigate to="/login" state={{ from: location }} replace />;
 
-  return children; // Ora accetterà qualsiasi figlio valido in React
+  return <>{children}</>;
 };

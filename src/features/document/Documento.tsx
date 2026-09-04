@@ -20,7 +20,8 @@ const LoadingSpinner = () => (
 );
 
 export const Documento = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, status } = useAuth();
+  const authLoading = status === 'loading';
   const { id } = useParams<{ id: string }>();
   // Assicurati che il router passi sempre l'ID a questo componente, quindi facciamo un check cautelativo
   const { selectedDoc, pdfUrl, loading: docLoading, deny, isGiurisprudenza } = useDocumento(id || "");

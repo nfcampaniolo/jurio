@@ -4,25 +4,73 @@ import { trackEvent } from "@/infrastructure/analytics";
 
 /** Carica e ritorna l'istanza Auth senza trascinare Firestore/Storage/Functions */
 export async function getAuthClient() {
-  const {
-    initializeFirebaseAppCheck,
-  } = await import(
-    "@/infrastructure/appCheck"
-  );
+  const { initializeFirebaseAppCheck } = await import("@/infrastructure/appCheck");
   initializeFirebaseAppCheck();
-
-  const { getAuth } =
-    await import("firebase/auth");
-
+  const { getAuth } = await import("firebase/auth");
   return getAuth(firebaseApp);
+}
+
+async function syncSessionSecure() {
+  const auth = await getAuthClient();
+  const user = auth.currentUser;
+  if (!user) throw new Error("Nessun utente per sincronizzare la sessione");
+
+  try {
+    // 1. Recupera JWT di Firebase Auth
+    const idToken = await user.getIdToken();
+    
+    // 2. Recupera Token di AppCheck usando la tua funzione
+    const { getToken } = await import("firebase/app-check");
+    const { initializeFirebaseAppCheck } = await import("@/infrastructure/appCheck");
+    
+    const appCheckInstance = initializeFirebaseAppCheck();
+    let appCheckToken = "";
+    
+    if (appCheckInstance) {
+      const appCheckData = await getToken(appCheckInstance, false);
+      appCheckToken = appCheckData.token;
+    }
+
+    const response = await fetch(`https://syncusersession-vqoobrenua-ew.a.run.app`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${idToken}`,
+        "X-Firebase-AppCheck": appCheckToken
+      },
+      body: JSON.stringify({}) // Corpo vuoto
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    localStorage.setItem("active_session_id", data.sessionId);
+    console.log("Sessione sincronizzata con autorità server.");
+    
+  } catch (err) {
+    console.error("Errore critico nella sincronizzazione sessione", err);
+    throw err;
+  }
 }
 
 export async function registerWithEmail(email: string, password: string) {
   const auth = await getAuthClient();
-  const { createUserWithEmailAndPassword } = await import("firebase/auth");
+  const { createUserWithEmailAndPassword, signOut } = await import("firebase/auth");
 
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+    try {
+      // Firebase logga l'utente in automatico, quindi creiamo la sessione
+      await syncSessionSecure();
+    } catch (sessionErr) {
+      // ROLLBACK: se il server fallisce, scolleghiamo l'utente localmente
+      console.error("Errore durante la sincronizzazione della sessione:", sessionErr);
+      await signOut(auth);
+      throw new Error("Impossibile creare la sessione sicura. Riprova.");
+    }
 
     // Tracking (success)
     trackEvent("sign_up", { method: "email", success: true });
@@ -41,13 +89,21 @@ export async function registerWithEmail(email: string, password: string) {
 
 export async function loginWithEmail(email: string, password: string) {
   const auth = await getAuthClient();
-  const { signInWithEmailAndPassword } = await import("firebase/auth");
+  const { signInWithEmailAndPassword, signOut } = await import("firebase/auth");
 
   try {
     const cred = await signInWithEmailAndPassword(auth, email, password);
-    // --- AGGIUNTA: Sincronizza sessione ---
-    await syncSession(cred.user.uid);
-    // --------------------------------------
+    
+    try {
+      // Sincronizza sessione
+      await syncSessionSecure();
+    } catch (sessionErr) {
+      // ROLLBACK: scollega localmente se il server non risponde
+      console.error("Errore durante la sincronizzazione della sessione:", sessionErr);
+      await signOut(auth);
+      throw new Error("Errore durante l'avvio della sessione sicura.");
+    }
+
     // Tracking (success)
     trackEvent("login", { method: "email", success: true });
     return cred;
@@ -64,14 +120,22 @@ export async function loginWithEmail(email: string, password: string) {
 
 export async function loginWithGoogle(): Promise<User> {
   const auth = await getAuthClient();
-  const { GoogleAuthProvider, signInWithPopup } = await import("firebase/auth");
+  const { GoogleAuthProvider, signInWithPopup, signOut } = await import("firebase/auth");
 
   try {
     const provider = new GoogleAuthProvider();
     const credential = await signInWithPopup(auth, provider);
-    // --- LOGICA SESSIONE UNICA ---
-    await syncSession(credential.user.uid);
-    // -----------------------------
+    
+    try {
+      // LOGICA SESSIONE UNICA
+      await syncSessionSecure();
+    } catch (sessionErr) {
+      // ROLLBACK preventivo
+      console.error("Errore durante l'avvio della sessione sicura con Google:", sessionErr);
+      await signOut(auth);
+      throw new Error("Errore durante l'avvio della sessione sicura con Google.");
+    }
+    
     trackEvent("login", { method: "google", success: true });
     return credential.user;
   } catch (err) {
@@ -89,9 +153,9 @@ export async function logout() {
   const { signOut } = await import("firebase/auth");
   try {
     await signOut(auth);
-    // --- AGGIUNTA: Pulizia sessione locale ---
+    // Pulizia sessione locale
     localStorage.removeItem("active_session_id");
-    // -----------------------------------------
+    
     // Tracking (success)
     trackEvent("logout", {});
     return;
@@ -193,8 +257,8 @@ export async function ensureAnonAuth() {
     throw err;
   }
 }
-/** * Inizializza il ReCaptcha invisibile. 
- */
+
+/** * Inizializza il ReCaptcha invisibile. */
 export async function setupRecaptcha(containerId: string) {
   const auth = await getAuthClient();
   const { RecaptchaVerifier } = await import("firebase/auth");
@@ -210,8 +274,7 @@ export async function setupRecaptcha(containerId: string) {
   return window.recaptchaVerifier;
 }
 
-/** * Invia l'SMS al numero di telefono e lo collega all'utente attuale.
- */
+/** * Invia l'SMS al numero di telefono e lo collega all'utente attuale. */
 export async function sendPhoneVerification(
   user: User, 
   phoneNumber: string, 
@@ -231,8 +294,7 @@ export async function sendPhoneVerification(
   }
 }
 
-/** * Conferma il codice OTP inserito dall'utente.
- */
+/** * Conferma il codice OTP inserito dall'utente. */
 export async function confirmPhoneVerification(confirmationResult: ConfirmationResult, otpCode: string) {
   try {
     const result = await confirmationResult.confirm(otpCode);
@@ -243,31 +305,5 @@ export async function confirmPhoneVerification(confirmationResult: ConfirmationR
       reason: err instanceof Error ? err.message : "unknown_error",
     });
     throw err;
-  }
-}
-
-// Helper per generare e salvare la sessione
-async function syncSession(uid: string) {
-  const { getDb } = await import("@/infrastructure/db"); 
-  const { doc, getDoc, updateDoc } = await import("firebase/firestore"); 
-  const db = await getDb();
-  
-  const userRef = doc(db, "users", uid);
-  const userSnap = await getDoc(userRef);
-
-  // Verifichiamo se il documento esiste prima di provare l'update
-  if (userSnap.exists()) {
-    const sessionId = typeof crypto !== 'undefined' && crypto.randomUUID 
-      ? crypto.randomUUID() 
-      : Date.now().toString();
-      
-    localStorage.setItem("active_session_id", sessionId);
-    
-    await updateDoc(userRef, {
-      currentSessionId: sessionId
-    });
-    console.log("Sessione sincronizzata per l'utente:", uid);
-  } else {
-    console.warn("Documento utente non trovato. Sincronizzazione sessione annullata.");
   }
 }

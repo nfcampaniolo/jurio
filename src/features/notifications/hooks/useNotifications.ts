@@ -9,7 +9,9 @@ export type FeedItem = JurioNotification & { isGlobal?: boolean };
 
 export function useNotifications() {
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  const { user, status } = useAuth();
+  
+  const authLoading = status === 'loading';
   
   const [personalNotifs, setPersonalNotifs] = useState<JurioNotification[]>([]);
   const [broadcastNotifs, setBroadcastNotifs] = useState<JurioNotification[]>([]);

@@ -125,7 +125,17 @@ describe("Auth Service Suite", () => {
     vi.clearAllMocks();
     localStorage.clear();
     delete window.recaptchaVerifier;
-    mockAuth.currentUser = null;
+    mockAuth.currentUser = mockUser;
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ sessionId: "mock_session_id_123" }),
+      })
+    );
+
+    mockUser.getIdToken = vi.fn().mockResolvedValue("mock_firebase_id_token");
 
     mockGetDb.mockResolvedValue(fakeDbInstance);
     vi.spyOn(console, "log").mockImplementation(() => {});
@@ -137,9 +147,6 @@ describe("Auth Service Suite", () => {
     vi.restoreAllMocks();
   });
 
-  /* -------------------------------------------------------------------------- */
-  /* GET AUTH CLIENT                                                            */
-  /* -------------------------------------------------------------------------- */
   describe("getAuthClient", () => {
     test("inizializza Firebase App Check e restituisce l'istanza di autenticazione", async () => {
       const client = await getAuthClient();
@@ -150,9 +157,6 @@ describe("Auth Service Suite", () => {
     });
   });
 
-  /* -------------------------------------------------------------------------- */
-  /* REGISTRAZIONE EMAIL & PASSWORD                                             */
-  /* -------------------------------------------------------------------------- */
   describe("registerWithEmail", () => {
     test("registra un nuovo utente con successo e traccia l'evento analytics", async () => {
       mockCreateUserWithEmailAndPassword.mockResolvedValueOnce(mockUserCredential);
@@ -190,15 +194,9 @@ describe("Auth Service Suite", () => {
     });
   });
 
-  /* -------------------------------------------------------------------------- */
-  /* LOGIN EMAIL & PASSWORD E SINCRONIZZAZIONE SESSIONE                        */
-  /* -------------------------------------------------------------------------- */
   describe("loginWithEmail & syncSession", () => {
-    test("esegue il login, sincronizza la sessione su firestore/localStorage e traccia il successo", async () => {
+    test("esegue il login, sincronizza la sessione su Cloud Run/localStorage e traccia il successo", async () => {
       mockSignInWithEmailAndPassword.mockResolvedValueOnce(mockUserCredential);
-      mockGetDoc.mockResolvedValueOnce({
-        exists: () => true,
-      });
 
       const cred = await loginWithEmail("flavio@jurio.it", "ValidPassword2026!");
 
@@ -208,13 +206,16 @@ describe("Auth Service Suite", () => {
         "ValidPassword2026!"
       );
 
-      expect(mockGetDoc).toHaveBeenCalled();
-      expect(mockUpdateDoc).toHaveBeenCalledWith(
-        expect.anything(),
+      expect(fetch).toHaveBeenCalledWith(
+        "https://syncusersession-vqoobrenua-ew.a.run.app",
         expect.objectContaining({
-          currentSessionId: expect.any(String),
+          method: "POST",
+          headers: expect.objectContaining({
+            "Authorization": expect.any(String),
+          }),
         })
       );
+
       expect(localStorage.getItem("active_session_id")).toBeTruthy();
 
       expect(mockTrackEvent).toHaveBeenCalledWith("login", {
@@ -224,18 +225,22 @@ describe("Auth Service Suite", () => {
       expect(cred).toBe(mockUserCredential);
     });
 
-    test("avverte in console e non aggiorna firestore se il documento utente non esiste durante syncSession", async () => {
+    test("interrompe la sessione e rilancia l'eccezione se la sincronizzazione server fallisce", async () => {
       mockSignInWithEmailAndPassword.mockResolvedValueOnce(mockUserCredential);
-      mockGetDoc.mockResolvedValueOnce({
-        exists: () => false,
-      });
-
-      await loginWithEmail("nuovo@jurio.it", "Pass!");
-
-      expect(console.warn).toHaveBeenCalledWith(
-        "Documento utente non trovato. Sincronizzazione sessione annullata."
+      
+      vi.stubGlobal(
+        "fetch",
+        vi.fn().mockResolvedValue({
+          ok: false,
+          status: 500,
+        })
       );
-      expect(mockUpdateDoc).not.toHaveBeenCalled();
+
+      await expect(
+        loginWithEmail("nuovo@jurio.it", "Pass!")
+      ).rejects.toThrow("Errore durante l'avvio della sessione sicura.");
+
+      expect(mockSignOut).toHaveBeenCalledWith(mockAuth);
       expect(localStorage.getItem("active_session_id")).toBeNull();
     });
 
@@ -257,15 +262,9 @@ describe("Auth Service Suite", () => {
     });
   });
 
-  /* -------------------------------------------------------------------------- */
-  /* LOGIN GOOGLE                                                               */
-  /* -------------------------------------------------------------------------- */
   describe("loginWithGoogle", () => {
     test("esegue login con popup Google, sincronizza sessione e restituisce l'utente", async () => {
       mockSignInWithPopup.mockResolvedValueOnce(mockUserCredential);
-      mockGetDoc.mockResolvedValueOnce({
-        exists: () => true,
-      });
 
       const user = await loginWithGoogle();
 
@@ -293,9 +292,6 @@ describe("Auth Service Suite", () => {
     });
   });
 
-  /* -------------------------------------------------------------------------- */
-  /* LOGOUT                                                                     */
-  /* -------------------------------------------------------------------------- */
   describe("logout", () => {
     test("disconnette l'utente, rimuove la sessione locale e traccia l'evento", async () => {
       localStorage.setItem("active_session_id", "session_token_123");
@@ -320,9 +316,6 @@ describe("Auth Service Suite", () => {
     });
   });
 
-  /* -------------------------------------------------------------------------- */
-  /* GESTIONE STATO UTENTE & CONFLITTO DI SESSIONE (onUserStateChange)          */
-  /* -------------------------------------------------------------------------- */
   describe("onUserStateChange & verifySessionStatus", () => {
     test("invoca il callback con null e nessun conflitto se l'utente non è autenticato", async () => {
       let authCallback: (u: User | null) => void = () => {};
@@ -469,9 +462,6 @@ describe("Auth Service Suite", () => {
     });
   });
 
-  /* -------------------------------------------------------------------------- */
-  /* RESET PASSWORD                                                             */
-  /* -------------------------------------------------------------------------- */
   describe("resetPassword", () => {
     test("solleva errore se l'email non è fornita", async () => {
       await expect(resetPassword("")).rejects.toThrow(
@@ -502,9 +492,6 @@ describe("Auth Service Suite", () => {
     });
   });
 
-  /* -------------------------------------------------------------------------- */
-  /* AUTENTICAZIONE ANONIMA                                                     */
-  /* -------------------------------------------------------------------------- */
   describe("ensureAnonAuth", () => {
     test("esegue signInAnonymously se auth.currentUser è null", async () => {
       mockAuth.currentUser = null;
@@ -536,9 +523,6 @@ describe("Auth Service Suite", () => {
     });
   });
 
-  /* -------------------------------------------------------------------------- */
-  /* VERIFICA TELEFONICA E RECAPTCHA                                            */
-  /* -------------------------------------------------------------------------- */
   describe("setupRecaptcha, sendPhoneVerification, confirmPhoneVerification", () => {
     test("setupRecaptcha crea l'istanza se assente su window e la restituisce", async () => {
       const mockVerifierInstance = { render: vi.fn() };

@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 import React from "react";
 import { AuthContext, type AuthContextType } from "@/context/AuthContext";
@@ -14,8 +14,10 @@ describe("useAuth Hook Suite", () => {
 
     const mockContextValue: AuthContextType = {
       user: mockUser,
-      loading: false,
+      status: "authenticated",
       hasConflict: false,
+      errorMessage: null,
+      resolveConflict: vi.fn(),
     };
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -27,27 +29,15 @@ describe("useAuth Hook Suite", () => {
     const { result } = renderHook(() => useAuth(), { wrapper });
 
     expect(result.current.user).toEqual(mockUser);
-    expect(result.current.loading).toBe(false);
+    expect(result.current.status).toBe("authenticated");
     expect(result.current.hasConflict).toBe(false);
+    expect(result.current.errorMessage).toBeNull();
+    expect(typeof result.current.resolveConflict).toBe("function");
   });
 
-  test("restituisce i valori predefiniti del contesto se invocato senza Provider esplicito", () => {
-    const { result } = renderHook(() => useAuth());
-
-    expect(result.current.user).toBeNull();
-    expect(result.current.loading).toBe(true);
-    expect(result.current.hasConflict).toBe(false);
-  });
-
-  test("solleva un'eccezione esplicita quando il contesto risolve a valore falsy (null / undefined)", () => {
-    const nullWrapper = ({ children }: { children: React.ReactNode }) => (
-      <AuthContext.Provider value={null as unknown as AuthContextType}>
-        {children}
-      </AuthContext.Provider>
-    );
-
-    expect(() => renderHook(() => useAuth(), { wrapper: nullWrapper })).toThrow(
-      "useAuth must be used within AuthProvider"
-    );
+  test("solleva un'eccezione esplicita quando invocato senza un Provider esplicito", () => {
+    expect(() => {
+      renderHook(() => useAuth());
+    }).toThrow("useAuth must be used within AuthProvider");
   });
 });

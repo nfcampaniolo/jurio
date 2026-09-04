@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, test, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import React, { useContext } from "react";
 import { AuthContext, type AuthContextType } from "@/context/AuthContext";
@@ -6,24 +6,29 @@ import type { User } from "firebase/auth";
 
 // Componente consumer di test per verificare i valori estratti dal contesto
 const TestConsumer: React.FC = () => {
-  const { user, loading, hasConflict } = useContext(AuthContext);
+  const context = useContext(AuthContext);
+  
+  if (!context) {
+    return <span data-testid="no-provider">No Provider</span>;
+  }
+
+  const { user, status, hasConflict, errorMessage } = context;
 
   return (
     <div>
       <span data-testid="user-status">{user ? user.uid : "no-user"}</span>
-      <span data-testid="loading-status">{loading ? "loading" : "idle"}</span>
+      <span data-testid="loading-status">{status}</span>
       <span data-testid="conflict-status">{hasConflict ? "conflict" : "no-conflict"}</span>
+      <span data-testid="error-status">{errorMessage || "no-error"}</span>
     </div>
   );
 };
 
 describe("AuthContext Suite", () => {
-  test("fornisce i valori di default corretti in assenza di un Provider esplicito", () => {
+  test("restituisce undefined (gestito dal consumer) in assenza di un Provider esplicito", () => {
     render(<TestConsumer />);
 
-    expect(screen.getByTestId("user-status")).toHaveTextContent("no-user");
-    expect(screen.getByTestId("loading-status")).toHaveTextContent("loading");
-    expect(screen.getByTestId("conflict-status")).toHaveTextContent("no-conflict");
+    expect(screen.getByTestId("no-provider")).toHaveTextContent("No Provider");
   });
 
   test("propaga correttamente i valori personalizzati tramite AuthContext.Provider", () => {
@@ -34,8 +39,10 @@ describe("AuthContext Suite", () => {
 
     const customContextValue: AuthContextType = {
       user: mockUser,
-      loading: false,
+      status: "authenticated",
       hasConflict: true,
+      errorMessage: null,
+      resolveConflict: vi.fn(),
     };
 
     render(
@@ -45,15 +52,17 @@ describe("AuthContext Suite", () => {
     );
 
     expect(screen.getByTestId("user-status")).toHaveTextContent("usr_flv_2026");
-    expect(screen.getByTestId("loading-status")).toHaveTextContent("idle");
+    expect(screen.getByTestId("loading-status")).toHaveTextContent("authenticated");
     expect(screen.getByTestId("conflict-status")).toHaveTextContent("conflict");
   });
 
   test("aggiorna i consumatori quando il valore del Provider cambia dinamicamente", () => {
     const initialValue: AuthContextType = {
       user: null,
-      loading: true,
+      status: "loading",
       hasConflict: false,
+      errorMessage: null,
+      resolveConflict: vi.fn(),
     };
 
     const { rerender } = render(
@@ -71,8 +80,10 @@ describe("AuthContext Suite", () => {
 
     const updatedValue: AuthContextType = {
       user: updatedUser,
-      loading: false,
+      status: "authenticated",
       hasConflict: false,
+      errorMessage: null,
+      resolveConflict: vi.fn(),
     };
 
     rerender(
@@ -82,7 +93,7 @@ describe("AuthContext Suite", () => {
     );
 
     expect(screen.getByTestId("user-status")).toHaveTextContent("usr_updated_999");
-    expect(screen.getByTestId("loading-status")).toHaveTextContent("idle");
+    expect(screen.getByTestId("loading-status")).toHaveTextContent("authenticated");
     expect(screen.getByTestId("conflict-status")).toHaveTextContent("no-conflict");
   });
 });

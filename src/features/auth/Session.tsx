@@ -1,19 +1,35 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/context/useAuth'; 
 
-// Importiamo la logica dal nostro file separato
 import { forceSessionTakeover, clearLocalSession } from './hooks/sessionLogic'; 
 
 export default function Session() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { hasConflict, status, resolveConflict } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
+  const from = location.state?.from?.pathname || '/profilo';
+
+  // Se il conflitto si risolve (via takeover o in background), esci subito da questa pagina
+  useEffect(() => {
+    if (status === 'authenticated' && !hasConflict) {
+      navigate(from, { replace: true });
+    }
+  }, [hasConflict, status, from, navigate]);
 
   const handleForceTakeover = async () => {
     setIsLoading(true);
     try {
       await forceSessionTakeover();
-      navigate(-1);
+      
+      // 1. Azzeramento sincrono nello stato React (la ProtectedRoute non rimbalza più)
+      resolveConflict();
+      
+      // 2. Navigazione immediata
+      navigate(from, { replace: true });
     } catch (error: unknown) {
       console.error("Errore durante la forzatura:", error);
 
@@ -47,10 +63,8 @@ export default function Session() {
     <div className="min-h-screen flex items-center justify-center bg-(--color-bg) p-4">
       <div className="relative max-w-md w-full bg-(--color-surface) border border-(--color-border) rounded-lg shadow-(--shadow-soft) p-6 sm:p-8 text-center overflow-hidden">
         
-        {/* LA LINEA DI RIGORE SUPERIORE (Unico tocco di colore) */}
         <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
 
-        {/* Icona */}
         <div className="mx-auto flex items-center justify-center h-14 w-14 rounded-md border border-(--color-border) bg-(--color-bg) mb-5 mt-1">
           <svg className="h-6 w-6 text-(--color-text) opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -67,7 +81,6 @@ export default function Session() {
         </p>
 
         <div className="space-y-4">
-          {/* Pulsante Primario */}
           <button 
             type="button"
             onClick={handleForceTakeover}
@@ -82,7 +95,6 @@ export default function Session() {
             (Questo disconnetterà l'altro dispositivo)
           </p>
 
-          {/* Pulsante Secondario */}
           <button 
             type="button"
             onClick={handleLogout}
@@ -95,7 +107,6 @@ export default function Session() {
 
         <hr className="my-6 border-(--color-border)" />
 
-        {/* Sezione supporto */}
         <div className="text-xs text-(--color-muted) font-light">
           Non riconosci questo accesso?{' '}
           <Link 

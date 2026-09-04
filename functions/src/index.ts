@@ -2426,9 +2426,8 @@ export const applyDiscountCoupon = onRequest(
   }
 );
 
-export const logCookieConsent = onRequest(async (req, res) => {
+export const syncUserSession = onRequest(async (req, res) => {
   corsHandlerDomain(req, res, async () => {
-    // Gestione Preflight CORS
     if (req.method === "OPTIONS") {
       res.status(204).end();
       return;
@@ -2437,78 +2436,87 @@ export const logCookieConsent = onRequest(async (req, res) => {
       res.status(405).send("Method Not Allowed");
       return;
     }
+
     try {
-      // 1. Sicurezza: Blocca bot e API abuse, ma LASCIA PASSARE utenti anonimi
+      // 1. Sicurezza: Blocca richieste senza AppCheck
       await requireAppCheck(req);
-      // 2. Estrazione e validazione del payload
-      const { anonymousId, preferences, url } = req.body;
-      if (!anonymousId || typeof anonymousId !== "string") {
-        res.status(400).json({ error: "Missing or invalid 'anonymousId'" });
-        return;
-      }
-      if (!preferences || typeof preferences !== "object") {
-        res.status(400).json({ error: "Missing or invalid 'preferences'" });
-        return;
-      }
-      // 3. Auth Opzionale (Gestione Loggati / Non Loggati)
-      // Cerchiamo il token. Se c'è, estraiamo l'UID. Altrimenti l'UID resta null.
-      let uid: string | null = null;
+
+      // 2. Auth Obbligatoria
       const authHeader = req.headers.authorization;
-    
-      if (authHeader && authHeader.startsWith("Bearer ")) {
-        const idToken = authHeader.split("Bearer ")[1];
-        try {
-          const decodedToken = await admin.auth().verifyIdToken(idToken);
-          uid = decodedToken.uid;
-        } catch (authErr) {
-          // Token assente, scaduto o invalido: non facciamo fallire la funzione.
-          console.warn("Auth token non valido, registro consenso anonimo.", authErr);
-        }
-      }
-      // 4. GDPR: Anonimizzazione Indirizzo IP
-      // Se Firebase o Google Cloud usa load balancer, l'IP reale è in x-forwarded-for
-      let rawIp = (req.headers["x-forwarded-for"] as string) || req.ip || "unknown";
-      
-      // x-forwarded-for può contenere multipli IP separati da virgola. Prendiamo il primo.
-      if (rawIp.includes(",")) {
-        rawIp = rawIp.split(",")[0].trim();
-      }
-      
-      let ipAddress = rawIp;
-      if (ipAddress.includes(".")) {
-        // IPv4: 192.168.1.123 -> 192.168.1.0
-        ipAddress = ipAddress.substring(0, ipAddress.lastIndexOf(".")) + ".0";
-      } else if (ipAddress.includes(":")) {
-        // IPv6: 2001:db8:85a3::8a2e:370:7334 -> 2001:db8:85a3:0000::
-        ipAddress = ipAddress.split(":").slice(0, 4).join(":") + "::";
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.status(401).json({ error: "Unauthorized: Missing authentication token" });
+        return;
       }
 
-      // 5. Preparazione log per Firestore
-      const logEntry = {
-        anonymousId,
-        uid, // Sarà la stringa UID se loggato, null se anonimo
-        preferences: {
-          necessary: true, 
-          analytics: !!preferences.analytics,
-          marketing: !!preferences.marketing,
-        },
-        url: typeof url === "string" ? url : "unknown",
-        ipAddress,
-        userAgent: req.headers["user-agent"] || "unknown",
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      };
+      const idToken = authHeader.split("Bearer ")[1];
+      let uid: string;
+      try {
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        uid = decodedToken.uid;
+      } catch (authErr) {
+        console.warn("Token invalido in syncUserSession", authErr);
+        res.status(401).json({ error: "Unauthorized: Invalid token" });
+        return;
+      }
 
-      // 6. Salvataggio
-      // Usando .doc(anonymousId).set(..., { merge: true }), teniamo un solo log per utente
-      await db
-        .collection("cookie_consent_logs")
-        .doc(anonymousId)
-        .set(logEntry, { merge: true });
+      // 3. Generazione e Salvataggio Atomico
+      const sessionId = crypto.randomUUID();
 
-      res.status(200).json({ success: true, message: "Consent logged" });
+      await db.collection("users").doc(uid).set({
+        currentSessionId: sessionId
+      }, { merge: true });
+
+      res.status(200).json({ success: true, sessionId });
     } catch (err) {
-      console.error("logCookieConsent error:", err);
-      // Evita di inviare dettagli dell'errore interno al client
+      console.error("syncUserSession error:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+});
+
+export const forceTakeoverSession = onRequest(async (req, res) => {
+  corsHandlerDomain(req, res, async () => {
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
+    if (req.method !== "POST") {
+      res.status(405).send("Method Not Allowed");
+      return;
+    }
+
+    try {
+      await requireAppCheck(req);
+
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        res.status(401).json({ error: "Unauthorized: Missing authentication token" });
+        return;
+      }
+
+      const idToken = authHeader.split("Bearer ")[1];
+      let uid: string;
+      try {
+        const decodedToken = await admin.auth().verifyIdToken(idToken);
+        uid = decodedToken.uid;
+      } catch (authErr) {
+        res.status(401).json({ error: "Unauthorized: Invalid token" });
+        return;
+      }
+
+      const newSessionId = crypto.randomUUID();
+
+      // REVOCA DEI TOKEN (il vero kick-out di sicurezza)
+      await admin.auth().revokeRefreshTokens(uid);
+
+      // Aggiornamento database
+      await db.collection("users").doc(uid).set({
+        currentSessionId: newSessionId
+      }, { merge: true });
+
+      res.status(200).json({ success: true, newSessionId });
+    } catch (err) {
+      console.error("forceTakeoverSession error:", err);
       res.status(500).json({ error: "Internal server error" });
     }
   });

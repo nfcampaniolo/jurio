@@ -69,6 +69,7 @@ describe("Tool Page Component Suite", () => {
     mockUseAuth.mockReturnValue({
       user: null,
       loading: true,
+      status: "loading",
     });
 
     const { container } = render(<Tool />);
@@ -85,6 +86,7 @@ describe("Tool Page Component Suite", () => {
     mockUseAuth.mockReturnValue({
       user: null,
       loading: false,
+      status: "unauthenticated",
     });
 
     render(<Tool />);
@@ -102,6 +104,7 @@ describe("Tool Page Component Suite", () => {
     mockUseAuth.mockReturnValue({
       user: { uid: "usr_flv_2026", email: "nicolocampaniolo@gmail.com" },
       loading: false,
+      status: "authenticated",
     });
 
     render(<Tool />);
@@ -119,6 +122,7 @@ describe("Tool Page Component Suite", () => {
     mockUseAuth.mockReturnValue({
       user: null,
       loading: false,
+      status: "unauthenticated",
     });
 
     render(<Tool />);

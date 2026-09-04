@@ -10,7 +10,8 @@ import { roleOptions } from "@/interfaces/interfaces";
 import { trackEvent } from "@/infrastructure/analytics";
 
 export const useProfile = () => {
-  const { user, loading } = useAuth();
+  const { user, status } = useAuth();
+  const loading = status === 'loading';
   const navigate = useNavigate();
 
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -194,7 +195,6 @@ export const useProfile = () => {
     }
   };
 
-
   const exportAccount = async () => {
     if (!user) return;
     const uid = user.uid;
@@ -211,7 +211,6 @@ export const useProfile = () => {
       }
     }
   };
-
 
   return {
     user,
