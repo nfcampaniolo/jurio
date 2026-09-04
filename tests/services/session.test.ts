@@ -46,6 +46,11 @@ describe("session Service Suite", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Simula le variabili d'ambiente di Vite per l'ambiente di test
+    vi.stubEnv("VITE_FORCE_TAKEOVER_URL", "https://forcetakeoversession-vqoobrenua-ew.a.run.app");
+    vi.stubEnv("VITE_SYNC_SESSION_URL", "https://syncusersession-vqoobrenua-ew.a.run.app");
+
     setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {});
     removeItemSpy = vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {});
 
@@ -61,6 +66,7 @@ describe("session Service Suite", () => {
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs(); // Pulisce le variabili d'ambiente dopo ogni test
     vi.restoreAllMocks();
   });
 
@@ -85,8 +91,10 @@ describe("session Service Suite", () => {
         "https://forcetakeoversession-vqoobrenua-ew.a.run.app",
         expect.objectContaining({
           method: "POST",
+          body: "{}",
           headers: expect.objectContaining({
             "Authorization": "Bearer mock_id_token",
+            "Content-Type": "application/json",
           }),
         })
       );

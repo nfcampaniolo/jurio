@@ -127,6 +127,9 @@ describe("Auth Service Suite", () => {
     delete window.recaptchaVerifier;
     mockAuth.currentUser = mockUser;
 
+    // Simula le variabili d'ambiente di Vite
+    vi.stubEnv("VITE_SYNC_SESSION_URL", "https://syncusersession-vqoobrenua-ew.a.run.app");
+
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -144,6 +147,7 @@ describe("Auth Service Suite", () => {
   });
 
   afterEach(() => {
+    vi.unstubAllEnvs(); // Pulisce le variabili d'ambiente dopo ogni test
     vi.restoreAllMocks();
   });
 
@@ -206,12 +210,15 @@ describe("Auth Service Suite", () => {
         "ValidPassword2026!"
       );
 
+      // Asserzione corretta per fetch con body e content-type
       expect(fetch).toHaveBeenCalledWith(
         "https://syncusersession-vqoobrenua-ew.a.run.app",
         expect.objectContaining({
           method: "POST",
+          body: "{}",
           headers: expect.objectContaining({
             "Authorization": expect.any(String),
+            "Content-Type": "application/json",
           }),
         })
       );
