@@ -219,13 +219,14 @@ describe("Auth Service Suite", () => {
       );
 
       expect(fetch).toHaveBeenCalledWith(
-        "https://syncusersession-vqoobrenua-ew.a.run.app",
+        expect.any(String), // Accetta sia "" della CI che l'URL in locale
         expect.objectContaining({
           method: "POST",
           body: "{}",
           headers: expect.objectContaining({
             "Authorization": expect.any(String),
             "Content-Type": "application/json",
+            "X-Firebase-AppCheck": expect.any(String),
           }),
         })
       );

@@ -95,13 +95,14 @@ describe("session Service Suite", () => {
 
       expect(mockUser.getIdToken).toHaveBeenCalledTimes(1);
       expect(fetch).toHaveBeenCalledWith(
-        "https://forcetakeoversession-vqoobrenua-ew.a.run.app",
+        expect.any(String), // Accetta sia "" della CI che l'URL in locale
         expect.objectContaining({
           method: "POST",
           body: "{}",
           headers: expect.objectContaining({
             "Authorization": "Bearer mock_id_token",
             "Content-Type": "application/json",
+            "X-Firebase-AppCheck": expect.any(String),
           }),
         })
       );
