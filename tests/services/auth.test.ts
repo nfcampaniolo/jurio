@@ -177,7 +177,7 @@ describe("Auth Service Suite", () => {
         success: true,
       });
       expect(result).toBe(mockUserCredential);
-    });
+    }); 
 
     test("traccia errore analytics e rilancia l'eccezione se la registrazione fallisce", async () => {
       const authErr = new Error("auth/email-already-in-use");
