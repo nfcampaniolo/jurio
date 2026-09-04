@@ -2,6 +2,7 @@ import * as admin from "firebase-admin";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
+import { getStorage } from "firebase-admin/storage";
 
 // Variabile per memorizzare l'istanza ed evitare di riconfigurare settings()
 let db: Firestore;
@@ -24,6 +25,11 @@ export function getDb(): Firestore {
 export function getAdminAuth() {
   if (!getApps().length) initializeApp();
   return getAuth();
+}
+
+export function getAdminStorage() {
+  if (!getApps().length) initializeApp();
+  return getStorage();
 }
 
 export function getAdmin() {

@@ -1,0 +1,1229 @@
+<!doctype html>
+<html lang="it">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Workspace Condiviso per Team Legali | Jurio</title>
+        <meta
+            name="description"
+            content="Gestisci team, licenze, fascicoli e documenti condivisi con Jurio Workspace: ruoli, permessi, voucher, accessi e regole di visibilità per il lavoro collaborativo."
+        />
+        <meta
+            name="keywords"
+            content="Jurio Workspace, team legale, workspace condiviso, gestione team avvocati, fascicoli condivisi, documenti condivisi, ruoli team, Owner Viewer Editor, voucher Jurio, collaborazione studio legale, legal workspace"
+        />
+        <link rel="canonical" href="https://jurio.it/caso-studio/workspace-team" />
+        <meta property="og:title" content="Workspace Condiviso per Team Legali | Jurio" />
+        <meta
+            property="og:description"
+            content="Coordina più professionisti in un unico workspace: licenze, fascicoli, documenti, ruoli e permessi gestiti in modo centralizzato."
+        />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content="https://jurio.it/caso-studio/workspace-team" />
+        <meta property="og:image" content="https://jurio.it/guida-image/team.webp" />
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "Article",
+                "headline": "Workspace Condiviso per Team Legali",
+                "description": "Gestione di team, licenze, fascicoli, documenti, ruoli e permessi in un workspace condiviso Jurio.",
+                "author": {
+                    "@type": "Organization",
+                    "name": "Jurio",
+                    "url": "https://jurio.it"
+                },
+                "publisher": {
+                    "@type": "Organization",
+                    "name": "Jurio"
+                },
+                "mainEntityOfPage": {
+                    "@type": "WebPage",
+                    "@id": "https://jurio.it/caso-studio/workspace-team"
+                }
+            }
+        </script>
+        <style>
+            :root {
+                --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+                --font-serif: "Lora", "Merriweather", Georgia, "Times New Roman", serif;
+                --color-bg: #f5f6f7;
+                --color-surface: #ffffff;
+                --color-text: #1a1d21;
+                --color-primary: #e0a32e;
+                --color-primary-hover: #f0b541;
+                --color-border: #d6d9de;
+                --color-muted: #5f6672;
+                --shadow-soft: 0 14px 45px rgba(42, 34, 24, 0.07);
+                --shadow-hover: 0 22px 60px rgba(42, 34, 24, 0.11);
+                --container: 1180px;
+                --radius: 18px;
+                --button-bg: var(--color-text);
+                --button-text: var(--color-bg);
+                --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+            }
+            * {
+                box-sizing: border-box;
+            }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --color-bg: #111111;
+                    --color-surface: #1a1a1a;
+                    --color-text: #e6e7ea;
+                    --color-primary: #e0a32e;
+                    --color-primary-hover: #f0b541;
+                    --color-border: #2e2e2e;
+                    --color-muted: #a1a7b0;
+                    --shadow-soft: 0 8px 18px rgba(0, 0, 0, 0.45);
+                }
+                .skip-link {
+                    background: var(--color-text);
+                    color: var(--color-bg);
+                }
+                .button-primary {
+                    color: var(--color-bg);
+                    background: var(--color-text);
+                }
+                .button-secondary {
+                    background: var(--color-surface);
+                }
+                .demo-media {
+                    background: #25221f;
+                }
+                .dark-banner {
+                    background: #0f0e0d;
+                }
+                .dark-banner .feature-list,
+                .dark-banner p {
+                    color: #d1c8bc;
+                }
+                .dark-banner .button-primary {
+                    color: #181613;
+                    background: #f7f1e8;
+                }
+            }
+            html {
+                scroll-behavior: smooth;
+            }
+            body {
+                margin: 0;
+                min-width: 320px;
+                background: var(--color-bg);
+                color: var(--color-text);
+                font-family: var(--font-sans);
+                -webkit-font-smoothing: antialiased;
+                text-rendering: optimizeLegibility;
+                line-height: 1.75;
+                overflow-x: hidden;
+            }
+            h1,
+            h2,
+            h3 {
+                font-family: var(--font-serif);
+            }
+            a {
+                color: inherit;
+            }
+            img {
+                display: block;
+                max-width: 100%;
+            }
+            :focus-visible {
+                outline: 3px solid rgba(154, 107, 37, 0.55);
+                outline-offset: 4px;
+            }
+            ::selection {
+                background: rgba(224, 163, 46, 0.18);
+                color: var(--color-text);
+            }
+            .skip-link {
+                position: fixed;
+                left: 1rem;
+                top: 1rem;
+                z-index: 1000;
+                transform: translateY(-160%);
+                transition: transform 0.18s ease;
+                background: var(--color-text);
+                color: #fff;
+                padding: 0.7rem 1rem;
+                border-radius: 10px;
+                font-weight: 700;
+                text-decoration: none;
+            }
+            .skip-link:focus {
+                transform: translateY(0);
+            }
+            .container {
+                width: min(var(--container), calc(100% - 40px));
+                margin-inline: auto;
+            }
+            .section {
+                padding: clamp(4.5rem, 8vw, 7rem) 0;
+            }
+            .site-header {
+                position: sticky;
+                top: 0;
+                z-index: 50;
+                background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+                border-bottom: 1px solid var(--color-border);
+                backdrop-filter: blur(14px);
+                -webkit-backdrop-filter: blur(14px);
+                transition:
+                    box-shadow 0.35s var(--ease-smooth),
+                    background-color 0.35s ease,
+                    border-color 0.35s ease;
+            }
+            .site-header.is-scrolled {
+                box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
+            }
+            .hero {
+                padding: clamp(3.2rem, 6vw, 5.5rem) 0 3.8rem;
+                position: relative;
+                isolation: isolate;
+            }
+            .hero::before {
+                content: "";
+                position: absolute;
+                width: min(52vw, 720px);
+                height: min(52vw, 720px);
+                right: -18vw;
+                top: -16vw;
+                border-radius: 50%;
+                border: 1px solid rgba(224, 163, 46, 0.14);
+                box-shadow:
+                    0 0 0 70px rgba(224, 163, 46, 0.045),
+                    0 0 0 140px rgba(224, 163, 46, 0.022);
+                pointer-events: none;
+                z-index: -1;
+            }
+            .hero-grid {
+                display: grid;
+                grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
+                gap: clamp(2.5rem, 6vw, 5.5rem);
+                align-items: start;
+            }
+            .eyebrow {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.45rem;
+                margin-bottom: 1.2rem;
+                color: var(--color-primary);
+                font-size: 0.72rem;
+                font-weight: 850;
+                text-transform: uppercase;
+                letter-spacing: 0.18em;
+            }
+            .eyebrow::before {
+                content: "";
+                width: 22px;
+                height: 1px;
+                background: currentColor;
+                opacity: 0.75;
+            }
+            .hero h1 {
+                margin: 0;
+                font-weight: 500;
+                letter-spacing: -0.045em;
+                font-size: clamp(3rem, 6vw, 5.3rem);
+                line-height: 0.98;
+                text-wrap: balance;
+            }
+            .cta-box h2 em,
+            .dark-banner h2 em,
+            .hero h1 em {
+                color: var(--color-primary);
+                font-style: italic;
+            }
+            .hero-lead {
+                margin: 1.5rem 0 0;
+                max-width: 720px;
+                font-size: clamp(1.05rem, 1.5vw, 1.24rem);
+                line-height: 1.75;
+            }
+            .hero-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.8rem;
+                margin-top: 2rem;
+            }
+            .button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.6rem;
+                min-height: 48px;
+                padding: 0 1.15rem;
+                border-radius: 10px;
+                text-decoration: none;
+                font-weight: 750;
+                border: 1px solid transparent;
+                transition:
+                    transform 0.18s ease,
+                    box-shadow 0.18s ease,
+                    background 0.18s ease;
+            }
+            .button-primary {
+                color: var(--button-text);
+                background: var(--button-bg);
+                box-shadow: 0 10px 24px rgba(36, 33, 29, 0.08);
+            }
+            .button-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 16px 34px rgba(36, 33, 29, 0.12);
+            }
+            .button-secondary {
+                background: var(--color-surface);
+                border-color: var(--color-border);
+            }
+            .button-secondary:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-soft);
+            }
+            .card,
+            .demo-card,
+            .permission-card,
+            .role-card,
+            .workspace-card {
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: var(--radius);
+                box-shadow: var(--shadow-soft);
+                transition:
+                    transform 0.55s var(--ease-smooth),
+                    box-shadow 0.55s var(--ease-smooth);
+            }
+            .card:hover,
+            .demo-card:hover,
+            .role-card:hover,
+            .workspace-card:hover {
+                transform: translateY(-5px);
+                box-shadow: var(--shadow-hover);
+            }
+            .demo-card {
+                position: relative;
+                overflow: hidden;
+            }
+            .demo-card::before {
+                content: "";
+                position: absolute;
+                inset: 0 0 auto;
+                height: 3px;
+                background: var(--color-primary);
+                z-index: 2;
+            }
+            .demo-media {
+                aspect-ratio: 16/10;
+                background: #1a1a1a;
+                overflow: hidden;
+            }
+            .demo-media img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .demo-caption {
+                padding: 1.15rem 1.25rem;
+                color: var(--color-muted);
+                font-size: 0.85rem;
+                line-height: 1.55;
+            }
+            .section-heading {
+                max-width: 780px;
+                margin: 0 auto 3rem;
+                text-align: center;
+            }
+            .section-heading h2 {
+                margin: 0 0 0.9rem;
+                font-weight: 500;
+                letter-spacing: -0.035em;
+                font-size: clamp(2.25rem, 4vw, 3.6rem);
+                line-height: 1.05;
+            }
+            .section-heading p {
+                margin: 0 auto;
+                color: var(--color-muted);
+                font-size: 1.05rem;
+                line-height: 1.75;
+            }
+            .three-column {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 1rem;
+            }
+            .card {
+                position: relative;
+                overflow: hidden;
+                padding: 2rem;
+            }
+            .card::before {
+                content: "";
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 3px;
+                height: 100%;
+                background: color-mix(in srgb, var(--color-primary) 70%, transparent);
+            }
+            .card-tag {
+                color: var(--color-primary);
+                font-size: 0.68rem;
+                font-weight: 850;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+            }
+            .card h3 {
+                margin: 0.75rem 0 0.85rem;
+                font-size: 1.55rem;
+                line-height: 1.15;
+                font-weight: 600;
+            }
+            .card p {
+                margin: 0;
+                color: var(--color-muted);
+                font-size: 0.97rem;
+                line-height: 1.72;
+            }
+            .roles-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 1rem;
+            }
+            .role-card {
+                padding: 2rem;
+            }
+            .role-name {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.55rem;
+                margin-bottom: 0.8rem;
+                color: var(--color-primary);
+                font-size: 0.72rem;
+                font-weight: 850;
+                letter-spacing: 0.15em;
+                text-transform: uppercase;
+            }
+            .role-name::before {
+                content: "";
+                width: 7px;
+                height: 7px;
+                border-radius: 50%;
+                background: currentColor;
+            }
+            .role-card h3 {
+                margin: 0 0 0.75rem;
+                font-size: 1.6rem;
+                line-height: 1.1;
+            }
+            .role-card p {
+                margin: 0;
+                color: var(--color-muted);
+                line-height: 1.72;
+            }
+            .feature-list,
+            .role-card ul {
+                margin: 1rem 0 0;
+                padding: 0;
+                list-style: none;
+            }
+            .feature-list li,
+            .role-card li {
+                display: flex;
+                gap: 0.65rem;
+                margin-top: 0.55rem;
+                color: var(--color-muted);
+            }
+            .feature-list li::before,
+            .role-card li::before {
+                content: "✓";
+                color: var(--color-primary);
+                font-weight: 850;
+            }
+            .steps {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 1rem;
+                margin: 0;
+                padding: 0;
+                list-style: none;
+            }
+            .step {
+                min-height: 235px;
+                padding: 2rem;
+                border-top: 1px solid var(--color-border);
+                position: relative;
+            }
+            .step::after {
+                content: "";
+                position: absolute;
+                left: 2rem;
+                bottom: 0;
+                width: 38px;
+                height: 1px;
+                background: var(--color-primary);
+                transform: scaleX(0.35);
+                transform-origin: left;
+            }
+            .step-num {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                color: var(--color-primary);
+                font-size: 0.72rem;
+                font-weight: 850;
+                letter-spacing: 0.15em;
+            }
+            .step-num::after {
+                content: "";
+                width: 42px;
+                height: 1px;
+                background: currentColor;
+                opacity: 0.35;
+            }
+            .step h3 {
+                margin: 0.85rem 0 0.65rem;
+                font-size: 1.55rem;
+                line-height: 1.15;
+            }
+            .step p {
+                margin: 0;
+                color: var(--color-muted);
+                line-height: 1.7;
+            }
+            .workspace-card {
+                padding: 2.4rem;
+            }
+            .workspace-card h3 {
+                margin: 0 0 0.7rem;
+                font-size: 1.8rem;
+                line-height: 1.1;
+            }
+            .workspace-card > p {
+                margin: 0;
+                max-width: 800px;
+                color: var(--color-muted);
+            }
+            .workspace-grid {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 1rem;
+                margin-top: 2rem;
+            }
+            .permission-card {
+                padding: 1.6rem;
+            }
+            .permission-card h4 {
+                margin: 0 0 0.55rem;
+                font-size: 1.15rem;
+                line-height: 1.25;
+            }
+            .permission-card p {
+                margin: 0;
+                color: var(--color-muted);
+                font-size: 0.93rem;
+                line-height: 1.7;
+            }
+            .dark-banner {
+                position: relative;
+                overflow: hidden;
+                display: grid;
+                grid-template-columns: minmax(0, 1.12fr) minmax(280px, 0.88fr);
+                gap: 2rem;
+                align-items: center;
+                padding: clamp(2rem, 5vw, 4rem);
+                background: #27231f;
+                color: #f9f6ef;
+                border-radius: 24px;
+                box-shadow: 0 20px 60px rgba(36, 33, 29, 0.16);
+            }
+            .dark-banner h2 {
+                margin: 0;
+                font-size: clamp(2.5rem, 5vw, 4.6rem);
+                line-height: 0.98;
+                letter-spacing: -0.045em;
+                font-weight: 500;
+            }
+            .dark-banner p {
+                margin: 1.1rem 0 0;
+                max-width: 720px;
+                color: #cfc7bc;
+                line-height: 1.75;
+            }
+            .feature-list {
+                display: grid;
+                gap: 0.65rem;
+                color: #ddd5ca;
+            }
+            .feature-list li {
+                margin: 0;
+            }
+            .case-panel {
+                padding: clamp(2rem, 4vw, 3rem);
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: var(--radius);
+                box-shadow: var(--shadow-soft);
+            }
+            .case-panel-header {
+                padding-bottom: 1.5rem;
+                margin-bottom: 1.5rem;
+                border-bottom: 2px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+            }
+            .case-panel-header h3 {
+                margin: 0 0 0.65rem;
+                font-size: 1.7rem;
+                line-height: 1.1;
+            }
+            .case-panel-header p {
+                margin: 0;
+                color: var(--color-muted);
+            }
+            .data-list {
+                display: flex;
+                flex-direction: column;
+                gap: 1.15rem;
+                margin: 0;
+            }
+            .data-list dt {
+                margin-bottom: 0.3rem;
+                color: var(--color-text);
+                font-size: 0.76rem;
+                font-weight: 850;
+                text-transform: uppercase;
+                letter-spacing: 0.11em;
+            }
+            .data-list dd {
+                margin: 0;
+                padding-bottom: 1.15rem;
+                color: var(--color-muted);
+                line-height: 1.68;
+                border-bottom: 1px dashed var(--color-border);
+            }
+            .data-list dd:last-child {
+                padding-bottom: 0;
+                border-bottom: none;
+            }
+            .faq {
+                max-width: 900px;
+                margin: 0 auto;
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: var(--radius);
+                overflow: hidden;
+                box-shadow: var(--shadow-soft);
+            }
+            details + details {
+                border-top: 1px solid var(--color-border);
+            }
+            summary {
+                list-style: none;
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 1rem;
+                padding: 1.35rem 1.5rem;
+                font-family: var(--font-serif);
+                font-size: 1.15rem;
+                font-weight: 700;
+                position: relative;
+            }
+            summary::-webkit-details-marker {
+                display: none;
+            }
+            summary::after {
+                content: "";
+                flex: 0 0 auto;
+                width: 10px;
+                height: 10px;
+                border-right: 2px solid var(--color-muted);
+                border-bottom: 2px solid var(--color-muted);
+                transform: translateY(-25%) rotate(45deg);
+                transition: transform 0.3s ease;
+            }
+            details[open] summary::after {
+                transform: translateY(25%) rotate(225deg);
+            }
+            .faq-content-inner {
+                margin: 0;
+                padding: 0 1.5rem;
+                max-height: 0;
+                opacity: 0;
+                overflow: hidden;
+                transform: translateY(-10px);
+                color: var(--color-muted);
+                line-height: 1.75;
+                transition:
+                    max-height 0.4s ease,
+                    opacity 0.25s ease,
+                    transform 0.25s ease,
+                    padding-bottom 0.4s ease;
+            }
+            details[open] .faq-content-inner {
+                max-height: 800px;
+                padding-bottom: 1.35rem;
+                opacity: 1;
+                transform: translateY(0);
+            }
+            .cta-box {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 2rem;
+                align-items: center;
+                padding: clamp(2rem, 5vw, 4.5rem);
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: 24px;
+                box-shadow: var(--shadow-soft);
+            }
+            .cta-box h2 {
+                margin: 0;
+                font-size: clamp(2.4rem, 4.6vw, 4.2rem);
+                line-height: 1;
+                letter-spacing: -0.045em;
+                font-weight: 500;
+            }
+            .cta-box p {
+                margin: 1rem 0 0;
+                max-width: 760px;
+                color: var(--color-muted);
+                line-height: 1.75;
+            }
+            .reveal {
+                opacity: 0;
+                transform: translateY(28px);
+                transition:
+                    opacity 0.8s var(--ease-smooth),
+                    transform 0.8s var(--ease-smooth);
+            }
+            .reveal.is-visible {
+                opacity: 1;
+                transform: none;
+            }
+            @media (max-width: 1050px) {
+                .hero-grid {
+                    grid-template-columns: 1fr;
+                }
+                .roles-grid,
+                .steps,
+                .three-column {
+                    grid-template-columns: 1fr;
+                }
+                .dark-banner {
+                    grid-template-columns: 1fr;
+                }
+            }
+            @media (max-width: 720px) {
+                .container {
+                    width: min(var(--container), calc(100% - 28px));
+                }
+                .site-header {
+                    position: static;
+                }
+                .hero {
+                    padding-top: 2.4rem;
+                }
+                .hero h1 {
+                    font-size: clamp(2.8rem, 14vw, 4rem);
+                }
+                .hero-actions,
+                .hero-actions .button {
+                    width: 100%;
+                }
+                .cta-box,
+                .workspace-grid {
+                    grid-template-columns: 1fr;
+                }
+                .workspace-card {
+                    padding: 1.6rem;
+                }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                html {
+                    scroll-behavior: auto;
+                }
+                *,
+                ::after,
+                ::before {
+                    transition-duration: NaNs !important;
+                    animation-duration: NaNs !important;
+                    animation-iteration-count: 1 !important;
+                }
+                .reveal {
+                    opacity: 1;
+                    transform: none !important;
+                }
+            }
+        </style>
+        <link rel="stylesheet" href="https://jurio.it/styles.css">
+    </head>
+    <body>
+        <a href="#main-content" class="skip-link">Vai al contenuto principale</a>
+        <div id="header"></div>
+        <main id="main-content">
+            <section class="section hero container">
+                <div class="hero-grid">
+                    <div class="reveal">
+                        <span class="eyebrow">Case Study / Account · Soluzioni Workspace Studio</span>
+                        <h1>Un workspace condiviso per <em>coordinare il lavoro del team</em></h1>
+                        <p class="hero-lead">
+                            Jurio consente di riunire più professionisti all'interno di un unico ambiente di lavoro, con
+                            gestione centralizzata delle licenze, condivisione controllata di fascicoli e documenti e
+                            ruoli differenziati in base alle attività.
+                        </p>
+                        <div class="hero-actions">
+                            <a href="/profilo/team" class="button button-primary">Gestisci il Team</a
+                            ><a href="#caso" class="button button-secondary">Guarda il caso d'uso</a>
+                        </div>
+                    </div>
+                    <div class="demo-card reveal">
+                        <div class="demo-media">
+                            <img
+                                src="https://jurio.it/guida-image/team.webp"
+                                alt="Pannello di gestione del team e del workspace condiviso di Jurio"
+                                loading="lazy"
+                            />
+                        </div>
+                        <div class="demo-caption">
+                            Pannello di controllo del workspace con gestione delle licenze e dei membri del team.
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="section container">
+                <div class="section-heading reveal">
+                    <h2>Contesto</h2>
+                    <p>
+                        Quando più professionisti lavorano sugli stessi materiali, la gestione non riguarda soltanto
+                        l'accesso: servono una struttura comune, regole di visibilità e una distinzione chiara tra chi
+                        amministra, chi consulta e chi può collaborare sulle bozze.
+                    </p>
+                </div>
+                <div class="three-column">
+                    <div class="card reveal">
+                        <span class="card-tag">Coordinamento</span>
+                        <h3>Un ambiente comune</h3>
+                        <p>
+                            Il workspace centralizza l'attività del gruppo e mette in relazione membri, fascicoli e
+                            documenti all'interno di uno stesso ambiente di lavoro.
+                        </p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-tag">Condivisione</span>
+                        <h3>Risorse disponibili al team</h3>
+                        <p>
+                            L'Owner può configurare la condivisione dei contenuti e rendere accessibili ai membri i
+                            fascicoli e i documenti che devono essere utilizzati come patrimonio comune dello studio.
+                        </p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-tag">Controllo</span>
+                        <h3>Ruoli e limiti distinti</h3>
+                        <p>
+                            Le autorizzazioni differenziano amministrazione, sola consultazione e lavoro collaborativo,
+                            mantenendo separata la gestione del workspace dall'attività sui contenuti personali.
+                        </p>
+                    </div>
+                </div>
+            </section>
+            <section class="section container">
+                <div class="section-heading reveal">
+                    <h2>Il Workspace</h2>
+                    <p>
+                        La configurazione parte dalle licenze e arriva alla gestione concreta dei membri e delle risorse
+                        condivise.
+                    </p>
+                </div>
+                <div class="workspace-card reveal">
+                    <h3>Licenze gestite attraverso voucher</h3>
+                    <p>
+                        I pacchetti Workspace disponibili definiscono il numero di utenti che possono essere associati
+                        al team. Per ciascuna licenza prevista dal pacchetto viene generato un voucher Business.
+                    </p>
+                    <div class="workspace-grid">
+                        <div class="permission-card">
+                            <h4>Pacchetto di licenze</h4>
+                            <p>
+                                I pacchetti possono prevedere configurazioni per gruppi di dimensioni diverse, ad
+                                esempio 3, 5 o 7 utenti.
+                            </p>
+                        </div>
+                        <div class="permission-card">
+                            <h4>Voucher individuali</h4>
+                            <p>
+                                Ogni voucher consente di attivare un accesso annuale al Piano Business per il singolo
+                                professionista.
+                            </p>
+                        </div>
+                        <div class="permission-card">
+                            <h4>Decorrenza al riscatto</h4>
+                            <p>
+                                La validità di 365 giorni decorre dal momento in cui il singolo utente riscatta il
+                                voucher, evitando che la durata della licenza inizi prima dell'attivazione.
+                            </p>
+                        </div>
+                        <div class="permission-card">
+                            <h4>Attivazione dei membri</h4>
+                            <p>
+                                L'Owner può distribuire le licenze tra i professionisti che devono entrare nel workspace
+                                e gestire le relative assegnazioni.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="section container">
+                <div class="section-heading reveal">
+                    <h2>Ruoli e Permessi</h2>
+                    <p>
+                        Ogni membro del team opera secondo un livello di autorizzazione coerente con il proprio ruolo.
+                    </p>
+                </div>
+                <div class="roles-grid">
+                    <div class="role-card reveal">
+                        <span class="role-name">Amministratore</span>
+                        <h3>Owner</h3>
+                        <p>È il proprietario del workspace e gestisce la configurazione generale del team.</p>
+                        <ul>
+                            <li>Invita nuovi membri</li>
+                            <li>Assegna i voucher</li>
+                            <li>Rimuove collaboratori</li>
+                            <li>Può promuovere altri utenti a Owner</li>
+                            <li>Gestisce le impostazioni di visibilità e riservatezza</li>
+                        </ul>
+                    </div>
+                    <div class="role-card reveal">
+                        <span class="role-name">Consultazione</span>
+                        <h3>Viewer</h3>
+                        <p>
+                            Il Viewer può accedere ai contenuti condivisi per consultarli e analizzarli senza
+                            modificarli.
+                        </p>
+                        <ul>
+                            <li>Visualizza i fascicoli condivisi</li>
+                            <li>Consulta i documenti disponibili</li>
+                            <li>Può analizzare le risorse rese visibili al team</li>
+                        </ul>
+                    </div>
+                    <div class="role-card reveal">
+                        <span class="role-name">Collaborazione</span>
+                        <h3>Editor</h3>
+                        <p>
+                            L'Editor dispone delle funzionalità necessarie per il lavoro collaborativo sulle bozze e
+                            sugli atti messi a disposizione del team.
+                        </p>
+                        <ul>
+                            <li>Lavora sulle bozze condivise</li>
+                            <li>Collabora sugli atti comuni</li>
+                            <li>Opera all'interno dei contenuti per i quali dispone delle autorizzazioni</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            <section class="section container">
+                <div class="section-heading reveal">
+                    <h2>Processo</h2>
+                    <p>
+                        Dalla creazione del workspace all'ingresso dei collaboratori, fino alla definizione delle
+                        modalità di accesso ai contenuti.
+                    </p>
+                </div>
+                <ol class="steps">
+                    <li class="step reveal">
+                        <span class="step-num">01</span>
+                        <h3>Attiva il Workspace</h3>
+                        <p>
+                            Acquista il pacchetto Workspace corrispondente al numero di professionisti che devono
+                            partecipare al team.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">02</span>
+                        <h3>Genera le licenze</h3>
+                        <p>
+                            La piattaforma associa al pacchetto acquistato i voucher previsti per le relative licenze
+                            Business.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">03</span>
+                        <h3>Invita i membri</h3>
+                        <p>
+                            L'Owner può invitare i colleghi tramite email oppure condividere direttamente il codice
+                            voucher da riscattare.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">04</span>
+                        <h3>Verifica l'account</h3>
+                        <p>
+                            Per entrare nel team e riscattare la licenza, il professionista deve disporre di un account
+                            Jurio registrato e attivo.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">05</span>
+                        <h3>Assegna ruoli e accessi</h3>
+                        <p>
+                            Il workspace distingue il livello amministrativo dell'Owner dai profili di consultazione e
+                            collaborazione dei membri del team.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">06</span>
+                        <h3>Configura la condivisione</h3>
+                        <p>
+                            L'Owner stabilisce quali fascicoli e documenti devono essere visibili al team, mantenendo
+                            separati i contenuti e le sessioni che restano riservati ai rispettivi proprietari.
+                        </p>
+                    </li>
+                </ol>
+            </section>
+            <section id="caso" class="section container">
+                <div class="section-heading reveal">
+                    <h2>Caso d'uso</h2>
+                    <p>
+                        Un esempio operativo di come un team possa utilizzare il workspace per condividere risorse
+                        mantenendo distinti accessi e responsabilità.
+                    </p>
+                </div>
+                <div class="case-panel reveal">
+                    <div class="case-panel-header">
+                        <h3>Studio con più professionisti su fascicoli condivisi</h3>
+                        <p>Coordinamento delle risorse comuni con ruoli differenziati</p>
+                    </div>
+                    <dl class="data-list">
+                        <dt>Situazione iniziale</dt>
+                        <dd>
+                            Più professionisti dello stesso studio lavorano su pratiche diverse ma utilizzano anche
+                            documenti, fascicoli e materiali che devono essere disponibili all'intero gruppo.
+                        </dd>
+                        <dt>Configurazione</dt>
+                        <dd>
+                            L'utente che acquista il pacchetto assume il ruolo di<strong>Owner</strong>e dispone del
+                            pannello di amministrazione per gestire membri, voucher e impostazioni del workspace.
+                        </dd>
+                        <dt>Ingresso dei collaboratori</dt>
+                        <dd>
+                            I colleghi possono essere invitati direttamente via email oppure ricevere un voucher da
+                            riscattare nella propria area personale. L'accesso richiede un account Jurio registrato e
+                            attivo.
+                        </dd>
+                        <dt>Gestione dei ruoli</dt>
+                        <dd>
+                            I membri vengono organizzati in base alle attività: il<strong>Viewer</strong>accede ai
+                            contenuti condivisi per consultarli, mentre l'<strong>Editor</strong>può collaborare sulle
+                            bozze e sugli atti messi in comune.
+                        </dd>
+                        <dt>Condivisione dei contenuti</dt>
+                        <dd>
+                            L'Owner può abilitare la condivisione centralizzata dei fascicoli e dei documenti che devono
+                            costituire una risorsa comune del team.
+                        </dd>
+                        <dt>Protezione delle sessioni</dt>
+                        <dd>
+                            La disponibilità dei contenuti condivisi non comporta la possibilità di intervenire
+                            indistintamente sulle attività personali degli altri professionisti. Le sessioni
+                            conversazionali e i thread associati ai fascicoli rimangono riservati ai rispettivi
+                            proprietari, secondo le regole previste dal workspace.
+                        </dd>
+                        <dt>Attività svolte dal Workspace</dt>
+                        <dd>
+                            <ul style="margin: 0; padding-left: 1.2rem">
+                                <li>centralizza la gestione del team;</li>
+                                <li>associa le licenze ai professionisti attraverso i voucher disponibili;</li>
+                                <li>gestisce l'ingresso dei nuovi membri;</li>
+                                <li>distingue i ruoli di Owner, Viewer ed Editor;</li>
+                                <li>rende condivisibili i fascicoli e i documenti destinati al lavoro comune;</li>
+                                <li>
+                                    mantiene distinte le attività e le sessioni appartenenti ai singoli professionisti;
+                                </li>
+                                <li>
+                                    consente di organizzare il lavoro collaborativo secondo livelli di accesso
+                                    differenti.
+                                </li>
+                            </ul>
+                        </dd>
+                        <dt>Risultato operativo</dt>
+                        <dd>
+                            Il workspace crea un ambiente comune nel quale le risorse condivise possono essere
+                            utilizzate dal team senza trasformare ogni contenuto in una risorsa indistintamente
+                            modificabile. Il risultato è una struttura di collaborazione basata su ruoli, visibilità e
+                            responsabilità differenziate.
+                        </dd>
+                    </dl>
+                </div>
+            </section>
+            <section class="section container">
+                <div class="dark-banner reveal">
+                    <div>
+                        <h2>Condivisione<em>senza perdere il controllo</em></h2>
+                        <p>
+                            Il valore del workspace non è soltanto mettere più utenti nello stesso ambiente. È
+                            consentire al team di utilizzare un patrimonio informativo comune mantenendo distinti i
+                            livelli di accesso e le attività personali dei professionisti.
+                        </p>
+                    </div>
+                    <div>
+                        <ul class="feature-list">
+                            <li>Fascicoli e documenti condivisi</li>
+                            <li>Ruoli differenziati</li>
+                            <li>Consultazione protetta</li>
+                            <li>Lavoro collaborativo sulle bozze</li>
+                            <li>Sessioni personali separate</li>
+                            <li>Gestione centralizzata dell'Owner</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            <section class="section container">
+                <div class="section-heading reveal">
+                    <h2>FAQ</h2>
+                    <p>Domande frequenti sul workspace condiviso e sulla gestione del team</p>
+                </div>
+                <div class="faq reveal">
+                    <details>
+                        <summary>Chi diventa Owner del Workspace?</summary>
+                        <div class="faq-content-inner">
+                            L'utente che effettua l'acquisto del pacchetto Workspace assume di default il ruolo di Owner
+                            e può gestire membri, voucher e impostazioni del team.
+                        </div>
+                    </details>
+                    <details>
+                        <summary>Come funzionano i voucher?</summary>
+                        <div class="faq-content-inner">
+                            Il pacchetto Workspace genera un numero di voucher corrispondente alle licenze previste.
+                            Ogni voucher consente di attivare un accesso annuale al Piano Business. La decorrenza dei
+                            365 giorni parte dal momento del riscatto del singolo voucher.
+                        </div>
+                    </details>
+                    <details>
+                        <summary>Come posso aggiungere un collega?</summary>
+                        <div class="faq-content-inner">
+                            L'Owner può inviare un invito diretto via email oppure fornire al collega il codice voucher
+                            da riscattare nella propria area personale.
+                        </div>
+                    </details>
+                    <details>
+                        <summary>È necessario avere già un account Jurio?</summary>
+                        <div class="faq-content-inner">
+                            Sì. Per unirsi al team e riscattare la licenza, il professionista invitato deve disporre di
+                            un account Jurio registrato e attivo.
+                        </div>
+                    </details>
+                    <details>
+                        <summary>Qual è la differenza tra Viewer ed Editor?</summary>
+                        <div class="faq-content-inner">
+                            Il Viewer dispone di un profilo di sola consultazione dei contenuti condivisi. L'Editor
+                            dispone invece delle funzionalità necessarie per il lavoro collaborativo sulle bozze e sugli
+                            atti messi in comune.
+                        </div>
+                    </details>
+                    <details>
+                        <summary>I membri possono modificare le sessioni degli altri?</summary>
+                        <div class="faq-content-inner">
+                            No. La condivisione dei documenti e dei fascicoli non equivale alla possibilità di
+                            intervenire indistintamente sulle sessioni personali. Le chat e i thread appartenenti agli
+                            altri professionisti rimangono riservati ai rispettivi proprietari, secondo le regole del
+                            workspace.
+                        </div>
+                    </details>
+                    <details>
+                        <summary>L'Owner può gestire le impostazioni del workspace?</summary>
+                        <div class="faq-content-inner">
+                            Sì. L'Owner gestisce la configurazione generale del workspace, compresa la gestione dei
+                            membri, l'assegnazione delle licenze e le impostazioni di visibilità e riservatezza.
+                        </div>
+                    </details>
+                </div>
+            </section>
+            <section class="section container">
+                <div class="cta-box reveal">
+                    <div>
+                        <h2>Organizza il team<br /><em>in un unico workspace</em>.</h2>
+                        <p>
+                            Centralizza licenze, membri, fascicoli e documenti condivisi con ruoli e permessi
+                            differenziati.
+                        </p>
+                    </div>
+                    <div><a href="/profilo/team" class="button button-primary">Apri il Workspace</a></div>
+                </div>
+            </section>
+        </main>
+        <div id="footer"></div>
+        <script>
+            document.addEventListener("DOMContentLoaded", async () => {
+                const components = [
+                    {
+                        selector: "#header",
+                        file: "/header.html",
+                    },
+                    {
+                        selector: "#footer",
+                        file: "/footer.html",
+                    },
+                ];
+
+                await Promise.all(
+                    components.map(async ({ selector, file }) => {
+                        const element = document.querySelector(selector);
+
+                        if (!element) return;
+
+                        try {
+                            const response = await fetch(file);
+
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}`);
+                            }
+
+                            element.innerHTML = await response.text();
+                        } catch (error) {
+                            console.error(`Errore nel caricamento di ${file}:`, error);
+                        }
+                    })
+                );
+            });
+        </script>
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const observer = new IntersectionObserver(
+                    (entries, observer) => {
+                        entries.forEach((entry) => {
+                            if (entry.isIntersecting) {
+                                entry.target.classList.add("is-visible");
+
+                                observer.unobserve(entry.target);
+                            }
+                        });
+                    },
+                    {
+                        root: null,
+                        rootMargin: "0px",
+                        threshold: 0.1,
+                    }
+                );
+
+                document.querySelectorAll(".reveal").forEach((el) => {
+                    observer.observe(el);
+                });
+
+                const header = document.querySelector(".site-header");
+
+                window.addEventListener(
+                    "scroll",
+                    () => {
+                        if (!header) return;
+
+                        if (window.scrollY > 20) {
+                            header.classList.add("is-scrolled");
+                        } else {
+                            header.classList.remove("is-scrolled");
+                        }
+                    },
+                    {
+                        passive: true,
+                    }
+                );
+            });
+        </script>
+    </body>
+</html>

@@ -1,7 +1,7 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { setGlobalOptions } from "firebase-functions/v2/options";
 import { Timestamp, FieldValue, Query, WriteBatch } from "firebase-admin/firestore";
-import { getAdmin, getDb, getAdminAuth ,sanitize } from "./deps";
+import { getAdmin, getDb, getAdminAuth, getAdminStorage, sanitize } from "./deps";
 import { MAX_INPUT_CHARS, PROMPT_MASSIMAZIONE, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, PlanDoc, getStripe, getWebhookSecret,normalizePlanId, handleEmbeddingCreation, handleEmbeddingDocumentCreation, handleFascicoloCreation, handleEmbeddingManualCreation } from "./params";
 import { enqueueWelcomeEmail, enqueueTrialEmail, queuePurchaseEmailOnceStripe, enqueueDowngradeEmail, enqueueContactEmail, enqueueVoucherEmail, enqueueWelcomeTeamEmail, enqueueRemoveTeamEmail, enqueueCloseTeamEmail } from "./email";
 import { corsHandlerDomain, requireAppCheck, requireUidFromAuthHeader, consumePerMinuteFeature, consumeDailyFeature, getKeywordStems, calculateMatchScore, applyHighlightWithRegex, generateHighlightRegex, runUpdateFonte, runUpdateMetadata, runCleanupDuplicates, processFascicoloDocs, processSubscriptionInTx, tryScheduleDowngradeTask, updateUserDocuments, removeUserVisibilityFromDocuments} from "./utils";
@@ -1939,6 +1939,63 @@ export const processFascicoloCreation = onDocumentCreated(
   },
   handleFascicoloCreation
 );
+
+export const generateStaticStatsJson = onDocumentCreated("metadocument/{docId}", async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+  const data = snapshot.data();
+  // 1. Filtriamo solo i documenti che ci interessano
+  if (data.type !== "weekly_sentences_stats") {
+    console.log(`Documento ${event.params.docId} ignorato: non è una statistica settimanale.`);
+    return;
+  }
+  console.log(`Elaborazione nuove statistiche dal documento: ${event.params.docId}`);
+  // 2. Formattiamo la data per il frontend (es: "31 Maggio 2026")
+  const createdAtDate = data.createdAt ? data.createdAt.toDate() : new Date();
+  const dateFormatter = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+  const dataAggiornamento = dateFormatter.format(createdAtDate);
+  // 3. Mappiamo il documento Firestore nella struttura esatta attesa dal file HTML
+  const configJson = {
+    meta: {
+      totale_documenti: data.totale_documenti || 0,
+      data_aggiornamento: dataAggiornamento
+    },
+    per_anno: data.per_anno || {},
+    per_organo: {
+      "Cassazione": data.per_organo?.corte_di_cassazione || 0,
+      "Consiglio di Stato": data.per_organo?.consiglio_di_stato || 0,
+      "Corte Costituzionale": data.per_organo?.corte_costituzionale || 0,
+    },
+    per_tipo: {
+      "Ordinanza": data.per_tipo?.ordinanza || 0,
+      "Sentenza": data.per_tipo?.sentenza || 0,
+      "Decreto": data.per_tipo?.decreto || 0,
+    },
+    per_materia: {
+      "civile": data.per_materia?.civile || 0,
+      "penale": data.per_materia?.penale || 0,
+    },
+    // Le sezioni sono già oggetti mappati, le passiamo direttamente
+    per_sezione_cassazione: data.per_sezione_cassazione || { civili: {}, penali: {} }
+  };
+  // 4. Scriviamo il file su Firebase Cloud Storage
+  try {
+    const storage = getAdminStorage();
+    const bucket = storage.bucket(); // Usa il bucket predefinito (es. jurio-it.appspot.com)
+    const file = bucket.file("dataConfig.json");
+    await file.save(JSON.stringify(configJson, null, 2), {
+      contentType: "application/json",
+      metadata: {
+        // Diciamo al browser di tenere in cache il file al massimo per un'ora
+        cacheControl: "public, max-age=3600", 
+      }
+    });
+    await file.makePublic();
+    console.log(`Successo! dataConfig.json sovrascritto e reso pubblico: ${file.publicUrl()}`);
+  } catch (error) {
+    console.error("Errore durante il salvataggio su Cloud Storage:", error);
+  }
+});
 
 // ============================================================================
 // SCHEDULAZIONI

@@ -1,33 +1,32 @@
 <!doctype html>
 <html lang="it">
     <head>
-        
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>Modelli di Analisi AI per Documenti | Crea Regole Riutilizzabili | Jurio</title>
+        <title>Consulente Legale AI: Chat, Fascicoli e Analisi Documentale | Jurio</title>
         <meta
             name="description"
-            content="Crea con Jurio modelli di analisi personalizzati: definisci istruzioni, campi da estrarre, tipi di risultato e regole operative, poi riutilizza lo stesso schema su più documenti e fascicoli."
+            content="Scopri il Consulente Legale di Jurio: analizza questioni giuridiche, consulta la giurisprudenza, lavora sui documenti e organizza pratiche persistenti in fascicoli condivisibili con il team."
         />
         <meta
             name="keywords"
-            content="modelli di analisi AI, modelli AI documenti, prompt AI legale, prompt per avvocati, estrazione dati documenti, analisi documentale AI, automazione documentale, revisione contratti AI, clausole contrattuali AI, estrazione clausole, legal AI, Jurio, AI per studi legali, modelli documentali"
+            content="consulente legale AI, assistente legale AI, legal AI, AI per avvocati, analisi giuridica AI, fascicoli legali, ricerca giurisprudenziale AI, analisi documentale avvocati, chat legale AI, fonti citate, gestione pratiche legali, collaborazione team legale, Jurio"
         />
-        <link rel="canonical" href="https://jurio.it/caso-studio/modelli-analisi-ai-documenti" />
-        <meta property="og:title" content="Modelli di Analisi AI per Documenti | Jurio" />
+        <link rel="canonical" href="https://jurio.it/caso-studio/consulente-legale-ai" />
+        <meta property="og:title" content="Consulente Legale AI: Chat, Fascicoli e Analisi Documentale | Jurio" />
         <meta
             property="og:description"
-            content="Definisci una volta cosa deve cercare l'AI nei documenti e riutilizza lo stesso modello su più fascicoli e documenti."
+            content="Un ambiente di lavoro per l'analisi giuridica: chat temporanee, fascicoli persistenti, documenti, ricerca giurisprudenziale e fonti verificabili."
         />
         <meta property="og:type" content="article" />
-        <meta property="og:url" content="https://jurio.it/caso-studio/modelli-analisi-ai-documenti" />
-        <meta property="og:image" content="https://jurio.it/logo.webp" />
+        <meta property="og:url" content="https://jurio.it/caso-studio/consulente-legale-ai" />
+        <meta property="og:image" content="https://jurio.it/guida-image/consulente.webp" />
         <script type="application/ld+json">
             {
                 "@context": "https://schema.org",
                 "@type": "Article",
-                "headline": "Modelli di Analisi AI per Documenti",
-                "description": "Crea modelli di analisi personalizzati con istruzioni, campi di estrazione, tipi di risultato e regole operative, poi riutilizzali su più documenti e fascicoli.",
+                "headline": "Consulente Legale AI: Chat, Fascicoli e Analisi Documentale",
+                "description": "Un ambiente di lavoro per l'analisi giuridica, la gestione dei fascicoli, la ricerca giurisprudenziale e l'analisi dei documenti tramite intelligenza artificiale.",
                 "author": {
                     "@type": "Organization",
                     "name": "Jurio",
@@ -43,7 +42,7 @@
                 },
                 "mainEntityOfPage": {
                     "@type": "WebPage",
-                    "@id": "https://jurio.it/caso-studio/modelli-analisi-ai-documenti"
+                    "@id": "https://jurio.it/caso-studio/consulente-legale-ai"
                 }
             }
         </script>
@@ -223,28 +222,6 @@
             .hero-copy {
                 position: relative;
             }
-            .hero-copy::before {
-                content: "";
-                position: absolute;
-                left: -24px;
-                top: 0.5rem;
-                width: 2px;
-                height: 74px;
-                background: var(--color-primary);
-                opacity: 0.9;
-                transform-origin: top;
-                animation: heroLine 0.9s var(--ease-smooth) both;
-            }
-            @keyframes heroLine {
-                from {
-                    transform: scaleY(0);
-                    opacity: 0;
-                }
-                to {
-                    transform: scaleY(1);
-                    opacity: 0.9;
-                }
-            }
             .eyebrow {
                 display: inline-flex;
                 margin-bottom: 1.2rem;
@@ -283,13 +260,6 @@
                 font-size: clamp(1.05rem, 1.5vw, 1.24rem);
                 line-height: 1.75;
             }
-            .hero-support {
-                margin: 1rem 0 0;
-                max-width: 650px;
-                color: var(--color-muted);
-                font-size: 1rem;
-                line-height: 1.75;
-            }
             .hero-actions {
                 display: flex;
                 flex-wrap: wrap;
@@ -312,8 +282,6 @@
                     box-shadow 0.18s ease,
                     background 0.18s ease;
                 position: relative;
-                overflow: hidden;
-                isolation: isolate;
             }
             .button-primary {
                 color: var(--button-text);
@@ -353,33 +321,16 @@
                 inset: 0 0 auto;
                 height: 3px;
                 background: var(--color-primary);
-                z-index: 2;
             }
             .demo-media {
                 aspect-ratio: 16/10;
-                background: #1a1a1a;
                 position: relative;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                overflow: hidden;
+                background: #1a1a1a;
             }
-            .demo-media::after {
-                content: "";
-                position: absolute;
-                inset: 0;
-                pointer-events: none;
-                border: 1px solid rgba(255, 255, 255, 0.1);
-                box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.06);
-            }
-            .demo-message {
-                padding: 2rem;
-                max-width: 600px;
-                color: #e0a32e;
-                text-align: center;
-                font-family: var(--font-serif);
-                font-size: clamp(1.4rem, 2.7vw, 2rem);
-                line-height: 1.25;
+            .demo-media img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
             }
             .integration-grid {
                 display: grid;
@@ -395,31 +346,12 @@
                 box-shadow: var(--shadow-soft);
                 transition:
                     transform 0.55s var(--ease-smooth),
-                    box-shadow 0.55s var(--ease-smooth),
-                    border-color 0.35s ease;
+                    box-shadow 0.55s var(--ease-smooth);
                 overflow: hidden;
             }
             .card:hover {
                 transform: translateY(-4px);
                 box-shadow: var(--shadow-hover);
-            }
-            .card::after {
-                content: "";
-                position: absolute;
-                inset: auto -15% -70% 45%;
-                height: 180px;
-                border-radius: 50%;
-                border: 1px solid rgba(224, 163, 46, 0.12);
-                transform: rotate(-10deg);
-                transition:
-                    transform 0.6s var(--ease-smooth),
-                    opacity 0.35s ease;
-                opacity: 0.45;
-                pointer-events: none;
-            }
-            .card:hover::after {
-                transform: translate(-12px, -10px) rotate(-4deg);
-                opacity: 0.9;
             }
             .card-tag {
                 color: var(--color-primary);
@@ -452,7 +384,7 @@
                 font-size: 0.97rem;
             }
             .section-heading {
-                max-width: 780px;
+                max-width: 760px;
                 margin: 0 auto 3rem;
                 text-align: center;
             }
@@ -481,7 +413,7 @@
                 list-style-type: none;
                 border-top: 1px solid var(--color-border);
                 position: relative;
-                min-height: 225px;
+                min-height: 210px;
             }
             .step::after {
                 content: "";
@@ -493,10 +425,6 @@
                 background: var(--color-primary);
                 transform: scaleX(0.35);
                 transform-origin: left;
-                transition: transform 0.45s var(--ease-smooth);
-            }
-            .step:hover::after {
-                transform: scaleX(1);
             }
             .step-num {
                 font-size: 0.72rem;
@@ -543,8 +471,6 @@
                 line-height: 0.98;
                 letter-spacing: -0.045em;
                 font-weight: 500;
-                position: relative;
-                z-index: 1;
             }
             .pricing-banner p {
                 margin: 1.1rem 0 0;
@@ -552,8 +478,6 @@
                 max-width: 700px;
                 line-height: 1.75;
                 font-size: 1.02rem;
-                position: relative;
-                z-index: 1;
             }
             .pricing-points {
                 display: grid;
@@ -562,8 +486,6 @@
                 padding: 0;
                 list-style: none;
                 color: #ddd5ca;
-                position: relative;
-                z-index: 1;
             }
             .pricing-points li {
                 display: flex;
@@ -574,26 +496,6 @@
                 content: "✓";
                 color: #e2b96f;
                 font-weight: 800;
-            }
-            .pricing-cta {
-                position: relative;
-                z-index: 1;
-                display: flex;
-                flex-direction: column;
-                align-items: flex-start;
-                justify-content: center;
-                gap: 0.8rem;
-            }
-            .pricing-cta .button-primary {
-                background: #f7f1e8;
-                color: #27231f;
-                border-color: #f7f1e8;
-            }
-            .pricing-cta small {
-                color: #a9a095;
-                font-size: 0.72rem;
-                text-transform: uppercase;
-                letter-spacing: 0.14em;
             }
             .faq {
                 max-width: 900px;
@@ -693,13 +595,6 @@
                 border-radius: var(--radius);
                 box-shadow: var(--shadow-soft);
                 margin-top: 2rem;
-                transition:
-                    transform 0.4s var(--ease-smooth),
-                    box-shadow 0.4s var(--ease-smooth);
-            }
-            .court-card:hover {
-                transform: translateY(-4px);
-                box-shadow: var(--shadow-hover);
             }
             .court-header {
                 margin-bottom: 2rem;
@@ -755,61 +650,6 @@
                 border-bottom: none;
                 padding-bottom: 0;
             }
-            .sections-list ul {
-                margin: 0;
-                padding-left: 1.2rem;
-                display: grid;
-                gap: 0.5rem;
-            }
-            footer {
-                margin-top: 4rem;
-                padding: 4rem 0 2rem;
-                border-top: 1px solid var(--color-border);
-                background: var(--color-surface);
-            }
-            .footer-grid {
-                display: grid;
-                grid-template-columns: minmax(0, 1.1fr) repeat(3, minmax(0, 0.6fr));
-                gap: 2rem;
-            }
-            .footer-brand {
-                font-family: var(--font-serif);
-                font-size: 2rem;
-                font-weight: 700;
-                text-decoration: none;
-            }
-            .footer-copy {
-                margin: 1rem 0 0;
-                color: var(--color-muted);
-                line-height: 1.72;
-                max-width: 480px;
-            }
-            .footer-col h3 {
-                margin: 0 0 0.9rem;
-                font-size: 0.7rem;
-                text-transform: uppercase;
-                letter-spacing: 0.14em;
-            }
-            .footer-col a {
-                display: block;
-                margin: 0.55rem 0;
-                color: var(--color-muted);
-                text-decoration: none;
-                font-size: 0.92rem;
-            }
-            .footer-col a:hover {
-                color: var(--color-text);
-            }
-            .footer-bottom {
-                margin-top: 3rem;
-                padding-top: 1.2rem;
-                border-top: 1px solid var(--color-border);
-                display: flex;
-                justify-content: space-between;
-                gap: 1rem;
-                color: var(--color-muted);
-                font-size: 0.78rem;
-            }
             .reveal {
                 opacity: 0;
                 transform: translateY(28px);
@@ -832,9 +672,6 @@
                 .pricing-banner {
                     grid-template-columns: 1fr;
                 }
-                .footer-grid {
-                    grid-template-columns: 1.4fr 1fr 1fr;
-                }
             }
             @media (max-width: 720px) {
                 .container {
@@ -853,23 +690,8 @@
                 .hero-actions .button {
                     width: 100%;
                 }
-                .hero::before {
-                    width: 420px;
-                    height: 420px;
-                    right: -230px;
-                    top: -90px;
-                }
                 .cta-box {
                     grid-template-columns: 1fr;
-                }
-                .footer-grid {
-                    grid-template-columns: 1fr 1fr;
-                }
-                .footer-grid > div:first-child {
-                    grid-column: 1/-1;
-                }
-                .footer-bottom {
-                    flex-direction: column;
                 }
             }
             @media (prefers-reduced-motion: reduce) {
@@ -883,36 +705,42 @@
                     animation-duration: NaNs !important;
                     animation-iteration-count: 1 !important;
                 }
-                .hero-copy::before {
-                    animation: none;
-                }
                 .reveal {
                     opacity: 1;
                     transform: none !important;
                 }
             }
         </style>
-        <link rel="stylesheet" href="https://jurio.it/styles.css">
+         <link rel="stylesheet" href="https://jurio.it/styles.css">
+        
     </head>
     <body>
         <a href="#main-content" class="skip-link">Vai al contenuto principale</a>
         <div id="header"></div>
         <main id="main-content">
             <section class="section hero container">
-                <div class="hero-copy reveal">
-                    <span class="eyebrow">Case Study / Legal AI · Modelli di Analisi</span>
-                    <h1>Definisci una volta <em>come analizzare</em> i tuoi documenti</h1>
-                    <p class="hero-lead">
-                        Con Jurio puoi creare modelli di analisi personalizzati: stabilisci cosa deve cercare l'AI,
-                        quali dati deve estrarre, in quale formato restituirli e quali regole deve seguire.
-                    </p>
-                    <p class="hero-support">
-                        Il modello viene salvato nell'archivio e può essere riutilizzato su nuovi documenti e
-                        fascicoli, trasformando istruzioni ripetitive in uno schema di lavoro già configurato.
-                    </p>
-                    <div class="hero-actions">
-                        <a href="/profilo" class="button button-primary">Crea un modello</a
-                        ><a href="#demo" class="button button-secondary">Guarda un esempio</a>
+                <div class="hero-grid">
+                    <div class="hero-copy reveal">
+                        <span class="eyebrow">Case Study / Legal AI · Consulente Legale</span>
+                        <h1>Un ambiente di lavoro per <em>analizzare, organizzare e seguire</em> le pratiche legali</h1>
+                        <p class="hero-lead">
+                            Con Jurio puoi passare dalla domanda giuridica puntuale alla pratica strutturata: interroga
+                            la giurisprudenza, lavora sui documenti, conserva il contesto e organizza le analisi
+                            all'interno di fascicoli persistenti.
+                        </p>
+                        <div class="hero-actions">
+                            <a href="/chat" class="button button-primary">Prova il Consulente Legale</a
+                            ><a href="#demo" class="button button-secondary">Guarda il caso d'uso</a>
+                        </div>
+                    </div>
+                    <div class="demo-card reveal">
+                        <div class="demo-media">
+                            <img
+                                src="https://jurio.it/guida-image/consulente.webp"
+                                alt="Interfaccia del modulo Consulente Legale di Jurio"
+                                loading="lazy"
+                            />
+                        </div>
                     </div>
                 </div>
             </section>
@@ -920,93 +748,129 @@
                 <div class="section-heading reveal">
                     <h2>Contesto</h2>
                     <p>
-                        Il modello di analisi nasce quando una stessa attività documentale deve essere ripetuta con
-                        criteri coerenti.
+                        La ricerca giuridica non si esaurisce nella singola domanda: spesso richiede documenti,
+                        verifiche successive e memoria del contesto.
                     </p>
                 </div>
                 <div class="integration-grid reveal">
                     <div class="card reveal">
                         <span class="card-tag">Il problema</span>
-                        <h3>Le stesse verifiche, ogni volta</h3>
+                        <h3>Dalla domanda alla pratica</h3>
                         <p>
-                            Nella revisione di documenti dello stesso tipo il professionista può avere bisogno di
-                            cercare sempre le medesime informazioni: durata, rinnovo, recesso, penali, responsabilità,
-                            obblighi o altre clausole specifiche. Riscrivere ogni volta le istruzioni rende il processo
-                            più ripetitivo e meno standardizzato.
+                            Una domanda iniziale può trasformarsi in un'attività più ampia: analizzare una sentenza,
+                            confrontare documenti, verificare una clausola, approfondire una questione controversa o
+                            ricostruire un orientamento. Trattare ogni attività come una conversazione isolata rende più
+                            difficile mantenere il contesto.
                         </p>
                     </div>
                     <div class="card reveal">
-                        <span class="card-tag">La configurazione</span>
-                        <h3>Istruzioni, campi e regole</h3>
+                        <span class="card-tag">Il flusso di lavoro</span>
+                        <h3>Chat quando serve, fascicolo quando occorre continuità</h3>
                         <p>
-                            Jurio permette di riunire in un unico modello ciò che l'AI deve cercare, i dati da estrarre,
-                            il tipo di risultato richiesto e le eventuali regole aggiuntive da rispettare durante
-                            l'analisi.
+                            Jurio distingue tra una chat temporanea, utile per un'analisi rapida, e un fascicolo,
+                            pensato per attività continuative. Nel fascicolo possono essere raccolti documenti e
+                            conversazioni relative alla stessa pratica, mantenendo disponibile il contesto per le
+                            analisi successive.
                         </p>
                     </div>
                     <div class="card reveal">
                         <span class="card-tag">Il risultato</span>
-                        <h3>Uno schema riutilizzabile</h3>
+                        <h3>Un contesto di lavoro persistente</h3>
                         <p>
-                            Una volta salvato nell'archivio, il modello può essere applicato a nuovi documenti e
-                            fascicoli. L'analisi parte così da criteri già definiti, rendendo confrontabili e più
-                            omogenei i risultati.
+                            Il professionista può tornare sulla stessa pratica senza ricostruire ogni volta il punto di
+                            partenza. Documenti, thread e informazioni della pratica vengono organizzati in un unico
+                            ambiente di lavoro, rendendo più semplice proseguire l'analisi.
                         </p>
                     </div>
                 </div>
             </section>
             <section class="section container">
                 <div class="section-heading reveal">
-                    <h2>Processo</h2>
-                    <p>Dalla definizione dell'attività alla creazione di un modello pronto per essere riutilizzato.</p>
+                    <h2>Tre modalità di lavoro</h2>
+                    <p>
+                        Lo stesso ambiente si adatta a esigenze rapide, attività continuative e gestione delle pratiche
+                        già avviate.
+                    </p>
                 </div>
                 <ul class="steps reveal">
                     <li class="step reveal">
                         <span class="step-num">01</span>
-                        <h3>Dai un nome al modello</h3>
+                        <h3>Chat Temporanea</h3>
                         <p>
-                            Scegli un nome riconoscibile che identifichi l'attività da standardizzare, ad esempio
-                            "Revisione contratto di fornitura".
+                            Avvia rapidamente una sessione per porre quesiti, analizzare una questione o lavorare su
+                            documenti senza trasformare necessariamente l'attività in una pratica persistente.
                         </p>
                     </li>
                     <li class="step reveal">
                         <span class="step-num">02</span>
-                        <h3>Definisci cosa cercare</h3>
+                        <h3>Nuovo Fascicolo</h3>
                         <p>
-                            Descrivi in linguaggio naturale cosa vuoi che l'AI analizzi e quali informazioni devono
-                            essere individuate all'interno dei documenti.
+                            Crea uno spazio dedicato a una pratica continuativa, associa i documenti rilevanti e
+                            conserva il contesto delle diverse analisi svolte nel tempo.
                         </p>
                     </li>
                     <li class="step reveal">
                         <span class="step-num">03</span>
-                        <h3>Imposta le regole</h3>
+                        <h3>Sfoglia Archivio</h3>
                         <p>
-                            Aggiungi eventuali indicazioni sul modo in cui l'analisi deve essere eseguita, sul formato
-                            della risposta e sulla gestione delle informazioni non presenti.
+                            Riprendi pratiche e sessioni precedenti, consulta le analisi svolte e gestisci il patrimonio
+                            di lavoro già organizzato nell'archivio.
+                        </p>
+                    </li>
+                </ul>
+            </section>
+            <section class="section container">
+                <div class="section-heading reveal">
+                    <h2>Processo</h2>
+                    <p>Dalla prima domanda alla gestione continuativa della pratica.</p>
+                </div>
+                <ul class="steps reveal">
+                    <li class="step reveal">
+                        <span class="step-num">01</span>
+                        <h3>Formula la questione</h3>
+                        <p>
+                            Inserisci la domanda giuridica in linguaggio naturale, tramite tastiera o comando vocale,
+                            senza dover costruire una stringa di ricerca rigida.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">02</span>
+                        <h3>Interroga le fonti</h3>
+                        <p>
+                            Il motore può lavorare sulla giurisprudenza disponibile e sui documenti caricati nella
+                            sessione, con possibilità di applicare filtri alla ricerca.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">03</span>
+                        <h3>Aggiungi i documenti</h3>
+                        <p>
+                            Inserisci gli atti o i file utili alla questione. I documenti possono poi essere richiamati
+                            nella conversazione per ulteriori analisi e confronti.
                         </p>
                     </li>
                     <li class="step reveal">
                         <span class="step-num">04</span>
-                        <h3>Crea i campi di estrazione</h3>
+                        <h3>Verifica le fonti</h3>
                         <p>
-                            Per ogni dato da trovare puoi definire un campo specifico e scegliere il relativo tipo di
-                            risultato: testo, numero/importo, sì/no, elenco o scelta predefinita.
+                            Le risposte riportano i riferimenti alle fonti utilizzate: il professionista può risalire al
+                            provvedimento o al documento da cui è stata ricavata l'informazione.
                         </p>
                     </li>
                     <li class="step reveal">
                         <span class="step-num">05</span>
-                        <h3>Salva il modello</h3>
+                        <h3>Trasforma la sessione in pratica</h3>
                         <p>
-                            Il modello viene conservato nell'archivio insieme alle istruzioni, ai campi e alle regole
-                            che hai definito.
+                            Quando l'attività richiede continuità, la sessione può diventare un fascicolo, associando
+                            documenti e conversazioni alla stessa pratica.
                         </p>
                     </li>
                     <li class="step reveal">
                         <span class="step-num">06</span>
-                        <h3>Riutilizzalo</h3>
+                        <h3>Mantieni il contesto</h3>
                         <p>
-                            Applica lo stesso schema a nuovi documenti dello stesso tipo senza dover ricostruire ogni
-                            volta il processo di analisi.
+                            Nel fascicolo le conversazioni successive possono essere svolte mantenendo come riferimento
+                            il patrimonio informativo della pratica, evitando di ricostruire continuamente il contesto.
                         </p>
                     </li>
                 </ul>
@@ -1014,96 +878,65 @@
             <section id="demo" class="section container">
                 <div class="section-heading reveal">
                     <h2>Dimostrazione</h2>
-                    <p>Un esempio concreto di modello costruito per l'analisi ricorrente di contratti di fornitura.</p>
+                    <p>Un esempio concreto: dalla prima domanda alla costruzione di una pratica continuativa.</p>
                 </div>
                 <div class="court-card reveal">
                     <div class="court-header">
-                        <h3>Modello · Revisione contratto di fornitura</h3>
-                        <p>Configurazione di istruzioni, campi di estrazione e regole operative</p>
+                        <h3>Pratica: Rossi c. Bianchi</h3>
+                        <p>Esempio di utilizzo del Consulente Legale con documenti, fonti e contesto persistente</p>
                     </div>
                     <dl class="sections-list">
-                        <dt>Nome del modello</dt>
-                        <dd>Revisione contratto di fornitura</dd>
-                        <dt>Cosa deve analizzare l'AI</dt>
+                        <dt>Punto di partenza</dt>
                         <dd>
-                            Analizza il contratto e individua le principali clausole che incidono sui diritti e sugli
-                            obblighi delle parti. Presta particolare attenzione a durata, rinnovo, recesso,
-                            corrispettivo, termini di pagamento, penali, responsabilità, limitazioni di responsabilità,
-                            esclusiva e risoluzione del rapporto.
+                            Il professionista deve valutare la posizione di un cliente in una controversia contrattuale
+                            e vuole verificare la giurisprudenza rilevante prima di procedere con l'analisi della
+                            documentazione.
                         </dd>
-                        <dt>Regole aggiuntive</dt>
+                        <dt>Prima fase · Chat Temporanea</dt>
                         <dd>
-                            Riporta esclusivamente le informazioni presenti nel documento. Non dedurre condizioni che
-                            non risultano espressamente dal testo. Quando un dato non è presente, restituisci "non
-                            presente". Mantieni il risultato sintetico e coerente con il formato richiesto per ciascun
-                            campo.
+                            Viene formulata una prima domanda in linguaggio naturale sulla questione giuridica e vengono
+                            consultate le pronunce pertinenti. La sessione serve a delimitare il problema e individuare
+                            le fonti da approfondire.
                         </dd>
-                        <dt>Dati da trovare</dt>
+                        <dt>Seconda fase · Documenti</dt>
                         <dd>
-                            <ul>
-                                <li>Durata</li>
-                                <li>Rinnovo automatico</li>
-                                <li>Termine di recesso</li>
-                                <li>Penali</li>
-                                <li>Limitazione di responsabilità</li>
-                                <li>Esclusiva</li>
-                                <li>Risoluzione</li>
-                            </ul>
+                            Vengono caricati il contratto, una comunicazione tra le parti e un provvedimento giudiziario
+                            rilevante. I documenti entrano nel contesto della sessione e possono essere richiamati nelle
+                            richieste successive.
                         </dd>
-                        <dt>Campo · Durata</dt>
+                        <dt>Terza fase · Verifica delle fonti</dt>
                         <dd>
-                            <strong>Tipo di risultato:</strong>Testo<br /><strong>Come deve trovarlo:</strong>Individua
-                            la durata iniziale del contratto e riporta il periodo espressamente indicato.
+                            Le risposte riportano i riferimenti alle pronunce e ai documenti utilizzati. Il
+                            professionista può aprire la fonte citata e verificare direttamente il passaggio rilevante.
                         </dd>
-                        <dt>Campo · Rinnovo automatico</dt>
+                        <dt>Quarta fase · Creazione del Fascicolo</dt>
                         <dd>
-                            <strong>Tipo di risultato:</strong>Sì / No<br /><strong>Come deve trovarlo:</strong>Verifica
-                            se il contratto prevede un rinnovo automatico alla scadenza.
+                            Quando l'analisi diventa una pratica continuativa, la sessione viene organizzata in un
+                            fascicolo dedicato. Il fascicolo raccoglie il contesto documentale e le successive
+                            conversazioni relative alla stessa posizione.
                         </dd>
-                        <dt>Campo · Termine di recesso</dt>
+                        <dt>Quinta fase · Analisi successive</dt>
                         <dd>
-                            <strong>Tipo di risultato:</strong>Testo<br /><strong>Come deve trovarlo:</strong>Individua
-                            l'eventuale facoltà di recesso e il termine di preavviso previsto.
-                        </dd>
-                        <dt>Campo · Penali</dt>
-                        <dd>
-                            <strong>Tipo di risultato:</strong>Numero / Importo<br /><strong>Come deve trovarlo:</strong
-                            >Individua le penali previste e restituisci l'importo o la percentuale quando espressamente
-                            indicati.
-                        </dd>
-                        <dt>Campo · Limitazione di responsabilità</dt>
-                        <dd>
-                            <strong>Tipo di risultato:</strong>Sì / No<br /><strong>Come deve trovarlo:</strong>Verifica
-                            la presenza di clausole che limitano o escludono la responsabilità di una delle parti.
-                        </dd>
-                        <dt>Campo · Esclusiva</dt>
-                        <dd>
-                            <strong>Tipo di risultato:</strong>Sì / No<br /><strong>Come deve trovarlo:</strong>Verifica
-                            la presenza di obblighi di esclusiva a carico di una o entrambe le parti.
-                        </dd>
-                        <dt>Campo · Risoluzione</dt>
-                        <dd>
-                            <strong>Tipo di risultato:</strong>Elenco<br /><strong>Come deve trovarlo:</strong>Elenca le
-                            principali ipotesi di risoluzione espressamente previste.
+                            Il professionista può tornare sul fascicolo per porre nuove domande, confrontare i documenti
+                            già caricati e proseguire il ragionamento senza dover ripresentare da zero il contesto della
+                            pratica.
                         </dd>
                         <dt>Attività svolte da Jurio</dt>
                         <dd>
-                            <ul>
-                                <li>ha ricevuto le istruzioni definite dal professionista;</li>
-                                <li>ha associato alle istruzioni specifici dati da individuare;</li>
-                                <li>ha gestito ciascun dato secondo il formato di risultato impostato;</li>
-                                <li>ha applicato le regole definite per l'analisi del documento;</li>
-                                <li>ha gestito in modo uniforme le informazioni non presenti;</li>
-                                <li>ha organizzato il risultato secondo la struttura prevista dal modello;</li>
-                                <li>ha reso lo schema disponibile per il riutilizzo su nuovi documenti.</li>
+                            <ul style="margin: 0; padding-left: 1.2rem">
+                                <li>ha gestito la domanda iniziale in linguaggio naturale;</li>
+                                <li>ha interrogato le fonti giurisprudenziali pertinenti;</li>
+                                <li>ha utilizzato i documenti caricati come materiale di analisi della sessione;</li>
+                                <li>ha associato alle risposte i riferimenti alle fonti utilizzate;</li>
+                                <li>ha consentito di trasformare il lavoro temporaneo in una pratica persistente;</li>
+                                <li>ha mantenuto il contesto documentale della pratica per le analisi successive.</li>
                             </ul>
                         </dd>
                         <dt>Risultato operativo</dt>
                         <dd>
-                            Il professionista definisce una volta i criteri con cui deve essere svolta l'analisi. Nei
-                            documenti successivi può quindi richiamare lo stesso modello e ottenere una struttura di
-                            dati coerente con le istruzioni impostate, dedicando il proprio tempo alla verifica,
-                            all'interpretazione e all'utilizzo del risultato.
+                            La ricerca giuridica non rimane una sequenza di conversazioni isolate. Quando la questione
+                            evolve in una pratica, il professionista dispone di un ambiente nel quale documenti, analisi
+                            e successive richieste vengono organizzati attorno allo stesso contesto.
                         </dd>
                     </dl>
                 </div>
@@ -1111,100 +944,129 @@
             <section class="section container">
                 <div class="pricing-banner reveal">
                     <div>
-                        <h2>Standardizza le attività<em>che si ripetono</em></h2>
-                        <p>
-                            Il modello di analisi è particolarmente utile quando la stessa struttura informativa deve
-                            essere ricavata da molti documenti. Invece di ricostruire ogni volta il prompt, il
-                            professionista definisce l'attività, stabilisce i dati da cercare e ne configura il formato.
-                        </p>
+                        <h2>Caso<em>d'uso</em></h2>
+                        <p>Dalla ricerca iniziale alla gestione continuativa di una pratica legale.</p>
                         <p style="font-size: 0.95rem; margin-top: 1rem">
-                            Il risultato è una configurazione riutilizzabile: lo stesso schema può essere applicato a
-                            nuovi fascicoli e documenti dello stesso tipo, mantenendo stabile il perimetro dell'analisi.
+                            Il valore del Consulente Legale emerge quando una domanda non si esaurisce nella prima
+                            risposta. Il professionista può iniziare da una chat temporanea, consultare la
+                            giurisprudenza, aggiungere i documenti rilevanti e, quando serve continuità, trasformare
+                            l'attività in un fascicolo. In questo modo Jurio accompagna il flusso di lavoro dalla fase
+                            esplorativa alla gestione della pratica, mantenendo organizzati il patrimonio documentale e
+                            il contesto delle analisi svolte.
                         </p>
                     </div>
-                    <div>
+                    <div class="pricing-cta">
                         <ul class="pricing-points">
-                            <li>Istruzioni definite dal professionista</li>
-                            <li>Campi di estrazione personalizzati</li>
-                            <li>Tipi di risultato configurabili</li>
-                            <li>Regole aggiuntive di analisi</li>
-                            <li>Gestione uniforme dei dati mancanti</li>
-                            <li>Modello salvato nell'archivio</li>
-                            <li>Riutilizzo su nuovi documenti</li>
+                            <li>Chat temporanea per analisi rapide</li>
+                            <li>Ricerca giurisprudenziale e filtri avanzati</li>
+                            <li>Documenti integrati nella sessione</li>
+                            <li>Fonti citate e verificabili</li>
+                            <li>Fascicoli con contesto persistente</li>
+                            <li>Archivio delle pratiche e delle analisi</li>
                         </ul>
                     </div>
                 </div>
             </section>
             <section class="section container">
                 <div class="section-heading reveal">
+                    <h2>Archivio e collaborazione</h2>
+                    <p>
+                        Il lavoro può essere organizzato anche quando la pratica viene gestita all'interno di un gruppo.
+                    </p>
+                </div>
+                <div class="integration-grid reveal">
+                    <div class="card reveal">
+                        <span class="card-tag">Archivio</span>
+                        <h3>Riprendere il lavoro</h3>
+                        <p>
+                            L'archivio raccoglie fascicoli e sessioni precedenti, permettendo di ritrovare e riprendere
+                            le attività già svolte senza ricostruire manualmente l'organizzazione della pratica.
+                        </p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-tag">Team</span>
+                        <h3>Condividere il contesto</h3>
+                        <p>
+                            All'interno di un team, i fascicoli possono essere consultati dagli altri membri secondo i
+                            permessi previsti, facilitando la conoscenza delle analisi già svolte sulla pratica.
+                        </p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-tag">Controllo</span>
+                        <h3>Distinguere consultazione e modifica</h3>
+                        <p>
+                            La gestione dei permessi mantiene distinta la possibilità di consultare un fascicolo dalla
+                            possibilità di modificarne conversazioni e contenuti, secondo l'organizzazione del gruppo di
+                            lavoro.
+                        </p>
+                    </div>
+                </div>
+            </section>
+            <section class="section container">
+                <div class="section-heading reveal">
                     <h2>FAQ</h2>
-                    <p>Domande frequenti sui modelli di analisi personalizzati</p>
+                    <p>Domande frequenti sul Consulente Legale di Jurio</p>
                 </div>
                 <div class="faq reveal">
                     <details>
-                        <summary>Che cos'è un modello di analisi?</summary>
+                        <summary>Che cos'è il Consulente Legale di Jurio?</summary>
                         <div class="faq-content-inner">
-                            È una configurazione riutilizzabile che combina le istruzioni per l'AI, i dati da estrarre,
-                            il formato dei risultati e le eventuali regole aggiuntive da applicare durante l'analisi dei
-                            documenti.
+                            È l'ambiente di lavoro di Jurio dedicato all'analisi giuridica, alla ricerca sulle fonti e
+                            al lavoro sui documenti. Può essere utilizzato sia per richieste puntuali sia per attività
+                            continuative organizzate in fascicoli.
                         </div>
                     </details>
                     <details>
-                        <summary>È la stessa cosa di un prompt?</summary>
+                        <summary>Qual è la differenza tra Chat Temporanea e Fascicolo?</summary>
                         <div class="faq-content-inner">
-                            Non esattamente. Il prompt contiene le istruzioni rivolte all'AI. Il modello di analisi
-                            organizza quelle istruzioni insieme ai campi da trovare, ai relativi tipi di risultato e
-                            alle regole operative, rendendo l'intera configurazione riutilizzabile.
+                            La Chat Temporanea è pensata per attività rapide o esplorative. Il Fascicolo è dedicato a
+                            una pratica che richiede continuità: raccoglie documenti e conversazioni e mantiene
+                            disponibile il contesto della pratica per le analisi successive.
                         </div>
                     </details>
                     <details>
-                        <summary>Posso decidere quali dati deve trovare l'AI?</summary>
+                        <summary>Posso caricare documenti nella conversazione?</summary>
                         <div class="faq-content-inner">
-                            Sì. Il modello consente di aggiungere campi specifici per ciascuna informazione che vuoi
-                            individuare e di definire il tipo di risultato atteso.
+                            Sì. I documenti caricati nella sessione possono essere utilizzati nelle richieste
+                            successive, ad esempio per confronti, estrazioni di informazioni o analisi del contenuto.
                         </div>
                     </details>
                     <details>
-                        <summary>Quali tipi di risultato posso impostare?</summary>
+                        <summary>Come funzionano le fonti citate?</summary>
                         <div class="faq-content-inner">
-                            I tipi disponibili comprendono testo, numero/importo, sì/no, elenco e scelta predefinita. La
-                            scelta del formato dipende dal tipo di informazione che vuoi estrarre.
+                            Le risposte possono riportare i riferimenti alle fonti utilizzate. Il professionista può
+                            così risalire al provvedimento o al documento citato e verificare direttamente l'origine
+                            dell'informazione.
                         </div>
                     </details>
                     <details>
-                        <summary>Posso aggiungere regole all'analisi?</summary>
+                        <summary>Quanti documenti posso utilizzare in una sessione?</summary>
                         <div class="faq-content-inner">
-                            Sì. Puoi aggiungere regole operative che definiscono, ad esempio, come trattare informazioni
-                            mancanti, quali contenuti considerare e come strutturare il risultato.
+                            Il modulo consente di gestire fino a 10 documenti allegati all'interno della sessione, che
+                            possono essere richiamati nelle analisi e nei confronti successivi.
                         </div>
                     </details>
                     <details>
-                        <summary>Cosa succede quando un'informazione non è presente?</summary>
+                        <summary>Posso trasformare una Chat Temporanea in un Fascicolo?</summary>
                         <div class="faq-content-inner">
-                            Il comportamento può essere definito nelle regole del modello. Ad esempio, puoi impostare
-                            l'indicazione "non presente" quando il dato richiesto non viene individuato nel documento.
+                            Sì. Quando una ricerca iniziale evolve in una pratica continuativa, la sessione può essere
+                            trasformata in un fascicolo dedicato, così da proseguire il lavoro mantenendo il contesto.
                         </div>
                     </details>
                     <details>
-                        <summary>Posso riutilizzare lo stesso modello?</summary>
+                        <summary>Il team può consultare i fascicoli degli altri membri?</summary>
                         <div class="faq-content-inner">
-                            Sì. Una volta salvato nell'archivio, il modello può essere richiamato e applicato a nuovi
-                            documenti senza dover ricostruire ogni volta istruzioni e campi di estrazione.
+                            Nell'organizzazione in team, i fascicoli possono essere consultati dagli altri membri
+                            secondo i permessi previsti. La gestione delle conversazioni e dei contenuti rimane distinta
+                            in base al ruolo e alla proprietà della pratica.
                         </div>
                     </details>
                     <details>
-                        <summary>Posso creare modelli diversi per attività diverse?</summary>
+                        <summary>Jurio sostituisce la valutazione del professionista?</summary>
                         <div class="faq-content-inner">
-                            Sì. Puoi creare modelli distinti per documenti o attività differenti, mantenendo per
-                            ciascuno un insieme specifico di istruzioni, dati e regole.
-                        </div>
-                    </details>
-                    <details>
-                        <summary>Il modello sostituisce la valutazione del professionista?</summary>
-                        <div class="faq-content-inner">
-                            No. Il modello serve a standardizzare l'attività di analisi secondo criteri definiti dal
-                            professionista. Il risultato deve essere utilizzato come supporto al lavoro e verificato in
-                            relazione al documento di riferimento e alla finalità concreta dell'analisi.
+                            No. Il Consulente Legale è uno strumento di supporto all'analisi, alla ricerca e
+                            all'organizzazione del lavoro. La valutazione giuridica, la verifica delle fonti e le
+                            decisioni professionali restano affidate al professionista.
                         </div>
                     </details>
                 </div>
@@ -1212,15 +1074,15 @@
             <section id="prova" class="section container cta">
                 <div class="cta-box reveal">
                     <div>
-                        <h2>Trasforma le tue istruzioni in un<em>modello riutilizzabile</em>.</h2>
+                        <h2>Dalla ricerca alla<br /><em>pratica legale</em>.</h2>
                         <p>
-                            Definisci cosa deve cercare l'AI, configura i dati da estrarre, salva il modello e
-                            riutilizzalo ogni volta che devi svolgere la stessa attività documentale.
+                            Prova Jurio per 7 giorni e utilizza il Consulente Legale per interrogare la giurisprudenza,
+                            analizzare documenti e organizzare le pratiche in fascicoli persistenti.
                         </p>
                         <ul class="pricing-points" style="margin-top: 1.5rem; color: var(--color-muted)">
-                            <li style="color: var(--color-muted)">Istruzioni personalizzate</li>
-                            <li style="color: var(--color-muted)">Campi e formati di risultato</li>
-                            <li style="color: var(--color-muted)">Modello riutilizzabile</li>
+                            <li style="color: var(--color-muted)">Nessuna carta richiesta</li>
+                            <li style="color: var(--color-muted)">7 giorni full access</li>
+                            <li style="color: var(--color-muted)">Cloud privato</li>
                         </ul>
                     </div>
                     <div class="pricing-cta">
@@ -1230,19 +1092,17 @@
                 </div>
             </section>
         </main>
-        <div id="footer"></div>
+        <div id="https://jurio.it/caso-studio/"></div>
         <script>
             document.addEventListener("DOMContentLoaded", async () => {
                 const components = [
                     {
                         selector: "#header",
-
                         file: "/header.html",
                     },
 
                     {
                         selector: "#footer",
-
                         file: "/footer.html",
                     },
                 ];
@@ -1270,45 +1130,45 @@
         </script>
         <script>
             document.addEventListener("DOMContentLoaded", () => {
-                const observerOptions = {
-                    root: null,
+                const observer = new IntersectionObserver(
+                    (entries, observer) => {
+                        entries.forEach((entry) => {
+                            if (entry.isIntersecting) {
+                                entry.target.classList.add("is-visible");
 
-                    rootMargin: "0px",
-
-                    threshold: 0.1,
-                };
-
-                const observer = new IntersectionObserver((entries, observer) => {
-                    entries.forEach((entry) => {
-                        if (entry.isIntersecting) {
-                            entry.target.classList.add("is-visible");
-
-                            observer.unobserve(entry.target);
-                        }
-                    });
-                }, observerOptions);
-
-                document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
-
-                const updateHeader = () => {
-                    const header = document.querySelector(".site-header");
-
-                    if (!header) return;
-
-                    if (window.scrollY > 20) {
-                        header.classList.add("is-scrolled");
-                    } else {
-                        header.classList.remove("is-scrolled");
+                                observer.unobserve(entry.target);
+                            }
+                        });
+                    },
+                    {
+                        root: null,
+                        rootMargin: "0px",
+                        threshold: 0.1,
                     }
-                };
+                );
 
-                window.addEventListener("scroll", updateHeader, {
-                    passive: true,
+                document.querySelectorAll(".reveal").forEach((el) => {
+                    observer.observe(el);
                 });
 
-                updateHeader();
+                const header = document.querySelector(".site-header");
+
+                window.addEventListener(
+                    "scroll",
+                    () => {
+                        if (!header) return;
+
+                        if (window.scrollY > 20) {
+                            header.classList.add("is-scrolled");
+                        } else {
+                            header.classList.remove("is-scrolled");
+                        }
+                    },
+                    {
+                        passive: true,
+                    }
+                );
             });
         </script>
-        
     </body>
 </html>

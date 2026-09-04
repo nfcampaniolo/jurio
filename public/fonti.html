@@ -1,16 +1,24 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <!-- Google Consent Mode v2 -->
+
+  <!-- =====================================================
+       COOKIE / CONSENT MODE
+       ===================================================== -->
+
   <script>
     window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
     gtag('consent', 'default', {
-      'analytics_storage': 'denied',
-      'ad_storage': 'denied',
-      'ad_user_data': 'denied',
-      'ad_personalization': 'denied',
-      'wait_for_update': 500
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+      wait_for_update: 500
     });
   </script>
 
@@ -21,567 +29,1611 @@
     type="text/javascript">
   </script>
 
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- SEO primaria -->
-  <title>Banca Dati Giurisprudenza Italiana | 401.870 Provvedimenti | Jurio</title>
+  <!-- =====================================================
+       BASIC META
+       ===================================================== -->
+
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="robots"
+    content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+  >
+
+  <meta
+    name="googlebot"
+    content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
+  >
+
+  <meta name="author" content="Jurio">
 
   <meta
     name="description"
-    content="Esplora la banca dati di giurisprudenza di Jurio: 401.870 provvedimenti indicizzati di Cassazione, Consiglio di Stato e Corte Costituzionale. Ricerca sentenze, ordinanze e decreti dal 2021 a oggi."
+    content="Banca dati di giurisprudenza italiana di Jurio: provvedimenti di Corte di Cassazione, Consiglio di Stato e Corte Costituzionale, organizzati per anno, organo, tipologia e materia."
   >
 
-  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-  <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
-  <meta name="author" content="Jurio">
   <meta name="theme-color" content="#ffffff">
 
-  <!-- Canonical -->
-  <link rel="canonical" href="https://www.jurio.it/statistiche">
 
-  <!-- Preconnect / performance -->
-  <link rel="preconnect" href="https://consent.cookiebot.com" crossorigin>
+  <!-- =====================================================
+       TITLE
+       ===================================================== -->
 
-  <!-- Open Graph -->
+  <title>Banca Dati di Giurisprudenza Italiana | Jurio</title>
+
+
+  <!-- =====================================================
+       CANONICAL
+       ===================================================== -->
+
+  <link
+    rel="canonical"
+    href="https://www.jurio.it/fonti"
+  >
+
+
+  <!-- =====================================================
+       PERFORMANCE
+       ===================================================== -->
+
+  <link
+    rel="preconnect"
+    href="https://consent.cookiebot.com"
+    crossorigin
+  >
+
+  <link
+    rel="dns-prefetch"
+    href="//storage.googleapis.com"
+  >
+
+
+  <!-- =====================================================
+       OPEN GRAPH
+       ===================================================== -->
+
   <meta property="og:type" content="website">
   <meta property="og:locale" content="it_IT">
   <meta property="og:site_name" content="Jurio">
-  <meta property="og:title" content="Banca Dati Giurisprudenza Italiana | Jurio">
+
+  <meta
+    property="og:title"
+    content="Banca Dati di Giurisprudenza Italiana | Jurio"
+  >
+
   <meta
     property="og:description"
-    content="401.870 provvedimenti indicizzati: Cassazione, Consiglio di Stato e Corte Costituzionale. Scopri come è organizzata la banca dati giuridica di Jurio."
+    content="Esplora la banca dati di giurisprudenza di Jurio: provvedimenti di Corte di Cassazione, Consiglio di Stato e Corte Costituzionale."
   >
-  <meta property="og:url" content="https://www.jurio.it/statistiche">
-  <meta property="og:image" content="https://www.jurio.it/og/statistiche.jpg">
-  <meta property="og:image:alt" content="Banca dati di giurisprudenza Jurio">
 
-  <!-- Twitter / X -->
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Banca Dati Giurisprudenza Italiana | Jurio">
   <meta
-    name="twitter:description"
-    content="401.870 provvedimenti indicizzati di Cassazione, Consiglio di Stato e Corte Costituzionale."
+    property="og:url"
+    content="https://www.jurio.it/fonti"
   >
-  <meta name="twitter:image" content="https://www.jurio.it/og/statistiche.jpg">
 
-  <!-- Favicon -->
-  <link rel="icon" href="/favicon.ico">
+  <meta
+    property="og:image"
+    content="https://www.jurio.it/logo.webp"
+  >
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="/styles.css">
+  <meta
+    property="og:image:alt"
+    content="Jurio - Banca dati di giurisprudenza italiana"
+  >
+
 
   <!-- =====================================================
-       DATI STRUTTURATI
+       TWITTER / X
        ===================================================== -->
 
-  <!-- WebPage -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    "@id": "https://www.jurio.it/statistiche#webpage",
-    "url": "https://www.jurio.it/statistiche",
-    "name": "Banca Dati Giurisprudenza Italiana | Jurio",
-    "headline": "Banca Dati di Giurisprudenza Italiana",
-    "description": "Statistiche e struttura della banca dati di giurisprudenza di Jurio, con provvedimenti della Corte di Cassazione, del Consiglio di Stato e della Corte Costituzionale.",
-    "inLanguage": "it-IT",
-    "isPartOf": {
-      "@type": "WebSite",
-      "@id": "https://www.jurio.it/#website",
-      "url": "https://www.jurio.it/",
-      "name": "Jurio"
-    },
-    "about": {
-      "@type": "Thing",
-      "name": "Giurisprudenza italiana"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "Jurio",
-      "url": "https://www.jurio.it/"
-    }
-  }
-  </script>
+  <meta
+    name="twitter:card"
+    content="summary_large_image"
+  >
 
-  <!-- Dataset -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "Dataset",
-    "@id": "https://www.jurio.it/statistiche#dataset",
-    "name": "Banca dati di giurisprudenza Jurio",
-    "description": "Dataset aggregato dei provvedimenti di giurisprudenza indicizzati da Jurio, organizzati per anno, organo giudicante, tipologia e materia.",
-    "url": "https://www.jurio.it/statistiche",
-    "inLanguage": "it-IT",
-    "creator": {
-      "@type": "Organization",
-      "name": "Jurio",
-      "url": "https://www.jurio.it/"
-    },
-    "publisher": {
-      "@type": "Organization",
-      "name": "Jurio",
-      "url": "https://www.jurio.it/"
-    },
-    "dateModified": "2026-08-30",
-    "temporalCoverage": "2021/2026",
-    "measurementTechnique": "Indicizzazione e classificazione dei provvedimenti giurisprudenziali",
-    "keywords": [
-      "banca dati giuridica",
-      "banca dati giurisprudenza",
-      "giurisprudenza italiana",
-      "sentenze Cassazione",
-      "sentenze Consiglio di Stato",
-      "Corte Costituzionale",
-      "ricerca giurisprudenza",
-      "provvedimenti giudiziari"
-    ]
-  }
-  </script>
+  <meta
+    name="twitter:title"
+    content="Banca Dati di Giurisprudenza Italiana | Jurio"
+  >
 
-  <!-- Breadcrumb -->
+  <meta
+    name="twitter:description"
+    content="Banca dati di giurisprudenza italiana con provvedimenti di Corte di Cassazione, Consiglio di Stato e Corte Costituzionale."
+  >
+
+  <meta
+    name="twitter:image"
+    content="https://www.jurio.it/logo.webp"
+  >
+
+
+  <!-- =====================================================
+       FAVICON
+       ===================================================== -->
+
+  <link rel="icon" href="/favicon.ico">
+
+
+  <!-- =====================================================
+       CSS
+       ===================================================== -->
+
+  <link rel="stylesheet" href="/styles.css">
+
+
+  <!-- =====================================================
+       STRUCTURED DATA
+       ===================================================== -->
+
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": [
+    "@graph": [
+
       {
-        "@type": "ListItem",
-        "position": 1,
-        "name": "Home",
-        "item": "https://www.jurio.it/"
+        "@type": "Organization",
+        "@id": "https://www.jurio.it/#organization",
+        "name": "Jurio",
+        "url": "https://www.jurio.it/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://www.jurio.it/logo.webp"
+        }
       },
+
       {
-        "@type": "ListItem",
-        "position": 2,
-        "name": "Banca dati e statistiche",
-        "item": "https://www.jurio.it/statistiche"
+        "@type": "WebSite",
+        "@id": "https://www.jurio.it/#website",
+        "url": "https://www.jurio.it/",
+        "name": "Jurio",
+        "publisher": {
+          "@id": "https://www.jurio.it/#organization"
+        },
+        "inLanguage": "it-IT"
+      },
+
+      {
+        "@type": "WebPage",
+        "@id": "https://www.jurio.it/fonti#webpage",
+        "url": "https://www.jurio.it/fonti",
+        "name": "Banca Dati di Giurisprudenza Italiana | Jurio",
+        "headline": "Banca Dati di Giurisprudenza Italiana",
+        "description": "Banca dati di giurisprudenza italiana di Jurio con provvedimenti organizzati per organo giudicante, anno, tipologia e materia.",
+        "isPartOf": {
+          "@id": "https://www.jurio.it/#website"
+        },
+        "publisher": {
+          "@id": "https://www.jurio.it/#organization"
+        },
+        "about": {
+          "@type": "Thing",
+          "name": "Giurisprudenza italiana"
+        },
+        "inLanguage": "it-IT",
+        "dateModified": "2026-09-04"
+      },
+
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://www.jurio.it/fonti#breadcrumb",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://www.jurio.it/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Banca dati e fonti",
+            "item": "https://www.jurio.it/fonti"
+          }
+        ]
       }
+
     ]
   }
   </script>
+
 </head>
+
 
 <body>
 
-  <div id="header"></div> 
+  <!-- =====================================================
+       HEADER
+       ===================================================== -->
+
+  <div id="header"></div>
+
 
   <main>
+
+    <!-- ===================================================
+         HERO
+         =================================================== -->
+
     <section class="section hero">
+
       <div class="container hero-grid">
+
         <div class="hero-copy reveal">
-          <span class="eyebrow">Banca Dati Aggiornata</span>
-          <h1>La banca dati che<br><em>alimenta Jurio</em></h1>
-          <p class="hero-lead">Il cuore pulsante della tua strategia legale vive qui. Non una raccolta caotica, ma una selezione mirata delle decisioni che tracciano la strada del diritto.</p>
-          
+
+          <span class="eyebrow">
+            Banca dati di giurisprudenza italiana
+          </span>
+
+          <h1>
+            Una banca dati di giurisprudenza
+            <br>
+            <em>costantemente aggiornata</em>
+          </h1>
+
+          <p class="hero-lead">
+            Jurio indicizza e organizza provvedimenti della Corte di Cassazione,
+            del Consiglio di Stato e della Corte Costituzionale, rendendo la
+            giurisprudenza consultabile in un unico ambiente di ricerca.
+          </p>
+
           <div class="stat-hero-box">
-            <span class="eyebrow" style="margin-bottom: 0.5rem; font-size: 0.65rem;">Totale Archivio</span>
-            <span class="num" id="ui-totale-doc">-</span>
-            <span class="label">provvedimenti indicizzati al <span id="ui-data-aggiornamento">...</span></span>
+
+            <span
+              class="eyebrow"
+              style="margin-bottom: 0.5rem; font-size: 0.65rem;"
+            >
+              Totale archivio
+            </span>
+
+            <!-- Valore presente già nell'HTML:
+                 non dipende esclusivamente da JavaScript -->
+
+            <span class="num" id="ui-totale-doc">
+              403.183
+            </span>
+
+            <span class="label">
+              provvedimenti indicizzati al
+              <time
+                id="ui-data-aggiornamento"
+                datetime="2026-09-04"
+              >
+                4 settembre 2026
+              </time>
+            </span>
+
           </div>
+
         </div>
-        
-        <div class="card reveal" style="margin-top: 1rem;">
-          <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">La tua ricerca, <em>unita</em> ai tuoi documenti</h3>
-          <p style="color: var(--color-muted); line-height: 1.6; margin-bottom: 2rem; font-size: 0.95rem;">Prova l'agente AI che collega i tuoi atti ai precedenti e alle norme in tempo reale.</p>
-          <a href="/login" class="button button-primary" style="width: 100%;">Inizia la prova gratuita</a>
+
+
+        <div
+          class="card reveal"
+          style="margin-top: 1rem;"
+        >
+
+          <h2
+            style="font-size: 1.5rem; margin-bottom: 0.5rem;"
+          >
+            La ricerca giuridica,
+            <em>unita</em> ai tuoi documenti
+          </h2>
+
+          <p
+            style="
+              color: var(--color-muted);
+              line-height: 1.6;
+              margin-bottom: 2rem;
+              font-size: 0.95rem;
+            "
+          >
+            Prova l'agente AI di Jurio che collega i tuoi atti,
+            i precedenti giurisprudenziali e le norme rilevanti.
+          </p>
+
+          <a
+            href="/login"
+            class="button button-primary"
+            style="width: 100%;"
+          >
+            Inizia la prova gratuita
+          </a>
+
         </div>
+
       </div>
+
     </section>
 
-    <section class="section" style="padding-top: 0;">
+
+    <!-- ===================================================
+         DATABASE STATISTICS
+         =================================================== -->
+
+    <section
+      class="section"
+      style="padding-top: 0;"
+    >
+
       <div class="container">
+
         <div class="integration-grid">
-          
-          <!-- Grafico a Barre (Ora limitato al 2021-2026 tramite JS) -->
+
+
+          <!-- -----------------------------------------------
+               PER ANNO
+               ----------------------------------------------- -->
+
           <div class="card col-span-2 reveal">
+
             <div class="card-heading">
+
               <div>
-                <span class="eyebrow" style="font-size: 0.55rem; margin-bottom: 0.3rem;">Archivio</span>
-                <h3>I provvedimenti presenti nell'archivio</h3>
+
+                <span
+                  class="eyebrow"
+                  style="
+                    font-size: 0.55rem;
+                    margin-bottom: 0.3rem;
+                  "
+                >
+                  Archivio
+                </span>
+
+                <h2>
+                  Provvedimenti presenti nell'archivio
+                </h2>
+
               </div>
-              <span class="chart-caption">Dal 2021 ad oggi</span>
+
+              <span class="chart-caption">
+                Dal 2021 al 2026
+              </span>
+
             </div>
-            
-            <div id="chart-anni" class="bar-chart"></div>
+
+            <div
+              id="chart-anni"
+              class="bar-chart"
+              aria-label="Distribuzione dei provvedimenti per anno"
+            ></div>
+
           </div>
 
-          <!-- Grafico a Barre Orizzontali -->
+
+          <!-- -----------------------------------------------
+               PER ORGANO + TIPOLOGIA
+               ----------------------------------------------- -->
+
           <div class="card reveal">
-            <div class="card-heading" style="margin-bottom: 1rem;">
+
+            <div
+              class="card-heading"
+              style="margin-bottom: 1rem;"
+            >
+
               <div>
-                <span class="eyebrow" style="font-size: 0.55rem; margin-bottom: 0.3rem;">Distribuzione</span>
-                <h3>Per Organo</h3>
+
+                <span
+                  class="eyebrow"
+                  style="
+                    font-size: 0.55rem;
+                    margin-bottom: 0.3rem;
+                  "
+                >
+                  Distribuzione
+                </span>
+
+                <h2>
+                  Per organo giudicante
+                </h2>
+
               </div>
+
             </div>
-            <div id="chart-organi" class="horizontal-chart" style="margin-bottom: 2rem;"></div>
-            
-            <div class="card-heading" style="margin-bottom: 1rem;">
+
+            <div
+              id="chart-organi"
+              class="horizontal-chart"
+              style="margin-bottom: 2rem;"
+            ></div>
+
+
+            <div
+              class="card-heading"
+              style="margin-bottom: 1rem;"
+            >
+
               <div>
-                <span class="eyebrow" style="font-size: 0.55rem; margin-bottom: 0.3rem;">Classificazione</span>
-                <h3>Per Tipologia</h3>
+
+                <span
+                  class="eyebrow"
+                  style="
+                    font-size: 0.55rem;
+                    margin-bottom: 0.3rem;
+                  "
+                >
+                  Classificazione
+                </span>
+
+                <h2>
+                  Per tipologia
+                </h2>
+
               </div>
+
             </div>
-            <div id="chart-tipologie" class="horizontal-chart"></div>
+
+            <div
+              id="chart-tipologie"
+              class="horizontal-chart"
+            ></div>
+
           </div>
 
         </div>
+
       </div>
+
     </section>
 
-    <section class="section" style="background: color-mix(in srgb, var(--color-text) 3%, transparent);">
+
+    <!-- ===================================================
+         STRUTTURA DATABASE
+         =================================================== -->
+
+    <section
+      class="section"
+      style="
+        background:
+        color-mix(
+          in srgb,
+          var(--color-text) 3%,
+          transparent
+        );
+      "
+    >
+
       <div class="container">
+
         <div class="section-heading reveal">
-          <h2>Come è organizzata la banca dati</h2>
-          <p>Jurio indicizza i provvedimenti delle principali Corti italiane. Ogni decisione viene classificata per organo giudicante, sezione e materia.</p>
+
+          <span class="eyebrow">
+            Fonti e organizzazione
+          </span>
+
+          <h2>
+            Come è organizzata la banca dati di Jurio
+          </h2>
+
+          <p>
+            Jurio organizza i provvedimenti della giurisprudenza italiana
+            per organo giudicante, anno, tipologia, materia e sezione,
+            per facilitare la ricerca e il collegamento tra decisioni
+            rilevanti.
+          </p>
+
         </div>
+
 
         <div class="faq reveal">
-          <details>
-            <summary>Corte di Cassazione - Civile</summary>
-            <div class="faq-content-inner">
-              <div id="ui-totale-civile" class="total-highlight"></div>
-              <ul id="list-civile" class="data-list"></ul>
-            </div>
-          </details>
+
+
+          <!-- CASSAZIONE CIVILE -->
 
           <details>
-            <summary>Corte di Cassazione - Penale</summary>
+
+            <summary>
+              Corte di Cassazione - Civile
+            </summary>
+
             <div class="faq-content-inner">
-              <div id="ui-totale-penale" class="total-highlight"></div>
-              <ul id="list-penale" class="data-list"></ul>
+
+              <div
+                id="ui-totale-civile"
+                class="total-highlight"
+              >
+                Materia Civile: 134.621 provvedimenti
+              </div>
+
+              <ul
+                id="list-civile"
+                class="data-list"
+              ></ul>
+
             </div>
+
           </details>
 
-          <details>
-            <summary>Consiglio di Stato</summary>
-            <div class="faq-content-inner">
-              <div id="ui-totale-cds" class="total-highlight"></div>
-              <p>Il Consiglio di Stato è il massimo organo di giurisdizione amministrativa in Italia. La banca dati indicizza in tempo reale le sentenze e le ordinanze relative a contratti pubblici, urbanistica e pubblico impiego.</p>
-            </div>
-          </details>
+
+          <!-- CASSAZIONE PENALE -->
 
           <details>
-            <summary>Corte Costituzionale</summary>
+
+            <summary>
+              Corte di Cassazione - Penale
+            </summary>
+
             <div class="faq-content-inner">
-              <div id="ui-totale-cc" class="total-highlight"></div>
-              <p>La Corte Costituzionale assicura il rispetto della Costituzione. Raccogliamo sentenze su giudizi di legittimità costituzionale, conflitti di attribuzione e referendum.</p>
+
+              <div
+                id="ui-totale-penale"
+                class="total-highlight"
+              >
+                Materia Penale: 189.336 provvedimenti
+              </div>
+
+              <ul
+                id="list-penale"
+                class="data-list"
+              ></ul>
+
             </div>
+
           </details>
+
+
+          <!-- CONSIGLIO DI STATO -->
+
+          <details>
+
+            <summary>
+              Consiglio di Stato
+            </summary>
+
+            <div class="faq-content-inner">
+
+              <div
+                id="ui-totale-cds"
+                class="total-highlight"
+              >
+                Totale: 76.864 provvedimenti
+              </div>
+
+              <p>
+                Il Consiglio di Stato è il massimo organo della
+                giustizia amministrativa. I provvedimenti possono
+                riguardare, tra le altre materie, appalti pubblici,
+                urbanistica, edilizia, pubblico impiego, sanità,
+                ambiente e beni culturali.
+              </p>
+
+            </div>
+
+          </details>
+
+
+          <!-- CORTE COSTITUZIONALE -->
+
+          <details>
+
+            <summary>
+              Corte Costituzionale
+            </summary>
+
+            <div class="faq-content-inner">
+
+              <div
+                id="ui-totale-cc"
+                class="total-highlight"
+              >
+                Totale: 2.990 provvedimenti
+              </div>
+
+              <p>
+                La Corte Costituzionale decide sulle questioni di
+                legittimità costituzionale, sui conflitti di attribuzione
+                tra poteri dello Stato e tra Stato e Regioni e sulle
+                altre competenze attribuite dalla Costituzione.
+              </p>
+
+            </div>
+
+          </details>
+
         </div>
+
       </div>
+
     </section>
+
+
+    <!-- ===================================================
+         COMPETENZE GIURISDIZIONALI
+         =================================================== -->
+
     <section class="section">
+
       <div class="container">
+
         <div class="section-heading reveal">
-          <span class="eyebrow" style="font-size: 0.55rem; margin-bottom: 0.3rem;">Competenze Giurisdizionali</span>
-          <h2>Cosa fanno le varie sezioni</h2>
-          <p>Una panoramica dettagliata delle competenze giurisdizionali divise per organi e sezioni, per aiutarti a orientare con precisione la tua ricerca.</p>
+
+          <span class="eyebrow">
+            Competenze giurisdizionali
+          </span>
+
+          <h2>
+            Organi e sezioni della giurisprudenza italiana
+          </h2>
+
+          <p>
+            Una panoramica delle principali competenze degli organi
+            giudiziari presenti nella banca dati, utile per orientare
+            la ricerca giurisprudenziale.
+          </p>
+
         </div>
+
 
         <div class="courts-grid">
-          
-          <!-- Cassazione Civile -->
-          <div class="court-card reveal">
-            <div class="court-header">
-              <h3>Corte di Cassazione - Civile</h3>
-              <p>Il vertice della giustizia ordinaria. In ambito civile assicura l'uniforme interpretazione della legge e garantisce la corretta applicazione delle norme nei rapporti tra privati.</p>
-            </div>
-            <dl class="sections-list">
-              <dt>Prima Sezione Civile</dt>
-              <dd>Diritto di famiglia, stato delle persone, diritto d'autore, diritto bancario e procedure concorsuali.</dd>
-              
-              <dt>Seconda Sezione Civile</dt>
-              <dd>Proprietà, diritti reali, successioni, condominio e responsabilità professionale.</dd>
-              
-              <dt>Terza Sezione Civile</dt>
-              <dd>Responsabilità civile, risarcimento del danno, assicurazioni, locazioni e contratti atipici.</dd>
-              
-              <dt>Quarta Sezione Civile (Lavoro)</dt>
-              <dd>Diritto del lavoro, previdenza sociale e pubblico impiego contrattualizzato.</dd>
-              
-              <dt>Quinta Sezione Civile (Tributaria)</dt>
-              <dd>Controversie tra contribuenti e amministrazione finanziaria.</dd>
-              
-              <dt>Sesta Sezione Civile</dt>
-              <dd>Valuta preliminarmente l'ammissibilità dei ricorsi e svolge funzione di filtro.</dd>
-              
-              <dt>Sezioni Unite Civili</dt>
-              <dd>Risolvono contrasti interpretativi tra sezioni e decidono questioni di particolare importanza.</dd>
-            </dl>
-          </div>
 
-          <!-- Cassazione Penale -->
-          <div class="court-card reveal">
+
+          <!-- -----------------------------------------------
+               CASSAZIONE CIVILE
+               ----------------------------------------------- -->
+
+          <article class="court-card reveal">
+
             <div class="court-header">
-              <h3>Corte di Cassazione - Penale</h3>
-              <p>Verifica la corretta applicazione delle norme sostanziali e processuali, senza rivalutare i fatti accertati nei precedenti gradi di giudizio.</p>
+
+              <h3>
+                Corte di Cassazione - Civile
+              </h3>
+
+              <p>
+                La Corte di Cassazione costituisce il vertice della
+                giurisdizione ordinaria e assicura l'uniforme
+                interpretazione e applicazione della legge.
+              </p>
+
             </div>
+
+
             <dl class="sections-list">
+
+              <dt>Prima Sezione Civile</dt>
+              <dd>
+                Diritto di famiglia, stato delle persone,
+                diritto d'autore, diritto bancario e procedure
+                concorsuali.
+              </dd>
+
+              <dt>Seconda Sezione Civile</dt>
+              <dd>
+                Proprietà, diritti reali, successioni,
+                condominio e responsabilità professionale.
+              </dd>
+
+              <dt>Terza Sezione Civile</dt>
+              <dd>
+                Responsabilità civile, risarcimento del danno,
+                assicurazioni, locazioni e contratti atipici.
+              </dd>
+
+              <dt>Quarta Sezione Civile</dt>
+              <dd>
+                Diritto del lavoro, previdenza sociale e
+                pubblico impiego contrattualizzato.
+              </dd>
+
+              <dt>Quinta Sezione Civile</dt>
+              <dd>
+                Controversie tributarie tra contribuenti
+                e amministrazione finanziaria.
+              </dd>
+
+              <dt>Sesta Sezione Civile</dt>
+              <dd>
+                Attività di filtro e valutazione preliminare
+                dell'ammissibilità dei ricorsi.
+              </dd>
+
+              <dt>Sezioni Unite Civili</dt>
+              <dd>
+                Risolvono contrasti interpretativi e decidono
+                questioni di particolare importanza.
+              </dd>
+
+            </dl>
+
+          </article>
+
+
+          <!-- -----------------------------------------------
+               CASSAZIONE PENALE
+               ----------------------------------------------- -->
+
+          <article class="court-card reveal">
+
+            <div class="court-header">
+
+              <h3>
+                Corte di Cassazione - Penale
+              </h3>
+
+              <p>
+                In materia penale la Corte verifica la corretta
+                applicazione delle norme sostanziali e processuali
+                nei casi previsti dall'ordinamento.
+              </p>
+
+            </div>
+
+
+            <dl class="sections-list">
+
               <dt>Prima Sezione Penale</dt>
-              <dd>Omicidi, criminalità organizzata, misure di prevenzione ed esecuzione penale.</dd>
-              
+              <dd>
+                Omicidi, criminalità organizzata, misure di
+                prevenzione ed esecuzione penale.
+              </dd>
+
               <dt>Seconda Sezione Penale</dt>
-              <dd>Furti, rapine, reati contro il patrimonio e reati informatici.</dd>
-              
+              <dd>
+                Reati contro il patrimonio e altre fattispecie
+                di competenza della sezione.
+              </dd>
+
               <dt>Terza Sezione Penale</dt>
-              <dd>Reati ambientali, urbanistici, tributari e delitti contro la libertà sessuale.</dd>
-              
+              <dd>
+                Reati ambientali, urbanistici, tributari
+                e delitti contro la libertà sessuale.
+              </dd>
+
               <dt>Quarta Sezione Penale</dt>
-              <dd>Responsabilità medica, infortuni sul lavoro e reati colposi derivanti dalla circolazione stradale.</dd>
-              
+              <dd>
+                Responsabilità medica, infortuni sul lavoro
+                e reati colposi.
+              </dd>
+
               <dt>Quinta Sezione Penale</dt>
-              <dd>Reati contro la persona, diffamazione, reati fallimentari e a mezzo stampa.</dd>
-              
+              <dd>
+                Reati contro la persona, diffamazione,
+                reati fallimentari e a mezzo stampa.
+              </dd>
+
               <dt>Sesta Sezione Penale</dt>
-              <dd>Reati contro la Pubblica Amministrazione e contro l'amministrazione della giustizia.</dd>
-              
+              <dd>
+                Reati contro la Pubblica Amministrazione
+                e contro l'amministrazione della giustizia.
+              </dd>
+
               <dt>Settima Sezione Penale</dt>
-              <dd>Filtro per l'inammissibilità dei ricorsi.</dd>
+              <dd>
+                Funzione di filtro per l'inammissibilità
+                dei ricorsi.
+              </dd>
 
               <dt>Sezione Feriale</dt>
-              <dd>Gestione delle questioni urgenti durante la sospensione estiva.</dd>
+              <dd>
+                Gestione delle questioni urgenti durante
+                il periodo di sospensione estiva.
+              </dd>
 
               <dt>Sezioni Unite Penali</dt>
-              <dd>Garantiscono uniformità interpretativa e risolvono contrasti giurisprudenziali.</dd>
-            </dl>
-          </div>
+              <dd>
+                Risolvono contrasti interpretativi e
+                garantiscono uniformità giurisprudenziale.
+              </dd>
 
-          <!-- Consiglio di Stato -->
-          <div class="court-card reveal">
+            </dl>
+
+          </article>
+
+
+          <!-- -----------------------------------------------
+               CONSIGLIO DI STATO
+               ----------------------------------------------- -->
+
+          <article class="court-card reveal">
+
             <div class="court-header">
-              <h3>Consiglio di Stato</h3>
-              <p>Il massimo organo della giustizia amministrativa italiana. Decide le controversie tra cittadini, imprese e Pubblica Amministrazione e svolge anche funzioni consultive.</p>
+
+              <h3>
+                Consiglio di Stato
+              </h3>
+
+              <p>
+                È il massimo organo della giustizia amministrativa
+                italiana e svolge anche funzioni consultive.
+              </p>
+
             </div>
+
+
             <dl class="sections-list">
+
               <dt>Sezione II</dt>
-              <dd>Ricorsi straordinari al Presidente della Repubblica e altre funzioni giurisdizionali.</dd>
-              
-              <dt>Sezione III</dt>
-              <dd>Sanità, assistenza sociale, immigrazione e misure interdittive antimafia.</dd>
-              
-              <dt>Sezione IV</dt>
-              <dd>Urbanistica, edilizia, espropriazioni e tutela dell'ambiente.</dd>
-              
-              <dt>Sezione V</dt>
-              <dd>Appalti pubblici, contratti pubblici e procedure di gara.</dd>
-              
-              <dt>Sezione VI</dt>
-              <dd>Università, istruzione, energia, antitrust e beni culturali.</dd>
-              
-              <dt>Sezione VII</dt>
-              <dd>Smaltimento dell'arretrato e materie trasversali.</dd>
-              
-              <dt>Adunanza Plenaria</dt>
-              <dd>Organo nomofilattico che risolve i contrasti interpretativi tra le sezioni.</dd>
-            </dl>
-          </div>
+              <dd>
+                Ricorsi straordinari al Presidente della Repubblica
+                e altre funzioni giurisdizionali.
+              </dd>
 
-          <!-- Corte Costituzionale -->
-          <div class="court-card reveal">
-            <div class="court-header">
-              <h3>Corte Costituzionale</h3>
-              <p>L'organo di garanzia suprema che assicura il rispetto e l'applicazione corretta della Costituzione della Repubblica Italiana.</p>
-            </div>
-            <dl class="sections-list">
-              <dt>Controllo costituzionalità</dt>
-              <dd>Verifica che le leggi dello Stato e delle Regioni siano conformi alla Costituzione.</dd>
-              
-              <dt>Conflitti di attribuzione</dt>
-              <dd>Decide le controversie tra poteri dello Stato e tra Stato e Regioni.</dd>
-              
-              <dt>Referendum</dt>
-              <dd>Valuta l'ammissibilità dei referendum abrogativi.</dd>
+              <dt>Sezione III</dt>
+              <dd>
+                Sanità, assistenza sociale, immigrazione
+                e misure interdittive antimafia.
+              </dd>
+
+              <dt>Sezione IV</dt>
+              <dd>
+                Urbanistica, edilizia, espropriazioni
+                e tutela dell'ambiente.
+              </dd>
+
+              <dt>Sezione V</dt>
+              <dd>
+                Appalti pubblici, contratti pubblici
+                e procedure di gara.
+              </dd>
+
+              <dt>Sezione VI</dt>
+              <dd>
+                Università, istruzione, energia, antitrust
+                e beni culturali.
+              </dd>
+
+              <dt>Sezione VII</dt>
+              <dd>
+                Smaltimento dell'arretrato e materie trasversali.
+              </dd>
+
+              <dt>Adunanza Plenaria</dt>
+              <dd>
+                Risolve questioni di particolare rilevanza
+                e contrasti interpretativi tra le sezioni.
+              </dd>
+
             </dl>
-          </div>
+
+          </article>
+
+
+          <!-- -----------------------------------------------
+               CORTE COSTITUZIONALE
+               ----------------------------------------------- -->
+
+          <article class="court-card reveal">
+
+            <div class="court-header">
+
+              <h3>
+                Corte Costituzionale
+              </h3>
+
+              <p>
+                Organo di garanzia costituzionale chiamato a
+                verificare la conformità delle norme alla Costituzione
+                e a decidere sulle competenze attribuite dalla Carta.
+              </p>
+
+            </div>
+
+
+            <dl class="sections-list">
+
+              <dt>Giudizi di costituzionalità</dt>
+              <dd>
+                Verifica della conformità delle leggi dello Stato
+                e delle Regioni alla Costituzione.
+              </dd>
+
+              <dt>Conflitti di attribuzione</dt>
+              <dd>
+                Decisione delle controversie tra poteri dello Stato
+                e tra Stato e Regioni.
+              </dd>
+
+              <dt>Referendum</dt>
+              <dd>
+                Valutazione dell'ammissibilità dei referendum
+                nei casi previsti dalla Costituzione.
+              </dd>
+
+            </dl>
+
+          </article>
 
         </div>
+
       </div>
+
     </section>
+
+
+    <!-- ===================================================
+         METHODOLOGY / TRUST
+         =================================================== -->
+
+    <section
+      class="section"
+      aria-labelledby="metodologia-title"
+    >
+
+      <div class="container">
+
+        <div class="section-heading reveal">
+
+          <span class="eyebrow">
+            Metodologia
+          </span>
+
+          <h2 id="metodologia-title">
+            Come vengono organizzati i dati
+          </h2>
+
+          <p>
+            La banca dati di Jurio raccoglie e organizza i provvedimenti
+            disponibili nelle fonti giurisprudenziali trattate dal sistema.
+            I dati vengono classificati per organo, anno, tipologia,
+            materia e, per la Corte di Cassazione, sezione.
+          </p>
+
+          <p>
+            Le statistiche mostrate in questa pagina rappresentano
+            lo stato dell'archivio alla data dell'ultimo aggiornamento
+            indicata.
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
+
   </main>
 
-    <!-- Footer -->
-    <div id="footer"></div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", async () => {
-        const components = [
-            {
-            selector: "#header",
-            file: "/header.html"
-            },
-            {
-            selector: "#footer",
-            file: "/footer.html"
-            }
-        ];
-        await Promise.all(
-            components.map(async ({ selector, file }) => {
-            const element = document.querySelector(selector);
+  <!-- =====================================================
+       FOOTER
+       ===================================================== -->
 
-            if (!element) return;
+  <div id="footer"></div>
 
-            try {
-                const response = await fetch(file);
 
-                if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
-                }
-
-                element.innerHTML = await response.text();
-            } catch (error) {
-                console.error(`Errore nel caricamento di ${file}:`, error);
-            }
-            })
-        );
-        });
-    </script>
-
+  <!-- =====================================================
+       HEADER / FOOTER
+       ===================================================== -->
 
   <script>
-    /**
-     * ==========================================
-     * OGGETTO DI CONFIGURAZIONE DATI
-     * ==========================================
-     */
-    const dataConfig = {
+    document.addEventListener("DOMContentLoaded", async () => {
+
+      const components = [
+        {
+          selector: "#header",
+          file: "/header.html"
+        },
+        {
+          selector: "#footer",
+          file: "/footer.html"
+        }
+      ];
+
+      await Promise.all(
+        components.map(async ({ selector, file }) => {
+
+          const element = document.querySelector(selector);
+
+          if (!element) {
+            return;
+          }
+
+          try {
+
+            const response = await fetch(file, {
+              cache: "no-cache"
+            });
+
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}`);
+            }
+
+            element.innerHTML = await response.text();
+
+          } catch (error) {
+
+            console.error(
+              `Errore nel caricamento di ${file}:`,
+              error
+            );
+
+          }
+
+        })
+      );
+
+    });
+  </script>
+
+
+  <!-- =====================================================
+       DATABASE
+       ===================================================== -->
+
+  <script>
+
+    const DATA_URL =
+      "https://storage.googleapis.com/jurio-it.firebasestorage.app/dataConfig.json";
+
+
+    /* =====================================================
+       FALLBACK
+       ===================================================== */
+
+    const fallbackDataConfig = {
       meta: {
-        totale_documenti: 401870,
-        data_aggiornamento: "30 Agosto 2026"
+        totale_documenti: 403183,
+        data_aggiornamento: "4 settembre 2026"
       },
-      // Filtrato per mostrare solo dal 2021 ad oggi (2026) come richiesto
+
       per_anno: {
         "2021": 59431,
         "2022": 73265,
         "2023": 71887,
         "2024": 74411,
         "2025": 69643,
-        "2026": 48346
+        "2026": 49659
       },
+
       per_organo: {
-        "Cassazione": 321987,
+        "Cassazione": 323300,
         "Consiglio di Stato": 76864,
         "Corte Costituzionale": 2990
       },
+
       per_tipo: {
-        "Ordinanza": 222600,
-        "Sentenza": 165436,
-        "Decreto": 13613
+        "Ordinanza": 223610,
+        "Sentenza": 165726,
+        "Decreto": 13626
       },
+
       per_materia: {
-        "civile": 134570,
-        "penale": 188074
+        "civile": 134621,
+        "penale": 189336
       },
+
       per_sezione_cassazione: {
+
         civili: {
-          "Prima Sezione Civile": 16946,
-          "Seconda Sezione Civile": 17855,
-          "Terza Sezione Civile": 14708,
-          "Quarta Sezione Civile": 20921,
-          "Quinta Sezione Civile": 47987,
-          "Sesta Sezione Civile": 13996,
-          "Sezioni Unite Civili": 1752
+          "SEZIONI UNITE CIVILI": 1752,
+          "PRIMA SEZIONE CIVILE": 16946,
+          "SESTA SEZIONE CIVILE": 13996,
+          "SECONDA SEZIONE CIVILE": 17906,
+          "QUARTA SEZIONE CIVILE": 20921,
+          "TERZA SEZIONE CIVILE": 14708,
+          "QUINTA SEZIONE CIVILE": 47987
         },
+
         penali: {
-          "Prima Sezione Penale": 20162,
-          "Seconda Sezione Penale": 20116,
-          "Terza Sezione Penale": 14604,
-          "Quarta Sezione Penale": 12814,
-          "Quinta Sezione Penale": 15797,
-          "Sesta Sezione Penale": 13852,
-          "Settima Sezione Penale": 89451,
-          "Sezione Feriale Penale": 220,
-          "Sezioni Unite Penali": 132
+          "SEZIONE FERIALE PENALE": 220,
+          "SECONDA SEZIONE PENALE": 20116,
+          "TERZA SEZIONE PENALE": 14604,
+          "PRIMA SEZIONE PENALE": 20162,
+          "SEZIONI UNITE PENALI": 132,
+          "SESTA SEZIONE PENALE": 13997,
+          "QUARTA SEZIONE PENALE": 12814,
+          "QUINTA SEZIONE PENALE": 15933,
+          "SETTIMA SEZIONE PENALE": 90432
         }
+
       }
     };
 
-    const formatNum = (num) => num.toLocaleString('it-IT');
 
-    document.addEventListener("DOMContentLoaded", () => {
-      // 1. Dati generali (Hero)
-      document.getElementById('ui-totale-doc').textContent = formatNum(dataConfig.meta.totale_documenti);
-      document.getElementById('ui-data-aggiornamento').textContent = dataConfig.meta.data_aggiornamento;
+    /* =====================================================
+       FORMAT
+       ===================================================== */
 
-      // 2. Grafico per Anno (solo 2021-2026)
-      const chartAnni = document.getElementById('chart-anni');
-      const maxAnno = Math.max(...Object.values(dataConfig.per_anno));
-      
-      for (const [anno, valore] of Object.entries(dataConfig.per_anno)) {
-        const altezzaPercentuale = Math.max(2, (valore / maxAnno) * 100); 
-        
-        const col = document.createElement('div');
-        col.className = 'bar-col';
-        col.title = `Anno ${anno}: ${formatNum(valore)} documenti`;
-        
-        col.innerHTML = `
-          <div class="bar" style="height: ${altezzaPercentuale}%;"></div>
-          <span class="bar-label">'${anno.slice(2)}</span>
-        `;
-        chartAnni.appendChild(col);
+    const formatNum = (num) => {
+      return Number(num).toLocaleString("it-IT");
+    };
+
+
+    /* =====================================================
+       VALIDAZIONE MINIMA
+       ===================================================== */
+
+    const isValidDataConfig = (data) => {
+
+      return Boolean(
+        data &&
+        data.meta &&
+        Number.isFinite(Number(data.meta.totale_documenti)) &&
+        data.meta.data_aggiornamento &&
+        data.per_anno &&
+        data.per_organo &&
+        data.per_tipo &&
+        data.per_materia &&
+        data.per_sezione_cassazione
+      );
+
+    };
+
+
+    /* =====================================================
+       RENDER
+       ===================================================== */
+
+    const renderUI = (dataConfig) => {
+
+      /* -----------------------------------------------
+         HERO
+         ----------------------------------------------- */
+
+      const totaleDoc =
+        document.getElementById("ui-totale-doc");
+
+      const dataAggiornamento =
+        document.getElementById("ui-data-aggiornamento");
+
+
+      if (totaleDoc) {
+
+        totaleDoc.textContent =
+          formatNum(dataConfig.meta.totale_documenti);
+
       }
 
-      // Animazione ritardata per innescare la salita delle barre
-      setTimeout(() => {
-        chartAnni.classList.add('is-visible');
-      }, 150);
 
-      // 3. Barre Orizzontali
-      const renderHorizontalBars = (containerId, dataObj, colorStyle) => {
-        const container = document.getElementById(containerId);
-        const totale = Object.values(dataObj).reduce((a, b) => a + b, 0);
+      if (dataAggiornamento) {
 
-        for (const [etichetta, valore] of Object.entries(dataObj)) {
-          const percentuale = (valore / totale) * 100;
-          const row = document.createElement('div');
-          row.className = 'h-bar-row';
-          row.title = `${percentuale.toFixed(1)}% del totale`;
-          
-          row.innerHTML = `
-            <div class="h-bar-fill" style="width: 0%; ${colorStyle}"></div>
-            <div class="h-bar-content">
-              <span>${etichetta}</span>
-              <span>${formatNum(valore)}</span>
-            </div>
-          `;
-          container.appendChild(row);
+        dataAggiornamento.textContent =
+          dataConfig.meta.data_aggiornamento;
 
-          setTimeout(() => {
-            row.querySelector('.h-bar-fill').style.width = `${percentuale}%`;
-          }, 150);
+      }
+
+
+      /* -----------------------------------------------
+         GRAFICO ANNI
+         ----------------------------------------------- */
+
+      const chartAnni =
+        document.getElementById("chart-anni");
+
+
+      if (chartAnni) {
+
+        chartAnni.innerHTML = "";
+
+
+        const anniFiltrati =
+          Object.entries(dataConfig.per_anno)
+            .filter(([anno]) => parseInt(anno, 10) >= 2021)
+            .sort((a, b) => Number(a[0]) - Number(b[0]));
+
+
+        if (anniFiltrati.length > 0) {
+
+          const maxAnno =
+            Math.max(
+              ...anniFiltrati.map(
+                ([, valore]) => Number(valore)
+              )
+            );
+
+
+          for (const [anno, valore] of anniFiltrati) {
+
+            const altezzaPercentuale =
+              Math.max(
+                2,
+                (Number(valore) / maxAnno) * 100
+              );
+
+
+            const col =
+              document.createElement("div");
+
+            col.className = "bar-col";
+
+            col.title =
+              `Anno ${anno}: ${formatNum(valore)} documenti`;
+
+
+            col.innerHTML = `
+              <div
+                class="bar"
+                style="height: ${altezzaPercentuale}%"
+                aria-hidden="true"
+              ></div>
+
+              <span class="bar-label">
+                '${anno.slice(2)}
+              </span>
+            `;
+
+
+            chartAnni.appendChild(col);
+
+          }
+
+
+          requestAnimationFrame(() => {
+
+            chartAnni.classList.add("is-visible");
+
+          });
+
         }
-      };
 
-      renderHorizontalBars('chart-organi', dataConfig.per_organo, 'background: color-mix(in srgb, var(--color-primary) 20%, transparent); border-left: 3px solid var(--color-primary);');
-      renderHorizontalBars('chart-tipologie', dataConfig.per_tipo, 'background: color-mix(in srgb, var(--color-text) 10%, transparent); border-left: 3px solid var(--color-text);');
-
-      // 4. Compilazione FAQ
-      document.getElementById('ui-totale-civile').textContent = `Materia Civile: ${formatNum(dataConfig.per_materia.civile)} Provvedimenti`;
-      const listCivile = document.getElementById('list-civile');
-      for (const [sezione, valore] of Object.entries(dataConfig.per_sezione_cassazione.civili)) {
-        listCivile.innerHTML += `<li><span>${sezione}</span> <span>${formatNum(valore)}</span></li>`;
       }
 
-      document.getElementById('ui-totale-penale').textContent = `Materia Penale: ${formatNum(dataConfig.per_materia.penale)} Provvedimenti`;
-      const listPenale = document.getElementById('list-penale');
-      for (const [sezione, valore] of Object.entries(dataConfig.per_sezione_cassazione.penali)) {
-        listPenale.innerHTML += `<li><span>${sezione}</span> <span>${formatNum(valore)}</span></li>`;
+
+      /* -----------------------------------------------
+         BARRE ORIZZONTALI
+         ----------------------------------------------- */
+
+      const renderHorizontalBars =
+        (containerId, dataObj, colorStyle) => {
+
+          const container =
+            document.getElementById(containerId);
+
+
+          if (!container || !dataObj) {
+            return;
+          }
+
+
+          container.innerHTML = "";
+
+
+          const valori =
+            Object.values(dataObj)
+              .map(Number)
+              .filter(Number.isFinite);
+
+
+          const totale =
+            valori.reduce(
+              (sum, value) => sum + value,
+              0
+            );
+
+
+          for (
+            const [etichetta, valore] of
+            Object.entries(dataObj)
+          ) {
+
+            const valoreNumerico =
+              Number(valore);
+
+
+            const percentuale =
+              totale > 0
+                ? (valoreNumerico / totale) * 100
+                : 0;
+
+
+            const row =
+              document.createElement("div");
+
+            row.className = "h-bar-row";
+
+            row.title =
+              `${percentuale.toFixed(1)}% del totale`;
+
+
+            row.innerHTML = `
+              <div
+                class="h-bar-fill"
+                style="width: 0%; ${colorStyle}"
+                aria-hidden="true"
+              ></div>
+
+              <div class="h-bar-content">
+
+                <span>
+                  ${etichetta}
+                </span>
+
+                <span>
+                  ${formatNum(valoreNumerico)}
+                </span>
+
+              </div>
+            `;
+
+
+            container.appendChild(row);
+
+
+            requestAnimationFrame(() => {
+
+              const bar =
+                row.querySelector(".h-bar-fill");
+
+              if (bar) {
+
+                bar.style.width =
+                  `${percentuale}%`;
+
+              }
+
+            });
+
+          }
+
+        };
+
+
+      renderHorizontalBars(
+        "chart-organi",
+        dataConfig.per_organo,
+        "background: color-mix(in srgb, var(--color-primary) 20%, transparent); border-left: 3px solid var(--color-primary);"
+      );
+
+
+      renderHorizontalBars(
+        "chart-tipologie",
+        dataConfig.per_tipo,
+        "background: color-mix(in srgb, var(--color-text) 10%, transparent); border-left: 3px solid var(--color-text);"
+      );
+
+
+      /* -----------------------------------------------
+         CASSAZIONE CIVILE
+         ----------------------------------------------- */
+
+      const totaleCivile =
+        document.getElementById("ui-totale-civile");
+
+
+      if (totaleCivile) {
+
+        totaleCivile.textContent =
+          `Materia Civile: ${formatNum(
+            dataConfig.per_materia.civile
+          )} provvedimenti`;
+
       }
 
-      document.getElementById('ui-totale-cds').textContent = `Totale: ${formatNum(dataConfig.per_organo["Consiglio di Stato"])} Provvedimenti`;
-      document.getElementById('ui-totale-cc').textContent = `Totale: ${formatNum(dataConfig.per_organo["Corte Costituzionale"])} Provvedimenti`;
-      
-      // Innesco animazioni reveal scroll
-      document.querySelectorAll('.reveal').forEach(el => el.classList.add('is-visible'));
-    });
 
-    // Scroll Header
-    window.addEventListener('scroll', () => {
-      const header = document.querySelector('.site-header');
-      if (window.scrollY > 20) header.classList.add('is-scrolled');
-      else header.classList.remove('is-scrolled');
-    });
+      const listCivile =
+        document.getElementById("list-civile");
+
+
+      if (listCivile) {
+
+        listCivile.innerHTML = "";
+
+
+        for (
+          const [sezione, valore] of
+          Object.entries(
+            dataConfig.per_sezione_cassazione.civili
+          )
+        ) {
+
+          listCivile.insertAdjacentHTML(
+            "beforeend",
+            `
+              <li>
+                <span>${sezione}</span>
+                <span>${formatNum(valore)}</span>
+              </li>
+            `
+          );
+
+        }
+
+      }
+
+
+      /* -----------------------------------------------
+         CASSAZIONE PENALE
+         ----------------------------------------------- */
+
+      const totalePenale =
+        document.getElementById("ui-totale-penale");
+
+
+      if (totalePenale) {
+
+        totalePenale.textContent =
+          `Materia Penale: ${formatNum(
+            dataConfig.per_materia.penale
+          )} provvedimenti`;
+
+      }
+
+
+      const listPenale =
+        document.getElementById("list-penale");
+
+
+      if (listPenale) {
+
+        listPenale.innerHTML = "";
+
+
+        for (
+          const [sezione, valore] of
+          Object.entries(
+            dataConfig.per_sezione_cassazione.penali
+          )
+        ) {
+
+          listPenale.insertAdjacentHTML(
+            "beforeend",
+            `
+              <li>
+                <span>${sezione}</span>
+                <span>${formatNum(valore)}</span>
+              </li>
+            `
+          );
+
+        }
+
+      }
+
+
+      /* -----------------------------------------------
+         CONSIGLIO DI STATO
+         ----------------------------------------------- */
+
+      const totaleCds =
+        document.getElementById("ui-totale-cds");
+
+
+      if (totaleCds) {
+
+        totaleCds.textContent =
+          `Totale: ${formatNum(
+            dataConfig.per_organo["Consiglio di Stato"]
+          )} provvedimenti`;
+
+      }
+
+
+      /* -----------------------------------------------
+         CORTE COSTITUZIONALE
+         ----------------------------------------------- */
+
+      const totaleCc =
+        document.getElementById("ui-totale-cc");
+
+
+      if (totaleCc) {
+
+        totaleCc.textContent =
+          `Totale: ${formatNum(
+            dataConfig.per_organo["Corte Costituzionale"]
+          )} provvedimenti`;
+
+      }
+
+
+      /* -----------------------------------------------
+         REVEAL
+         ----------------------------------------------- */
+
+      document
+        .querySelectorAll(".reveal")
+        .forEach((element) => {
+
+          element.classList.add("is-visible");
+
+        });
+
+    };
+
+
+    /* =====================================================
+       LOAD DATA
+       ===================================================== */
+
+    document.addEventListener(
+      "DOMContentLoaded",
+      async () => {
+
+        let finalData = fallbackDataConfig;
+
+        try {
+
+          /*
+           * cache: no-store evita di riutilizzare
+           * una risposta locale non aggiornata.
+           */
+
+          const response =
+            await fetch(
+              `${DATA_URL}?v=${Date.now()}`,
+              {
+                cache: "no-store"
+              }
+            );
+
+
+          if (!response.ok) {
+
+            throw new Error(
+              `HTTP ${response.status}`
+            );
+
+          }
+
+
+          const remoteData =
+            await response.json();
+
+
+          if (!isValidDataConfig(remoteData)) {
+
+            throw new Error(
+              "dataConfig.json ha una struttura non valida"
+            );
+
+          }
+
+
+          finalData = remoteData;
+
+
+          console.info(
+            "Jurio: dati dinamici caricati correttamente.",
+            finalData
+          );
+
+
+        } catch (error) {
+
+          console.error(
+            "Jurio: impossibile caricare dataConfig.json.",
+            error
+          );
+
+
+          console.warn(
+            "Jurio: utilizzo dei dati di fallback."
+          );
+
+        }
+
+
+        renderUI(finalData);
+
+      }
+    );
+
+
+    /* =====================================================
+       HEADER SCROLL
+       ===================================================== */
+
+    window.addEventListener(
+      "scroll",
+      () => {
+
+        const header =
+          document.querySelector(".site-header");
+
+
+        if (!header) {
+          return;
+        }
+
+
+        header.classList.toggle(
+          "is-scrolled",
+          window.scrollY > 20
+        );
+
+      },
+      {
+        passive: true
+      }
+    );
+
   </script>
+
 </body>
 </html>

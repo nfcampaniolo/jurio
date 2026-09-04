@@ -205,14 +205,20 @@ export async function computeAndSaveMonthlyUsage() {
   const usageByUser: Record<string, Record<string, number>> = {};
 
   daysSnapshot.forEach((doc) => {
+    // Sicurezza: controlla che siamo effettivamente sotto usage/
+    if (!doc.ref.path.startsWith('usage/')) return;
+
     const data = doc.data();
     const count = typeof data.count === 'number' ? data.count : 0;
     
     const uid = doc.ref.parent.parent?.id; 
     if (!uid) return;
 
-    const docIdParts = doc.id.split('_');
-    const serviceName = docIdParts.length > 3 ? docIdParts.slice(3).join('_') : 'unknown_service';
+    // Estrae dinamicamente tutto ciò che c'è dopo il primo '_' (es. "legal_agent")
+    const firstUnderscoreIndex = doc.id.indexOf('_');
+    const serviceName = firstUnderscoreIndex !== -1 
+      ? doc.id.substring(firstUnderscoreIndex + 1) 
+      : 'unknown_service';
 
     if (!usageByUser[uid]) {
       usageByUser[uid] = {};
@@ -231,7 +237,13 @@ export async function computeAndSaveMonthlyUsage() {
   let utentiProcessati = 0;
 
   for (const [uid, servicesRecord] of Object.entries(usageByUser)) {
-    // Prepariamo i dati per il DB
+    // 4.1 Verifica che l'utente esista in 'register' scartando ad es. gli IP
+    const registerDoc = await db.collection('register').doc(uid).get();
+    if (!registerDoc.exists) {
+      continue; // Salta questo uid se non è un utente registrato
+    }
+
+    // 4.2 Prepariamo i dati per il DB
     const usageDocRef = db.collection('register').doc(uid).collection('usage').doc(targetMonthStr);
     const payload = sanitize({
       ...servicesRecord,
@@ -240,7 +252,7 @@ export async function computeAndSaveMonthlyUsage() {
 
     currentBatch.set(usageDocRef, payload, { merge: true });
 
-    // Prepariamo i dati per l'email sfruttando la funzione pura
+    // 4.3 Prepariamo i dati per l'email sfruttando la funzione pura
     const reportData = calculateReportData(servicesRecord, meseDescrittivo);
     
     // Accodiamo l'email solo se l'utente ha usato effettivamente qualcosa
