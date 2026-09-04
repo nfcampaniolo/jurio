@@ -1,4 +1,16 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
+import { vi } from "vitest";
+
+/* ---------- inizializzazione preventiva ambiente di test ---------- */
+vi.hoisted(() => {
+  if (!import.meta.env.VITE_SYNC_SESSION_URL) {
+    import.meta.env.VITE_SYNC_SESSION_URL = "https://syncusersession-vqoobrenua-ew.a.run.app";
+  }
+  if (!import.meta.env.VITE_FORCE_TAKEOVER_URL) {
+    import.meta.env.VITE_FORCE_TAKEOVER_URL = "https://forcetakeoversession-vqoobrenua-ew.a.run.app";
+  }
+});
+
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
 import type { User, UserCredential, ConfirmationResult, ApplicationVerifier } from "firebase/auth";
 import type { DocumentSnapshot } from "firebase/firestore";
 
@@ -127,9 +139,6 @@ describe("Auth Service Suite", () => {
     delete window.recaptchaVerifier;
     mockAuth.currentUser = mockUser;
 
-    // Simula le variabili d'ambiente di Vite
-    vi.stubEnv("VITE_SYNC_SESSION_URL", "https://syncusersession-vqoobrenua-ew.a.run.app");
-
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -147,7 +156,6 @@ describe("Auth Service Suite", () => {
   });
 
   afterEach(() => {
-    vi.unstubAllEnvs(); // Pulisce le variabili d'ambiente dopo ogni test
     vi.restoreAllMocks();
   });
 
@@ -177,7 +185,7 @@ describe("Auth Service Suite", () => {
         success: true,
       });
       expect(result).toBe(mockUserCredential);
-    }); 
+    });
 
     test("traccia errore analytics e rilancia l'eccezione se la registrazione fallisce", async () => {
       const authErr = new Error("auth/email-already-in-use");
@@ -210,7 +218,6 @@ describe("Auth Service Suite", () => {
         "ValidPassword2026!"
       );
 
-      // Asserzione corretta per fetch con body e content-type
       expect(fetch).toHaveBeenCalledWith(
         "https://syncusersession-vqoobrenua-ew.a.run.app",
         expect.objectContaining({

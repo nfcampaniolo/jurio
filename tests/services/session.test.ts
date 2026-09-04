@@ -1,4 +1,16 @@
-import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
+import { vi } from "vitest";
+
+/* ---------- inizializzazione preventiva ambiente di test ---------- */
+vi.hoisted(() => {
+  if (!import.meta.env.VITE_FORCE_TAKEOVER_URL) {
+    import.meta.env.VITE_FORCE_TAKEOVER_URL = "https://forcetakeoversession-vqoobrenua-ew.a.run.app";
+  }
+  if (!import.meta.env.VITE_SYNC_SESSION_URL) {
+    import.meta.env.VITE_SYNC_SESSION_URL = "https://syncusersession-vqoobrenua-ew.a.run.app";
+  }
+});
+
+import { describe, test, expect, beforeEach, afterEach } from "vitest";
 
 /* ---------- hoisted mocks ---------- */
 const {
@@ -46,10 +58,6 @@ describe("session Service Suite", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
-    // Simula le variabili d'ambiente di Vite per l'ambiente di test
-    vi.stubEnv("VITE_FORCE_TAKEOVER_URL", "https://forcetakeoversession-vqoobrenua-ew.a.run.app");
-    vi.stubEnv("VITE_SYNC_SESSION_URL", "https://syncusersession-vqoobrenua-ew.a.run.app");
 
     setItemSpy = vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => {});
     removeItemSpy = vi.spyOn(Storage.prototype, "removeItem").mockImplementation(() => {});
@@ -66,7 +74,6 @@ describe("session Service Suite", () => {
   });
 
   afterEach(() => {
-    vi.unstubAllEnvs(); // Pulisce le variabili d'ambiente dopo ogni test
     vi.restoreAllMocks();
   });
 
