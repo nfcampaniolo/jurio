@@ -40,6 +40,7 @@ export const guideNavigation = [
       { title: "Quote di Utilizzo", href: "/guida/quote" },
       { title: "Aggiornamento Forzato", href: "/guida/aggiornamento-forzato" },
       { title: "Configurazione MCP Vibe", href: "/guida/mcp-vibe" },
+      { title: "Configurazione MCP Claude", href: "/guida/mcp-claude" },
     ]
   }
 ];

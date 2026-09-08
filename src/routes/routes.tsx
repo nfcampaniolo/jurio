@@ -27,6 +27,12 @@ const Login = lazy(() =>
   }))
 );
 
+const OAuthLogin = lazy(() =>
+  import("@/features/auth/components/OAuthLogin").then((m) => ({
+    default: m.OAuthLogin,
+  }))
+);
+
 const Register = lazy(() =>
   import("@/features/auth/Register").then((m) => ({
     default: m.Register,
@@ -91,6 +97,10 @@ export const appRoutes: RouteObject[] = [
   {
     path: "/",
     element: <Tool />,
+  },
+  {
+    path: "/oauth-login",
+    element: <OAuthLogin />,
   },
 
   {

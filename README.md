@@ -295,21 +295,82 @@ Scopri Jurio:
 
 ```text
 jurio/
-
-├── src/
-│   ├── components/      # UI components
-│   ├── add-in/          # Microsoft Word integration
-│   ├── ai/              # Genkit flows, prompts and RAG
-│   ├── services/        # Firebase and backend services
-│   └── utils/           # Utilities and data transformers
-│
-├── public/
-│   ├── manifest/        # Office Add-in manifests
-│   └── assets/          # Static assets
-│
+├── .firebase/                  # config Firebase locale
+├── .github/                    # workflow GitHub
+├── .firebaserc                 # progetto Firebase
+├── .gitignore
+├── README.md
+├── app.html
+├── build/                      # build output generato
+├── coverage/                   # coverage reports
+├── eslint.config.js
+├── firebase.json
+├── functions/                  # Cloud Functions Firebase
+│   ├── .gitignore
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── src/
+│   ├── tsconfig.json
+│   ├── tsconfig.dev.json
+│   └── ...
+├── index_rules.txt
+├── package-lock.json
 ├── package.json
+├── public/                     # asset statici e pagine HTML
+│   ├── *.html                  # privacy, gdpr, guida, etc.
+│   ├── *.png
+│   ├── *.webp
+│   ├── *.mp4
+│   ├── *.svg
+│   ├── logo.webp
+│   ├── favicon.ico
+│   ├── google-icon.svg
+│   ├── site.webmanifest
+│   └── ...
+├── src/                        # app principale
+│   ├── App.tsx
+│   ├── index.css
+│   ├── main.tsx
+│   ├── config/
+│   ├── context/
+│   ├── env.d.ts
+│   ├── features/
+│   │   ├── admin/
+│   │   ├── auth/
+│   │   ├── chat/
+│   │   ├── document/
+│   │   ├── guide/
+│   │   ├── info/
+│   │   ├── notifications/
+│   │   ├── plans/
+│   │   ├── profile/
+│   │   ├── prompt/
+│   │   ├── search/
+│   │   ├── teams/
+│   │   └── ...
+│   ├── infrastructure/
+│   ├── interfaces/
+│   ├── routes/
+│   ├── shared/
+│   └── test/
+├── tests/                      # test frontend
+│   ├── App.test.tsx
+│   ├── main.test.tsx
+│   ├── css.test.ts
+│   ├── components/
+│   ├── config/
+│   ├── context/
+│   ├── hooks/
+│   ├── pages/
+│   ├── routes/
+│   ├── services/
+│   └── stores/
 ├── tsconfig.json
-└── README.md
+├── tsconfig.app.json
+├── tsconfig.node.json
+├── vite.config.ts
+├── sonar-project.properties
+└── ...
 ```
 
 ---

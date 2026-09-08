@@ -17,6 +17,7 @@ import ConsiglioStato from '@/features/guide/components/ConsiglioStato';
 import CorteCostituzionale from '@/features/guide/components/CorteCostituzionale';
 import QuoteUtilizzo from '@/features/guide/components/QuoteUtilizzo';
 import ConfigurazioneLeChat from '@/features/guide/components/ConfigurazioneLeChat';
+import ConfigurazioneClaude from '../components/ConfigurazioneClaude';
 
 export const guideContent: Record<string, React.ReactNode> = {
   "introduzione": <Introduzione />,
@@ -37,4 +38,5 @@ export const guideContent: Record<string, React.ReactNode> = {
   "corte-costituzionale": <CorteCostituzionale />,
   "quote": <QuoteUtilizzo />,
   "mcp-vibe": <ConfigurazioneLeChat />,
+  "mcp-claude": <ConfigurazioneClaude />,
 };

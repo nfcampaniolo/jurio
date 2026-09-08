@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import React from "react";
 
-/* ---------- mock dei singoli componenti della guida ---------- */
+/* ---------- mock di tutti i componenti della guida ---------- */
 vi.mock("@/features/guide/components/Introduzione", () => ({
   default: () => <div data-testid="guida-introduzione">Introduzione</div>,
 }));
@@ -58,8 +58,9 @@ vi.mock("@/features/guide/components/ConfigurazioneLeChat", () => ({
   default: () => <div data-testid="guida-mcp-vibe">Configurazione MCP</div>,
 }));
 
+
 /* ---------- subject under test ---------- */
-import { guideContent } from "@/features/guide/hooks/guideContent"; // <-- adegua il path di import se necessario
+import { guideContent } from "@/features/guide/hooks/guideContent";
 
 describe("Guide Content Registry Suite", () => {
   beforeEach(() => {
@@ -88,8 +89,8 @@ describe("Guide Content Registry Suite", () => {
   ];
 
   describe("Integrità del Registro delle Rotte", () => {
-    test("contiene esattamente le 18 sezioni censite", () => {
-      expect(Object.keys(guideContent)).toHaveLength(18);
+    test("contiene esattamente le 19 sezioni censite", () => {
+      expect(Object.keys(guideContent)).toHaveLength(19);
     });
 
     test("tutti gli slug rispettano il pattern kebab-case minuscolo", () => {

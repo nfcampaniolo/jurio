@@ -18,6 +18,7 @@ import * as busboyModule from "busboy";
 import { google } from "googleapis";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import {createMcpServer} from "./mcp";
+import { randomBytes } from "crypto";
 
 const Busboy = busboyModule.default || busboyModule;
 const db = getDb();
@@ -63,7 +64,120 @@ export const jurioMcpServer = onRequest(
         });
         return;
       }
+
+      // ----------------------------------------------------------------------
+      // OAUTH DISCOVERY: /.well-known/oauth-protected-resource
+      // ----------------------------------------------------------------------
+      if (path === "/.well-known/oauth-protected-resource" || path === "/.well-known/oauth-protected-resource/") {
+        res.status(200).json({
+          resource: "https://juriomcpserver-vqoobrenua-ew.a.run.app",
+          authorization_servers: ["https://juriomcpserver-vqoobrenua-ew.a.run.app"]
+        });
+        return;
+      }
+
+      // ----------------------------------------------------------------------
+      // OAUTH DISCOVERY: /.well-known/oauth-authorization-server (RFC 8414)
+      // ----------------------------------------------------------------------
+      if (path === "/.well-known/oauth-authorization-server" || path === "/.well-known/oauth-authorization-server/" || path === "/.well-known/openid-configuration") {
+        res.status(200).json({
+          issuer: "https://juriomcpserver-vqoobrenua-ew.a.run.app",
+          authorization_endpoint: "https://juriomcpserver-vqoobrenua-ew.a.run.app/authorize",
+          token_endpoint: "https://juriomcpserver-vqoobrenua-ew.a.run.app/token",
+          registration_endpoint: "https://juriomcpserver-vqoobrenua-ew.a.run.app/register",
+          response_types_supported: ["code"],
+          grant_types_supported: ["authorization_code"],
+          code_challenge_methods_supported: ["S256", "plain"]
+        });
+        return;
+      }
+
+      // ----------------------------------------------------------------------
+      // OAUTH DCR: POST /register (Dynamic Client Registration - RFC 7591)
+      // ----------------------------------------------------------------------
+      if (path === "/register" && req.method === "POST") {
+        res.status(201).json({
+          client_id: "jurio_claude_client_id_auto",
+          client_secret: "jurio_secret_dummy",
+          client_id_issued_at: Math.floor(Date.now() / 1000),
+          grant_types: ["authorization_code"],
+          response_types: ["code"],
+          redirect_uris: req.body?.redirect_uris || []
+        });
+        return;
+      }
       
+      // ----------------------------------------------------------------------
+      // FLUSSO OAUTH2 - ENDPOINT /authorize
+      // ----------------------------------------------------------------------
+      if (req.method === "GET" && path === "/authorize") {
+        const { client_id, redirect_uri, state, response_type } = req.query;
+
+        if (response_type !== "code") {
+          res.status(400).send("Unsupported response_type. Must be 'code'.");
+          return;
+        }
+
+        const loginUrl = new URL("https://jurio.it/oauth-login");
+        if (client_id) loginUrl.searchParams.append("client_id", String(client_id));
+        if (redirect_uri) loginUrl.searchParams.append("redirect_uri", String(redirect_uri));
+        if (state) loginUrl.searchParams.append("state", String(state));
+
+        res.redirect(302, loginUrl.toString());
+        return;
+      }
+
+      // ----------------------------------------------------------------------
+      // FLUSSO OAUTH2 - ENDPOINT /token
+      // ----------------------------------------------------------------------
+      if (req.method === "POST" && path === "/token") {
+        const code = req.body?.code || req.query?.code;
+        const grant_type = req.body?.grant_type || req.query?.grant_type;
+
+        if (grant_type !== "authorization_code" || !code) {
+          res.status(400).json({ error: "unsupported_grant_type" });
+          return;
+        }
+
+        try {
+          const codeRef = db.collection("oauth_codes").doc(code);
+          const codeSnap = await codeRef.get();
+
+          if (!codeSnap.exists) {
+            res.status(401).json({ error: "invalid_grant", error_description: "Codice non valido o scaduto" });
+            return;
+          }
+
+          const codeData = codeSnap.data();
+          const uid = codeData?.uid;
+
+          // Bruciamo il codice per evitare replay attack
+          await codeRef.delete();
+
+          // Generiamo il token definitivo
+          const accessToken = randomBytes(32).toString("hex");
+
+          await db.collection("oauth_tokens").doc(accessToken).set({
+            uid: uid,
+            createdAt: FieldValue.serverTimestamp(),
+            client_id: req.body?.client_id || req.query?.client_id || "claude_web"
+          });
+
+          res.status(200).json({
+            access_token: accessToken,
+            token_type: "Bearer",
+            expires_in: 31536000,
+          });
+        } catch (err) {
+          console.error("[JURIO-MCP] Errore scambio token:", err);
+          res.status(500).json({ error: "server_error" });
+        }
+        return;
+      }
+
+      // ----------------------------------------------------------------------
+      // HANDSHAKE BASE E ESECUZIONE MCP
+      // ----------------------------------------------------------------------
       if (req.method === "GET" && (path === "" || path === "/")) {
         res.status(200).json({
           name: "Jurio MCP Server",
@@ -160,17 +274,26 @@ export const vectorSearchJurio = onRequest(
 
         let isOAuthRequest = false;
 
-        // Controllo token OAuth / Connettori esterni (es. Mistral, ChatGPT)
         if (token) {
-          const directUserSnap = await db.collection("register").doc(token).get();
-          if (directUserSnap.exists) {
-            uid = token;
+          // A) Controllo primario: Verifichiamo se il token arriva da un client OAuth (Claude/ChatGPT/Mistral)
+          const tokenSnap = await db.collection("oauth_tokens").doc(token).get();
+          if (tokenSnap.exists) {
+            uid = tokenSnap.data()?.uid;
             isOAuthRequest = true;
-            console.log(`[JURIO-SEARCH] Autenticazione diretta via UID riuscita per: ${uid}`);
+            console.log(`[JURIO-SEARCH] Autenticazione OAuth riuscita per UID: ${uid}`);
+          } else {
+            // B) Compatibilità retroattiva: Controlliamo se per caso è un ID diretto nella collezione register
+            const directUserSnap = await db.collection("register").doc(token).get();
+            if (directUserSnap.exists) {
+              uid = token;
+              isOAuthRequest = true;
+              console.log(`[JURIO-SEARCH] Autenticazione diretta via UID riuscita per: ${uid}`);
+            }
           }
         }
-        if (!isOAuthRequest) {
-          // Flusso standard per il tuo Frontend Web (AppCheck + decodifica JWT)
+
+        if (!isOAuthRequest || !uid) {
+          // C) Flusso standard per il tuo Frontend Web (AppCheck + decodifica JWT)
           await requireAppCheck(req);
           uid = await requireUidFromAuthHeader(req);
         }

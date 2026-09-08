@@ -71,7 +71,7 @@ export default function ConfigurazioneLeChat() {
               </li>
               <li className="flex items-start">
                 <span className="text-(--color-text) mr-2 font-bold">3.</span>
-                <span>Inserisci l'URL del server (es. <strong className="font-semibold text-(--color-text)">https://juriomcpserver-vqoobrenua-ew.a.run.app</strong>).</span>
+                <span>Inserisci l'URL del server (<strong className="font-semibold text-(--color-text)">https://juriomcpserver-vqoobrenua-ew.a.run.app</strong>).</span>
               </li>
               <li className="flex items-start">
                 <span className="text-(--color-text) mr-2 font-bold">4.</span>
