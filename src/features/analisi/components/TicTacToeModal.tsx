@@ -17,6 +17,13 @@ const WINNING_COMBINATIONS = [
   [2, 4, 6],
 ];
 
+// Helper function per generare numeri pseudo-casuali sicuri tramite Web Crypto API
+const getSecureRandomIndex = (max: number): number => {
+  const array = new Uint32Array(1);
+  window.crypto.getRandomValues(array);
+  return array[0] % max;
+};
+
 const getWinner = (board: Cell[]): GameResult => {
   for (const [a, b, c] of WINNING_COMBINATIONS) {
     if (board[a] && board[a] === board[b] && board[a] === board[c]) {
@@ -57,14 +64,14 @@ const getComputerMove = (board: Cell[]): number => {
 
   const corners = [0, 2, 6, 8].filter((index) => !board[index]);
   if (corners.length > 0) {
-    return corners[Math.floor(Math.random() * corners.length)];
+    return corners[getSecureRandomIndex(corners.length)];
   }
 
   const freeCells = board
     .map((value, index) => (!value ? index : null))
     .filter((value): value is number => value !== null);
 
-  return freeCells[Math.floor(Math.random() * freeCells.length)] ?? -1;
+  return freeCells.length > 0 ? freeCells[getSecureRandomIndex(freeCells.length)] : -1;
 };
 
 interface TicTacToeModalProps {

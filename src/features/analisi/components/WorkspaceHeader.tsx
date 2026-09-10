@@ -22,12 +22,12 @@ export const WorkspaceHeader: React.FC<Props> = ({
   isProcessing,
 }) => {
   return (
-    <div className="shrink-0 border-b border-(--color-border) bg-(--color-surface) px-4 sm:px-8 lg:px-16 py-4 flex items-center justify-between">
-      <div className="flex items-center gap-2 group min-w-0">
+    <div className="flex shrink-0 items-center justify-between border-b border-(--color-border) bg-(--color-surface) px-4 py-4 sm:px-8 lg:px-16">
+      <div className="group flex min-w-0 items-center gap-2">
         {isEditingTitle && activeSession ? (
           <input
             autoFocus
-            className="text-base sm:text-lg font-medium bg-transparent border-b border-(--color-text) outline-none truncate"
+            className="truncate border-b border-(--color-text) bg-transparent text-base font-medium outline-none sm:text-lg"
             style={{ fontFamily: "var(--font-serif)" }}
             value={titoloEditabile}
             onChange={(e) => setTitoloLocale(e.target.value)}
@@ -36,25 +36,39 @@ export const WorkspaceHeader: React.FC<Props> = ({
           />
         ) : (
           <h1
+            role={activeSession ? "button" : undefined}
+            tabIndex={activeSession ? 0 : undefined}
             onClick={() => activeSession && setIsEditingTitle(true)}
-            className={`text-base sm:text-lg font-medium tracking-tight truncate ${
-              activeSession ? "cursor-pointer" : ""
-            }`}
+            onKeyDown={(e) => {
+              if (activeSession && (e.key === "Enter" || e.key === " ")) {
+                e.preventDefault();
+                setIsEditingTitle(true);
+              }
+            }}
+            className={[
+              "truncate text-base font-medium tracking-tight sm:text-lg",
+              activeSession
+                ? "cursor-pointer rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-(--color-text)"
+                : "",
+            ].join(" ")}
             style={{ fontFamily: "var(--font-serif)" }}
           >
             <em>{titoloEditabile}</em>
           </h1>
         )}
         {!isEditingTitle && activeSession && (
-          <Edit2
-            size={12}
-            className="text-(--color-muted) opacity-0 group-hover:opacity-100 cursor-pointer shrink-0"
+          <button
+            type="button"
             onClick={() => setIsEditingTitle(true)}
-          />
+            aria-label="Modifica titolo"
+            className="shrink-0 cursor-pointer rounded-sm text-(--color-muted) opacity-0 outline-none transition-opacity hover:text-(--color-text) focus:opacity-100 focus-visible:ring-2 focus-visible:ring-(--color-text) group-hover:opacity-100"
+          >
+            <Edit2 size={12} />
+          </button>
         )}
       </div>
 
-      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-(--color-muted) shrink-0">
+      <div className="flex shrink-0 items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-(--color-muted)">
         {isProcessing ? (
           <span className="flex items-center gap-1.5 text-blue-500">
             <Loader2 size={12} className="animate-spin" /> Elaborazione Mappa...
@@ -64,7 +78,7 @@ export const WorkspaceHeader: React.FC<Props> = ({
         ) : activeSession?.status === "review" ? (
           <span className="text-orange-500">Revisione Mappa</span>
         ) : activeSession?.status === "completed" ? (
-          <span className="text-green-600 flex items-center gap-1">
+          <span className="flex items-center gap-1 text-green-600">
             <CheckCircle2 size={12} /> Completata
           </span>
         ) : (
