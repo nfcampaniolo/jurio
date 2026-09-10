@@ -6,6 +6,7 @@ import TeamVouchers from "@/features/teams/components/TeamVouchers";
 import TeamMembers from "@/features/teams/components/TeamMembers";
 import JoinTeamWithVoucher from "@/features/teams/components/JoinTeamWithVoucher";
 import { YourDocument } from "@/shared/components/YourDocument";
+import { SEO } from "@/shared/components/SEO";
 import { Loader2 } from "lucide-react";
 
 export default function TeamDashboard() {
@@ -14,23 +15,48 @@ export default function TeamDashboard() {
 
   if (loading) {
     return (
-      <div className="h-screen flex items-center justify-center text-(--color-muted) gap-2 bg-(--color-bg)">
-        <Loader2 size={16} className="animate-spin text-(--color-text)" />
-        <span className="text-xs font-bold uppercase tracking-widest">Caricamento Workspace in corso...</span>
-      </div>
+      <>
+        <SEO
+          title="Workspace Studio"
+          description="Gestione membri, permessi e documenti condivisi del Workspace su Jurio."
+          path="/profilo/team"
+          noIndex
+        />
+        <div className="h-screen flex items-center justify-center text-(--color-muted) gap-2 bg-(--color-bg)">
+          <Loader2 size={16} className="animate-spin text-(--color-text)" />
+          <span className="text-xs font-bold uppercase tracking-widest">Caricamento Workspace in corso...</span>
+        </div>
+      </>
     );
   }
 
   if (!user || !team) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-(--color-bg)">
-        <JoinTeamWithVoucher />
-      </div>
+      <>
+        <SEO
+          title="Accedi al Workspace"
+          description="Inserisci il voucher di studio per unirti al Workspace condiviso su Jurio."
+          path="/profilo/team"
+          noIndex
+        />
+        <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-(--color-bg)">
+          <JoinTeamWithVoucher />
+        </div>
+      </>
     );
   }
 
+  const teamTitle = team.name ? `${team.name} - Workspace` : "Workspace Studio";
+
   return (
     <div className="min-h-screen bg-(--color-bg) text-(--color-text) py-12 px-4 sm:px-6">
+      <SEO
+        title={teamTitle}
+        description="Gestisci i membri dello studio, le licenze voucher, i fascicoli condivisi e le impostazioni del Workspace su Jurio."
+        path="/profilo/team"
+        noIndex
+      />
+
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Intestazione pagina */}
         <div className="mb-4 sm:mb-6">
@@ -61,12 +87,14 @@ export default function TeamDashboard() {
             </button>
           </div>
         </div>
+
         {/* Membri del Team */}
         <TeamMembers 
           teamId={team.id} 
           isManager={isManager} 
           currentUserUid={user.uid} 
         />
+
         {/* Documenti */}
         <YourDocument />
         

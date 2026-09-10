@@ -6,6 +6,15 @@ const { mockNavigate } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
 }));
 
+vi.mock("@dr.pogodin/react-helmet", () => ({
+  Helmet: () => null,
+  HelmetProvider: ({ children }: { children?: React.ReactNode }) => children ?? null,
+}));
+
+vi.mock("@/shared/components/SEO", () => ({
+  SEO: () => null,
+}));
+
 /* ---------- mock react-router-dom ---------- */
 vi.mock("react-router-dom", () => ({
   __esModule: true,

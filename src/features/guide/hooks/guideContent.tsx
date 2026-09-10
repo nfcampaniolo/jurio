@@ -5,6 +5,7 @@ import RicercaSemantica from '@/features/guide/components/RicercaSemantica';
 import ConsulenteLegale from '@/features/guide/components/ConsulenteLegale';
 import AnalisiDocumenti from '@/features/guide/components/AnalisiDocumenti';
 import Accesso from '@/features/guide/components/Accesso';
+import ApprofondimentoGiurisprudenziale from '@/features/guide/components/ApprofondimentoGiurisprudenziale';
 import ProvaGratuita from '@/features/guide/components/ProvaGratuita';
 import GestionePiano from '@/features/guide/components/GestionePiano';
 import ModificaProfilo from '@/features/guide/components/ModificaProfilo';
@@ -24,6 +25,7 @@ export const guideContent: Record<string, React.ReactNode> = {
   "interfacce": <InterfacceNavigazione />,
   "ricerca-semantica": <RicercaSemantica />,
   "consulente-legale": <ConsulenteLegale />,
+  "analisi": <ApprofondimentoGiurisprudenziale />,
   "analisi-documenti": <AnalisiDocumenti />,
   "accesso": <Accesso />,
   "prova-gratuita": <ProvaGratuita />,

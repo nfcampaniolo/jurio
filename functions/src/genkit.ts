@@ -30,7 +30,7 @@ const CFG = {
   SEMANTIC_SAFE_LIMIT: 5,
   CHUNK_PARENT_LIMIT: 5,
   EXCLUDE_IDS_LIMIT: 10,
-  HISTORY_WINDOW: 4,
+  HISTORY_WINDOW: 10,
   MAX_SOURCES: 10,
 
   EMBEDDING_MODEL: "text-embedding-3-small",
@@ -183,7 +183,8 @@ export const ricercaDatabaseInterno = ai.defineTool(
     try {
       const { tipo_ricerca, query, numero_sentenza } = input;
 
-      const safeLimit = 3; 
+      // Legge dbLimit (topK) dal context, con default a 10
+      const safeLimit = context?.dbLimit ?? 10; 
       
       const finalQuery = (query || numero_sentenza || "").trim();
       
@@ -212,7 +213,7 @@ export const ricercaDatabaseInterno = ai.defineTool(
         const sentencesRef = db.collection("sentences");
         
         const [snapNumero, snapEcli, snapUrn] = await Promise.all([
-          sentencesRef.where("numero_sentenza", "==", sanitizedNumero).limit(3).get(), // CRITICO: Ridotto a 3
+          sentencesRef.where("numero_sentenza", "==", sanitizedNumero).limit(3).get(),
           sentencesRef.where("ecli", "==", identificativo).limit(3).get(),
           sentencesRef.where("urn", "==", identificativo).limit(3).get()
         ]);
@@ -299,17 +300,18 @@ export const ricercaFascicoloUtente = ai.defineTool(
     try {
       const userId = context?.userId;
       const fascicoloId = context?.fascicoloId;
-      const attachedDocs: string[] = context?.docs || []; // Recuperiamo i documenti allegati!
+      const attachedDocs: string[] = context?.docs || [];
 
       if (!userId) return [{ error: "Errore di autenticazione interno." }];
 
       const sanitizedQuery = input.query.trim();
       const queryVector = await createEmbedding(sanitizedQuery);
-      const safeLimit = context?.dbLimit || 5;
+      
+      // Legge dbLimit (topK) dal context, con default a 10
+      const safeLimit = context?.dbLimit ?? 10;
       
       let qOwner: FirebaseFirestore.Query = db.collection("document_chunks").where("user", "==", userId);
       
-      // FIX: Precedenza ASSOLUTA ai documenti inviati nel payload
       if (attachedDocs.length > 0) {
         qOwner = qOwner.where("parentId", "in", attachedDocs.slice(0, 10));
       } else if (input.documentId_specifico) {
@@ -340,7 +342,6 @@ export const ricercaFascicoloUtente = ai.defineTool(
       snapOwner.docs.forEach((doc: any) => uniqueDocsMap.set(doc.id, doc.data()));
       snapShared.docs.forEach((doc: any) => {
         const data = doc.data();
-        // Se ci sono allegati espliciti, skippiamo il controllo sul fascicolo condiviso
         if (fascicoloId && attachedDocs.length === 0 && (!data.fascicoloIds || !data.fascicoloIds.includes(fascicoloId))) return; 
         if (!uniqueDocsMap.has(doc.id)) uniqueDocsMap.set(doc.id, data);
       });
@@ -365,6 +366,7 @@ export const ricercaFascicoloUtente = ai.defineTool(
     }
   }
 );
+
 export const webSearchTool = ai.defineTool(
   {
     name: 'ricercaWebLegale',
@@ -375,7 +377,8 @@ export const webSearchTool = ai.defineTool(
     }),
     outputSchema: z.any(),
   },
-  async (input) => {
+  // 👈 Estraiamo il `context` (passato da ai.generate) dal secondo parametro (tipizzato come any per sicurezza TS)
+  async (input, options?: any) => {
     try {
       const apiKey = process.env.TAVILY_API_KEY;
       if (!apiKey) return [{ error: "TAVILY_API_KEY non configurata." }];
@@ -383,6 +386,9 @@ export const webSearchTool = ai.defineTool(
       let finalDomains = [...CFG.DOMAINS_ISTITUZIONALE, ...CFG.DOMAINS_EDITORIALE];
       if (input.focus === "istituzionale") finalDomains = [...CFG.DOMAINS_ISTITUZIONALE];
       if (input.focus === "editoriale") finalDomains = [...CFG.DOMAINS_EDITORIALE];
+
+      // 👇 Leggiamo webLimit dal contesto, altrimenti applichiamo il default di 5
+      const webLimit = options?.context?.webLimit ?? 5;
 
       const response = await fetch("https://api.tavily.com/search", {
         method: "POST",
@@ -392,7 +398,7 @@ export const webSearchTool = ai.defineTool(
           query: input.query,
           search_depth: "basic",
           include_domains: finalDomains,
-          max_results: 2,
+          max_results: webLimit, // 👈 Adesso la ricerca estrae esattamente i risultati richiesti
           include_answer: false,
           include_raw_content: false,
         }),
@@ -678,24 +684,56 @@ export function getExecutionProfile(promptLower: string): ExecutionProfile {
   if (needsDeepReasoning) {
     return { model: "googleai/gemini-1.5-pro", dbLimit: 5, webLimit: 3 };
   } else {
-    return { model: "googleai/gemini-2.5-flash", dbLimit: 3, webLimit: 2 };
+    return { model: "googleai/gemini-2.5-flash", dbLimit: 5, webLimit: 2 };
   }
 }
 
-async function executeDeterministicRetrieval(input: any, promptLower: string, toolContext: any, sendChunk: any) {
-  const isConversational = promptLower.length < 25 && /^(grazie|ok|chiaro|perfetto|ciao|va bene|ottimo|esatto)/.test(promptLower);
-  
-  const isDatabaseQuery = /(sentenza|ordinanza|cassazione|tribunale|tar|provvediment|art\.|articolo|legge|codice|decreto|direttiva|giurisprudenza|massima)/i.test(promptLower);
-  
-  // Rileviamo se ci sono allegati nel payload
-  const hasDocs = toolContext.docs && toolContext.docs.length > 0;
-  const isFascicoloQuery = (input.fascicoloId && /(questo documento|il contratto|il file|fascicolo|allegato|caricato|documentazione)/i.test(promptLower)) || hasDocs;
-  
-  const needsWebSearch = /(recente|news|novità|aggiornament|oggi|notizi|tempo reale|ultim'ora)/i.test(promptLower);
-  const isDistinguishQuery = /(fattispecie|caso concreto|mio caso|differenz|analizza i fatti|applicabil|distinguish)/i.test(promptLower);
+async function executeDeterministicRetrieval(
+  input: any,
+  promptLower: string,
+  toolContext: any,
+  sendChunk: any
+) {
+  const isConversational =
+    promptLower.length < 25 &&
+    /^(grazie|ok|chiaro|perfetto|ciao|va bene|ottimo|esatto)/.test(promptLower);
 
-  const matchPuntuale = promptLower.match(/\b\d{1,6}\/\d{4}\b/);
-  const matchNormativa = promptLower.match(/(?:art|articolo)\.?\s*\d+(?:\s*(?:bis|ter|quater|quinquies))?/i);
+  const isDatabaseQuery =
+    /(sentenza|ordinanza|cassazione|tribunale|tar|provvediment|art\.|articolo|legge|codice|decreto|direttiva|giurisprudenza|massima)/i
+      .test(promptLower);
+
+  const hasDocs =
+    Array.isArray(toolContext.docs) && toolContext.docs.length > 0;
+
+  const isFascicoloQuery =
+    (
+      input.fascicoloId &&
+      /(questo documento|il contratto|il file|fascicolo|allegato|caricato|documentazione)/i
+        .test(promptLower)
+    ) || hasDocs;
+
+  const needsWebSearch =
+    /(recente|news|novità|aggiornament|oggi|notizi|tempo reale|ultim'ora)/i
+      .test(promptLower);
+
+  const isDistinguishQuery =
+    /(fattispecie|caso concreto|mio caso|differenz|analizza i fatti|applicabil|distinguish)/i
+      .test(promptLower);
+
+  const matchPuntuale =
+    promptLower.match(/\b\d{1,6}\/\d{4}\b/);
+
+  const matchNormativa =
+    promptLower.match(
+      /(?:art|articolo)\.?\s*\d+(?:\s*(?:bis|ter|quater|quinquies))?/i
+    );
+
+  const matchExecutive =
+    promptLower.match(
+      /\b(procedi|procediamo|vai\s+avanti|vai\s+pure|continua|continuiamo|prosegui|proseguiamo|esegui|eseguiamo|avvia|applicalo|fallo|puoi\s+procedere|andiamo\s+avanti|prcedi)\b/i
+    );
+
+  const hasExecutiveIntent = Boolean(matchExecutive);
 
   let preRetrievalOutput: any = null;
   let preRetrievalToolName = "";
@@ -703,49 +741,118 @@ async function executeDeterministicRetrieval(input: any, promptLower: string, to
   if (!isConversational) {
     try {
       if (hasDocs) {
-        // TASSATIVO: Se ci sono allegati, forziamo immediatamente la lettura
-        sendChunk({ status: "Lettura dei documenti allegati..." });
+        sendChunk({
+          status: "Lettura dei documenti allegati..."
+        });
+
         preRetrievalToolName = "ricercaFascicoloUtente";
-        preRetrievalOutput = await ricercaFascicoloUtente({ query: input.prompt }, { context: toolContext });
+
+        preRetrievalOutput = await ricercaFascicoloUtente(
+          { query: input.prompt },
+          { context: toolContext }
+        );
+
       } else if (matchPuntuale) {
-        sendChunk({ status: `Ricerca sentenza ${matchPuntuale[0]}...` });
+        sendChunk({
+          status: `Ricerca sentenza ${matchPuntuale[0]}...`
+        });
+
         preRetrievalToolName = "ricercaDatabaseInterno";
-        preRetrievalOutput = await ricercaDatabaseInterno({ tipo_ricerca: "puntuale", numero_sentenza: matchPuntuale[0], query: input.prompt }, { context: toolContext });
+
+        preRetrievalOutput = await ricercaDatabaseInterno(
+          {
+            tipo_ricerca: "puntuale",
+            numero_sentenza: matchPuntuale[0],
+            query: input.prompt
+          },
+          { context: toolContext }
+        );
+
       } else if (matchNormativa) {
-        sendChunk({ status: `Ricerca riferimento ${matchNormativa[0]}...` });
+        sendChunk({
+          status: `Ricerca riferimento ${matchNormativa[0]}...`
+        });
+
         preRetrievalToolName = "ricercaDatabaseInterno";
-        preRetrievalOutput = await ricercaDatabaseInterno({ tipo_ricerca: "normativa", query: matchNormativa[0] }, { context: toolContext });
+
+        preRetrievalOutput = await ricercaDatabaseInterno(
+          {
+            tipo_ricerca: "normativa",
+            query: matchNormativa[0]
+          }
+        );
       } else if (isFascicoloQuery) {
-        sendChunk({ status: "Consultazione documenti utente..." });
+        sendChunk({
+          status: "Consultazione documenti utente..."
+        });
+
         preRetrievalToolName = "ricercaFascicoloUtente";
-        preRetrievalOutput = await ricercaFascicoloUtente({ query: input.prompt }, { context: toolContext });
+
+        preRetrievalOutput = await ricercaFascicoloUtente(
+          { query: input.prompt },
+          { context: toolContext }
+        );
       }
     } catch (err) {
-      console.warn("Errore pre-retrieval deterministico:", err);
+      console.warn(
+        "Errore pre-retrieval deterministico:",
+        err
+      );
     }
   }
 
   let dynamicTools: any[] = [];
   let skipTurn1 = false;
 
-  // FIX RACE CONDITION: Se il retrieval documentale deterministico è "vuoto" (documenti in elaborazione in background), 
-  // non saltiamo il turno 1. Così l'Agente riproverà da solo concedendo tempo al DB.
-  const isEmptyRetrieval = preRetrievalOutput && Array.isArray(preRetrievalOutput) && preRetrievalOutput[0]?.messaggio?.includes("Nessun paragrafo");
-
-  if (preRetrievalOutput && (!Array.isArray(preRetrievalOutput) || !preRetrievalOutput[0]?.error) && !isEmptyRetrieval) {
+  const isEmptyRetrieval =
+    preRetrievalOutput &&
+    Array.isArray(preRetrievalOutput) &&
+    preRetrievalOutput[0]?.messaggio?.includes("Nessun paragrafo");
+  if (
+    preRetrievalOutput &&
+    (!Array.isArray(preRetrievalOutput) ||
+      !preRetrievalOutput[0]?.error) &&
+    !isEmptyRetrieval &&
+    !hasExecutiveIntent
+  ) {
     skipTurn1 = true;
-  } else if (!isConversational) {
-    // ABILITAZIONE CHIRURGICA DEI TOOL
-    if (isDatabaseQuery) dynamicTools.push(ricercaDatabaseInterno);
-    if (isFascicoloQuery || hasDocs) dynamicTools.push(ricercaFascicoloUtente);
-    if (isDistinguishQuery) dynamicTools.push(analizzaDistinguishFattispecie);
-    if (needsWebSearch) dynamicTools.push(webSearchTool);
-    if (hasDocs && !dynamicTools.includes(ricercaFascicoloUtente)) {
-      dynamicTools.push(ricercaFascicoloUtente);
-    }
   }
 
-  return { skipTurn1, preRetrievalOutput, preRetrievalToolName, dynamicTools };
+  if (!isConversational) {
+    if (hasExecutiveIntent) {
+      dynamicTools = [
+        ricercaDatabaseInterno,
+        ricercaFascicoloUtente,
+        analizzaDistinguishFattispecie,
+        webSearchTool,
+      ];
+    } else {
+      if (isDatabaseQuery) {
+        dynamicTools.push(ricercaDatabaseInterno);
+      }
+      if (isFascicoloQuery || hasDocs) {
+        dynamicTools.push(ricercaFascicoloUtente);
+      }
+      if (isDistinguishQuery) {
+        dynamicTools.push(analizzaDistinguishFattispecie);
+      }
+      if (needsWebSearch) {
+        dynamicTools.push(webSearchTool);
+      }
+      if (
+        hasDocs &&
+        !dynamicTools.includes(ricercaFascicoloUtente)
+      ) {
+        dynamicTools.push(ricercaFascicoloUtente);
+      }
+    }
+  }
+  return {
+    skipTurn1,
+    preRetrievalOutput,
+    preRetrievalToolName,
+    dynamicTools,
+  };
 }
 
 function extractAndFormatSources(messages: any[]) {
@@ -1508,7 +1615,6 @@ export const wordReviewFlow = ai.defineFlow(
     try {
       // 2. Chiamata agentica
       const response = await ai.generate({
-        // model: 'googleai/gemini-2.5-pro',
         messages: messages as any,
         tools: [ricercaDatabaseInterno, webSearchTool, analizzaDistinguishFattispecie], 
         config: { 
@@ -1676,7 +1782,6 @@ ${stringifiedSchema}
     try {
       // 3. Chiamata Agentica (Stessi parametri rigorosi della review)
       const response = await ai.generate({
-        // model: 'googleai/gemini-2.5-pro', 
         messages: messages as any,
         config: { 
           temperature: 0.1, // Temperatura bassissima per massima precisione architetturale
@@ -1703,6 +1808,467 @@ ${stringifiedSchema}
     } catch (error) {
       console.error("Errore promptBuilderFlow:", error);
       throw new Error("Si è verificato un errore durante la generazione del prompt architetturale.");
+    }
+  }
+);
+
+// ─────────────────────────────────────────────
+// FLOW — Deep Analysis
+// ──
+
+const PrecedenteMinimaleSchema = z.object({
+  id: z.string().min(1).describe("TASSATIVO: Se fonte='web', inserisci l'URL completo. Se fonte='interna', inserisci ESCLUSIVAMENTE l'ID univoco del documento Firestore (es. hash alfanumerico dell'ID), MAI il numero della sentenza o la data."),
+  fonte: z.enum(["interna", "web"]),
+  gradoPertinenza: z.number().min(0).max(100),
+  escluso: z.boolean().optional(),
+  nuova: z.boolean().optional(), // 👈 Obbligatorio per preservare il flag dopo il .parse()
+});
+
+const OrientamentoSchema = z.object({
+  titoloTesi: z.string().describe("Sintesi chiara dell'orientamento giuridico."),
+  argomentazioneLogica: z.string().describe("Motivazione e ratio alla base di questo orientamento."),
+  fonti: z.array(PrecedenteMinimaleSchema).describe("Sentenze e documenti che supportano specificamente QUESTA tesi.")
+});
+
+const ResearchOutputSchema = z.object({
+  inquadramento: z.object({
+    qualificazioneGiuridica: z.string().describe("Qualificazione tecnica e sintetica."),
+    fattispecieEstratta: z.string().describe("Sintesi dei fatti rilevanti."),
+    normeRiferimento: z.array(z.string()).describe("Norme e articoli pertinenti."),
+  }),
+  mappaDialettica: z.object({
+    orientamentoFavorevole: OrientamentoSchema.nullable().describe("La tesi che supporta la richiesta/posizione dell'utente."),
+    orientamentoContrario: OrientamentoSchema.nullable().describe("La tesi avversa, orientamento minoritario ostile o rischi."),
+    puntiAperti: z.array(z.string()).describe("Questioni irrisolte, vuoti normativi o oscillazioni non composte.")
+  })
+});
+
+async function getModelForUser(userId: string): Promise<string> {
+  if (!userId) return "googleai/gemini-2.5-flash";
+  
+  try {
+    const userDoc = await db.collection("register").doc(userId).get();
+    
+    if (userDoc.exists) {
+      const planId = userDoc.data()?.planId;
+      if (["business", "business_m", "admin"].includes(planId)) {
+        return "googleai/gemini-2.5-pro";
+      }
+    }
+  } catch (error) {
+    console.error("Errore durante il recupero del planId da Firestore:", error);
+  }
+  
+  // Fallback di default
+  return "googleai/gemini-2.5-flash";
+}
+
+export const ReportSintesiSchema = z.object({
+  titoloReport: z.string().describe("Un titolo formale e riassuntivo per il parere strategico."),
+  executiveSummary: z.string().describe("Sintesi operativa in 2-3 frasi dell'esito dell'indagine. Qual è la risposta al quesito?"),
+  contestoENorme: z.string().describe("Breve riassunto della fattispecie e delle norme di riferimento (Inquadramento)."),
+  argomentazioniAzione: z.array(z.string()).describe("I punti di forza e le tesi a favore. DEVI citare l'ID delle fonti a supporto."),
+  rischiEEccezioni: z.array(z.string()).describe("Le debolezze, i rischi e le tesi contrarie. DEVI citare l'ID delle fonti ostili."),
+  conclusioniStrategiche: z.string().describe("Il suggerimento operativo finale. Come deve muoversi l'utente alla luce dei punti aperti?")
+});
+
+const isUrl = (val: string) => {
+  try {
+    const u = new URL(val);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+};
+
+const validaFonti = (fonti: any[]) => {
+  if (!Array.isArray(fonti)) return [];
+  const fontiValide = [];
+  for (const item of fonti) {
+    if (!item || !item.id || !item.fonte) continue;
+    const id = String(item.id).trim();
+    const validUrl = isUrl(id);
+    
+    if (item.fonte === "web" && !validUrl) {
+      console.warn(`[Validazione] Scartata fonte web non valida: ${id}`);
+      continue;
+    }
+    if (item.fonte === "interna" && validUrl) {
+      console.warn(`[Validazione] Scartata fonte interna non valida (era URL): ${id}`);
+      continue;
+    }
+    // Preserva escluso, nuova e qualsiasi altro campo passato nel payload
+    fontiValide.push({ ...item, id });
+  }
+  return fontiValide;
+};
+
+// ============================================================================
+// 1. FLOW 1: PRIMA RICERCA
+// ============================================================================
+export const researchAnalysisFlow = ai.defineFlow(
+  {
+    name: "researchAnalysisFlow",
+    inputSchema: z.object({
+      prompt: z.string().min(1),
+      docs: z
+        .array(z.union([z.string(), z.object({ id: z.string() })]))
+        .optional()
+        .default([])
+        .transform((items) =>
+          items.map((item) => (typeof item === "string" ? item : item.id))
+        ),
+      userId: z.string().min(1),
+      config: z.object({
+        confidenceLevel: z.number().min(0).max(100).default(80),
+        sourceWeb: z.boolean().default(true),
+        sourceInternalDB: z.boolean().default(true),
+        temperature: z.number().min(0).max(2).default(0.2),
+        topK: z.number().int().min(1).default(10),
+        webLimit: z.number().int().min(1).default(5),
+      }).optional().default({}),
+    }),
+    outputSchema: ResearchOutputSchema,
+  },
+  async ({ prompt, docs = [], userId, config }) => {
+    const { 
+      confidenceLevel = 80, 
+      sourceWeb = true, 
+      sourceInternalDB = true, 
+      temperature = 0.2, 
+      topK = 10, 
+      webLimit = 5 
+    } = config;
+
+    const aiModel = await getModelForUser(userId);
+    const hasUserDocs = docs.length > 0;
+
+    const dynamicTools = [
+      sourceInternalDB && ricercaDatabaseInterno,
+      sourceWeb && webSearchTool,
+      hasUserDocs && ricercaFascicoloUtente,
+    ].filter(Boolean);
+
+    const requiredTools = [
+      sourceWeb && "ricercaWebLegale",
+      sourceInternalDB && "ricercaDatabaseInterno",
+      hasUserDocs && "ricercaFascicoloUtente",
+    ].filter(Boolean) as string[];
+
+    // 1. CHIAMATA DI ESECUZIONE TOOL FORZATA
+    const searchPrompt = `Agisci come un assistente di ricerca legale. 
+Esegui immediatamente le ricerche necessarie usando i tool disponibili per il seguente quesito:
+"${prompt}"
+Raccogli tutte le massime, i precedenti e le informazioni utili sia a favore che contrarie.`;
+
+    let searchResponse;
+    try {
+      searchResponse = await ai.generate({
+        model: aiModel,
+        messages: [
+          { role: "user", content: [{ text: searchPrompt }] }
+        ],
+        tools: dynamicTools as any,
+        config: { temperature: 0.1 },
+        maxTurns: 3,
+        context: { userId, docs, dbLimit: topK, webLimit, confidenceLevel, sourceWeb, sourceInternalDB, requiredTools },
+      });
+    } catch (err: any) {
+      console.error("Errore durante l'esecuzione dei tool di ricerca:", err);
+      if (err.message && err.message.includes("Exceeded maximum tool call iterations")) {
+        throw new Error("ToolLoop: Il modello ha superato il limite di iterazioni per i tool di ricerca.");
+      }
+      throw new Error(`Errore di rete o timeout durante l'interrogazione delle banche dati: ${err.message}`);
+    }
+
+    // 2. CHIAMATA DI MAPPATURA DIALETTICA
+    const mappingSystemPrompt = `SEI JURIO, motore di analisi dialettica giuridica.
+Analizza i dati raccolti dalla ricerca precedente e compila la "Mappa Dialettica" per il quesito: "${prompt}".
+
+REGOLE TASSATIVE:
+1. SMISTA rigorosamente le fonti trovate tra 'orientamentoFavorevole' e 'orientamentoContrario'.
+2. Se un orientamento ha riscontri, compila 'titoloTesi', 'argomentazioneLogica' e inserisci le fonti nell'array.
+3. Estrai eventuali 'puntiAperti' (incertezze normative o dubbi interpretativi).
+4. 'fonte': 'web' -> 'id' DEVE essere l'URL completo. 'fonte': 'interna' -> 'id' DEVE essere L'ID INTERNO DEL DOCUMENTO FIRESTORE fornito dal tool (es. stringa alfanumerica), VIETATISSIMO inserire il numero di sentenza o altri estremi.
+5. Restituisci ESCLUSIVAMENTE JSON conforme allo schema richiesto.`;
+
+    const cleanHistory = (searchResponse.messages || []).filter(
+      (msg: any) => msg?.role !== "system"
+    );
+    let mappingResponse;
+    try {
+      mappingResponse = await ai.generate({
+        model: aiModel, // Utilizzo dinamico del modello anche per il JSON mapping
+        messages: [
+          { role: "system", content: [{ text: mappingSystemPrompt }] },
+          ...cleanHistory,
+          { role: "user", content: [{ text: "Genera ora la Mappa Dialettica in formato JSON basandoti sulle fonti reperite." }] }
+        ],
+        output: { schema: ResearchOutputSchema },
+        config: { temperature },
+      });
+    } catch (err: any) {
+      throw new Error(`Errore durante la formattazione strutturata della mappa: ${err.message}`);
+    }
+
+    const output = mappingResponse.output;
+    if (!output) {
+      throw new Error("[ResearchAnalysisFlow] Impossibile generare la mappa dialettica dalle fonti estratte.");
+    }
+
+    if (output.mappaDialettica.orientamentoFavorevole) {
+      output.mappaDialettica.orientamentoFavorevole.fonti = validaFonti(output.mappaDialettica.orientamentoFavorevole.fonti);
+    }
+    if (output.mappaDialettica.orientamentoContrario) {
+      output.mappaDialettica.orientamentoContrario.fonti = validaFonti(output.mappaDialettica.orientamentoContrario.fonti);
+    }
+
+    return ResearchOutputSchema.parse(output);
+  }
+);
+
+// ============================================================================
+// 2. FLOW 2: APPROFONDIMENTO MIRATO
+// ============================================================================
+export const refineResearchFlow = ai.defineFlow(
+  {
+    name: "refineResearchFlow",
+    inputSchema: z.object({
+      originalPrompt: z.string(),
+      direttivaHitl: z.string().describe("Azione strategica, es: 'Rafforza orientamento favorevole', 'Smonta tesi contraria'"),
+      currentInquadramento: z.any(), 
+      currentMappaDialettica: z.any(),
+      docs: z
+      .array(z.union([z.string(), z.object({ id: z.string() })]))
+      .optional()
+      .default([])
+      .transform((items) =>
+        items.map((item) => (typeof item === "string" ? item : item.id))
+      ),
+      userId: z.string().min(1),
+      config: z.any()
+    }),
+    outputSchema: ResearchOutputSchema,
+  },
+  async ({ originalPrompt, direttivaHitl, currentInquadramento, currentMappaDialettica, docs, userId, config }) => {
+    const { 
+      confidenceLevel = 80, 
+      sourceWeb = true, 
+      sourceInternalDB = true, 
+      temperature = 0.2, 
+      topK = 10, 
+      webLimit = 5 
+    } = config || {};
+
+    const aiModel = await getModelForUser(userId);
+    const hasUserDocs = docs.length > 0;
+
+    const dynamicTools = [
+      sourceInternalDB && ricercaDatabaseInterno,
+      sourceWeb && webSearchTool,
+      hasUserDocs && ricercaFascicoloUtente,
+    ].filter(Boolean);
+
+    const oldFavFonts = currentMappaDialettica?.orientamentoFavorevole?.fonti || [];
+    const oldContFonts = currentMappaDialettica?.orientamentoContrario?.fonti || [];
+    const knownIds = [...oldFavFonts, ...oldContFonts].map((f: any) => f.id);
+
+    const systemPrompt = `SEI JURIO. Stai eseguendo un approfondimento MIRATO sulla mappa dialettica esistente.
+
+QUESITO ORIGINALE: "${originalPrompt}"
+
+ID/URL FONTI GIA' ACQUISITE (NON RESTITUIRE QUESTE NELLA RICERCA):
+${knownIds.join("\n")}
+
+OBIETTIVO TASSATIVO:
+1. Usa i tool per trovare NUOVE fonti specifiche per soddisfare l'AZIONE RICHIESTA dall'utente.
+2. Raccogli tutte le informazioni necessarie per l'aggiornamento.
+3. STOP LOOP: Fai max 3 chiamate ai tool. Se non trovi nulla di nuovo, fermati.`;
+
+    // PASSO 1: Esecuzione dei tool di ricerca
+    let searchResponse;
+    try {
+      searchResponse = await ai.generate({
+        model: aiModel,
+        messages: [
+          { role: "system", content: [{ text: systemPrompt }] },
+          { 
+            role: "user", 
+            content: [{ text: `Esegui la ricerca mirata usando i tool necessari per soddisfare questa azione richiesta: "${direttivaHitl}"` }] 
+          },
+        ],
+        tools: dynamicTools as any,
+        config: { temperature },
+        maxTurns: 3, 
+        context: { userId, docs, dbLimit: topK, webLimit, confidenceLevel, sourceWeb, sourceInternalDB, requiredTools: [] },
+      });
+    } catch (err: any) {
+      if (err.message && err.message.includes("Exceeded maximum tool call iterations")) {
+        console.warn("⚠️ [Refine] Loop intercettato. Propagazione errore ToolLoop al client.");
+        throw new Error("ToolLoop: Il modello ha superato il limite di iterazioni durante l'approfondimento.");
+      }
+      throw err;
+    }
+
+    // PASSO 2: Formattazione JSON strutturata
+    const mappingSystemPrompt = `SEI JURIO. In base ai risultati della ricerca mirata appena eseguita, restituisci la mappa dialettica aggiornata e completa in formato JSON strutturato.
+REGOLE:
+1. Integra le nuove fonti trovate senza perdere quelle esistenti.
+2. Mantieni l'inquadramento e assegna correttamente le nuove fonti al ramo di pertinenza.`;
+
+    const historyWithoutSystem = searchResponse.messages.filter((msg: any) => msg.role !== "system");
+
+    let rawData: any = {};
+    try {
+      const mappingResponse = await ai.generate({
+        model: aiModel,
+        messages: [
+          { role: "system", content: [{ text: mappingSystemPrompt }] },
+          ...historyWithoutSystem,
+          { role: "user", content: [{ text: "Genera ora la Mappa Dialettica finale integrando le nuove fonti e argomentazioni." }] }
+        ],
+        output: { schema: ResearchOutputSchema },
+        config: { temperature },
+      });
+
+      rawData = mappingResponse.output;
+      if (!rawData) {
+        throw new Error("Nessun output strutturato restituito dal modello.");
+      }
+    } catch (err: any) {
+      console.error("❌ [Refine] Errore nella generazione strutturata della mappa:", err);
+      throw new Error(`[Refine] Errore formattazione mappa: ${err.message}`);
+    }
+
+    const mergeFonti = (oldF: any[], newF: any[]) => {
+      const map = new Map();
+      (oldF || []).forEach((s: any) => map.set(s.id, s));
+
+      const valideNew = validaFonti(newF || []);
+      valideNew.forEach((s: any) => {
+        if (!map.has(s.id)) {
+          map.set(s.id, { ...s, nuova: true });
+        } else {
+          const existing = map.get(s.id);
+          map.set(s.id, { ...s, escluso: existing.escluso, nuova: existing.nuova });
+        }
+      });
+
+      return Array.from(map.values());
+    };
+
+    const parsedData = {
+      inquadramento: {
+        qualificazioneGiuridica: rawData?.inquadramento?.qualificazioneGiuridica || currentInquadramento.qualificazioneGiuridica,
+        fattispecieEstratta: rawData?.inquadramento?.fattispecieEstratta || currentInquadramento.fattispecieEstratta,
+        normeRiferimento: Array.isArray(rawData?.inquadramento?.normeRiferimento) ? rawData.inquadramento.normeRiferimento : currentInquadramento.normeRiferimento
+      },
+      mappaDialettica: {
+        orientamentoFavorevole: rawData?.mappaDialettica?.orientamentoFavorevole ? {
+          ...rawData.mappaDialettica.orientamentoFavorevole,
+          fonti: mergeFonti(oldFavFonts, rawData.mappaDialettica.orientamentoFavorevole.fonti)
+        } : currentMappaDialettica.orientamentoFavorevole,
+
+        orientamentoContrario: rawData?.mappaDialettica?.orientamentoContrario ? {
+          ...rawData.mappaDialettica.orientamentoContrario,
+          fonti: mergeFonti(oldContFonts, rawData.mappaDialettica.orientamentoContrario.fonti)
+        } : currentMappaDialettica.orientamentoContrario,
+
+        puntiAperti: Array.isArray(rawData?.mappaDialettica?.puntiAperti) 
+          ? Array.from(new Set([...(currentMappaDialettica.puntiAperti || []), ...rawData.mappaDialettica.puntiAperti]))
+          : (currentMappaDialettica.puntiAperti || [])
+      }
+    };
+
+    return ResearchOutputSchema.parse(parsedData);
+  }
+);
+
+// ============================================================================
+// 3. FLOW 3: GENERAZIONE REPORT STRATEGICO
+// ============================================================================
+export const generateSynthesisReportFlow = ai.defineFlow(
+  {
+    name: "generateSynthesisReportFlow",
+    inputSchema: z.object({
+      quesitoOriginale: z.string(),
+      inquadramento: z.any(),
+      mappaDialettica: z.any(),
+      userId: z.string().min(1), // Aggiunto per consentire il controllo Firestore
+      config: z.object({
+        temperature: z.number().min(0).max(2).default(0.3),
+      }).optional().default({}),
+    }),
+    outputSchema: ReportSintesiSchema,
+  },
+  async ({ quesitoOriginale, inquadramento, mappaDialettica, userId, config }) => {
+
+    const aiModel = await getModelForUser(userId);
+
+    // 1. PRE-PROCESSING
+    const filtraFontiAttive = (fonti: any[]) => {
+      if (!Array.isArray(fonti)) return [];
+      return fonti.filter((f) => !f.escluso);
+    };
+
+    const mappaFiltrata = {
+      orientamentoFavorevole: mappaDialettica?.orientamentoFavorevole ? {
+        ...mappaDialettica.orientamentoFavorevole,
+        fonti: filtraFontiAttive(mappaDialettica.orientamentoFavorevole.fonti)
+      } : null,
+      orientamentoContrario: mappaDialettica?.orientamentoContrario ? {
+        ...mappaDialettica.orientamentoContrario,
+        fonti: filtraFontiAttive(mappaDialettica.orientamentoContrario.fonti)
+      } : null,
+      puntiAperti: mappaDialettica?.puntiAperti || []
+    };
+
+    // 2. COSTRUZIONE DEL PAYLOAD TESTUALE
+    const datiAnalisiJSON = JSON.stringify({
+      inquadramento,
+      mappaDialettica: mappaFiltrata
+    }, null, 2);
+
+    // 3. SYSTEM PROMPT
+    const systemPrompt = `SEI JURIO, un Avvocato Cassazionista e Senior Legal Strategist.
+Il tuo compito ESCLUSIVO è redigere un "Report Strategico Finale" basandoti UNICAMENTE sui dati JSON che ti vengono forniti. Non inventare giurisprudenza e non fare ulteriori ricerche.
+
+QUESITO DEL CLIENTE:
+"${quesitoOriginale}"
+
+REGOLE DI REDAZIONE:
+1. Usa un tono formale, giuridicamente ineccepibile ma estremamente operativo e chiaro.
+2. Basati SOLO sulle informazioni presenti nel JSON fornito.
+3. Nelle sezioni 'argomentazioniAzione' e 'rischiEEccezioni', quando menzioni un principio, CITA SEMPRE la fonte associata riportando testualmente il suo ID (che sia un UUID o un URL web).
+4. Le 'conclusioniStrategiche' devono rispondere direttamente al quesito del cliente, fornendo un parere definitivo basato sul bilanciamento tra orientamento favorevole e contrario.`;
+
+    // 4. GENERAZIONE
+    try {
+      const response = await ai.generate({
+        model: aiModel,
+        messages: [
+          { role: "system", content: [{ text: systemPrompt }] },
+          { 
+            role: "user", 
+            content: [{ 
+              text: `Ecco i risultati consolidati della ricerca in formato JSON. Estrai il report strutturato.\n\nDATI:\n${datiAnalisiJSON}` 
+            }] 
+          }
+        ],
+        output: { schema: ReportSintesiSchema },
+        config: { temperature: config.temperature },
+      });
+
+      const output = response.output;
+      if (!output) {
+        throw new Error("Generazione del report fallita: output vuoto.");
+      }
+
+      return ReportSintesiSchema.parse(output);
+
+    } catch (err: any) {
+      console.error("❌ Errore durante la generazione del report di sintesi:", err);
+      throw new Error(`Errore nella stesura del report: ${err.message}`);
     }
   }
 );

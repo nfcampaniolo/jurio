@@ -499,6 +499,7 @@ export interface MonthlyUsageReportData {
   ricerca: { count: number; timeSavedMinutes: number }; 
   analisi: { count: number; timeSavedMinutes: number }; 
   sintesi: { count: number; timeSavedMinutes: number }; 
+  deepAnalysis: { count: number; timeSavedMinutes: number }; 
   totalTimeSavedMinutes: number;
 }
 
@@ -523,6 +524,9 @@ export function calculateReportData(rawUsage: Record<string, number>, targetMont
   const sintesiCount = rawUsage['drafting_agent'] || 0;
   const sintesiTime = sintesiCount * 15;
 
+  const deepAnalysisCount = rawUsage['deep_analysis'] || 0;
+  const deepAnalysisTime = deepAnalysisCount * 60;
+
   return {
     mese: targetMonthStr,
     haFattoPrompting,
@@ -530,7 +534,8 @@ export function calculateReportData(rawUsage: Record<string, number>, targetMont
     ricerca: { count: ricercaCount, timeSavedMinutes: ricercaTime },
     analisi: { count: analisiCount, timeSavedMinutes: analisiTime },
     sintesi: { count: sintesiCount, timeSavedMinutes: sintesiTime },
-    totalTimeSavedMinutes: analisiTime + ricercaTime + sintesiTime
+    deepAnalysis: { count: deepAnalysisCount, timeSavedMinutes: deepAnalysisTime },
+    totalTimeSavedMinutes: analisiTime + ricercaTime + sintesiTime + deepAnalysisTime
   };
 }
 

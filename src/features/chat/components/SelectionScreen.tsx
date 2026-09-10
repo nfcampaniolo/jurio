@@ -17,75 +17,119 @@ export const SelectionScreen = ({
   const navigate = useNavigate();
 
   return (
-    <section className="w-full h-full overflow-y-auto bg-neutral-50 dark:bg-neutral-950 scroll-smooth">
-      <div className="min-h-full w-full flex flex-col items-center justify-start md:justify-center px-4 py-8 md:py-20">
+    <section aria-labelledby="selection-screen-heading" className="w-full h-full overflow-y-auto bg-(--color-bg) scroll-smooth">
+      <div className="min-h-full w-full flex flex-col items-center justify-start px-6 py-10 md:py-16">
         <motion.div 
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 
           exit={{ opacity: 0, scale: 0.98 }} 
           transition={{ duration: 0.4, ease: "easeOut" }} 
-          className="max-w-4xl w-full flex flex-col items-center"
+          className="max-w-5xl w-full flex flex-col items-center"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8 w-full mb-8 md:mb-10">
+          
+          {/* HEADER SEZIONE (Spostato in alto per coerenza con DeepAnalysisLanding) */}
+          <div className="text-center max-w-4xl mb-14">
+            <div className="mb-6 flex justify-center">
+              <span className="inline-flex items-center justify-center w-14 h-14 rounded-lg border border-(--color-border) bg-(--color-surface) text-(--color-text)">
+                <Scale size={26} className="opacity-80" />
+              </span>
+            </div>
+
+            <h1
+              id="selection-screen-heading"
+              className="text-3xl md:text-4xl lg:text-5xl text-(--color-text) tracking-tight mb-5 leading-tight"
+              style={{ fontFamily: 'var(--font-serif)' }}
+            >
+              Il tuo <em>Consulente Legale</em>
+            </h1>
+
+            <p className="text-lg text-(--color-muted) font-light leading-relaxed mx-auto max-w-2xl">
+              Ricerca giurisprudenziale avanzata e analisi dei tuoi documenti,
+              in un unico spazio di lavoro.
+            </p>
+          </div>
+
+          {/* GRIGLIA OPZIONI PRINCIPALI */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 w-full max-w-4xl mb-12">
+            
+            {/* Card: Chat Temporanea */}
             <button 
               onClick={startTempChat} 
-              className="group relative p-5 sm:p-6 md:p-8 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-yellow-500 dark:hover:border-yellow-500 hover:shadow-2xl hover:shadow-yellow-500/5 transition-all duration-300 text-left overflow-hidden"
+              className="group relative flex flex-col text-left p-8 rounded-lg border border-(--color-border) bg-(--color-surface) transition-all duration-300 overflow-hidden shadow-sm"
             >
-              {/* Linea superiore di rigore: invisibile di default, compare e si ingrandisce all'hover */}
-              <div className="absolute top-0 left-0 right-0 h-0 bg-(--color-primary, #eab308) opacity-0 group-hover:opacity-100 group-hover:h-1 transition-all duration-200 z-10" />
+              {/* Linea superiore di rigore animata */}
+              <div className="absolute top-0 left-0 right-0 h-0 bg-(--color-primary) opacity-0 group-hover:opacity-100 group-hover:h-1 transition-all duration-200 z-10" />
 
-              <div className="p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl w-fit group-hover:scale-110 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/40 transition-all mb-4 sm:mb-5">
-                <MessageSquare className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-blue-600 dark:text-blue-400" />
-              </div>
-              <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 text-neutral-900 dark:text-white">Chat Temporanea</h3>
-              <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+              <span 
+                className="mb-8 mt-2 inline-flex items-center justify-center w-12 h-12 rounded-md bg-(--color-border) opacity-80 text-(--color-text) transition-transform group-hover:scale-105 relative z-10" 
+                aria-hidden="true"
+              >
+                <MessageSquare size={20} />
+              </span>
+
+              <h3 
+                className="text-xl mb-3 font-medium text-(--color-text) leading-snug relative z-10"
+                style={{ fontFamily: 'var(--font-serif)' }}
+              >
+                Chat Temporanea
+              </h3>
+              
+              <p className="text-sm leading-relaxed text-(--color-muted) font-light relative z-10">
                 Avvia una sessione rapida di ricerca giurisprudenziale senza salvare dati nel cloud.
               </p>
             </button>
             
+            {/* Card: Nuovo Fascicolo */}
             <button 
               onClick={startFascicoloSetup} 
-              className="group relative p-5 sm:p-6 md:p-8 rounded-lg bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-yellow-500 dark:hover:border-yellow-500 hover:shadow-2xl hover:shadow-yellow-500/5 transition-all duration-300 text-left overflow-hidden"
+              className="group relative flex flex-col text-left p-8 rounded-lg border border-(--color-border) bg-(--color-surface)  transition-all duration-300 overflow-hidden shadow-sm"
             >
-              {/* Linea superiore di rigore: invisibile di default, compare e si ingrandisce all'hover */}
-              <div className="absolute top-0 left-0 right-0 h-0 bg-(--color-primary, #eab308) opacity-0 group-hover:opacity-100 group-hover:h-1 transition-all duration-200 z-10" />
+              {/* Linea superiore di rigore animata */}
+              <div className="absolute top-0 left-0 right-0 h-0 bg-(--color-primary) opacity-0 group-hover:opacity-100 group-hover:h-1 transition-all duration-200 z-10" />
 
-              <div className="p-3 sm:p-4 bg-stone-50 dark:bg-stone-900/20 rounded-2xl w-fit group-hover:scale-110 group-hover:bg-stone-100 dark:group-hover:bg-stone-900/40 transition-all mb-4 sm:mb-5">
-                <FolderPlus className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 text-yellow-600 dark:text-yellow-400" />
-              </div>
-              <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2 text-neutral-900 dark:text-white">Nuovo Fascicolo</h3>
-              <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 leading-relaxed">
+              <span 
+                className="mb-8 mt-2 inline-flex items-center justify-center w-12 h-12 rounded-md bg-(--color-border) opacity-80 text-(--color-text) transition-transform group-hover:scale-105 relative z-10" 
+                aria-hidden="true"
+              >
+                <FolderPlus size={20} />
+              </span>
+
+              <h3 
+                className="text-xl mb-3 font-medium text-(--color-text) leading-snug relative z-10"
+                style={{ fontFamily: 'var(--font-serif)' }}
+              >
+                Nuovo Fascicolo
+              </h3>
+              
+              <p className="text-sm leading-relaxed text-(--color-muted) font-light relative z-10">
                 Organizza i tuoi documenti e crea una memoria persistente per analisi complesse.
               </p>
             </button>
+
           </div>
 
+          {/* AZIONE SECONDARIA (Archivio) */}
           <motion.button 
             whileHover={{ x: 5 }} 
             onClick={() => navigate('/storico')} 
-            className="group flex items-center gap-3 px-6 py-4 text-sm sm:text-base text-neutral-600 dark:text-neutral-300 font-bold hover:text-yellow-600 dark:hover:text-yellow-400 transition-all mb-8"
+            className="group flex items-center gap-3 px-6 py-4 mt-4 text-(--color-text) hover:opacity-80 transition-all mb-16 mx-auto outline-none"
           >
-            <div className="p-2 bg-neutral-100 dark:bg-neutral-800 rounded-lg group-hover:bg-stone-50 dark:group-hover:bg-stone-900/30 transition-colors">
-                {isLoadingData ? <Loader2 size={18} className="animate-spin text-yellow-600" /> : <FolderOpen size={18} />}
+            <div className="flex items-center justify-center w-8 h-8 bg-(--color-surface) border border-(--color-border) rounded-md group- transition-colors">
+              {isLoadingData ? (
+                <Loader2 size={14} className="animate-spin text-(--color-primary)" />
+              ) : (
+                <FolderOpen size={14} className="text-(--color-muted) group-hover:text-(--color-text) transition-colors" />
+              )}
             </div>
-            <span>Sfoglia Archivio Fascicoli</span>
-            <ChevronRight size={18} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+            <span className="uppercase tracking-widest text-[11px] font-bold">
+              Sfoglia Archivio Fascicoli
+            </span>
+            <ChevronRight size={16} className="opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all text-(--color-muted)" />
           </motion.button>
           
-          <div className="text-center space-y-3 md:space-y-4 mb-10 md:mb-16">
-            <div className="relative inline-block">
-              <Scale className="w-12 h-12 md:w-16 md:h-16 text-yellow-600 dark:text-yellow-500 mx-auto" />
-            </div>
-            <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
-              Nuova Consultazione
-            </h1>
-            <p className="text-sm sm:text-base md:text-lg text-neutral-500 dark:text-neutral-400 max-w-md mx-auto leading-relaxed px-2">
-              Scegli come procedere con la tua analisi legale intelligente.
-            </p>
-          </div>
         </motion.div>
       </div>
-    <Footer />
+      <Footer />
     </section>
   );
 };

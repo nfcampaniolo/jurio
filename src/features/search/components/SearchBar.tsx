@@ -199,7 +199,7 @@ export const SearchBar = () => {
           className="text-2xl sm:text-3xl md:text-4xl font-medium text-(--color-text) tracking-tight"
          
         >
-          Consulta la giurisprudenza online
+          Consulta la <em>giurisprudenza</em> online
         </motion.h1>
 
         <motion.p

@@ -781,3 +781,30 @@ export function normalizePlanId(id: unknown):
   if (v === "personale" || v === "business" || v === "personale_m" || v === "business_m") return v;
   return null;
 }
+
+export interface DeepAnalysisConfig {
+  confidenceLevel: number;
+  sourceWeb: boolean;
+  sourceInternalDB: boolean;
+  temperature: number;
+  topK: number;
+  webLimit: number;
+}
+
+export const DEFAULT_CONFIG: DeepAnalysisConfig = {
+  confidenceLevel: 80,
+  sourceWeb: true,
+  sourceInternalDB: true,
+  temperature: 0.2,
+  topK: 10,
+  webLimit: 5,
+};
+
+export interface DeepAnalysisRequestBody {
+  action?: "start_research" | "refine_research" | "generate_synthesis";
+  sessionId?: string;
+  prompt?: string;
+  direttivaHitl?: string;
+  docs?: string[];
+  config?: Partial<DeepAnalysisConfig>;
+}

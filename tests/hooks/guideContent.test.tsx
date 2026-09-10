@@ -15,6 +15,9 @@ vi.mock("@/features/guide/components/RicercaSemantica", () => ({
 vi.mock("@/features/guide/components/ConsulenteLegale", () => ({
   default: () => <div data-testid="guida-consulente-legale">Consulente Legale</div>,
 }));
+vi.mock("@/features/guide/components/ApprofondimentoGiurisprudenziale", () => ({
+  default: () => <div data-testid="guida-approfondimento">Approfondimento Giurisprudenziale</div>,
+}));
 vi.mock("@/features/guide/components/AnalisiDocumenti", () => ({
   default: () => <div data-testid="guida-analisi-documenti">Analisi Documenti</div>,
 }));
@@ -57,7 +60,12 @@ vi.mock("@/features/guide/components/QuoteUtilizzo", () => ({
 vi.mock("@/features/guide/components/ConfigurazioneLeChat", () => ({
   default: () => <div data-testid="guida-mcp-vibe">Configurazione MCP</div>,
 }));
-
+vi.mock("@/features/guide/components/ConfigurazioneClaude", () => ({
+  default: () => <div data-testid="guida-mcp-claude">Configurazione Claude</div>,
+}));
+vi.mock("../components/ConfigurazioneClaude", () => ({
+  default: () => <div data-testid="guida-mcp-claude">Configurazione Claude</div>,
+}));
 
 /* ---------- subject under test ---------- */
 import { guideContent } from "@/features/guide/hooks/guideContent";
@@ -72,6 +80,7 @@ describe("Guide Content Registry Suite", () => {
     ["interfacce", "guida-interfacce"],
     ["ricerca-semantica", "guida-ricerca-semantica"],
     ["consulente-legale", "guida-consulente-legale"],
+    ["analisi", "guida-approfondimento"],
     ["analisi-documenti", "guida-analisi-documenti"],
     ["accesso", "guida-accesso"],
     ["prova-gratuita", "guida-prova-gratuita"],
@@ -86,11 +95,12 @@ describe("Guide Content Registry Suite", () => {
     ["corte-costituzionale", "guida-corte-costituzionale"],
     ["quote", "guida-quote"],
     ["mcp-vibe", "guida-mcp-vibe"],
+    ["mcp-claude", "guida-mcp-claude"],
   ];
 
   describe("Integrità del Registro delle Rotte", () => {
-    test("contiene esattamente le 19 sezioni censite", () => {
-      expect(Object.keys(guideContent)).toHaveLength(19);
+    test("contiene esattamente le 20 sezioni censite", () => {
+      expect(Object.keys(guideContent)).toHaveLength(20);
     });
 
     test("tutti gli slug rispettano il pattern kebab-case minuscolo", () => {

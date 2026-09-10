@@ -7,6 +7,7 @@ import { ConfirmModal } from "@/shared/components/ConfirmModal";
 import { Upload } from "@/features/profile/components/UploadSentences";
 import { YourDocument } from "@/shared/components/YourDocument.tsx";
 import { HeaderProfile } from "@/features/profile/components/HeaderProfile";
+import { SEO } from "@/shared/components/SEO";
 import type { Action } from "@/interfaces/interfaces";
 import {
   FiSearch,
@@ -16,7 +17,9 @@ import {
   FiTrash2,
   FiDollarSign,
   FiActivity,
-  FiLayout
+  FiLayout,
+  FiSliders,
+  FiBookOpen
 } from "react-icons/fi";
 import { navigateItem } from "@/routes/navigation";
 import { Loader2 } from "lucide-react";
@@ -36,12 +39,24 @@ export const Profile: React.FC = () => {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  const seoComponent = (
+    <SEO
+      title="Il tuo Profilo"
+      description="Gestisci il tuo account, carica sentenze e monitora i tuoi utilizzi su Jurio."
+      path="/profilo"
+      noIndex
+    />
+  );
+
   if (loading || !user || !userData) {
     return (
-      <div className="h-screen flex items-center justify-center text-(--color-muted) gap-2 bg-(--color-bg)">
-        <Loader2 size={16} className="animate-spin text-(--color-text)" />
-        <span className="text-xs font-bold uppercase tracking-widest">Caricamento...</span>
-      </div>
+      <>
+        {seoComponent}
+        <div className="h-screen flex items-center justify-center text-(--color-muted) gap-2 bg-(--color-bg)">
+          <Loader2 size={16} className="animate-spin text-(--color-text)" />
+          <span className="text-xs font-bold uppercase tracking-widest">Caricamento...</span>
+        </div>
+      </>
     );
   }
 
@@ -63,6 +78,26 @@ export const Profile: React.FC = () => {
       onClick: () =>
         navigateItem(
           { type: "route", target: "/chat" },
+          navigate
+        ),
+    },
+    {
+      id: "analisi",
+      label: "Approfondimento Giurisprudenziale",
+      icon: <FiBookOpen />,
+      onClick: () =>
+        navigateItem(
+          { type: "route", target: "/analisi" },
+          navigate
+        ),
+    },
+    {
+      id: "prompting",
+      label: "Prompting Personalizzato",
+      icon: <FiSliders />,
+      onClick: () =>
+        navigateItem(
+          { type: "route", target: "/profilo/prompt-builder" },
           navigate
         ),
     },
@@ -121,6 +156,8 @@ export const Profile: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-(--color-bg) text-(--color-text)">
+      {seoComponent}
+
       <HeaderProfile
         name={name}
         surname={surname}
@@ -131,24 +168,24 @@ export const Profile: React.FC = () => {
 
         {/* Profilo compatto */}
         <motion.section
-            id="section1"
-            className="flex flex-col items-center text-center gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-          >
-            <Upload/>
-          </motion.section>
+          id="section1"
+          className="flex flex-col items-center text-center gap-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut" }}
+        >
+          <Upload />
+        </motion.section>
 
-          <motion.section
-            id="section2"
-            className="flex flex-col items-center text-center gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, ease: "easeOut", delay: 0.1 }}
-          >
-            <YourDocument/>
-          </motion.section>
+        <motion.section
+          id="section2"
+          className="flex flex-col items-center text-center gap-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, ease: "easeOut", delay: 0.1 }}
+        >
+          <YourDocument />
+        </motion.section>
 
         <ConfirmModal
           isOpen={confirmOpen}
@@ -170,6 +207,7 @@ export const Profile: React.FC = () => {
             setConfirmOpen(false);
           }}
         />
+
         {/* Footer con link legali */}
         <div className="mt-8 flex justify-center gap-6 text-xs text-(--color-muted) font-light uppercase tracking-widest">
           <a href="/privacy" className="hover:text-(--color-text) transition-colors underline underline-offset-2">Privacy</a>

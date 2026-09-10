@@ -1,241 +1,275 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import React from "react";
-import type { UsageDoc } from "@/features/profile/hooks/usageUtils";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import UserUsage from "@/features/profile/UserUsage"; // Adatta il path se necessario
 
 /* ---------- hoisted mocks ---------- */
-const { mockNavigate, mockAuthState, mockGetDocs } = vi.hoisted(() => ({
+const { mockNavigate, mockUseAuth, mockUseUsageData, mockSeo } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
-  mockAuthState: {
-    user: { uid: "usr_flv_2026" } as { uid: string; email?: string } | null,
-  },
-  mockGetDocs: vi.fn(),
+  mockUseAuth: vi.fn(),
+  mockUseUsageData: vi.fn(),
+  mockSeo: vi.fn(),
 }));
 
-/* ---------- mock react-router-dom ---------- */
-vi.mock("react-router-dom", () => ({
-  __esModule: true,
-  useNavigate: () => mockNavigate,
-}));
+/* ---------- mock router & auth ---------- */
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
-/* ---------- mock @/context/useAuth ---------- */
 vi.mock("@/context/useAuth", () => ({
-  __esModule: true,
-  useAuth: () => mockAuthState,
+  useAuth: () => mockUseAuth(),
+}));
+
+/* ---------- mock SEO component ---------- */
+vi.mock("@/shared/components/SEO", () => ({
+  SEO: (props: unknown) => {
+    mockSeo(props);
+    return null;
+  },
+}));
+
+/* ---------- mock hook dati & formattatori ---------- */
+vi.mock("@/features/profile/hooks/useUsageData", () => ({
+  useUsageData: (...args: unknown[]) => mockUseUsageData(...args),
+  formatMonthLabel: vi.fn((mese: string) => `Settembre ${mese.split("-")[0]}`),
+  formatTimeHero: vi.fn((min: number) => ({
+    value: String(Math.floor(min / 60)),
+    unit: "ore",
+  })),
+  formatTimeCompact: vi.fn((min: number) => `${min}m`),
 }));
 
 /* ---------- mock framer-motion ---------- */
-vi.mock("framer-motion", () => {
-  const passthroughComponent = (tag: string) =>
-    React.forwardRef<
-      HTMLElement,
-      React.HTMLAttributes<HTMLElement> & {
-        variants?: unknown;
-        initial?: unknown;
-        animate?: unknown;
-        transition?: unknown;
-      }
-    >(({ children, ...props }, ref) =>
-      React.createElement(tag, { ...props, ref }, children)
-    );
-
+vi.mock("framer-motion", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("framer-motion")>();
   return {
-    __esModule: true,
+    ...actual,
+    useReducedMotion: vi.fn(() => false),
     motion: {
-      div: passthroughComponent("div"),
-      h1: passthroughComponent("h1"),
-      p: passthroughComponent("p"),
+      div: ({
+        children,
+        className,
+        style,
+        role,
+        "aria-valuenow": valuenow,
+        "aria-valuemin": valuemin,
+        "aria-valuemax": valuemax,
+        "aria-label": ariaLabel,
+      }: {
+        children?: React.ReactNode;
+        className?: string;
+        style?: React.CSSProperties;
+        role?: string;
+        "aria-valuenow"?: number;
+        "aria-valuemin"?: number;
+        "aria-valuemax"?: number;
+        "aria-label"?: string;
+      }) => (
+        <div
+          className={className}
+          style={style}
+          role={role}
+          aria-valuenow={valuenow}
+          aria-valuemin={valuemin}
+          aria-valuemax={valuemax}
+          aria-label={ariaLabel}
+        >
+          {children}
+        </div>
+      ),
     },
   };
 });
 
-/* ---------- mock usageUtils ---------- */
-vi.mock("@/features/profile/hooks/usageUtils", () => ({
-  __esModule: true,
-  formatMonth: (id: string) => {
-    if (id === "2026_08") return "Agosto 2026";
-    if (id === "2026_07") return "Luglio 2026";
-    return id;
-  },
-  calculateTimeSaved: (usage: Partial<UsageDoc>) => {
-    const total =
-      (usage.research_agent || 0) * 15 +
-      (usage.drafting_agent || 0) * 30 +
-      (usage.legal_agent || 0) * 10;
-    return total;
-  },
-}));
+describe("UserUsage Component Suite", () => {
+  const defaultLimits = {
+    research: 100,
+    analysis: 50,
+    deep_analysis: 20,
+    synthesis: 40,
+  };
 
-/* ---------- mock firestore & db ---------- */
-const mockGetDb = vi.fn().mockResolvedValue({ type: "firestore-db" });
+  const mockUsageList = [
+    {
+      mese: "2026-09",
+      isCurrentMonth: true,
+      totalTimeSavedMinutes: 360,
+      ricerca: { count: 30, timeSavedMinutes: 300 },
+      analisi: { count: 10, timeSavedMinutes: 300 },
+      deepAnalysis: { count: 5, timeSavedMinutes: 300 },
+      sintesi: { count: 8, timeSavedMinutes: 120 },
+      interazioniCount: 42,
+    },
+    {
+      mese: "2026-08",
+      isCurrentMonth: false,
+      totalTimeSavedMinutes: 180,
+      ricerca: { count: 20, timeSavedMinutes: 200 },
+      analisi: { count: 5, timeSavedMinutes: 150 },
+      deepAnalysis: { count: 2, timeSavedMinutes: 120 },
+      sintesi: { count: 4, timeSavedMinutes: 60 },
+      interazioniCount: 15,
+    },
+  ];
 
-vi.mock("@/infrastructure/db", () => ({
-  __esModule: true,
-  getDb: () => mockGetDb(),
-}));
-
-vi.mock("firebase/firestore", () => ({
-  __esModule: true,
-  collection: vi.fn((_db, ...pathSegments: string[]) => ({
-    _type: "collection",
-    path: pathSegments.join("/"),
-  })),
-  query: vi.fn((coll: unknown) => ({
-    _type: "query",
-    coll,
-  })),
-  orderBy: vi.fn((field: string, dir: string) => ({ _type: "orderBy", field, dir })),
-  getDocs: () => mockGetDocs(),
-}));
-
-/* ---------- mock data ---------- */
-const sampleUsageData: Array<{ id: string } & Partial<UsageDoc>> = [
-  {
-    id: "2026_08",
-    research_agent: 10,
-    research: 5,
-    review_agent: 3,
-    reasoning: 2,
-    speech_to_text: 1,
-    drafting_agent: 4,
-    legal_agent: 12,
-    prompting: 2,
-  },
-  {
-    id: "2026_07",
-    research_agent: 4,
-    research: 2,
-    review_agent: 1,
-    reasoning: 0,
-    speech_to_text: 0,
-    drafting_agent: 1,
-    legal_agent: 5,
-    prompting: 0,
-  },
-];
-
-/* ---------- component under test ---------- */
-import UserUsage from "@/features/profile/UserUsage";
-
-describe("UserUsage Page Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(console, "error").mockImplementation(() => {});
-    mockAuthState.user = { uid: "usr_flv_2026" };
-    mockGetDocs.mockResolvedValue({
-      docs: sampleUsageData.map((item) => ({
-        id: item.id,
-        data: () => {
-          const { ...rest } = item;
-          return rest;
-        },
-      })),
-    });
+    mockUseAuth.mockReturnValue({ user: { uid: "usr_flv_2026" } });
   });
 
-  test("mostra lo stato di caricamento quando uid è assente o il recupero è in corso", () => {
-    mockAuthState.user = null;
-    render(<UserUsage />);
+  const renderComponent = () =>
+    render(
+      <MemoryRouter>
+        <UserUsage />
+      </MemoryRouter>
+    );
 
-    expect(screen.getByText("Caricamento statistiche...")).toBeInTheDocument();
-  });
-
-  test("mostra il box di errore se il fetch Firestore fallisce", async () => {
-    mockGetDocs.mockRejectedValue(new Error("Network connection error"));
-    render(<UserUsage />);
-
-    await waitFor(() => {
-      expect(
-        screen.getByText("Si è verificato un errore nel caricamento dei dati di utilizzo.")
-      ).toBeInTheDocument();
-    });
-  });
-
-  test("mostra la schermata di stato vuoto quando non ci sono record di utilizzo registrati", async () => {
-    mockGetDocs.mockResolvedValue({ docs: [] });
-    render(<UserUsage />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Nessuna statistica disponibile")).toBeInTheDocument();
-      expect(
-        screen.getByText("Attualmente non ci sono dati di utilizzo registrati per il tuo profilo.")
-      ).toBeInTheDocument();
-    });
-  });
-
-  test("renderizza le metriche calcolate del mese più recente e il badge prompting se presente", async () => {
-    render(<UserUsage />);
-
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "I tuoi utilizzi", level: 1 })).toBeInTheDocument();
+  test("configura correttamente i metadati SEO (noIndex e path riservato)", () => {
+    mockUseUsageData.mockReturnValue({
+      usageList: mockUsageList,
+      limits: defaultLimits,
+      loading: false,
+      error: null,
     });
 
-    const select = screen.getByLabelText("Periodo:") as HTMLSelectElement;
-    expect(select.value).toBe("2026_08");
-    expect(screen.getByRole("option", { name: "Agosto 2026" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Luglio 2026" })).toBeInTheDocument();
+    renderComponent();
 
-    // Tempo risparmiato: 10*15 + 4*30 + 12*10 = 390 minuti
-    expect(screen.getByText("390")).toBeInTheDocument();
-    expect(screen.getByText("minuti")).toBeInTheDocument();
+    expect(mockSeo).toHaveBeenCalledTimes(1);
+    expect(mockSeo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Monitoraggio Utilizzi e Statistiche",
+        path: "/profilo/utilizzi",
+        noIndex: true,
+      })
+    );
+  });
 
-    // Ricerche: 10 + 5 = 15 sessioni
-    expect(screen.getByText("15")).toBeInTheDocument();
-    expect(screen.getByText("sessioni")).toBeInTheDocument();
+  test("renderizza lo stato di caricamento iniziale", () => {
+    mockUseUsageData.mockReturnValue({
+      usageList: [],
+      limits: defaultLimits,
+      loading: true,
+      error: null,
+    });
 
-    // Analisi Documentale: 3 + 2 + 1 = 6 documenti
+    renderComponent();
+
+    expect(screen.getByText("Sincronizzazione registri...")).toBeInTheDocument();
+  });
+
+  test("renderizza il messaggio di errore in caso di fallimento della chiamata", () => {
+    mockUseUsageData.mockReturnValue({
+      usageList: [],
+      limits: defaultLimits,
+      loading: false,
+      error: "Impossibile recuperare i log di utilizzo.",
+    });
+
+    renderComponent();
+
+    expect(screen.getByText("Impossibile recuperare i log di utilizzo.")).toBeInTheDocument();
+  });
+
+  test("renderizza statistiche hero, card metriche e limiti per il mese corrente", () => {
+    mockUseUsageData.mockReturnValue({
+      usageList: mockUsageList,
+      limits: defaultLimits,
+      loading: false,
+      error: null,
+    });
+
+    renderComponent();
+
+    // Hero Section
+    expect(screen.getByText(/Performance in corso/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: /Tempo Risparmiato/i })).toBeInTheDocument();
     expect(screen.getByText("6")).toBeInTheDocument();
-    expect(screen.getByText("documenti")).toBeInTheDocument();
+    expect(screen.getByText("ore")).toBeInTheDocument();
 
-    // Sintesi: 4 bozze
-    expect(screen.getByText("4")).toBeInTheDocument();
-    expect(screen.getByText("bozze")).toBeInTheDocument();
+    // Card Metriche (titoli e conteggi)
+    expect(screen.getByText("Ricerche")).toBeInTheDocument();
+    expect(screen.getByText("30")).toBeInTheDocument();
+    expect(screen.getByText(/\/ 100/i)).toBeInTheDocument();
 
-    // Conversazioni Legal Agent: 12
-    expect(screen.getByText("12")).toBeInTheDocument();
+    expect(screen.getByText("Analisi Doc")).toBeInTheDocument();
+    expect(screen.getByText("10")).toBeInTheDocument();
 
-    // Prompting > 0 presente per Agosto 2026
-    expect(screen.getByText("Prompting Libero Attivo")).toBeInTheDocument();
-  });
-
-  test("aggiorna le metriche e nasconde il badge prompting al cambio del mese nel selettore", async () => {
-    render(<UserUsage />);
-
-    await waitFor(() => {
-      expect(screen.getByLabelText("Periodo:")).toBeInTheDocument();
-    });
-
-    const select = screen.getByLabelText("Periodo:");
-    fireEvent.change(select, { target: { value: "2026_07" } });
-
-    // Tempo risparmiato: 4*15 + 1*30 + 5*10 = 140 minuti
-    expect(screen.getByText("140")).toBeInTheDocument();
-
-    // Ricerche: 4 + 2 = 6 sessioni
-    expect(screen.getByText("6")).toBeInTheDocument();
-
-    // Analisi Documentale (1 doc) e Sintesi (1 bozza) -> 2 card con conteggio 1
-    const unitCounts = screen.getAllByText("1");
-    expect(unitCounts.length).toBeGreaterThanOrEqual(2);
-    expect(screen.getByText("documenti")).toBeInTheDocument();
-    expect(screen.getByText("bozze")).toBeInTheDocument();
-
-    // Conversazioni Legal Agent: 5
+    expect(screen.getByText("Approfondimenti")).toBeInTheDocument();
     expect(screen.getByText("5")).toBeInTheDocument();
 
-    // Prompting è 0 per Luglio 2026 -> badge assente
-    expect(screen.queryByText("Prompting Libero Attivo")).not.toBeInTheDocument();
+    expect(screen.getByText("Redazione")).toBeInTheDocument();
+    expect(screen.getByText("8")).toBeInTheDocument();
+
+    // Progress Bar aria attributes per il mese corrente
+    const researchProgressBar = screen.getByRole("progressbar", { name: "Utilizzo Ricerche" });
+    expect(researchProgressBar).toHaveAttribute("aria-valuenow", "30");
+    expect(researchProgressBar).toHaveAttribute("aria-valuemax", "100");
+
+    // Footer agente & metodologia
+    expect(screen.getByText("42 interazioni")).toBeInTheDocument();
+    expect(screen.getByText(/Base calcolo: Deep/i)).toBeInTheDocument();
   });
 
-  test("esegue la navigazione alla cronologia precedente (-1) al click su 'Torna al profilo'", async () => {
-    render(<UserUsage />);
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Torna al profilo" })).toBeInTheDocument();
+  test("permette di selezionare un mese storico e disattiva la visualizzazione dei limiti", () => {
+    mockUseUsageData.mockReturnValue({
+      usageList: mockUsageList,
+      limits: defaultLimits,
+      loading: false,
+      error: null,
     });
 
-    const backBtn = screen.getByRole("button", { name: "Torna al profilo" });
-    fireEvent.click(backBtn);
+    renderComponent();
+
+    const select = screen.getByLabelText("Seleziona Mese");
+    expect(select).toBeInTheDocument();
+
+    // Cambia selezione al mese precedente (non corrente)
+    fireEvent.change(select, { target: { value: "2026-08" } });
+
+    expect(screen.getByText(/Performance storica/i)).toBeInTheDocument();
+    expect(screen.getByText("20")).toBeInTheDocument();
+
+    // Nei mesi storici showLimit è false, quindi non devono comparire barre di avanzamento
+    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
+  });
+
+  test("gestisce lo stato 'Limite raggiunto' quando l'utilizzo eguaglia o supera il limite", () => {
+    const exhaustedUsageList = [
+      {
+        ...mockUsageList[0],
+        ricerca: { count: 100, timeSavedMinutes: 1000 },
+      },
+    ];
+
+    mockUseUsageData.mockReturnValue({
+      usageList: exhaustedUsageList,
+      limits: defaultLimits,
+      loading: false,
+      error: null,
+    });
+
+    renderComponent();
+
+    expect(screen.getByText("Limite raggiunto")).toBeInTheDocument();
+    expect(screen.getByText("100%")).toBeInTheDocument();
+  });
+
+  test("naviga indietro al profilo al clic sul pulsante", () => {
+    mockUseUsageData.mockReturnValue({
+      usageList: mockUsageList,
+      limits: defaultLimits,
+      loading: false,
+      error: null,
+    });
+
+    renderComponent();
+
+    const backButton = screen.getByRole("button", { name: /torna al profilo/i });
+    fireEvent.click(backButton);
 
     expect(mockNavigate).toHaveBeenCalledWith(-1);
   });

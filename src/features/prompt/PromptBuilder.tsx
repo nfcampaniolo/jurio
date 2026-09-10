@@ -3,6 +3,7 @@ import { PromptList } from "@/features/prompt/components/PromptList";
 import { PromptCreator } from "@/features/prompt/components/PromptCreator";
 import { ConfirmModal } from "@/shared/components/ConfirmModal";
 import { usePromptDashboard } from "@/features/prompt/hooks/usePromptGenerator";
+import { SEO } from "@/shared/components/SEO";
 import { motion, AnimatePresence, useReducedMotion, type TargetAndTransition, type Transition } from "framer-motion";
 import { FaShieldAlt, FaArrowLeft, FaInfoCircle, FaFolderOpen, FaChevronRight } from "react-icons/fa";
 
@@ -37,9 +38,22 @@ export const PromptDashboard: React.FC = () => {
     transition: shouldReduceMotion ? {} : ({ duration: 0.22, ease: "easeOut" } as Transition),
   };
 
+  // Titolo contestuale alla vista attiva
+  const pageTitle = view === "create"
+    ? selectedTemplate
+      ? "Modifica Prompt Personalizzato"
+      : "Nuova Regola di Estrazione"
+    : "Prompting Personalizzato - Archivio";
+
   return (
     <div className="w-full min-h-screen bg-(--color-bg) text-(--color-text) relative">
-      
+      <SEO
+        title={pageTitle}
+        description="Crea, personalizza e gestisci le regole di estrazione e i prompt per l'analisi documentale su Jurio."
+        path="/profilo/prompt-builder"
+        noIndex
+      />
+
       {/* BARRA SUPERIORE ISTITUZIONALE & BREADCRUMB */}
       <div className="border-b border-(--color-border) bg-(--color-surface)/70 backdrop-blur-md sticky top-0 z-30 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
@@ -109,7 +123,7 @@ export const PromptDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* STRISCIA INFORMATIVA DI ORIENTAMENTO (Hover interattivo per guidare l'utente) */}
+      {/* STRISCIA INFORMATIVA DI ORIENTAMENTO */}
       {view === "list" && prompts.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
           <div className="group relative flex items-start sm:items-center justify-between gap-3 px-4 py-3 bg-(--color-surface) border border-(--color-border) hover:border-(--color-text)/40 rounded-lg shadow-xs transition-all duration-200">

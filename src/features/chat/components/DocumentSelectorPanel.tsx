@@ -7,14 +7,10 @@ import { Fragment } from "react";
 import { FaChevronDown, FaCheck } from "react-icons/fa";
 import { toast } from "react-hot-toast";
 
-// Assicurati che SavedPrompt sia esportato da interfaces.ts
 import type { AttachedDocument, DocumentSelectorPanelProps } from "@/interfaces/interfaces";
-
 import { DropZoneUploader } from "./DropZoneUploader";
 import { DocumentCard } from "./DocumentCard";
 import { DocumentModals } from "./DocumentModals";
-
-// IMPORTA IL TUO COMPONENTE (Assicurati che il percorso sia corretto in base alla tua cartella)
 import { PromptSelector } from "@/shared/components/PromptSelector";
 
 export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({ 
@@ -44,7 +40,6 @@ export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({
   const [itemToDelete, setItemToDelete] = useState<AttachedDocument | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   
-  // --- STATO PER I PROMPT CUSTOM ---
   const [selectedPromptId, setSelectedPromptId] = useState<string>("default");
 
   const { fascicoloId } = useParams<{ fascicoloId?: string }>();
@@ -52,7 +47,6 @@ export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({
   const maxAllowed = 10;
   const totalCount = attachedDocs.length + pendingFiles.length;
 
-  
   const processedDocs = archiveDocs
     .filter(doc => doc.name.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
@@ -114,7 +108,6 @@ export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({
 
   const handleProcessAndClose = async () => {
     if (pendingFiles.length > 0) {
-      // ATTENZIONE: Assicurati che `onProcessFiles` supporti il terzo parametro (promptId)
       await onProcessFiles(pendingFiles, selectedPromptId, fascicoloId);
       setPendingFiles([]); 
     }
@@ -149,18 +142,22 @@ export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({
   };
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
+    <>
+      <AnimatePresence>
+        {isOpen && (
           <motion.div
+            key="selector-backdrop"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={!isProcessing ? onClose : undefined} 
             className="fixed inset-0 bg-black/40 backdrop-blur-sm z-60"
           />
+        )}
 
+        {isOpen && (
           <motion.div
+            key="selector-panel"
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
@@ -276,7 +273,7 @@ export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({
                           </div>
                           {priorityDocs.map((doc, index) => (
                             <DocumentCard
-                              key={doc.id || `priority-${index}`}
+                              key={doc.id ? `priority-${doc.id}-${index}` : `priority-fallback-${index}`}
                               doc={doc}
                               fallbackIndex={index}
                               listType="priority"
@@ -306,7 +303,7 @@ export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({
                           )}
                           {otherDocs.map((doc, index) => (
                             <DocumentCard
-                              key={doc.id || `other-${index}`}
+                              key={doc.id ? `other-${doc.id}-${index}` : `other-fallback-${index}`}
                               doc={doc}
                               fallbackIndex={index}
                               listType="other"
@@ -334,26 +331,23 @@ export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({
 
             {/* SEZIONE AZIONI E CONFERMA */}
             <div className="p-5 border-t border-(--color-border) bg-(--color-surface) flex flex-col gap-4">
-               
-              {/* MOSTRA IL SELECTOR SOLO SE CI SONO NUOVI FILE DA ANALIZZARE */}
               {pendingFiles.length > 0 && (
-                  <div className="bg-(--color-bg) p-3 rounded-md border border-(--color-border)">
-                    {/* ECCO IL COMPONENTE RIUTILIZZABILE! */}
-                    <PromptSelector 
-                      value={selectedPromptId}
-                      onChange={setSelectedPromptId} // Aggiorna direttamente lo stato
-                      disabled={isProcessing}
-                      label="Modello di Analisi per i nuovi file"
-                    />
-                  </div>
+                <div className="bg-(--color-bg) p-3 rounded-md border border-(--color-border)">
+                  <PromptSelector 
+                    value={selectedPromptId}
+                    onChange={setSelectedPromptId}
+                    disabled={isProcessing}
+                    label="Modello di Analisi per i nuovi file"
+                  />
+                </div>
               )}
 
-               <div className="flex items-center gap-2 text-(--color-muted) px-1">
-                 <Info size={12} className="shrink-0" />
-                 <span className="text-[10px] font-light">I file selezionati verranno inclusi nel contesto dell'analisi.</span>
-               </div>
-               
-               <button
+              <div className="flex items-center gap-2 text-(--color-muted) px-1">
+                <Info size={12} className="shrink-0" />
+                <span className="text-[10px] font-light">I file selezionati verranno inclusi nel contesto dell'analisi.</span>
+              </div>
+              
+              <button
                 onClick={handleProcessAndClose}
                 disabled={isProcessing || totalCount > maxAllowed}
                 className="w-full py-3 bg-(--color-text) text-(--color-surface) rounded-md font-bold text-xs uppercase tracking-widest hover:opacity-80 transition-opacity flex justify-center items-center gap-2 disabled:opacity-50 outline-none shadow-sm"
@@ -368,8 +362,8 @@ export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({
               </button>
             </div>
           </motion.div>
-        </>
-      )}
+        )}
+      </AnimatePresence>
 
       <DocumentModals
         isRenameOpen={isRenameOpen}
@@ -384,6 +378,6 @@ export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({
         handleRenameSubmit={handleRenameSubmit}
         handleDeleteConfirm={handleDeleteConfirm}
       />
-    </AnimatePresence>
+    </>
   );
 };

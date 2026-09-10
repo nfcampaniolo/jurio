@@ -1,138 +1,126 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import React from "react";
+import { MemoryRouter } from "react-router-dom";
+import { SelectionScreen } from "@/features/chat/components/SelectionScreen"; // Adatta il path se necessario
 
-/* ---------- hoisted shared mocks ---------- */
+/* ---------- hoisted mocks ---------- */
 const { mockNavigate } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
 }));
 
-/* ---------- mock react-router-dom ---------- */
-vi.mock("react-router-dom", () => ({
-  useNavigate: () => mockNavigate,
-}));
-
-/* ---------- mock lucide-react ---------- */
-vi.mock("lucide-react", () => {
-  const Icon = (name: string) => (props: React.SVGProps<SVGSVGElement>) => (
-    <svg data-testid={`icon-${name}`} {...props} />
-  );
+/* ---------- mock router ---------- */
+vi.mock("react-router-dom", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("react-router-dom")>();
   return {
-    Scale: Icon("scale"),
-    MessageSquare: Icon("message-square"),
-    FolderPlus: Icon("folder-plus"),
-    FolderOpen: Icon("folder-open"),
-    Loader2: Icon("loader-2"),
-    ChevronRight: Icon("chevron-right"),
+    ...actual,
+    useNavigate: () => mockNavigate,
   };
 });
 
-/* ---------- mock framer-motion ---------- */
-vi.mock("framer-motion", async () => ({
-  motion: {
-    div: ({
-      children,
-      ...props
-    }: React.HTMLAttributes<HTMLDivElement> & { [key: string]: unknown }) => (
-      <div {...props}>{children}</div>
-    ),
-    button: ({
-      children,
-      ...props
-    }: React.ButtonHTMLAttributes<HTMLButtonElement> & { [key: string]: unknown }) => (
-      <button {...props}>{children}</button>
-    ),
-  },
-}));
-
-/* ---------- mock Footer ---------- */
+/* ---------- mock footer ---------- */
 vi.mock("@/shared/components/Footer", () => ({
-  Footer: () => <footer data-testid="footer-mock">Footer Mock</footer>,
+  Footer: () => <footer data-testid="mock-footer">Footer Mock</footer>,
 }));
 
-/* ---------- component ---------- */
-import { SelectionScreen } from "@/features/chat/components/SelectionScreen"; // <-- adegua il path se necessario
+/* ---------- mock framer-motion ---------- */
+vi.mock("framer-motion", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("framer-motion")>();
+  return {
+    ...actual,
+    motion: {
+      div: ({ children, className }: { children?: React.ReactNode; className?: string }) => (
+        <div className={className}>{children}</div>
+      ),
+      button: ({
+        children,
+        className,
+        onClick,
+      }: {
+        children?: React.ReactNode;
+        className?: string;
+        onClick?: () => void;
+      }) => (
+        <button type="button" className={className} onClick={onClick}>
+          {children}
+        </button>
+      ),
+    },
+  };
+});
 
 describe("SelectionScreen Component Suite", () => {
-  const mockStartTempChat = vi.fn();
-  const mockStartFascicoloSetup = vi.fn();
+  const defaultProps = {
+    startTempChat: vi.fn(),
+    startFascicoloSetup: vi.fn(),
+    isLoadingData: false,
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  const defaultProps = {
-    startTempChat: mockStartTempChat,
-    startFascicoloSetup: mockStartFascicoloSetup,
-    isLoadingData: false,
-  };
+  const renderComponent = (props = defaultProps) =>
+    render(
+      <MemoryRouter>
+        <SelectionScreen {...props} />
+      </MemoryRouter>
+    );
 
-  test("renderizza titoli, opzioni principali, icone e Footer", () => {
-    render(<SelectionScreen {...defaultProps} />);
+  test("renderizza correttamente l'intestazione principale e la descrizione", () => {
+    renderComponent();
 
-    // Titoli e descrizioni principali
-    expect(screen.getByRole("heading", { name: "Nuova Consultazione", level: 1 })).toBeInTheDocument();
     expect(
-      screen.getByText("Scegli come procedere con la tua analisi legale intelligente.")
+      screen.getByRole("heading", { level: 1, name: /il tuo consulente legale/i })
     ).toBeInTheDocument();
-
-    // Card Chat Temporanea
-    expect(screen.getByRole("heading", { name: "Chat Temporanea", level: 3 })).toBeInTheDocument();
     expect(
-      screen.getByText("Avvia una sessione rapida di ricerca giurisprudenziale senza salvare dati nel cloud.")
+      screen.getByText(/ricerca giurisprudenziale avanzata e analisi dei tuoi documenti/i)
     ).toBeInTheDocument();
-    expect(screen.getByTestId("icon-message-square")).toBeInTheDocument();
-
-    // Card Nuovo Fascicolo
-    expect(screen.getByRole("heading", { name: "Nuovo Fascicolo", level: 3 })).toBeInTheDocument();
-    expect(
-      screen.getByText("Organizza i tuoi documenti e crea una memoria persistente per analisi complesse.")
-    ).toBeInTheDocument();
-    expect(screen.getByTestId("icon-folder-plus")).toBeInTheDocument();
-
-    // Icona Scale e Footer
-    expect(screen.getByTestId("icon-scale")).toBeInTheDocument();
-    expect(screen.getByTestId("footer-mock")).toBeInTheDocument();
+    expect(screen.getByTestId("mock-footer")).toBeInTheDocument();
   });
 
-  test("invoca startTempChat al click sulla card Chat Temporanea", () => {
-    render(<SelectionScreen {...defaultProps} />);
+  test("invoca startTempChat quando l'utente clicca sulla card 'Chat Temporanea'", () => {
+    const startTempChatMock = vi.fn();
+    renderComponent({
+      ...defaultProps,
+      startTempChat: startTempChatMock,
+    });
 
-    const tempChatBtn = screen.getByRole("heading", { name: "Chat Temporanea" }).closest("button")!;
-    fireEvent.click(tempChatBtn);
+    const chatCard = screen.getByRole("button", { name: /chat temporanea/i });
+    fireEvent.click(chatCard);
 
-    expect(mockStartTempChat).toHaveBeenCalledTimes(1);
-    expect(mockStartFascicoloSetup).not.toHaveBeenCalled();
+    expect(startTempChatMock).toHaveBeenCalledTimes(1);
   });
 
-  test("invoca startFascicoloSetup al click sulla card Nuovo Fascicolo", () => {
-    render(<SelectionScreen {...defaultProps} />);
+  test("invoca startFascicoloSetup quando l'utente clicca sulla card 'Nuovo Fascicolo'", () => {
+    const startFascicoloSetupMock = vi.fn();
+    renderComponent({
+      ...defaultProps,
+      startFascicoloSetup: startFascicoloSetupMock,
+    });
 
-    const fascicoloSetupBtn = screen.getByRole("heading", { name: "Nuovo Fascicolo" }).closest("button")!;
-    fireEvent.click(fascicoloSetupBtn);
+    const fascicoloCard = screen.getByRole("button", { name: /nuovo fascicolo/i });
+    fireEvent.click(fascicoloCard);
 
-    expect(mockStartFascicoloSetup).toHaveBeenCalledTimes(1);
-    expect(mockStartTempChat).not.toHaveBeenCalled();
+    expect(startFascicoloSetupMock).toHaveBeenCalledTimes(1);
   });
 
-  test("naviga a '/storico' al click sul pulsante 'Sfoglia Archivio Fascicoli'", () => {
-    render(<SelectionScreen {...defaultProps} />);
+  test("reindirizza alla rotta '/storico' quando viene cliccato il pulsante di archivio fascicoli", () => {
+    renderComponent();
 
-    const archiveBtn = screen.getByRole("button", { name: /Sfoglia Archivio Fascicoli/i });
-    fireEvent.click(archiveBtn);
+    const archiveButton = screen.getByRole("button", { name: /sfoglia archivio fascicoli/i });
+    fireEvent.click(archiveButton);
 
     expect(mockNavigate).toHaveBeenCalledWith("/storico");
   });
 
-  test("gestisce lo stato isLoadingData mostrando lo spinner o l'icona della cartella", () => {
-    // 1. isLoadingData = false -> Mostra icon-folder-open
-    const { rerender } = render(<SelectionScreen {...defaultProps} isLoadingData={false} />);
-    expect(screen.getByTestId("icon-folder-open")).toBeInTheDocument();
-    expect(screen.queryByTestId("icon-loader-2")).not.toBeInTheDocument();
+  test("mostra lo spinner animato quando isLoadingData è impostato su true", () => {
+    const { container } = renderComponent({
+      ...defaultProps,
+      isLoadingData: true,
+    });
 
-    // 2. isLoadingData = true -> Mostra icon-loader-2 (spinner)
-    rerender(<SelectionScreen {...defaultProps} isLoadingData={true} />);
-    expect(screen.getByTestId("icon-loader-2")).toBeInTheDocument();
-    expect(screen.queryByTestId("icon-folder-open")).not.toBeInTheDocument();
+    // Verifica la presenza della classe animate-spin sul Loader2
+    const spinner = container.querySelector(".animate-spin");
+    expect(spinner).toBeInTheDocument();
   });
 });

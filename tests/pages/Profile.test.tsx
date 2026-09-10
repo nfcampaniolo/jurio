@@ -4,7 +4,7 @@ import React from "react";
 import type { Action } from "@/interfaces/interfaces";
 
 /* ---------- hoisted mocks ---------- */
-const { mockNavigate, mockNavigateItem, mockLogout, mockToast } = vi.hoisted(() => {
+const { mockNavigate, mockNavigateItem, mockLogout, mockToast, mockSeo } = vi.hoisted(() => {
   const toastFn = vi.fn();
   return {
     mockNavigate: vi.fn(),
@@ -14,6 +14,7 @@ const { mockNavigate, mockNavigateItem, mockLogout, mockToast } = vi.hoisted(() 
       success: vi.fn(),
       error: vi.fn(),
     }),
+    mockSeo: vi.fn(),
   };
 });
 
@@ -28,6 +29,15 @@ vi.mock("react-hot-toast", () => ({
   __esModule: true,
   toast: mockToast,
   default: mockToast,
+}));
+
+/* ---------- mock SEO component ---------- */
+vi.mock("@/shared/components/SEO", () => ({
+  __esModule: true,
+  SEO: (props: unknown) => {
+    mockSeo(props);
+    return null;
+  },
 }));
 
 /* ---------- mock framer-motion ---------- */
@@ -101,7 +111,7 @@ vi.mock("@/features/profile/components/UploadSentences", () => ({
   Upload: () => <div data-testid="upload-sentences">Upload Sentenze Component</div>,
 }));
 
-vi.mock("@/shared/components//YourDocument.tsx", () => ({
+vi.mock("@/shared/components/YourDocument.tsx", () => ({
   __esModule: true,
   YourDocument: () => <div data-testid="your-document">I Tuoi Documenti Component</div>,
 }));
@@ -179,6 +189,30 @@ describe("Profile Page Suite", () => {
       deleteAccount: mockDeleteAccount,
       exportAccount: mockExportAccount,
     };
+  });
+
+  test("configura correttamente i metadati SEO con noIndex sia in caricamento che a dati pronti", () => {
+    mockProfileState.loading = true;
+    const { rerender } = render(<Profile />);
+
+    expect(mockSeo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Il tuo Profilo",
+        path: "/profilo",
+        noIndex: true,
+      })
+    );
+
+    mockProfileState.loading = false;
+    rerender(<Profile />);
+
+    expect(mockSeo).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        title: "Il tuo Profilo",
+        path: "/profilo",
+        noIndex: true,
+      })
+    );
   });
 
   test("mostra lo stato di caricamento quando loading è true o i dati utente non sono disponibili", () => {

@@ -8,12 +8,34 @@ vi.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
 }));
 
+/* ---------- mock SEO component ---------- */
+const mockSeo = vi.fn();
+vi.mock("@/shared/components/SEO", () => ({
+  SEO: (props: unknown) => {
+    mockSeo(props);
+    return null;
+  },
+}));
+
 /* ---------- component ---------- */
-import BillingCancel from "@/features/plans/BillingCancel"; // <-- adegua il path se necessario
+import BillingCancel from "@/features/plans/BillingCancel"; // adegua il path se necessario
 
 describe("BillingCancel Page Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  test("configura correttamente i metadati SEO (noindex e titolo)", () => {
+    render(<BillingCancel />);
+
+    expect(mockSeo).toHaveBeenCalledTimes(1);
+    expect(mockSeo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Pagamento Annullato",
+        path: "/billing/cancel",
+        noIndex: true,
+      })
+    );
   });
 
   test("renderizza l'intestazione, il titolo di pagamento annullato e la descrizione", () => {

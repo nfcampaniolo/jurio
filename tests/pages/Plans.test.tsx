@@ -20,6 +20,16 @@ vi.mock("react-router-dom", () => ({
   }),
 }));
 
+/* ---------- mock SEO component ---------- */
+const mockSeo = vi.fn();
+vi.mock("@/shared/components/SEO", () => ({
+  __esModule: true,
+  SEO: (props: unknown) => {
+    mockSeo(props);
+    return null;
+  },
+}));
+
 /* ---------- mock framer-motion ---------- */
 vi.mock("framer-motion", () => ({
   __esModule: true,
@@ -297,6 +307,30 @@ describe("Plans Page Suite", () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  test("configura correttamente i metadati SEO (noIndex e titolo) sia in loading che dopo il rendering", () => {
+    mockProfileState.loading = true;
+    const { rerender } = render(<Plans />);
+
+    expect(mockSeo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Piani e Abbonamenti",
+        path: "/profilo/piani",
+        noIndex: true,
+      })
+    );
+
+    mockProfileState.loading = false;
+    rerender(<Plans />);
+
+    expect(mockSeo).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        title: "Piani e Abbonamenti",
+        path: "/profilo/piani",
+        noIndex: true,
+      })
+    );
   });
 
   test("mostra lo spinner di caricamento globale quando useProfile è in loading o l'utente è assente", async () => {

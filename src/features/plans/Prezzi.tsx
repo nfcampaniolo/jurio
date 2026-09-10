@@ -5,7 +5,8 @@ import { ButtonCTA, ButtonSecondCTA } from "@/shared/components/ButtonCTA";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/useAuth";
-import { fetchPlansFromDb, getPreloadedPlans, type PlanUI }from "@/features/plans/hooks/plans";
+import { fetchPlansFromDb, getPreloadedPlans, type PlanUI } from "@/features/plans/hooks/plans";
+import { SEO } from "@/shared/components/SEO";
 
 type BillingCycle = "monthly" | "yearly";
 
@@ -91,7 +92,12 @@ const Prezzi: React.FC = () => {
 
   return (
     <section id="prezzi" aria-labelledby="prezzi-heading" className="relative py-16 md:py-24 bg-(--color-bg) overflow-hidden z-0">
-      
+      <SEO
+        title="Piani e Tariffe - Abbonamenti per Professionisti e Studi Legali"
+        description="Scopri i piani e le tariffe di Jurio. Ricerca giurisprudenziale avanzata, analisi automatica degli atti e soluzioni Workspace scalabili per studi legali."
+        path="/prezzi"
+      />
+
       {/* Decorative Background Element */}
       <div 
         className="absolute -top-[10vw] -right-[15vw] w-[min(52vw,720px)] h-[min(52vw,720px)] rounded-full border border-(--color-primary)/20 pointer-events-none -z-10"
@@ -134,14 +140,16 @@ const Prezzi: React.FC = () => {
                 transition={{ type: "spring", stiffness: 400, damping: 30 }}
               />
               <button
+                type="button"
                 onClick={() => setBilling("monthly")}
-                className={`relative z-10 w-36 py-2.5 text-sm font-bold rounded-md transition-colors duration-300 ${billing === "monthly" ? "text-(--color-bg)" : "text-(--color-muted) hover:text-(--color-text)"}`}
+                className={`relative z-10 w-36 py-2.5 text-sm font-bold rounded-md transition-colors duration-300 cursor-pointer ${billing === "monthly" ? "text-(--color-bg)" : "text-(--color-muted) hover:text-(--color-text)"}`}
               >
                 Mensile
               </button>
               <button
+                type="button"
                 onClick={() => setBilling("yearly")}
-                className={`relative z-10 w-36 py-2.5 text-sm font-bold rounded-md transition-colors duration-300 ${billing === "yearly" ? "text-(--color-bg)" : "text-(--color-muted) hover:text-(--color-text)"}`}
+                className={`relative z-10 w-36 py-2.5 text-sm font-bold rounded-md transition-colors duration-300 cursor-pointer ${billing === "yearly" ? "text-(--color-bg)" : "text-(--color-muted) hover:text-(--color-text)"}`}
               >
                 Annuale
               </button>
@@ -336,7 +344,7 @@ const Prezzi: React.FC = () => {
 
           <div className="relative border border-(--color-border) bg-(--color-surface) rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] p-8 md:p-14 overflow-hidden">
             
-            {/* Decorative Corner Rings (from provided CSS logic) */}
+            {/* Decorative Corner Rings */}
             <div 
               className="absolute pointer-events-none rounded-full border border-(--color-text)/5 -z-10" 
               style={{ width: '420px', height: '420px', right: '-160px', top: '-180px', boxShadow: '0 0 0 60px rgba(0,0,0,0.015), 0 0 0 120px rgba(0,0,0,0.01)' }} 
@@ -370,7 +378,6 @@ const Prezzi: React.FC = () => {
 
                   return (
                     <div key={plan.id} className="group relative flex flex-col p-8 border border-(--color-border) bg-(--color-bg) rounded-(--radius) transition-all duration-400 hover:-translate-y-1 hover:shadow-(--shadow-hover) hover:border-(--color-primary)/40 overflow-hidden">
-                      {/* Hover effect background accent */}
                       <div className="absolute inset-0 bg-linear-to-br from-(--color-primary)/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                       
                       <div className="relative z-10 flex flex-col h-full">

@@ -68,6 +68,7 @@ const Contatti = lazy(() => import("@/features/info/Contatti"));
 const NotFound = lazy(() => import("@/shared/NotFound"));
 const Session = lazy(() => import("@/features/auth/Session"));
 const Chat = lazy(() => import("@/features/chat/Chat"));
+const DeepAnalysisTool = lazy(() => import("@/features/analisi/DeepAnalysisTool"));
 const HistoryPage = lazy(() => import("@/features/chat/components/HistoryPage"));
 const TeamDashboard = lazy(() => import("@/features/teams/TeamDashboard"));
 
@@ -184,6 +185,11 @@ export const appRoutes: RouteObject[] = [
     element: <Chat />,
   },
 
+  {
+    path: "/analisi",
+    element: <DeepAnalysisTool />,
+  },
+
   // ==========================================================
   // ROTTE PROTETTE
   // ==========================================================
@@ -276,6 +282,11 @@ export const appRoutes: RouteObject[] = [
         <Chat />
       </ProtectedRoute>
     ),
+  },
+
+  {
+    path: "/analisi/:analisiId",
+    element: <DeepAnalysisTool />,
   },
 
   {

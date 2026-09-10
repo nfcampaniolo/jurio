@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
+import { HelmetProvider } from "@dr.pogodin/react-helmet";
 
 /* ---------- hoisted mocks ---------- */
 const {
@@ -153,7 +154,7 @@ vi.mock("@/features/prompt/hooks/usePromptGenerator", () => ({
 }));
 
 /* ---------- component under test ---------- */
-import { PromptDashboard } from "@/features/prompt/PromptBuilder"; // <-- adegua il path se necessario
+import { PromptDashboard } from "@/features/prompt/PromptBuilder"; // adegua il path se necessario
 
 describe("PromptDashboard Suite", () => {
   beforeEach(() => {
@@ -176,8 +177,15 @@ describe("PromptDashboard Suite", () => {
     };
   });
 
+  const renderComponent = () =>
+    render(
+      <HelmetProvider>
+        <PromptDashboard />
+      </HelmetProvider>
+    );
+
   test("renderizza PromptList con la lista dei prompt quando view è 'list'", () => {
-    render(<PromptDashboard />);
+    renderComponent();
 
     expect(screen.getByTestId("prompt-list")).toBeInTheDocument();
     expect(screen.getByText("Atto di Citazione")).toBeInTheDocument();
@@ -186,7 +194,7 @@ describe("PromptDashboard Suite", () => {
   });
 
   test("gestisce la creazione e la richiesta di eliminazione dalla lista dei prompt", () => {
-    render(<PromptDashboard />);
+    renderComponent();
 
     // Click nuovo prompt
     fireEvent.click(screen.getByTestId("btn-create-new"));
@@ -204,7 +212,7 @@ describe("PromptDashboard Suite", () => {
       name: "Schema Memoria Difensiva",
     };
 
-    render(<PromptDashboard />);
+    renderComponent();
 
     expect(screen.getByTestId("prompt-creator")).toBeInTheDocument();
     expect(screen.getByText("Template: Schema Memoria Difensiva")).toBeInTheDocument();
@@ -219,7 +227,7 @@ describe("PromptDashboard Suite", () => {
     window.location.hash = "#crea";
     const replaceStateSpy = vi.spyOn(window.history, "replaceState");
 
-    render(<PromptDashboard />);
+    renderComponent();
 
     expect(mockHandleOpenCreator).toHaveBeenCalledTimes(1);
     expect(replaceStateSpy).toHaveBeenCalledWith(
@@ -234,7 +242,7 @@ describe("PromptDashboard Suite", () => {
   test("mostra ConfirmModal e inoltra conferme o annullamenti quando isDeleteModalOpen è true", () => {
     mockDashboardState.isDeleteModalOpen = true;
 
-    render(<PromptDashboard />);
+    renderComponent();
 
     expect(screen.getByTestId("confirm-modal")).toBeInTheDocument();
     expect(screen.getByText("Elimina Prompt Personalizzato")).toBeInTheDocument();

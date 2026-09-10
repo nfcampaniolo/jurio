@@ -78,6 +78,8 @@ body {
   outline-offset: 2px;
 }
 
+h1 em { color: var(--color-primary); font-style: italic; }
+
 /* =======================
    Gerarchia tipografica
    ======================= */

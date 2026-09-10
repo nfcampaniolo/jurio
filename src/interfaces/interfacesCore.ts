@@ -22,7 +22,7 @@ export interface EmailMessage {
 export type ViewMode = "uploaded" | "saved";
 
 export interface Action {
-  id: "home" | "search" | "pricing" | "edit" | "logout" | "delete" | "chat" | "team" | "utilizzi";
+  id: "home" | "search" | "pricing" | "edit" | "logout" | "delete" | "chat" | "prompting" | "analisi" | "team" | "utilizzi";
   label: string;
   icon?: ReactNode;
   destructive?: boolean;

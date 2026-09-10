@@ -131,42 +131,60 @@ export const HeaderProfile: React.FC<HeaderProfileProps> = ({
                   onClick={closeMenu}
                   aria-label="Chiudi menu"
                 />
-
                 <motion.div
                   ref={menuRef}
                   id={menuId}
                   role="menu"
                   aria-label="Azioni profilo"
-                  className="absolute right-0 mt-2 w-56 bg-(--color-surface) rounded-xl shadow-(--shadow-soft) flex flex-col overflow-hidden z-50 border border-(--color-border)"
-                  initial={shouldReduceMotion ? false : { opacity: 0, y: -10, scale: 0.95 }}
+                  className="absolute right-0 mt-2 w-64 sm:w-72 bg-(--color-surface) rounded-lg shadow-(--shadow-soft) border border-(--color-border) p-1.5 flex flex-col z-50 overflow-hidden origin-top-right backdrop-blur-md"
+                  initial={shouldReduceMotion ? false : { opacity: 0, y: -8, scale: 0.97 }}
                   animate={shouldReduceMotion ? {} : { opacity: 1, y: 0, scale: 1 }}
-                  exit={shouldReduceMotion ? {} : { opacity: 0, y: -10, scale: 0.95 }}
-                  transition={shouldReduceMotion ? {} : { duration: 0.25 }}
+                  exit={shouldReduceMotion ? {} : { opacity: 0, y: -8, scale: 0.97 }}
+                  transition={
+                    shouldReduceMotion
+                      ? { duration: 0 }
+                      : { duration: 0.18, ease: [0.22, 1, 0.36, 1] }
+                  }
                 >
-                  {actions.map((action) => (
-                    <button
-                      key={action.id}
-                      type="button"
-                      role="menuitem"
-                      onClick={() => {
-                        action.onClick();
-                        closeMenu();
-                        triggerRef.current?.focus();
-                      }}
-                      className={`flex items-center px-4 py-3 w-full text-left transition-colors outline-none ${
-                        action.destructive
-                          ? "text-red-600 dark:text-red-400 hover:bg-red-500/10"
-                          : "text-(--color-text) hover:bg-(--color-bg)"
-                      }`}
-                    >
-                      {action.icon ? (
-                        <span className="mr-5 opacity-80" aria-hidden="true">
-                          {action.icon}
-                        </span>
-                      ) : null}
-                      <span className="font-medium">{action.label}</span>
-                    </button>
-                  ))}
+                  {/* Accento superiore coordinato */}
+                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-80" />
+
+                  <div className="flex flex-col gap-0.5 pt-0.5">
+                    {actions.map((action) => {
+                      const isDestructive = action.destructive;
+                      return (
+                        <button
+                          key={action.id}
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            action.onClick();
+                            closeMenu();
+                            triggerRef.current?.focus();
+                          }}
+                          className={`group flex items-center gap-3 px-3 py-2.5 w-full text-left rounded-md text-xs sm:text-[13px] font-medium transition-all duration-150 outline-none cursor-pointer select-none focus-visible:ring-1 focus-visible:ring-(--color-primary) ${
+                            isDestructive
+                              ? "text-red-600 dark:text-red-400 hover:bg-red-500/10 focus-visible:bg-red-500/10"
+                              : "text-(--color-text) hover:bg-(--color-bg) hover:text-(--color-primary) focus-visible:bg-(--color-bg)"
+                          }`}
+                        >
+                          {action.icon && (
+                            <span
+                              className={`shrink-0 text-sm sm:text-base transition-transform duration-150 group-hover:scale-105 ${
+                                isDestructive
+                                  ? "text-red-500/80"
+                                  : "text-(--color-muted) group-hover:text-(--color-primary)"
+                              }`}
+                              aria-hidden="true"
+                            >
+                              {action.icon}
+                            </span>
+                          )}
+                          <span className="truncate tracking-tight">{action.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </motion.div>
               </>
             )}

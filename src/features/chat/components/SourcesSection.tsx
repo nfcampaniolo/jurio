@@ -51,7 +51,7 @@ export const SourcesSection: React.FC<SourcesSectionProps> = ({
   return (
     <div className="relative flex flex-col flex-1 overflow-hidden bg-(--color-surface)">
       {/* LA LINEA DI RIGORE SUPERIORE (Unico tocco di colore) */}
-      <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
+      <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90" />
 
       <div className="p-4 border-b border-(--color-border) bg-(--color-bg) shrink-0 mt-1">
         <h2 className="font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 text-(--color-muted)">

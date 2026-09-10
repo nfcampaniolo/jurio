@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { doc, onSnapshot } from "firebase/firestore";
 import { getDb } from "@/infrastructure/db";
 import { useAuth } from "@/context/useAuth";
+import { SEO } from "@/shared/components/SEO";
 
 type RegisterDoc = {
   status?: "active" | "prova" | string;
@@ -78,6 +79,13 @@ export default function BillingSuccess() {
 
   return (
     <div className="min-h-[calc(100vh-4rem)] w-full px-4 py-10 sm:py-14">
+      <SEO
+        title={title}
+        description="Elaborazione e verifica dell'attivazione del piano di abbonamento su Jurio."
+        path="/billing/success"
+        noIndex
+      />
+
       <div className="mx-auto max-w-lg">
         <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
           {/* header */}
@@ -140,14 +148,14 @@ export default function BillingSuccess() {
                   <button
                     type="button"
                     onClick={() => navigate("/profilo")}
-                    className="inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800 active:scale-[0.99] dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white"
+                    className="inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800 active:scale-[0.99] disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white cursor-pointer"
                   >
                     Vai al profilo
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate("/profilo/piani")}
-                    className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-50 active:scale-[0.99] dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900"
+                    className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-50 active:scale-[0.99] dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900 cursor-pointer"
                   >
                     Torna ai piani
                   </button>
@@ -165,7 +173,7 @@ export default function BillingSuccess() {
                   <button
                     type="button"
                     onClick={() => navigate("/profilo")}
-                    className="inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800 active:scale-[0.99] dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white"
+                    className="inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800 active:scale-[0.99] disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white cursor-pointer"
                   >
                     Vai al profilo ora
                   </button>
@@ -183,14 +191,14 @@ export default function BillingSuccess() {
                   <button
                     type="button"
                     onClick={() => navigate("/profilo")}
-                    className="inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800 active:scale-[0.99] dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white"
+                    className="inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800 active:scale-[0.99] disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white cursor-pointer"
                   >
                     Vai al profilo
                   </button>
                   <button
                     type="button"
                     onClick={() => navigate("/profilo/piani")}
-                    className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-50 active:scale-[0.99] dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900"
+                    className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-50 active:scale-[0.99] dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900 cursor-pointer"
                   >
                     Torna ai piani
                   </button>

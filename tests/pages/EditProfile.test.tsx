@@ -2,11 +2,25 @@ import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
 
+/* ---------- hoisted mocks ---------- */
+const { mockNavigate, mockSeo } = vi.hoisted(() => ({
+  mockNavigate: vi.fn(),
+  mockSeo: vi.fn(),
+}));
+
 /* ---------- mock react-router-dom ---------- */
-const mockNavigate = vi.fn();
 vi.mock("react-router-dom", () => ({
   __esModule: true,
   useNavigate: () => mockNavigate,
+}));
+
+/* ---------- mock SEO component ---------- */
+vi.mock("@/shared/components/SEO", () => ({
+  __esModule: true,
+  SEO: (props: unknown) => {
+    mockSeo(props);
+    return null;
+  },
 }));
 
 /* ---------- mock react-hot-toast ---------- */
@@ -104,7 +118,7 @@ vi.mock("@/features/profile/hooks/useProfile", () => ({
 }));
 
 /* ---------- component under test ---------- */
-import { EditProfile } from "@/features/profile/EditProfile"; // <-- adegua il path se necessario
+import { EditProfile } from "@/features/profile/EditProfile";
 import { toast } from "react-hot-toast";
 
 describe("EditProfile Page Suite", () => {
@@ -138,6 +152,30 @@ describe("EditProfile Page Suite", () => {
         writeText: vi.fn().mockResolvedValue(undefined),
       },
     });
+  });
+
+  test("configura correttamente i metadati SEO (noIndex e titolo) sia in loading che a dati pronti", () => {
+    mockProfileState.loading = true;
+    const { rerender } = render(<EditProfile />);
+
+    expect(mockSeo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Modifica Profilo",
+        path: "/profilo/modifica",
+        noIndex: true,
+      })
+    );
+
+    mockProfileState.loading = false;
+    rerender(<EditProfile />);
+
+    expect(mockSeo).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        title: "Modifica Profilo",
+        path: "/profilo/modifica",
+        noIndex: true,
+      })
+    );
   });
 
   test("mostra lo stato di caricamento quando i dati profilo non sono ancora disponibili", () => {

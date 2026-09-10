@@ -7,6 +7,7 @@ import { useProfile } from "@/features/profile/hooks/useProfile";
 import { EditProfileAvatar } from "@/features/profile/components/EditProfileAvatar";
 import { EditProfileForm } from "@/features/profile/components/EditProfileForm";
 import { EditProfileConsents } from "@/features/profile/components/EditProfileConsents";
+import { SEO } from "@/shared/components/SEO";
 import { Loader2 } from "lucide-react";
 
 const fadeUp: Variants = {
@@ -49,12 +50,24 @@ export const EditProfile: React.FC = () => {
     setRoleOther,
   } = useProfile();
 
+  const seoComponent = (
+    <SEO
+      title="Modifica Profilo"
+      description="Aggiorna le informazioni personali del tuo account, ruolo e consensi privacy su Jurio."
+      path="/profilo/modifica"
+      noIndex
+    />
+  );
+
   if (loading || !user || !userData) {
     return (
-      <div className="h-screen flex items-center justify-center text-(--color-muted) gap-2 bg-(--color-bg)">
-        <Loader2 size={16} className="animate-spin text-(--color-text)" />
-        <span className="text-xs font-bold uppercase tracking-widest">Caricamento...</span>
-      </div>
+      <>
+        {seoComponent}
+        <div className="h-screen flex items-center justify-center text-(--color-muted) gap-2 bg-(--color-bg)">
+          <Loader2 size={16} className="animate-spin text-(--color-text)" />
+          <span className="text-xs font-bold uppercase tracking-widest">Caricamento...</span>
+        </div>
+      </>
     );
   }
 
@@ -70,7 +83,6 @@ export const EditProfile: React.FC = () => {
   };
 
   const copyMcpToken = () => {
-    // Sostituisci user.uid con l'attributo corretto se il tuo auth provider usa un nome diverso (es. user.id)
     if (user?.uid) {
       navigator.clipboard.writeText(`Bearer ${user.uid}`);
       toast.success("Token MCP copiato!");
@@ -87,6 +99,8 @@ export const EditProfile: React.FC = () => {
       initial="hidden"
       animate="show"
     >
+      {seoComponent}
+
       <div>
         {/* Header */}
         <motion.div className="flex items-start justify-between gap-4 mb-8" variants={fadeUp}>
@@ -101,7 +115,7 @@ export const EditProfile: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="inline-flex w-fit items-center gap-2 px-4 py-2.5 rounded-md border border-(--color-border) bg-(--color-surface) hover:border-(--color-text) text-(--color-text) text-xs font-bold uppercase tracking-widest transition-colors shadow-xs outline-none"
+            className="inline-flex w-fit items-center gap-2 px-4 py-2.5 rounded-md border border-(--color-border) bg-(--color-surface) hover:border-(--color-text) text-(--color-text) text-xs font-bold uppercase tracking-widest transition-colors shadow-xs outline-none cursor-pointer"
             aria-label="Torna al profilo"
           >
             <FiArrowLeft size={15} className="opacity-70" />
@@ -114,7 +128,7 @@ export const EditProfile: React.FC = () => {
           className="relative rounded-lg border border-(--color-border) shadow-(--shadow-soft) p-6 sm:p-8 overflow-hidden bg-(--color-surface)"
           variants={card}
         >
-          {/* LA LINEA DI RIGORE SUPERIORE (Unico tocco di colore) */}
+          {/* LA LINEA DI RIGORE SUPERIORE */}
           <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
 
           <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 mt-1">
@@ -148,11 +162,11 @@ export const EditProfile: React.FC = () => {
           {/* Azioni */}
           <motion.div className="flex flex-col sm:flex-row justify-between gap-6 pt-10" variants={fadeUp}>
             
-            {/* Pulsante Copia Token (Allineato a sinistra) */}
+            {/* Pulsante Copia Token */}
             <motion.button
               type="button"
               onClick={copyMcpToken}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md border border-(--color-border) text-(--color-muted) bg-(--color-surface) hover:text-(--color-text) hover:border-(--color-text) transition-colors text-xs font-bold uppercase tracking-widest outline-none shadow-xs"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md border border-(--color-border) text-(--color-muted) bg-(--color-surface) hover:text-(--color-text) hover:border-(--color-text) transition-colors text-xs font-bold uppercase tracking-widest outline-none shadow-xs cursor-pointer"
               whileHover={shouldReduceMotion ? undefined : { y: -1 }}
               whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
               title="Copia token per integrazione Mistral AI MCP"
@@ -161,12 +175,12 @@ export const EditProfile: React.FC = () => {
               <span>Copia Token MCP</span>
             </motion.button>
 
-            {/* Azioni Form (Allineate a destra) */}
+            {/* Azioni Form */}
             <div className="flex flex-row gap-3">
               <motion.button
                 type="button"
                 onClick={() => navigate("/profilo")}
-                className="w-full sm:w-auto px-5 py-2.5 rounded-md border border-(--color-border) text-(--color-text) bg-(--color-surface) hover:bg-(--color-bg) transition-colors text-xs font-bold uppercase tracking-widest outline-none shadow-xs"
+                className="w-full sm:w-auto px-5 py-2.5 rounded-md border border-(--color-border) text-(--color-text) bg-(--color-surface) hover:bg-(--color-bg) transition-colors text-xs font-bold uppercase tracking-widest outline-none shadow-xs cursor-pointer"
                 disabled={saving}
                 whileHover={shouldReduceMotion ? undefined : { y: -1 }}
                 whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
@@ -179,7 +193,7 @@ export const EditProfile: React.FC = () => {
                   type="button"
                   onClick={onSave}
                   disabled={saving}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-md bg-(--color-text) text-(--color-surface) text-xs font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-35 disabled:cursor-not-allowed transition-all shadow-xs outline-none flex items-center justify-center gap-2"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-md bg-(--color-text) text-(--color-surface) text-xs font-bold uppercase tracking-widest hover:opacity-90 disabled:opacity-35 disabled:cursor-not-allowed transition-all shadow-xs outline-none flex items-center justify-center gap-2 cursor-pointer"
                 >
                   {saving && <Loader2 size={14} className="animate-spin" />}
                   <span>{saving ? "Salvataggio..." : "Salva"}</span>

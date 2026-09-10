@@ -2,7 +2,7 @@ import { onRequest } from "firebase-functions/v2/https";
 import { setGlobalOptions } from "firebase-functions/v2/options";
 import { Timestamp, FieldValue, Query, WriteBatch } from "firebase-admin/firestore";
 import { getAdmin, getDb, getAdminAuth, getAdminStorage, sanitize } from "./deps";
-import { MAX_INPUT_CHARS, PROMPT_MASSIMAZIONE, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, PlanDoc, getStripe, getWebhookSecret,normalizePlanId, handleEmbeddingCreation, handleEmbeddingDocumentCreation, handleFascicoloCreation, handleEmbeddingManualCreation } from "./params";
+import { MAX_INPUT_CHARS, PROMPT_MASSIMAZIONE, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, PlanDoc, getStripe, getWebhookSecret,normalizePlanId, handleEmbeddingCreation, handleEmbeddingDocumentCreation, handleFascicoloCreation, handleEmbeddingManualCreation, DeepAnalysisRequestBody, DeepAnalysisConfig, DEFAULT_CONFIG } from "./params";
 import { enqueueWelcomeEmail, enqueueTrialEmail, queuePurchaseEmailOnceStripe, enqueueDowngradeEmail, enqueueContactEmail, enqueueVoucherEmail, enqueueWelcomeTeamEmail, enqueueRemoveTeamEmail, enqueueCloseTeamEmail } from "./email";
 import { corsHandlerDomain, requireAppCheck, requireUidFromAuthHeader, consumePerMinuteFeature, consumeDailyFeature, getKeywordStems, calculateMatchScore, applyHighlightWithRegex, generateHighlightRegex, runUpdateFonte, runUpdateMetadata, runCleanupDuplicates, processFascicoloDocs, processSubscriptionInTx, tryScheduleDowngradeTask, updateUserDocuments, removeUserVisibilityFromDocuments} from "./utils";
 import { scheduleDowngradeTask, DowngradeTxResult, computeAndSaveWeeklyStats, computeAndSaveMonthlyUsage } from "./tasks";
@@ -10,7 +10,7 @@ import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/fire
 import OpenAI from "openai";
 import Stripe from "stripe";
 import { SpeechClient } from "@google-cloud/speech";
-import { legalAgentFlow, legalAgentSupport, legalGeminiFallbackFlow, reasoningFlow, estraiMetadatiFlow, wordQuoteFlow, wordReviewFlow, promptBuilderFlow } from './genkit';
+import { legalAgentFlow, legalAgentSupport, legalGeminiFallbackFlow, reasoningFlow, estraiMetadatiFlow, wordQuoteFlow, wordReviewFlow, promptBuilderFlow, researchAnalysisFlow, refineResearchFlow, generateSynthesisReportFlow } from './genkit';
 import { onSchedule } from "firebase-functions/v2/scheduler"; 
 // @ts-ignore
 import pdfExtract from "pdf-extraction";
@@ -24,6 +24,7 @@ const Busboy = busboyModule.default || busboyModule;
 const db = getDb();
 const admin = getAdmin();
 const MAX_NOTES_CHARS = 2000;
+let oaClient: OpenAI;
 
 setGlobalOptions({
   region: "europe-west1",
@@ -231,12 +232,18 @@ export const vectorSearchJurio = onRequest(
   {
     secrets: ["OPENAI_API_KEY", "GOOGLE_GENAI_API_KEY"],
     timeoutSeconds: 75,
-    memory: "1GiB", 
+    memory: "2GiB",
+    cpu: 1,
+    concurrency: 80
   },
   async (req, res) => {
     return corsHandlerDomain(req, res, async () => {
       if (req.method === "OPTIONS") return res.status(204).end();
       if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+
+      if (!oaClient) {
+        oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      }
 
       try {
         // 1) INPUT SANITIZATION
@@ -266,53 +273,50 @@ export const vectorSearchJurio = onRequest(
         const totalKeywords = kwObjects.length;
         let minRequiredKeywords = Math.max(1, Math.ceil(totalKeywords * 0.8));
 
-        // 3) AUTH BASE - IBRIDA (Frontend React / OAuth / External Connectors)
+        // 3) AUTH BASE - OTTIMIZZATA IN PARALLELO
         let uid: string = "";
-        
         const authHeader = req.headers.authorization || "";
         const token = authHeader.replace("Bearer ", "").trim();
-
         let isOAuthRequest = false;
 
         if (token) {
-          // A) Controllo primario: Verifichiamo se il token arriva da un client OAuth (Claude/ChatGPT/Mistral)
-          const tokenSnap = await db.collection("oauth_tokens").doc(token).get();
+          // 🌟 OTTIMIZZAZIONE 3: Fetch parallelo per ridurre il tempo di fallback OAuth->Register
+          const [tokenSnap, directUserSnap] = await Promise.all([
+            db.collection("oauth_tokens").doc(token).get(),
+            db.collection("register").doc(token).get()
+          ]);
+
           if (tokenSnap.exists) {
             uid = tokenSnap.data()?.uid;
             isOAuthRequest = true;
             console.log(`[JURIO-SEARCH] Autenticazione OAuth riuscita per UID: ${uid}`);
-          } else {
-            // B) Compatibilità retroattiva: Controlliamo se per caso è un ID diretto nella collezione register
-            const directUserSnap = await db.collection("register").doc(token).get();
-            if (directUserSnap.exists) {
-              uid = token;
-              isOAuthRequest = true;
-              console.log(`[JURIO-SEARCH] Autenticazione diretta via UID riuscita per: ${uid}`);
-            }
+          } else if (directUserSnap.exists) {
+            uid = token;
+            isOAuthRequest = true;
+            console.log(`[JURIO-SEARCH] Autenticazione diretta via UID riuscita per: ${uid}`);
           }
         }
 
         if (!isOAuthRequest || !uid) {
-          // C) Flusso standard per il tuo Frontend Web (AppCheck + decodifica JWT)
           await requireAppCheck(req);
           uid = await requireUidFromAuthHeader(req);
         }
 
-        // Protezione finale: se per qualsiasi motivo l'UID non è stato valorizzato, blocchiamo
         if (!uid) {
           return res.status(401).json({ error: "Unauthorized: Access denied" });
         }
-
-        // 4) PARALLELIZZAZIONE DB READ + OPENAI
-        const oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-        const [userSnap, embeddingPromiseResult] = await Promise.all([
-          db.collection("register").doc(uid).get(),
+        
+        const limits = { perMinute: 20, perDay: 100 };
+         
+        const [embeddingPromiseResult, userSnap] = await Promise.all([
           oaClient.embeddings.create({
             model: "text-embedding-3-small",
             input: `Contesto giuridico italiano: ${queryText}`,
             dimensions: 1536,
-          })
+          }),
+          db.collection("register").doc(uid).get(),
+          consumePerMinuteFeature(uid, "research" as any, limits.perMinute),
+          consumeDailyFeature(uid, "research" as any, limits.perDay)
         ]);
 
         // 5) VERIFICA PIANO UTENTE
@@ -330,17 +334,10 @@ export const vectorSearchJurio = onRequest(
             message: "È richiesto un piano attivo per utilizzare la ricerca." 
           });
         }
-
-        // --- RATE LIMITING ---
-        const limits = { perMinute: 20, perDay: 100 };
-        await Promise.all([
-          consumePerMinuteFeature(uid, "research" as any, limits.perMinute),
-          consumeDailyFeature(uid, "research" as any, limits.perDay)
-        ]);
         
         const queryVector = embeddingPromiseResult.data[0].embedding;
 
-        // 🌟 OTTIMIZZAZIONE PROIEZIONE DATABASE: Selezioniamo solo i campi necessari alla UI
+        // SELEZIONE CAMPI
         const baseCollection = db.collection(collectionName).select(
           "tipo_documento", "fonte", "logo_fonte", "organo_giudicante", "sezione", 
           "numero_sentenza", "dataSentenza", "data_sentenza", "ecli", "urn",
@@ -353,7 +350,6 @@ export const vectorSearchJurio = onRequest(
         const appliedFilters = filters.reduce((q: any, f: any) => {
           if (f && typeof f.field === "string" && typeof f.operator === "string" && "value" in f) {
             let queryValue = f.value;
-            // INTERCETTIAMO IL TIMESTAMP SERIALIZZATO DAL FRONTEND
             if (
               f.value && 
               typeof f.value === "object" && 
@@ -361,7 +357,6 @@ export const vectorSearchJurio = onRequest(
             ) {
               const seconds = f.value.seconds;
               const nanoseconds = f.value.nanoseconds || 0;
-              
               if (typeof seconds === "number") {
                 queryValue = new Timestamp(seconds, nanoseconds);
               }
@@ -371,7 +366,7 @@ export const vectorSearchJurio = onRequest(
           return q;
         }, baseCollection as any);
 
-        // FUNZIONE HELPER: Esegue la query vettoriale e lo scoring
+        // HELPER DI RICERCA
         const performSearchAndScoring = async (vector: any, currentKwObjects: any[]) => {
           const candidateLimit = Math.min(Math.max(limit * 2, 50), 100);
           const sSnap = await appliedFilters
@@ -404,10 +399,9 @@ export const vectorSearchJurio = onRequest(
               const MAX_CHARS = 10000;
               const safeTruncate = (text: unknown) => text ? text.toString().substring(0, MAX_CHARS) : null;
 
-              // 🌟 MAPPING ESPLICITO: Aggiunto l'URL pubblico per Mistral/Client e mantenuto il resto
               return {
                 id: doc.id,
-                url: `https://jurio.it/giurisprudenza/${doc.id}`, // <-- QUI GENERA L'URL DINAMICO
+                url: `https://jurio.it/giurisprudenza/${doc.id}`,
                 tipo_documento: data.tipo_documento || "sentenza",
                 fonte: data.fonte || null,
                 logo_fonte: data.logo_fonte || null,
@@ -417,26 +411,18 @@ export const vectorSearchJurio = onRequest(
                 dataSentenza: data.dataSentenza || data.data_sentenza || null,
                 ecli: data.ecli || null,
                 urn: data.urn || null,
-
-                // Campi ordinanze
                 tipo_ordinanza: data.tipo_ordinanza || null,
                 efficacia_temporale: data.efficacia_temporale || null,
                 misura_disposta: data.misura_disposta || null,
                 fumus_boni_iuris: data.fumus_boni_iuris || null,
                 periculum_in_mora: data.periculum_in_mora || null,
-
-                // Campi decreti
                 tipo_decreto: data.tipo_decreto || null,
                 contraddittorio: data.contraddittorio !== undefined ? data.contraddittorio : null,
                 autorita_monocratica: data.autorita_monocratica !== undefined ? data.autorita_monocratica : null,
                 contenuto_precettivo: data.contenuto_precettivo || null,
-
-                // Blocchi di testo troncati
                 massima: safeTruncate(data.massima),
                 summary: safeTruncate(data.summary),
                 fattispecie_rilevante: safeTruncate(data.fattispecie_rilevante),
-
-                // Metadati interni di ranking
                 _matchCount: Math.floor(scores.textMatchScore ?? 0),
                 _distance: doc.distance ?? baseDistance,
                 _rankingDistance: rankingDistance,
@@ -447,30 +433,24 @@ export const vectorSearchJurio = onRequest(
             .sort((a: any, b: any) => a._rankingDistance - b._rankingDistance);
         };
 
-        // 6) PRIMA RICERCA VETTORIALE (Originale)
+        // 6) PRIMA RICERCA VETTORIALE
         let scoredItems = await performSearchAndScoring(queryVector, kwObjects);
 
-        // 7) FALLBACK GEMINI TRAMITE GENKIT FLOW (ESCLUSO PER I CONNETTORI ESTERNI)
+        // 7) FALLBACK GEMINI TRAMITE GENKIT FLOW
         let geminiResponsePayload: any = null;
         const FALLBACK_THRESHOLD = 0.7; 
         const needsFallback = scoredItems.length === 0 || scoredItems[0]._rankingDistance > FALLBACK_THRESHOLD;
 
-        console.log(`[JURIO-SEARCH] Valutazione needsFallback: ${needsFallback} (Soglia: ${FALLBACK_THRESHOLD})`);
-
-        // 🌟 Modifica cruciale: Eseguiamo il fallback SOLO se la richiesta NON è un connettore esterno
         if (needsFallback && !isOAuthRequest) {
           try {
             const fallbackResult = await legalGeminiFallbackFlow({ query: queryText });
             
             if (fallbackResult) {
-              console.log(`[JURIO-SEARCH] Flow Genkit completato con successo. Query generata: "${fallbackResult.queryAlternativa}"`);
-              
               geminiResponsePayload = {
                 sintesi: fallbackResult.sintesi,
                 queryAlternativa: fallbackResult.queryAlternativa,
               };
 
-              // Ricalcoliamo con la nuova query
               const altQueryText = fallbackResult.queryAlternativa;
               kwObjects = getKeywordStems(altQueryText); 
               originalKws = kwObjects.map((k) => k.original);
@@ -482,10 +462,8 @@ export const vectorSearchJurio = onRequest(
                 input: `Contesto giuridico italiano: ${altQueryText}`,
                 dimensions: 1536,
               });
-              const altQueryVector = altEmbeddingRes.data[0].embedding;
-
-              const altScoredItems = await performSearchAndScoring(altQueryVector, kwObjects);
-              console.log(`[JURIO-SEARCH] 2° Ricerca completata. Trovati: ${altScoredItems.length} documenti.`);
+              
+              const altScoredItems = await performSearchAndScoring(altEmbeddingRes.data[0].embedding, kwObjects);
 
               if (altScoredItems.length > 0) {
                 scoredItems = altScoredItems.map((item: any) => ({
@@ -493,17 +471,13 @@ export const vectorSearchJurio = onRequest(
                   _source: "gemini_fallback",
                 }));
               }
-            } else {
-              console.warn(`[JURIO-SEARCH] ATTENZIONE: Il Flow Genkit ha restituito un risultato nullo/indefinito.`);
             }
           } catch (geminiErr) {
             console.error(`[JURIO-SEARCH] ERRORE GRAVE nel fallback Genkit:`, geminiErr);
           }
-        } else if (needsFallback && isOAuthRequest) {
-          console.log(`[JURIO-SEARCH] Fallback Gemini bypassato perché la richiesta è un connettore esterno (MCP/OAuth).`);
         }
 
-        // 8) OUTPUT & LAZY HIGHLIGHTING DETTAGLIATO PER IL COMPONENTE FRONTEND
+        // 8) OUTPUT & LAZY HIGHLIGHTING
         const highlightRegex = generateHighlightRegex(originalKws, stemsList);
         const limitedItems = scoredItems.slice(0, limit);
 
@@ -694,6 +668,197 @@ export const legalAgent = onRequest(
         } else {
           res.status(500).json({ error: "Process failed", details: msg });
         }
+      }
+    });
+  }
+);
+
+export const deepAnalysisAgent = onRequest(
+  { 
+    secrets: ["GOOGLE_GENAI_API_KEY", "OPENAI_API_KEY", "TAVILY_API_KEY"],
+    timeoutSeconds: 540,
+    memory: "2GiB",
+    concurrency: 80 
+  }, 
+  async (req, res) => {
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+
+      try {
+        await requireAppCheck(req);
+        const uid = await requireUidFromAuthHeader(req);
+
+        const body = req.body as DeepAnalysisRequestBody;
+        const { action, sessionId, prompt, direttivaHitl, docs, config } = body;
+
+        if (!action || !["start_research", "refine_research", "generate_synthesis"].includes(action)) { 
+          res.status(400).json({ error: "Bad Request", details: "Action non valida." }); 
+          return; 
+        }
+        if (!sessionId || typeof sessionId !== "string") {
+          res.status(400).json({ error: "Bad Request", details: "SessionId mancante o non valido." }); 
+          return;
+        }
+
+        const userSnap = await admin.firestore().collection("register").doc(uid).get();
+        if (!userSnap.exists) { 
+          res.status(404).json({ error: "User not found" }); 
+          return; 
+        }
+        
+        const planId = String(userSnap.data()?.planId ?? "");
+        if (!["admin", "personale", "personale_m", "business", "business_m"].includes(planId)) { 
+          res.status(403).json({ error: "Access denied." }); 
+          return; 
+        }
+
+        const sessionRef = admin.firestore().collection("deep_analysis_sessions").doc(sessionId);
+        const sessionSnap = await sessionRef.get();
+
+        // ─── AZIONE 1: START ──────────────────────────────────────────
+        if (action === "start_research") {
+          if (!prompt || typeof prompt !== "string") {
+            res.status(400).json({ error: "Bad Request", details: "Prompt mancante per start_research." });
+            return;
+          }
+
+          // 1. CONTROLLO QUOTE IMMEDIATO (Lancia errore se superate bloccando il flusso)
+          await Promise.all([
+            consumePerMinuteFeature(uid, "deep_analysis" as any, 10),
+            consumeDailyFeature(uid, "deep_analysis" as any, 30)
+          ]);
+
+          const resolvedConfig: DeepAnalysisConfig = {
+            ...DEFAULT_CONFIG,
+            ...(config || {}),
+          };
+
+          const output = await researchAnalysisFlow({
+            prompt, 
+            docs: docs || [], 
+            userId: uid, 
+            config: resolvedConfig
+          });
+          
+          await sessionRef.set(
+            sanitize({
+              user: uid,
+              title: prompt.substring(0, 30) + "...",
+              status: "review",
+              promptOriginale: prompt,
+              documentiAllegati: docs || [],
+              configurazione: config || {},
+              inquadramento: output.inquadramento,
+              mappaDialettica: output.mappaDialettica,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+              createdAt: sessionSnap.exists ? sessionSnap.data()?.createdAt : admin.firestore.FieldValue.serverTimestamp()
+            }), 
+            { merge: true }
+          );
+
+          res.status(200).json({ success: true, status: "review" });
+          return;
+        }
+
+        // ─── AZIONE 2: REFINE / HITL ──────────────────────────────────
+        if (action === "refine_research") {
+          if (!sessionSnap.exists) { 
+            res.status(404).json({ error: "Session not found." }); 
+            return; 
+          }
+          const sessionData = sessionSnap.data();
+
+          // 1. CONTROLLO QUOTE IMMEDIATO
+          await Promise.all([
+            consumePerMinuteFeature(uid, "deep_analysis" as any, 10),
+            consumeDailyFeature(uid, "deep_analysis" as any, 30)
+          ]);
+
+          const savedConfig = (sessionData?.configurazione as Partial<DeepAnalysisConfig>) || {};
+          const resolvedConfig: DeepAnalysisConfig = {
+            ...DEFAULT_CONFIG,
+            ...savedConfig,
+          };
+
+          const output = await refineResearchFlow({
+            originalPrompt: (sessionData?.promptOriginale as string) || "",
+            direttivaHitl: direttivaHitl || "Ricerca approfondimenti", 
+            currentInquadramento: (sessionData?.inquadramento as Record<string, unknown>) || {},
+            currentMappaDialettica: (sessionData?.mappaDialettica as Record<string, unknown>) || {},
+            docs: (sessionData?.documentiAllegati as string[]) || [],
+            userId: uid,
+            config: resolvedConfig
+          });
+
+          await sessionRef.update(
+            sanitize({
+              inquadramento: output.inquadramento,
+              mappaDialettica: output.mappaDialettica,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            })
+          );
+
+          res.status(200).json({ success: true, status: "review" });
+          return;
+        }
+
+        // ─── AZIONE 3: GENERATE SYNTHESIS ─────────────────────────────
+        if (action === "generate_synthesis") {
+          if (!sessionSnap.exists) { 
+            res.status(404).json({ error: "Session not found." }); 
+            return; 
+          }
+          const sessionData = sessionSnap.data();
+
+          // 1. CONTROLLO QUOTE IMMEDIATO
+          await Promise.all([
+            consumePerMinuteFeature(uid, "deep_analysis" as any, 10),
+            consumeDailyFeature(uid, "deep_analysis" as any, 30)
+          ]);
+
+          const savedConfig = (sessionData?.configurazione as Partial<DeepAnalysisConfig>) || {};
+          const resolvedConfig: DeepAnalysisConfig = {
+            ...DEFAULT_CONFIG,
+            ...savedConfig,
+          };
+
+          const output = await generateSynthesisReportFlow({
+            quesitoOriginale: (sessionData?.promptOriginale as string) || "",
+            inquadramento: sessionData?.inquadramento || {},
+            mappaDialettica: sessionData?.mappaDialettica || {},
+            userId: uid,
+            config: resolvedConfig
+          });
+
+          await sessionRef.update(
+            sanitize({
+              sintesiStrategica: output,
+              status: "completed",
+              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            })
+          );
+
+          res.status(200).json({ success: true, status: "completed" });
+          return;
+        }
+
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error("🔥 ERRORE CRITICO DEEP ANALYSIS AGENT:", err);
+        
+        // CATTURA L'ERRORE DELLE QUOTE E RESTITUISCE 429
+        if (msg.includes("quota_exceeded")) {
+          res.status(429).json({ error: "Quota Exceeded", details: msg });
+          return;
+        }
+        
+        if (msg.includes("ToolLoop")) {
+          res.status(422).json({ error: "ToolLoop", details: msg });
+          return;
+        }
+        
+        res.status(500).json({ error: "Process failed", details: msg });
       }
     });
   }

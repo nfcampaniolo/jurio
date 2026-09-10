@@ -36,14 +36,27 @@ export function getAdmin() {
   return admin;
 }
 
-export function sanitize(obj: any): any {
-  if (Array.isArray(obj)) return obj.map(sanitize);
-  if (obj !== null && typeof obj === 'object' && !(obj instanceof admin.firestore.FieldValue)) {
-    return Object.fromEntries(
-      Object.entries(obj)
-        .filter(([_, v]) => v !== undefined)
-        .map(([k, v]) => [k, sanitize(v)])
-    );
+export function sanitize<T>(obj: T): T {
+  if (obj === undefined) return null as T;
+
+  if (obj === null || typeof obj !== "object") {
+    return obj;
   }
-  return obj;
+  if (
+    obj instanceof Date ||
+    obj instanceof admin.firestore.Timestamp ||
+    obj instanceof admin.firestore.FieldValue
+  ) {
+    return obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj
+      .filter((item) => item !== undefined)
+      .map((item) => sanitize(item)) as unknown as T;
+  }
+  return Object.fromEntries(
+    Object.entries(obj as Record<string, unknown>)
+      .filter(([_, v]) => v !== undefined)
+      .map(([k, v]) => [k, sanitize(v)])
+  ) as T;
 }

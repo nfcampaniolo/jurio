@@ -17,11 +17,11 @@ import {
   findPlanByKey,
 } from "@/features/plans/hooks/planlDomain";
 import { PaymentHistory } from "@/features/plans/components/PaymentHistory";
-import { Loader2 } from "lucide-react";
-
 import { CurrentPlanCard } from "@/features/plans/components/CurrentPlanCard";
 import { PlansGrid } from "@/features/plans/components/PlansGrid";
 import { TeamPlansSection } from "@/features/plans/components/TeamPlansSection";
+import { SEO } from "@/shared/components/SEO";
+import { Loader2 } from "lucide-react";
 
 type BillingCycle = "monthly" | "yearly";
 
@@ -127,17 +127,31 @@ export const Plans: React.FC = () => {
   const upgradePlan: PlanUI | null = upgradeTarget ? findPlanByKey(orderedPlans, upgradeTarget) : null;
   const cycleLabel = billing === "monthly" ? "al mese" : "all’anno";
 
+  const seoComponent = (
+    <SEO
+      title="Piani e Abbonamenti"
+      description="Gestisci il tuo abbonamento a Jurio, visualizza lo stato del piano attivo, le licenze di studio e lo storico fatture."
+      path="/profilo/piani"
+      noIndex
+    />
+  );
+
   if (profileLoading || !user) {
     return (
-      <div className="h-screen flex items-center justify-center text-(--color-muted) gap-2 bg-(--color-bg)">
-        <Loader2 size={16} className="animate-spin text-(--color-text)" />
-        <span className="text-xs font-bold uppercase tracking-widest">Caricamento in corso...</span>
-      </div>
+      <>
+        {seoComponent}
+        <div className="h-screen flex items-center justify-center text-(--color-muted) gap-2 bg-(--color-bg)">
+          <Loader2 size={16} className="animate-spin text-(--color-text)" />
+          <span className="text-xs font-bold uppercase tracking-widest">Caricamento in corso...</span>
+        </div>
+      </>
     );
   }
 
   return (
     <>
+      {seoComponent}
+
       <motion.main
         className="py-12 md:py-16 max-w-5xl mx-auto px-4 sm:px-6"
         variants={fadeIn}
@@ -159,7 +173,7 @@ export const Plans: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="inline-flex w-fit items-center gap-2 px-4 py-2.5 rounded-md border border-(--color-border) bg-(--color-surface) hover:border-(--color-text) text-(--color-text) text-xs font-bold uppercase tracking-widest transition-colors shadow-xs outline-none"
+            className="inline-flex w-fit items-center gap-2 px-4 py-2.5 rounded-md border border-(--color-border) bg-(--color-surface) hover:border-(--color-text) text-(--color-text) text-xs font-bold uppercase tracking-widest transition-colors shadow-xs outline-none cursor-pointer"
             aria-label="Torna al profilo"
           >
             <FiArrowLeft size={15} className="opacity-70" />
@@ -175,7 +189,7 @@ export const Plans: React.FC = () => {
             animate="show"
             transition={shouldReduceMotion ? {} : { duration: 0.3, ease: "easeOut" }}
           >
-            {/* LA LINEA DI RIGORE SUPERIORE (Unico tocco di colore) */}
+            {/* LA LINEA DI RIGORE SUPERIORE */}
             <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
 
             <div className="text-xs font-bold uppercase tracking-widest text-(--color-text) mb-2 flex items-center gap-2 mt-1">
@@ -259,7 +273,7 @@ export const Plans: React.FC = () => {
         )}
       </motion.main>
 
-     <TeamPlansSection
+      <TeamPlansSection
         plans={plans}
         activeCoupon={activeCoupon}
         openPaymentForPlan={openPaymentForPlan}

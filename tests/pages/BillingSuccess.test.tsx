@@ -23,6 +23,15 @@ vi.mock("@/context/useAuth", () => ({
   useAuth: () => ({ user: mockAuthUser }),
 }));
 
+/* ---------- mock SEO component ---------- */
+const mockSeo = vi.fn();
+vi.mock("@/shared/components/SEO", () => ({
+  SEO: (props: unknown) => {
+    mockSeo(props);
+    return null;
+  },
+}));
+
 /* ---------- mock services/db & firebase/firestore ---------- */
 const mockGetDb = vi.fn().mockResolvedValue({ type: "firestore-db" });
 vi.mock("@/infrastructure/db", () => ({
@@ -60,6 +69,43 @@ describe("BillingSuccess Page Suite", () => {
 
   afterEach(() => {
     vi.useRealTimers();
+  });
+
+  test("configura correttamente i metadati SEO iniziali e li aggiorna al completamento", async () => {
+    render(<BillingSuccess />);
+
+    // Stato iniziale: waiting
+    expect(mockSeo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Pagamento in elaborazione…",
+        path: "/billing/success",
+        noIndex: true,
+      })
+    );
+
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    // Simula transizione a stato: ok
+    act(() => {
+      snapshotCallback?.({
+        exists: () => true,
+        data: () => ({
+          status: "active",
+          provider: "stripe",
+          stripeSessionId: "cs_test_123456",
+        }),
+      });
+    });
+
+    expect(mockSeo).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        title: "Pagamento completato",
+        path: "/billing/success",
+        noIndex: true,
+      })
+    );
   });
 
   test("renderizza lo stato iniziale di attesa (waiting) con session ID e opzioni di navigazione", async () => {

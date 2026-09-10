@@ -10,6 +10,7 @@ export const guideNavigation = [
       { title: "Interfacce di navigazione", href: "/guida/interfacce" },
       { title: "Ricerca semantica", href: "/guida/ricerca-semantica" },
       { title: "Consulente legale", href: "/guida/consulente-legale" },
+      { title: "Approfondimento giurisprudenziale", href: "/guida/analisi" },
       { title: "Analisi dei documenti", href: "/guida/analisi-documenti" },
       { title: "Add-in Word", href: "/guida/add-in-word" },
     ]

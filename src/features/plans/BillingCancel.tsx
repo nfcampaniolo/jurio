@@ -1,10 +1,18 @@
 import { useNavigate } from "react-router-dom";
+import { SEO } from "@/shared/components/SEO";
 
 export default function BillingCancel() {
   const navigate = useNavigate();
 
   return (
     <div className="min-h-[calc(100vh-4rem)] w-full px-4 py-10 sm:py-14">
+      <SEO
+        title="Pagamento Annullato"
+        description="La sessione di pagamento è stata annullata. Nessun addebito è stato effettuato sul tuo conto."
+        path="/billing/cancel"
+        noIndex
+      />
+
       <div className="mx-auto max-w-lg">
         <div className="rounded-2xl border border-neutral-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
           {/* header */}
@@ -33,7 +41,7 @@ export default function BillingCancel() {
               <button
                 type="button"
                 onClick={() => navigate("/profilo/piani")}
-                className="inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800 active:scale-[0.99] disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white"
+                className="inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800 active:scale-[0.99] disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white cursor-pointer"
               >
                 Riprova
               </button>
@@ -41,7 +49,7 @@ export default function BillingCancel() {
               <button
                 type="button"
                 onClick={() => navigate("/profilo")}
-                className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-50 active:scale-[0.99] dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900"
+                className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-50 active:scale-[0.99] dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900 cursor-pointer"
               >
                 Torna alla home
               </button>

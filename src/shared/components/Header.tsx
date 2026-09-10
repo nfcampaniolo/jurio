@@ -28,6 +28,7 @@ export const Header: React.FC = () => {
   const navItems: (NavItem & { label: string })[] = [
     { label: "Ricerca Giurisprudenza", type: "route", target: "/ricerca" },
     { label: "Consulente Legale", type: "route", target: "/chat" },
+    { label: "Approfondimento Giuriprudenziale", type: "route", target: "/analisi" },
   ];
 
   const closeMenu = () => setIsOpen(false);

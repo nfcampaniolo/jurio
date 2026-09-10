@@ -3,11 +3,25 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
 import type { PlanUI } from "@/features/plans/hooks/plans";
 
+/* ---------- hoisted mocks ---------- */
+const { mockNavigate, mockSeo } = vi.hoisted(() => ({
+  mockNavigate: vi.fn(),
+  mockSeo: vi.fn(),
+}));
+
 /* ---------- mock react-router-dom ---------- */
-const mockNavigate = vi.fn();
 vi.mock("react-router-dom", () => ({
   __esModule: true,
   useNavigate: () => mockNavigate,
+}));
+
+/* ---------- mock SEO component ---------- */
+vi.mock("@/shared/components/SEO", () => ({
+  __esModule: true,
+  SEO: (props: unknown) => {
+    mockSeo(props);
+    return null;
+  },
 }));
 
 /* ---------- mock useAuth ---------- */
@@ -37,19 +51,11 @@ vi.mock("framer-motion", () => ({
         whileInView?: unknown;
         viewport?: unknown;
       }
-    >(
-      (
-        {
-          children,
-          ...props
-        },
-        ref
-      ) => (
-        <div ref={ref} {...props}>
-          {children}
-        </div>
-      )
-    ),
+    >(({ children, ...props }, ref) => (
+      <div ref={ref} {...props}>
+        {children}
+      </div>
+    )),
   },
 }));
 
@@ -164,7 +170,7 @@ vi.mock("@/features/plans/hooks/plans", () => ({
 }));
 
 /* ---------- component under test ---------- */
-import Prezzi from "@/features/plans/Prezzi"; // <-- adegua il path se necessario
+import Prezzi from "@/features/plans/Prezzi";
 
 describe("Prezzi Component Suite", () => {
   beforeEach(() => {
@@ -172,6 +178,19 @@ describe("Prezzi Component Suite", () => {
     mockAuthState = { user: null, loading: false };
     mockFetchPlansFromDb.mockResolvedValue(samplePlans);
     mockGetPreloadedPlans.mockReturnValue(samplePlans);
+  });
+
+  test("configura correttamente i metadati SEO pubblici per la pagina prezzi", () => {
+    render(<Prezzi />);
+
+    expect(mockSeo).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Piani e Tariffe - Abbonamenti per Professionisti e Studi Legali",
+        description:
+          "Scopri i piani e le tariffe di Jurio. Ricerca giurisprudenziale avanzata, analisi automatica degli atti e soluzioni Workspace scalabili per studi legali.",
+        path: "/prezzi",
+      })
+    );
   });
 
   test("renderizza l'intestazione, il toggle di fatturazione e la tabella comparativa desktop", async () => {
