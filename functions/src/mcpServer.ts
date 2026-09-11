@@ -1,18 +1,17 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { translateRiferimento } from "./utils";
+import { getAuth } from "firebase-admin/auth";
+import { translateRiferimento, consumePerMinuteFeature, consumeDailyFeature } from "./utils";
 import { getDb } from "./deps";
 import { AREE } from "./params";
 
 const JURIO_VECTOR_SEARCH_URL = "https://vectorsearchjurio-vqoobrenua-ew.a.run.app";
-
-
 const NOMI_AREE = Object.values(AREE).join("', '");
 
 export function createMcpServer(authHeader: string): McpServer {
   const server = new McpServer({
     name: "jurio-mcp",
-    version: "1.0.1",
+    version: "1.0.3",
   });
   
   // --------------------------------------------------------------------------
@@ -47,11 +46,21 @@ export function createMcpServer(authHeader: string): McpServer {
           body: JSON.stringify({ query, limit: safeLimit }),
         });
 
+        if (response.status === 401) {
+          return { content: [{ type: "text", text: "Sessione Jurio non valida o scaduta. Ricollega il tuo account Jurio dalle impostazioni del client MCP." }], isError: true };
+        }
+        if (response.status === 403) {
+          return { content: [{ type: "text", text: "Accesso non consentito: nessun piano attivo rilevato. Per utilizzare gli strumenti di ricerca giuridica di Jurio è necessario un abbonamento. Attiva o rinnova il tuo piano su: https://jurio.it/prezzi" }], isError: false };
+        }
+        if (response.status === 429) {
+          return { content: [{ type: "text", text: "Hai raggiunto il limite di ricerche disponibili per il tuo piano. Riprova più tardi." }], isError: false };
+        }
+
         const data = await response.json().catch(async () => ({ error: await response.text() }));
 
         if (!response.ok) {
           return {
-            content: [{ type: "text", text: `Errore dal backend Jurio: ${data.error ?? response.statusText}` }],
+            content: [{ type: "text", text: `Errore dal backend Jurio (${response.status}): ${data.error ?? response.statusText}` }],
             isError: true,
           };
         }
@@ -65,7 +74,7 @@ export function createMcpServer(authHeader: string): McpServer {
         return { content: [{ type: "text", text: formatted }] };
       } catch (error) {
         return {
-          content: [{ type: "text", text: `Errore di rete: ${error instanceof Error ? error.message : String(error)}` }],
+          content: [{ type: "text", text: `Errore di rete o timeout: ${error instanceof Error ? error.message : String(error)}` }],
           isError: true,
         };
       }
@@ -91,8 +100,13 @@ export function createMcpServer(authHeader: string): McpServer {
     },
     async ({ riferimento, limit }) => {
       try {
-        const safeLimit = Math.min(limit ?? 10, 20);
+        const db = getDb();
+        
+        // 🔒 Controllo Autenticazione (compatibile con OAuth), Piano e Limiti
+        const authCheck = await verifyPlanAndLimits(authHeader, db);
+        if (!authCheck.ok) return { content: [{ type: "text", text: authCheck.text }], isError: authCheck.isError };
 
+        const safeLimit = Math.min(limit ?? 10, 20);
         const translation = translateRiferimento(riferimento);
         const searchKey = translation.key;
 
@@ -103,7 +117,6 @@ export function createMcpServer(authHeader: string): McpServer {
           };
         }
 
-        const db = getDb();
         const snap = await db
           .collection("sentences")
           .where("riferimenti_normativi_key", "array-contains", searchKey)
@@ -147,12 +160,18 @@ export function createMcpServer(authHeader: string): McpServer {
     async ({ identificativo }) => {
       try {
         const db = getDb();
+        
+        // 🔒 Controllo Autenticazione (compatibile con OAuth), Piano e Limiti
+        const authCheck = await verifyPlanAndLimits(authHeader, db);
+        if (!authCheck.ok) return { content: [{ type: "text", text: authCheck.text }], isError: authCheck.isError };
+
         const docs = await findByNumeroSentenzaAdmin(identificativo, db);
         if (!docs || docs.length === 0) {
           return {
             content: [{ type: "text", text: `Nessun documento trovato per l'identificativo: ${identificativo}` }],
           };
         }
+        
         const formatted = docs.map((doc: any) => formatDocument(doc)).join("\n\n---\n\n");
         return { content: [{ type: "text", text: formatted }] };
       } catch (error) {
@@ -181,8 +200,13 @@ export function createMcpServer(authHeader: string): McpServer {
     },
     async ({ termine, limit }) => {
       try {
-        const safeLimit = Math.min(limit ?? 10, 50);
         const db = getDb();
+
+        // 🔒 Controllo Autenticazione (compatibile con OAuth), Piano e Limiti
+        const authCheck = await verifyPlanAndLimits(authHeader, db);
+        if (!authCheck.ok) return { content: [{ type: "text", text: authCheck.text }], isError: authCheck.isError };
+
+        const safeLimit = Math.min(limit ?? 10, 50);
         const docs = await findBySottocategoriaAdmin(termine, safeLimit, db);
 
         if (!docs || docs.length === 0) {
@@ -206,7 +230,94 @@ export function createMcpServer(authHeader: string): McpServer {
 }
 
 // ============================================================================
-// FUNZIONI HELPER INTERNE
+// HELPER: CONTROLLO SICUREZZA, PIANO E LIMITI (Per i Tools Diretti 2, 3 e 4)
+// ============================================================================
+
+/**
+ * Verifica l'autenticazione analizzando sia i token OAuth salvati in Firestore
+ * (usati dai client MCP esterni) sia i classici JWT di Firebase.
+ * Consuma poi i rate limits. I limiti per i tool non vettoriali sono impostati a 20/min e 200/day.
+ */
+async function verifyPlanAndLimits(authHeader: string, db: any): Promise<{ ok: boolean, isError: boolean, text: string }> {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return { ok: false, isError: true, text: "Sessione Jurio non valida o token assente. Verifica l'autenticazione OAuth e ricollega il connettore." };
+  }
+
+  const token = authHeader.replace("Bearer ", "").trim();
+  let uid: string | null = null;
+
+  try {
+    // 1) Cerca il token nei database Firestore (come fa la Cloud Function vectorSearchJurio)
+    const [tokenSnap, directUserSnap] = await Promise.all([
+      db.collection("oauth_tokens").doc(token).get(),
+      db.collection("register").doc(token).get()
+    ]);
+
+    if (tokenSnap.exists) {
+      uid = tokenSnap.data()?.uid; // Token OAuth valido
+    } else if (directUserSnap.exists) {
+      uid = token; // Caso in cui il token sia direttamente l'UID
+    }
+  } catch (dbErr) {
+    console.error("[MCP Auth] Errore lettura token da Firestore:", dbErr);
+  }
+
+  // 2) Fallback: se Firestore non ha trovato l'UID, prova a validare il token come standard JWT Firebase
+  if (!uid) {
+    try {
+      const decodedToken = await getAuth().verifyIdToken(token);
+      uid = decodedToken.uid;
+    } catch (authError) {
+      return { ok: false, isError: true, text: "Token di autenticazione scaduto o non autorizzato. Ricollega il tuo account Jurio dalle impostazioni del client MCP." };
+    }
+  }
+
+  if (!uid) {
+    return { ok: false, isError: true, text: "Accesso negato: Impossibile identificare l'utente." };
+  }
+
+  // 3) Verifica Piano e Rate Limiting
+  const limits = { perMinute: 20, perDay: 200 };
+
+  try {
+    const [userSnap] = await Promise.all([
+      db.collection("register").doc(uid).get(),
+      consumePerMinuteFeature(uid, "research" as any, limits.perMinute),
+      consumeDailyFeature(uid, "research" as any, limits.perDay)
+    ]);
+
+    if (!userSnap.exists) {
+      return { ok: false, isError: true, text: "Errore: Account utente non trovato nel registro Jurio." };
+    }
+
+    const planId = String(userSnap.data()?.planId ?? "");
+    const allowedPlans = new Set(["prova", "admin", "business", "personale", "business_m", "personale_m"]);
+
+    if (!allowedPlans.has(planId)) {
+      return { 
+        ok: false, 
+        isError: false, 
+        text: "Accesso non consentito: nessun piano attivo rilevato. Per utilizzare gli strumenti di ricerca giuridica di Jurio tramite MCP è necessario un abbonamento. Attiva o rinnova il tuo piano su: https://jurio.it/prezzi" 
+      };
+    }
+
+    return { ok: true, isError: false, text: "Autorizzato" };
+  } catch (error: any) {
+    // Cattura l'errore generato se le quote perMinute o perDay vengono superate
+    if (error?.message?.toLowerCase().includes("limit") || error?.message?.toLowerCase().includes("quota") || error?.status === 429) {
+      return { 
+        ok: false, 
+        isError: false, 
+        text: "Hai raggiunto il limite massimo di ricerche (orario o giornaliero) consentito dal tuo piano. Riprova più tardi." 
+      };
+    }
+    // Rilancia eventuali altri errori tecnici (es. disconnessione Firestore)
+    throw error;
+  }
+}
+
+// ============================================================================
+// FUNZIONI HELPER INTERNE AL DATABASE
 // ============================================================================
 
 function formatDocument(doc: any): string {
@@ -219,9 +330,6 @@ function formatDocument(doc: any): string {
   return lines.join("\n");
 }
 
-/**
- * Ricerca puntuale per identificativo (Admin SDK)
- */
 async function findByNumeroSentenzaAdmin(identificativo: string, db: any): Promise<any[]> {
   const match = identificativo.match(/(\d+)\/(\d+)/);
   let variazioniNumero: string[] = [];
@@ -241,13 +349,11 @@ async function findByNumeroSentenzaAdmin(identificativo: string, db: any): Promi
 
   const sentencesRef = db.collection("sentences");
 
-  // Prepariamo le promises per l'esecuzione parallela
   const promises = [];
   
   if (variazioniNumero.length > 0) {
     promises.push(sentencesRef.where("numero_sentenza", "in", variazioniNumero).get());
   } else {
-    // Fallback vuoto per mantenere allineati gli indici dell'array
     promises.push(Promise.resolve({ empty: true, docs: [] }));
   }
 
@@ -259,17 +365,12 @@ async function findByNumeroSentenzaAdmin(identificativo: string, db: any): Promi
 
   const uniqueDocs = new Map();
 
-  // Unione risultati evitando duplicati e iniettando l'ID del documento
   [...snapNumero.docs, ...snapEcli.docs, ...snapUrn.docs].forEach((d) => {
     uniqueDocs.set(d.id, { id: d.id, ...d.data() });
   });
 
   return Array.from(uniqueDocs.values());
 }
-
-/**
- * Ricerca per materia o area (Admin SDK)
- */
 
 async function findBySottocategoriaAdmin(termine: string, max: number, db: any): Promise<any[]> {
   const original = termine.trim();
@@ -279,18 +380,15 @@ async function findBySottocategoriaAdmin(termine: string, max: number, db: any):
 
   const sentencesRef = db.collection("sentences");
 
-  // Eseguiamo due query parallele per aggirare in modo sicuro le differenze di case
-  // tra le macro-aree (spesso Title Case) e le sottocategorie (spesso array lowercase).
   const [snapArea, snapSotto] = await Promise.all([
     sentencesRef.where("area", "==", original).limit(max).get(),
     sentencesRef.where("sottocategoria", "array-contains", lower).limit(max).get()
   ]);
 
   const uniqueDocs = new Map();
-  // Mappiamo entrambi i risultati garantendo l'iniezione dell'id per i link di Jurio
+  
   snapArea.docs.forEach((d: any) => uniqueDocs.set(d.id, { id: d.id, ...d.data() }));
   snapSotto.docs.forEach((d: any) => uniqueDocs.set(d.id, { id: d.id, ...d.data() }));
 
-  // Ritorniamo i valori assicurandoci di non superare il limite massimo richiesto
   return Array.from(uniqueDocs.values()).slice(0, max);
 }

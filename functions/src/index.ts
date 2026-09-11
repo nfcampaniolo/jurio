@@ -10,7 +10,7 @@ import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/fire
 import OpenAI from "openai";
 import Stripe from "stripe";
 import { SpeechClient } from "@google-cloud/speech";
-import { legalAgentFlow, legalAgentSupport, legalGeminiFallbackFlow, reasoningFlow, estraiMetadatiFlow, wordQuoteFlow, wordReviewFlow, promptBuilderFlow, researchAnalysisFlow, refineResearchFlow, generateSynthesisReportFlow } from './genkit';
+import { legalAgentFlow, legalAgentSupport, legalGeminiFallbackFlow, reasoningFlow, estraiMetadatiFlow, wordQuoteFlow, wordReviewFlow, promptBuilderFlow, researchAnalysisFlow, refineResearchFlow, generateSynthesisReportFlow } from './genkit/flows';
 import { onSchedule } from "firebase-functions/v2/scheduler"; 
 // @ts-ignore
 import pdfExtract from "pdf-extraction";

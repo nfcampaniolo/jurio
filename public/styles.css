@@ -3098,3 +3098,271 @@ details[open] > div.faq-content-inner {
     display: none;
   }
 }
+/* =========================================================
+   MCP — PALETTE OCRA / STONE
+   Allinea l'integrazione MCP al linguaggio visivo della pagina
+   ========================================================= */
+
+.integration-mcp {
+  --mcp-stone-0: #f8f5ef;
+  --mcp-stone-1: #eee9df;
+  --mcp-stone-2: #d8d0c2;
+  --mcp-stone-3: #8b8377;
+  --mcp-ochre: var(--color-primary);
+  --mcp-ochre-soft: rgba(224, 163, 46, .16);
+  --mcp-ochre-line: rgba(154, 107, 37, .24);
+
+  background:
+    radial-gradient(
+      circle at 78% 48%,
+      rgba(224, 163, 46, .13),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 94% 12%,
+      rgba(154, 107, 37, .07),
+      transparent 24%
+    ),
+    linear-gradient(
+      135deg,
+      var(--mcp-stone-0) 0%,
+      #f4f0e8 58%,
+      var(--mcp-stone-1) 100%
+    );
+
+  color: var(--color-text);
+  border-color: var(--color-border);
+}
+
+.integration-mcp:hover {
+  border-color: color-mix(in srgb, var(--color-border) 68%, var(--color-primary));
+  box-shadow: var(--shadow-hover);
+}
+
+.integration-mcp .integration-label,
+.integration-mcp .integration-number {
+  color: var(--color-primary);
+}
+
+.integration-mcp .integration-number {
+  border-color: color-mix(in srgb, var(--color-border) 72%, var(--color-primary));
+  background: rgba(255,255,255,.38);
+}
+
+.integration-mcp .integration-copy h3 {
+  color: var(--color-text);
+}
+
+.integration-mcp .integration-copy h3 span {
+  color: var(--color-muted);
+}
+
+.integration-mcp .integration-copy p {
+  color: var(--color-muted);
+}
+
+.integration-mcp .integration-link {
+  color: var(--color-text);
+}
+
+.integration-mcp .integration-link::after {
+  background: var(--color-primary);
+}
+
+.integration-mcp .integration-arrow {
+  border-color: var(--color-border);
+  background: rgba(255,255,255,.35);
+}
+
+.integration-mcp .integration-link:hover .integration-arrow {
+  background: var(--mcp-ochre-soft);
+  border-color: var(--mcp-ochre);
+}
+
+.integration-mcp .mcp-ring {
+  border-color: rgba(154, 107, 37, .20);
+}
+
+.integration-mcp .mcp-center {
+  border-color: rgba(154, 107, 37, .30);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(224, 163, 46, .20),
+      rgba(255,255,255,.52)
+    );
+  color: var(--color-text);
+  box-shadow:
+    0 0 70px rgba(224, 163, 46, .16);
+}
+
+.integration-mcp .mcp-node {
+  border-color: rgba(154, 107, 37, .22);
+  background: rgba(255,255,255,.46);
+  color: var(--color-text);
+  box-shadow:
+    0 10px 30px rgba(42, 34, 24, .10);
+}
+
+.integration-mcp .mcp-visual::before,
+.integration-mcp .mcp-visual::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(154, 107, 37, .24),
+    transparent
+  );
+}
+
+@media (prefers-color-scheme: dark) {
+  .integration-mcp {
+    --mcp-stone-0: #2a2723;
+    --mcp-stone-1: #221f1c;
+    --mcp-stone-2: #4a443c;
+    --mcp-stone-3: #a9a095;
+
+    background:
+      radial-gradient(
+        circle at 78% 48%,
+        rgba(224, 163, 46, .12),
+        transparent 34%
+      ),
+      radial-gradient(
+        circle at 94% 12%,
+        rgba(154, 107, 37, .08),
+        transparent 24%
+      ),
+      linear-gradient(
+        135deg,
+        var(--mcp-stone-0) 0%,
+        #25221f 58%,
+        var(--mcp-stone-1) 100%
+      );
+
+    border-color: var(--color-border);
+  }
+
+  .integration-mcp .integration-label,
+  .integration-mcp .integration-number {
+    color: #d8b56a;
+  }
+
+  .integration-mcp .integration-number {
+    border-color: rgba(224, 163, 46, .22);
+    background: rgba(255,255,255,.04);
+  }
+
+  .integration-mcp .mcp-ring {
+    border-color: rgba(224, 163, 46, .17);
+  }
+
+  .integration-mcp .mcp-center {
+    border-color: rgba(224, 163, 46, .26);
+    background:
+      linear-gradient(
+        145deg,
+        rgba(224, 163, 46, .18),
+        rgba(255,255,255,.04)
+      );
+    box-shadow:
+      0 0 70px rgba(224, 163, 46, .13);
+  }
+
+  .integration-mcp .mcp-node {
+    border-color: rgba(224, 163, 46, .18);
+    background: rgba(255,255,255,.035);
+    color: var(--color-text);
+    box-shadow:
+      0 10px 30px rgba(0,0,0,.20);
+  }
+
+  .integration-mcp .mcp-visual::before,
+  .integration-mcp .mcp-visual::after {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(224, 163, 46, .20),
+      transparent
+    );
+  }
+}
+
+[data-theme="dark"] .integration-mcp {
+  background:
+    radial-gradient(
+      circle at 78% 48%,
+      rgba(224, 163, 46, .12),
+      transparent 34%
+    ),
+    radial-gradient(
+      circle at 94% 12%,
+      rgba(154, 107, 37, .08),
+      transparent 24%
+    ),
+    linear-gradient(
+      135deg,
+      #2a2723 0%,
+      #25221f 58%,
+      #221f1c 100%
+    );
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .integration-mcp .integration-label,
+[data-theme="dark"] .integration-mcp .integration-number {
+  color: #d8b56a;
+}
+
+[data-theme="dark"] .integration-mcp .integration-number {
+  border-color: rgba(224, 163, 46, .22);
+  background: rgba(255,255,255,.04);
+}
+
+[data-theme="dark"] .integration-mcp .mcp-ring {
+  border-color: rgba(224, 163, 46, .17);
+}
+
+[data-theme="dark"] .integration-mcp .mcp-center {
+  border-color: rgba(224, 163, 46, .26);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(224, 163, 46, .18),
+      rgba(255,255,255,.04)
+    );
+  box-shadow:
+    0 0 70px rgba(224, 163, 46, .13);
+}
+
+[data-theme="dark"] .integration-mcp .mcp-node {
+  border-color: rgba(224, 163, 46, .18);
+  background: rgba(255,255,255,.035);
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .integration-mcp .mcp-visual::before,
+[data-theme="dark"] .integration-mcp .mcp-visual::after {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(224, 163, 46, .20),
+    transparent
+  );
+}
+
+/* =========================================================
+   MCP — TYPOGRAPHY ALIGNMENT
+   ========================================================= */
+
+/* La "J" usa lo stesso carattere serif del wordmark Jurio. */
+.integration-mcp .mcp-center span {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  letter-spacing: -.04em;
+}
+
+/* Titoli MCP allineati alla tipografia principale della pagina. */
+.integration-mcp .integration-copy h3,
+.integration-mcp .integration-copy h3 span {
+  font-family: var(--font-serif);
+}
