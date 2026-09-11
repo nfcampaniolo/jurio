@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiCopy } from "react-icons/fi";
+import { FiArrowLeft } from "react-icons/fi";
 import { toast } from "react-hot-toast";
 import { motion, type Variants, useReducedMotion } from "framer-motion";
 import { useProfile } from "@/features/profile/hooks/useProfile";
@@ -82,15 +82,6 @@ export const EditProfile: React.FC = () => {
     }
   };
 
-  const copyMcpToken = () => {
-    if (user?.uid) {
-      navigator.clipboard.writeText(`Bearer ${user.uid}`);
-      toast.success("Token MCP copiato!");
-    } else {
-      toast.error("Impossibile recuperare l'ID utente");
-    }
-  };
-
   return (
     <motion.main
       className="min-h-screen px-4 py-10 max-w-5xl mx-auto"
@@ -162,19 +153,6 @@ export const EditProfile: React.FC = () => {
           {/* Azioni */}
           <motion.div className="flex flex-col sm:flex-row justify-between gap-6 pt-10" variants={fadeUp}>
             
-            {/* Pulsante Copia Token */}
-            <motion.button
-              type="button"
-              onClick={copyMcpToken}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-md border border-(--color-border) text-(--color-muted) bg-(--color-surface) hover:text-(--color-text) hover:border-(--color-text) transition-colors text-xs font-bold uppercase tracking-widest outline-none shadow-xs cursor-pointer"
-              whileHover={shouldReduceMotion ? undefined : { y: -1 }}
-              whileTap={shouldReduceMotion ? undefined : { scale: 0.98 }}
-              title="Copia token per integrazione Mistral AI MCP"
-            >
-              <FiCopy size={15} className="opacity-70" />
-              <span>Copia Token MCP</span>
-            </motion.button>
-
             {/* Azioni Form */}
             <div className="flex flex-row gap-3">
               <motion.button

@@ -26,7 +26,7 @@ vi.mock("react-icons/fi", () => ({
 }));
 
 /* ---------- component ---------- */
-import ConfigurazioneLeChat from "@/features/guide/components/ConfigurazioneLeChat"; // <-- adegua il path se necessario
+import ConfigurazioneLeChat from "@/features/guide/components/ConfigurazioneLeChat";
 
 describe("Guida - ConfigurazioneLeChat Component Suite", () => {
   const originalClipboard = navigator.clipboard;
@@ -86,31 +86,30 @@ describe("Guida - ConfigurazioneLeChat Component Suite", () => {
     expect(mistralLink).toHaveAttribute("href", "https://console.mistral.ai/");
     expect(mistralLink).toHaveAttribute("target", "_blank");
 
-    expect(screen.getByText("https://juriomcpserver-vqoobrenua-ew.a.run.app")).toBeInTheDocument();
+    // Fix 1: Utilizza il nuovo URL MCP
+    expect(screen.getByText("https://jurio.it/mcp")).toBeInTheDocument();
   });
 
-  test("copia l'intestazione 'Authorization' negli appunti e mostra il toast di conferma al click", async () => {
+  test("copia l'URL MCP negli appunti e mostra il toast di conferma al click", async () => {
     render(<ConfigurazioneLeChat />);
 
-    const copyBtn = screen.getByRole("button", { name: "Authorization" });
+    // Fix 2: Usa il bottone corretto (che mostra l'URL, non Authorization)
+    const copyBtn = screen.getByRole("button", { name: /https:\/\/jurio\.it\/mcp/i });
     expect(copyBtn).toBeInTheDocument();
     expect(screen.getByTestId("fi-copy")).toBeInTheDocument();
 
     fireEvent.click(copyBtn);
 
     await waitFor(() => {
-      expect(mockWriteText).toHaveBeenCalledWith("Authorization");
-      expect(mockToast.success).toHaveBeenCalledWith("Authorization copiato!");
+      expect(mockWriteText).toHaveBeenCalledWith("https://jurio.it/mcp");
+      expect(mockToast.success).toHaveBeenCalledWith("URL copiato negli appunti!");
     });
   });
 
-  test("renderizza i collegamenti ipertestuali a /profilo e alla pagina di supporto /contatti", () => {
+  test("renderizza il collegamento ipertestuale alla pagina di supporto /contatti", () => {
     render(<ConfigurazioneLeChat />);
 
-    const profileLink = screen.getByRole("link", { name: "/profilo" });
-    expect(profileLink).toHaveAttribute("href", "https://jurio.it/profilo/modifica");
-    expect(profileLink).toHaveAttribute("target", "_blank");
-
+    // Fix 3: Rimosso il controllo del link /profilo che nel nuovo componente OAuth non esiste più
     const contactLink = screen.getByRole("link", { name: "/contatti" });
     expect(contactLink).toHaveAttribute("href", "/contatti");
   });
@@ -121,15 +120,16 @@ describe("Guida - ConfigurazioneLeChat Component Suite", () => {
     const images = screen.getAllByRole("img");
     expect(images).toHaveLength(3);
 
-    expect(images[0]).toHaveAttribute("src", "https://jurio.it/guida-image/vibe_1.webp");
-    expect(images[1]).toHaveAttribute("src", "https://jurio.it/guida-image/vibe_2.webp");
+    // Fix 4: Aggiornate le rotte delle immagini e le caption per riflettere il componente corrente
+    expect(images[0]).toHaveAttribute("src", "https://jurio.it/guida-image/mcp_vibe_1.webp");
+    expect(images[1]).toHaveAttribute("src", "https://jurio.it/guida-image/mcp_vibe_2.webp");
     expect(images[2]).toHaveAttribute("src", "https://jurio.it/guida-image/vibe.webp");
 
     expect(
       screen.getByText(/Figura 1: Aggiunta di un nuovo connettore personalizzato dalla sezione Contesto/i)
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Figura 2: Configurazione Token di Autenticazione/i)
+      screen.getByText(/Figura 2: Flusso di autenticazione e autorizzazione account/i)
     ).toBeInTheDocument();
     expect(
       screen.getByText(/Figura 3: Vista Vibe con connettore Jurio/i)

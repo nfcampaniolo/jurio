@@ -1,4 +1,14 @@
+import { toast } from "react-hot-toast";
+import { FiCopy } from "react-icons/fi";
+
 export default function ConfigurazioneClaude() {
+  const mcpUrl = "https://jurio.it/mcp";
+
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(mcpUrl);
+    toast.success("URL copiato negli appunti!");
+  };
+
   return (
     <div className="space-y-8">
       {/* Intestazione Sezione */}
@@ -39,7 +49,15 @@ export default function ConfigurazioneClaude() {
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-70" />
             <h3 className="font-medium text-(--color-text) text-md tracking-tight mt-0.5">Accesso a Claude</h3>
             <p className="text-md text-(--color-muted) font-light leading-relaxed">
-              Accedi al tuo account su <a href="https://claude.ai/" target="_blank" rel="noopener noreferrer" className="font-bold underline underline-offset-2 text-(--color-text) hover:text-(--color-primary)">https://claude.ai/</a>.
+              Accedi al tuo account su{" "}
+              <a
+                href="https://claude.ai/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold underline underline-offset-2 text-(--color-text) hover:text-(--color-primary)"
+              >
+                https://claude.ai/
+              </a>.
             </p>
           </div>
 
@@ -52,11 +70,11 @@ export default function ConfigurazioneClaude() {
             </p>
           </div>
 
-          {/* --- IMMAGINE 1: Directory Connettori --- */}
+          {/* IMMAGINE 1: Directory Connettori */}
           <div className="my-4">
             <div className="flex justify-center">
               <img
-                src="https://jurio.it/guida-image/claude_1.webp" // Sostituisci con il link corretto dell'immagine corrispondente
+                src="https://jurio.it/guida-image/claude_1.webp"
                 alt="Schermata della directory dei connettori su Claude"
                 loading="lazy"
                 className="rounded-lg border border-(--color-border) shadow-xs max-w-full"
@@ -71,14 +89,23 @@ export default function ConfigurazioneClaude() {
           <div className="relative p-5 rounded-lg border border-(--color-border) bg-(--color-surface) shadow-(--shadow-soft) overflow-hidden space-y-2">
             <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
             <h3 className="text-md font-bold uppercase tracking-wider text-(--color-text) mt-1">Parametri Iniziali</h3>
-            <ul className="space-y-1.5 text-md text-(--color-muted) font-light leading-relaxed">
+            <ul className="space-y-2 text-md text-(--color-muted) font-light leading-relaxed">
               <li className="flex items-start">
                 <span className="text-(--color-text) mr-2 font-bold">1.</span>
                 <span>Inserisci <strong className="font-semibold text-(--color-text)">Jurio</strong> nel campo nome.</span>
               </li>
-              <li className="flex items-start">
+              <li className="flex items-center gap-2 flex-wrap">
                 <span className="text-(--color-text) mr-2 font-bold">2.</span>
-                <span>Inserisci l'URL del server: <strong className="font-semibold text-(--color-text)">https://juriomcpserver-vqoobrenua-ew.a.run.app</strong></span>
+                <span>URL Server:</span>
+                <button
+                  type="button"
+                  onClick={handleCopyUrl}
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-(--color-border) bg-(--color-bg) hover:border-(--color-text) hover:text-(--color-text) text-(--color-muted) text-sm font-mono transition-colors shadow-xs outline-none"
+                  title="Copia URL MCP"
+                >
+                  <span>{mcpUrl}</span>
+                  <FiCopy size={12} className="opacity-70" />
+                </button>
               </li>
               <li className="flex items-start">
                 <span className="text-(--color-text) mr-2 font-bold">3.</span>
@@ -87,11 +114,11 @@ export default function ConfigurazioneClaude() {
             </ul>
           </div>
 
-          {/* --- IMMAGINE 2: Modale di inserimento URL e Nome --- */}
+          {/* IMMAGINE 2: Modale di inserimento URL e Nome */}
           <div className="my-4">
             <div className="flex justify-center">
               <img
-                src="https://jurio.it/guida-image/claude_2.webp"
+                src="https://jurio.it/guida-image/mcp_claude_1.webp"
                 alt="Modale di inserimento dei dati del connettore Jurio"
                 loading="lazy"
                 className="rounded-lg border border-(--color-border) shadow-xs max-w-full"
@@ -122,11 +149,11 @@ export default function ConfigurazioneClaude() {
             </ul>
           </div>
 
-          {/* --- IMMAGINE 3: Selezione Autenticazione e Client OAuth --- */}
+          {/* IMMAGINE 3: Selezione Autenticazione e Client OAuth */}
           <div className="my-4">
             <div className="flex justify-center">
               <img
-                src="https://jurio.it/guida-image/claude_3.webp"
+                src="https://jurio.it/guida-image/mcp_claude_2.webp"
                 alt="Schermata di selezione delle opzioni di autenticazione e Client OAuth"
                 loading="lazy"
                 className="rounded-lg border border-(--color-border) shadow-xs max-w-full"
@@ -154,7 +181,6 @@ export default function ConfigurazioneClaude() {
 
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
-            
             {/* Pulsante Collega */}
             <div className="relative p-4 rounded-lg border border-(--color-border) bg-(--color-surface) shadow-xs space-y-1 overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-70" />
@@ -178,11 +204,11 @@ export default function ConfigurazioneClaude() {
             </div>
           </div>
 
-          {/* --- IMMAGINE 4: Schermata "Non sei ancora connesso" con tasto Collega --- */}
+          {/* IMMAGINE 4: Schermata "Non sei ancora connesso" con tasto Collega */}
           <div className="my-4">
             <div className="flex justify-center">
               <img
-                src="https://jurio.it/guida-image/claude_4.webp"
+                src="https://jurio.it/guida-image/mcp_claude_3.webp"
                 alt="Schermata di Claude con il pulsante Collega il connettore Jurio"
                 loading="lazy"
                 className="rounded-lg border border-(--color-border) shadow-xs max-w-full"
@@ -192,16 +218,16 @@ export default function ConfigurazioneClaude() {
               Figura 4: Schermata finale con il pulsante "Collega" per attivare la sessione OAuth.
             </p>
           </div>
-          
+
           {/* Supporto / Contatti */}
           <div className="px-1 text-sm text-(--color-muted) font-light">
-            Hai riscontrato problemi durante la procedura di collegamento OAuth? Visita la pagina{' '}
-            <a 
-              href="/contatti" 
+            Hai riscontrato problemi durante la procedura di collegamento OAuth? Visita la pagina{" "}
+            <a
+              href="/contatti"
               className="font-semibold underline underline-offset-2 text-(--color-text) hover:text-(--color-primary) transition-colors"
             >
               /contatti
-            </a>{' '}
+            </a>{" "}
             per ricevere assistenza immediata.
           </div>
         </div>

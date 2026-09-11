@@ -56,8 +56,6 @@ export function useSearchHistory(uid: string | null, searchInput: string) {
   useEffect(() => {
     let cancelled = false;
     
-    // RISOLTO: Inseriamo il set state sincrono dentro la funzione async
-    // per non far arrabbiare il linter di React sui render a cascata.
     const fetchHistory = async () => {
       if (!uid) {
         setUserTerms([]);

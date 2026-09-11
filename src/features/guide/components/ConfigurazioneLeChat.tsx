@@ -1,7 +1,14 @@
 import { toast } from "react-hot-toast";
-import { FiCopy } from "react-icons/fi"; 
+import { FiCopy } from "react-icons/fi";
 
 export default function ConfigurazioneLeChat() {
+  const mcpUrl = "https://jurio.it/mcp";
+
+  const handleCopyUrl = () => {
+    navigator.clipboard.writeText(mcpUrl);
+    toast.success("URL copiato negli appunti!");
+  };
+
   return (
     <div className="space-y-8">
       {/* Intestazione Sezione */}
@@ -18,7 +25,7 @@ export default function ConfigurazioneLeChat() {
           Connessione a Vibe
         </h1>
         <p className="text-md text-(--color-muted) font-light leading-relaxed">
-          Questa guida illustra i passaggi per integrare Jurio all'interno di Vibe utilizzando il protocollo MCP (Model Context Protocol). L'integrazione richiede la creazione di un connettore personalizzato e l'autenticazione tramite <strong className="font-semibold text-(--color-text)">Token</strong>.
+          Questa guida illustra i passaggi per integrare Jurio all'interno di Vibe utilizzando il protocollo MCP (Model Context Protocol). L'integrazione richiede la creazione di un connettore personalizzato e l'autorizzazione rapida tramite <strong className="font-semibold text-(--color-text)">OAuth</strong>.
         </p>
       </div>
 
@@ -35,7 +42,6 @@ export default function ConfigurazioneLeChat() {
           </p>
         </div>
 
-      
         {/* Passaggi Creazione */}
         <div className="space-y-3.5 pt-1">
           {/* Step 1: Login Mistral */}
@@ -43,7 +49,16 @@ export default function ConfigurazioneLeChat() {
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-70" />
             <h3 className="font-medium text-(--color-text) text-md tracking-tight mt-0.5">Accesso alla Piattaforma</h3>
             <p className="text-md text-(--color-muted) font-light leading-relaxed">
-              Prima di tutto, è necessario effettuare il login. Vai su <a href="https://console.mistral.ai/" target="_blank" rel="noopener noreferrer" className="font-bold underline underline-offset-2 text-(--color-text) hover:text-(--color-primary)">https://console.mistral.ai/</a> e accedi con le tue credenziali.
+              Prima di tutto, effettua l'accesso su{" "}
+              <a
+                href="https://console.mistral.ai/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold underline underline-offset-2 text-(--color-text) hover:text-(--color-primary)"
+              >
+                https://console.mistral.ai/
+              </a>{" "}
+              con le tue credenziali.
             </p>
           </div>
 
@@ -52,7 +67,7 @@ export default function ConfigurazioneLeChat() {
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-70" />
             <h3 className="font-medium text-(--color-text) text-md tracking-tight mt-0.5">Navigazione nel menu</h3>
             <p className="text-md text-(--color-muted) font-light leading-relaxed">
-              Una volta effettuato l'accesso, nella sidebar laterale di Vibe individua ed espandi la voce <strong className="font-semibold text-(--color-text)">Contesto</strong>, quindi clicca su <strong className="font-semibold text-(--color-text)">Connettori</strong>. Nella pagina che si aprirà, fai clic sul pulsante <strong className="font-semibold text-(--color-text)">+ Aggiungi connettore</strong> situato in alto a destra.
+              Nella barra laterale di Vibe individua la voce <strong className="font-semibold text-(--color-text)">Contesto</strong> ed espandi <strong className="font-semibold text-(--color-text)">Connettori</strong>. Fai clic sul pulsante <strong className="font-semibold text-(--color-text)">+ Aggiungi connettore</strong> in alto a destra.
             </p>
           </div>
 
@@ -60,106 +75,90 @@ export default function ConfigurazioneLeChat() {
           <div className="relative p-5 rounded-lg border border-(--color-border) bg-(--color-surface) shadow-(--shadow-soft) overflow-hidden space-y-2">
             <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
             <h3 className="text-md font-bold uppercase tracking-wider text-(--color-text) mt-1">Parametri del Connettore</h3>
-            <ul className="space-y-1.5 text-md text-(--color-muted) font-light leading-relaxed">
+            <ul className="space-y-2 text-md text-(--color-muted) font-light leading-relaxed">
               <li className="flex items-start">
                 <span className="text-(--color-text) mr-2 font-bold">1.</span>
-                <span>Seleziona la tab <strong className="font-semibold text-(--color-text)">Connettore MCP personalizzato</strong>.</span>
+                <span>Seleziona la scheda <strong className="font-semibold text-(--color-text)">Connettore MCP personalizzato</strong>.</span>
               </li>
               <li className="flex items-start">
                 <span className="text-(--color-text) mr-2 font-bold">2.</span>
                 <span>Inserisci <strong className="font-semibold text-(--color-text)">Jurio</strong> nel campo nome.</span>
               </li>
-              <li className="flex items-start">
+              <li className="flex items-center gap-2 flex-wrap">
                 <span className="text-(--color-text) mr-2 font-bold">3.</span>
-                <span>Inserisci l'URL del server (<strong className="font-semibold text-(--color-text)">https://juriomcpserver-vqoobrenua-ew.a.run.app</strong>).</span>
+                <span>URL Server:</span>
+                <button
+                  type="button"
+                  onClick={handleCopyUrl}
+                  className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-(--color-border) bg-(--color-bg) hover:border-(--color-text) hover:text-(--color-text) text-(--color-muted) text-sm font-mono transition-colors shadow-xs outline-none"
+                  title="Copia URL MCP"
+                >
+                  <span>{mcpUrl}</span>
+                  <FiCopy size={12} className="opacity-70" />
+                </button>
               </li>
               <li className="flex items-start">
                 <span className="text-(--color-text) mr-2 font-bold">4.</span>
-                <span>Clicca su <strong className="font-semibold text-(--color-text)">Crea</strong> per confermare l'operazione.</span>
+                <span>Clicca su <strong className="font-semibold text-(--color-text)">Crea</strong> per registrare il connettore.</span>
               </li>
             </ul>
           </div>
         </div>
       </section>
-      {/* --- PLACEHOLDER IMMAGINE 1 (Screenshot Connettori) --- */}
-        <div className="my-4">
-          <div className="flex justify-center">
-            <img
-              src="https://jurio.it/guida-image/vibe_1.webp"
-              alt="Schermata delle impostazioni di Vibe per l'aggiunta di un nuovo connettore MCP"
-              loading="lazy"
-            />
-          </div>
-          <p className="text-md text-(--color-muted) font-light mt-2 text-center italic">
-            Figura 1: Aggiunta di un nuovo connettore personalizzato dalla sezione Contesto.
-          </p>
+
+      {/* Screenshot Connettori */}
+      <div className="my-4">
+        <div className="flex justify-center">
+          <img
+            src="https://jurio.it/guida-image/mcp_vibe_1.webp"
+            alt="Schermata delle impostazioni di Vibe per l'aggiunta di un nuovo connettore MCP"
+            loading="lazy"
+          />
         </div>
+        <p className="text-md text-(--color-muted) font-light mt-2 text-center italic">
+          Figura 1: Aggiunta di un nuovo connettore personalizzato dalla sezione Contesto.
+        </p>
+      </div>
+
       <hr className="border-(--color-border)" />
 
-      {/* SEZIONE 2: Autenticazione e Permessi */}
+      {/* SEZIONE 2: Autenticazione OAuth e Permessi */}
       <section className="space-y-4">
         <div>
           <h2 className="text-base sm:text-lg font-medium text-(--color-text) tracking-tight mb-1.5">
-            2. Autenticazione Token e Permessi
+            2. Autenticazione OAuth e Permessi
           </h2>
           <p className="text-md text-(--color-muted) font-light leading-relaxed">
-            Affinché Vibe possa comunicare in modo sicuro con Jurio, è necessario configurare l'autenticazione tramite Token e concedere le autorizzazioni di esecuzione.
+            Non è necessario generare o copiare token manuali: la connessione a Jurio avviene tramite autenticazione sicura OAuth standard.
           </p>
         </div>
-     {/* --- PLACEHOLDER IMMAGINE 1 (Screenshot Connettori) --- */}
+
+        {/* Screenshot OAuth */}
         <div className="my-4">
           <div className="flex justify-center">
             <img
-              src="https://jurio.it/guida-image/vibe_2.webp"
-              alt="Schermata delle impostazioni di Vibe per l'aggiunta di un nuovo connettore MCP"
+              src="https://jurio.it/guida-image/mcp_vibe_2.webp"
+              alt="Schermata delle impostazioni di Vibe per l'autorizzazione OAuth"
               loading="lazy"
             />
           </div>
           <p className="text-md text-(--color-muted) font-light mt-2 text-center italic">
-            Figura 2: Configurazione Token di Autenticazione
+            Figura 2: Flusso di autenticazione e autorizzazione account
           </p>
         </div>
-      {/* Passaggi Autenticazione e Tool */}
+
+        {/* Passaggi Autenticazione e Tool */}
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
-            
-            {/* Autenticazione (Configurazione Header) */}
+            {/* Flusso OAuth */}
             <div className="relative p-4 rounded-lg border border-(--color-border) bg-(--color-surface) shadow-xs space-y-1 overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-70" />
               <h3 className="font-medium text-(--color-text) text-md tracking-tight mt-0.5">
-                Configurazione Intestazione
+                Accesso Account (OAuth)
               </h3>
-              <div className="text-md text-(--color-muted) font-light leading-relaxed mt-1">
-                In fase di configurazione, per autorizzare la connessione, devi <strong className="font-semibold text-(--color-text)">assolutamente</strong> aggiungere un'intestazione personalizzata:
-                <ul className="list-disc list-inside mt-2 space-y-2 ml-1">
-                  <li className="flex items-center gap-2">
-                    <span className="font-semibold text-(--color-text)">Intestazione connessione:</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        navigator.clipboard.writeText("Authorization");
-                        toast.success("Authorization copiato!");
-                      }}
-                      className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md border border-(--color-border) bg-(--color-bg) hover:border-(--color-text) hover:text-(--color-text) text-(--color-muted) text-sm font-mono transition-colors shadow-xs outline-none"
-                      title="Copia 'Authorization'"
-                    >
-                      <span>Authorization</span>
-                      <FiCopy size={12} className="opacity-70" />
-                    </button>
-                  </li>
-                  <li>
-                    <span className="font-semibold text-(--color-text)">Valore:</span> inserisci il token segreto copiato dal tuo{' '}
-                    <a 
-                      href="https://jurio.it/profilo/modifica" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="font-bold underline underline-offset-2 text-(--color-text) hover:text-(--color-primary) transition-colors"
-                    >
-                      /profilo
-                    </a>.
-                  </li>
-                </ul>
-              </div>
+              <p className="text-md text-(--color-muted) font-light leading-relaxed mt-1">
+                Al salvataggio del connettore (o al primo avvio di una richiesta), Vibe avvierà automaticamente la finestra di autorizzazione. Fai clic su <strong className="font-semibold text-(--color-text)">Autorizza</strong> ed effettua il login con il tuo account Jurio per collegare i servizi senza inserire token manuali.
+              </p>
             </div>
 
             {/* Autorizzazione Tools */}
@@ -169,34 +168,35 @@ export default function ConfigurazioneLeChat() {
                 Approvazione dei Tool
               </h3>
               <p className="text-md text-(--color-muted) font-light leading-relaxed mt-1">
-                Durante l'utilizzo, se Vibe ti chiede di approvare le chiamate ai tool, assicurati di <strong className="font-semibold text-(--color-text)">consentire l'esecuzione</strong>. Questo permetterà all'assistente di effettuare ricerche e operazioni utilizzando Jurio direttamente all'interno della conversazione.
+                Durante l'utilizzo, quando Vibe invoca gli strumenti di ricerca o consultazione normativa di Jurio, assicurati di <strong className="font-semibold text-(--color-text)">consentire l'esecuzione</strong> per permettere all'assistente di restituire i risultati.
               </p>
             </div>
           </div>
-          
+
           {/* Supporto / Contatti */}
           <div className="px-1 text-sm text-(--color-muted) font-light">
-            Hai difficoltà con la configurazione o il token restituisce errore? Visita la pagina{' '}
-            <a 
-              href="/contatti" 
+            Hai dubbi durante il login o la connessione non va a buon fine? Visita la pagina{" "}
+            <a
+              href="/contatti"
               className="font-semibold underline underline-offset-2 text-(--color-text) hover:text-(--color-primary) transition-colors"
             >
               /contatti
-            </a>{' '}
-            per ricevere supporto o per qualsiasi evenienza.
+            </a>{" "}
+            per ricevere supporto.
           </div>
         </div>
-         {/* --- PLACEHOLDER IMMAGINE 1 (Screenshot Connettori) --- */}
+
+        {/* Screenshot Finale */}
         <div className="my-4">
           <div className="flex justify-center">
             <img
               src="https://jurio.it/guida-image/vibe.webp"
-              alt="Schermata delle impostazioni di Vibe per l'aggiunta di un nuovo connettore MCP"
+              alt="Vista finale di Vibe con connettore Jurio attivo"
               loading="lazy"
             />
           </div>
           <p className="text-md text-(--color-muted) font-light mt-2 text-center italic">
-            Figura 3: Vista Vibe con connettore Jurio
+            Figura 3: Vista Vibe con connettore Jurio configurato e collegato
           </p>
         </div>
       </section>

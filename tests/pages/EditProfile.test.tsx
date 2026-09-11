@@ -214,16 +214,6 @@ describe("EditProfile Page Suite", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/profilo");
   });
 
-  test("copia il token MCP negli appunti e mostra il toast di conferma", () => {
-    render(<EditProfile />);
-
-    const copyTokenButton = screen.getByRole("button", { name: /Copia Token MCP/i });
-    fireEvent.click(copyTokenButton);
-
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith("Bearer usr_flv_2026");
-    expect(toast.success).toHaveBeenCalledWith("Token MCP copiato!");
-  });
-
   test("gestisce il salvataggio del profilo con successo", async () => {
     render(<EditProfile />);
 

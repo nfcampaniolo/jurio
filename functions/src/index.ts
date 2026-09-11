@@ -17,8 +17,11 @@ import pdfExtract from "pdf-extraction";
 import * as busboyModule from "busboy";
 import { google } from "googleapis";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import {createMcpServer} from "./mcp";
+import { createMcpServer } from "./mcpServer";
 import { randomBytes } from "crypto";
+
+import express from "express";
+import cors from "cors";
 
 const Busboy = busboyModule.default || busboyModule;
 const db = getDb();
@@ -35,193 +38,174 @@ setGlobalOptions({
 
 
 // ============================================================================
-// MCP SERVER
+// MCP SERVER (EXPRESS)
 // ============================================================================
+const app = express();
+app.use(cors({ origin: true }));
+app.use(express.json());
+
+// Normalizza le richieste: rimuove il prefisso /mcp se presente
+app.use((req, res, next) => {
+  if (req.url.startsWith("/mcp/")) {
+    req.url = req.url.replace(/^\/mcp/, "");
+  } else if (req.url === "/mcp") {
+    req.url = "/";
+  }
+  next();
+});
+
+// 1. Server Card
+app.get(["/.well-known/mcp/server-card", "/.well-known/mcp/server-card/"], (req, res) => {
+  res.status(200).json({
+    name: "Jurio MCP Server",
+    version: "1.0.0",
+    description: "Server MCP per la ricerca nella giurisprudenza italiana",
+  });
+});
+
+// 2. Protected Resource (RFC 9723)
+app.get([
+  "/.well-known/oauth-protected-resource",
+  "/.well-known/oauth-protected-resource/",
+  "/.well-known/oauth-protected-resource/mcp"
+], (req, res) => {
+  res.status(200).json({
+    resource: "https://jurio.it/mcp",
+    authorization_servers: ["https://jurio.it/mcp"]
+  });
+});
+
+// 3. Authorization Server Metadata (RFC 8414 & OpenID Discovery)
+app.get([
+  "/.well-known/oauth-authorization-server",
+  "/.well-known/oauth-authorization-server/",
+  "/.well-known/oauth-authorization-server/mcp",
+  "/.well-known/openid-configuration",
+  "/.well-known/openid-configuration/",
+  "/.well-known/openid-configuration/mcp"
+], (req, res) => {
+  res.status(200).json({
+    issuer: "https://jurio.it/mcp",
+    authorization_endpoint: "https://jurio.it/mcp/authorize",
+    token_endpoint: "https://jurio.it/mcp/token",
+    registration_endpoint: "https://jurio.it/mcp/register",
+    response_types_supported: ["code"],
+    grant_types_supported: ["authorization_code"],
+    code_challenge_methods_supported: ["S256", "plain"]
+  });
+});
+
+// 4. Dynamic Client Registration (RFC 7591)
+app.post("/register", (req, res) => {
+  res.status(201).json({
+    client_id: "jurio_claude_client_id_auto",
+    client_secret: "jurio_secret_dummy",
+    client_id_issued_at: Math.floor(Date.now() / 1000),
+    client_secret_expires_at: 0,
+    grant_types: ["authorization_code"],
+    response_types: ["code"],
+    redirect_uris: req.body?.redirect_uris || [],
+    token_endpoint_auth_method: "client_secret_post"
+  });
+});
+
+// 5. OAuth Authorize
+app.get("/authorize", (req, res) => {
+  const { client_id, redirect_uri, state, response_type } = req.query;
+  if (response_type !== "code") {
+    res.status(400).send("Unsupported response_type. Must be 'code'.");
+    return;
+  }
+  const loginUrl = new URL("https://jurio.it/oauth-login");
+  if (client_id) loginUrl.searchParams.append("client_id", String(client_id));
+  if (redirect_uri) loginUrl.searchParams.append("redirect_uri", String(redirect_uri));
+  if (state) loginUrl.searchParams.append("state", String(state));
+  res.redirect(302, loginUrl.toString());
+});
+
+// 6. OAuth Token Exchange
+app.post("/token", async (req, res) => {
+  const code = req.body?.code || req.query?.code;
+  const grant_type = req.body?.grant_type || req.query?.grant_type;
+
+  if (grant_type !== "authorization_code" || !code) {
+    res.status(400).json({ error: "unsupported_grant_type" });
+    return;
+  }
+
+  try {
+    const codeRef = db.collection("oauth_codes").doc(code as string);
+    const codeSnap = await codeRef.get();
+
+    if (!codeSnap.exists) {
+      res.status(401).json({ error: "invalid_grant", error_description: "Codice non valido o scaduto" });
+      return;
+    }
+
+    await codeRef.delete();
+    const accessToken = randomBytes(32).toString("hex");
+
+    const expireDate = new Date();
+    expireDate.setFullYear(expireDate.getFullYear() + 1);
+
+    await db.collection("oauth_tokens").doc(accessToken).set({
+      uid: codeSnap.data()?.uid,
+      createdAt: FieldValue.serverTimestamp(),
+      expiresAt: Timestamp.fromDate(expireDate),
+      client_id: req.body?.client_id || req.query?.client_id || "claude_web"
+    });
+
+    res.status(200).json({
+      access_token: accessToken,
+      token_type: "Bearer",
+      expires_in: 31536000,
+    });
+  } catch (err) {
+    console.error("[JURIO-MCP] Errore scambio token:", err);
+    res.status(500).json({ error: "server_error" });
+  }
+});
+
+// 7. MCP Protocol Transport (protetto da Bearer token)
+app.use(async (req, res) => {
+  if (req.method === "OPTIONS") { 
+    res.status(204).end(); 
+    return; 
+  }
+
+  const authHeader = typeof req.headers?.authorization === "string" ? req.headers.authorization : "";
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    res.set("WWW-Authenticate", 'Bearer realm="jurio", error="unauthorized"');
+    res.status(401).json({
+      error: "unauthorized",
+      message: "Autenticazione richiesta per utilizzare Jurio MCP."
+    });
+    return;
+  }
+
+  const server = createMcpServer(authHeader);
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: undefined,
+    enableJsonResponse: true,
+  });
+
+  res.on("close", () => {
+    transport.close().catch(console.error);
+  });
+
+  try {
+    await server.connect(transport);
+    await transport.handleRequest(req, res, req.body);
+  } catch (error) {
+    console.error("[JURIO-MCP] Errore MCP:", error);
+    if (!res.headersSent) res.status(500).json({ error: "MCP server error" });
+  }
+});
 
 export const jurioMcpServer = onRequest(
-  {
-    timeoutSeconds: 300,
-    memory: "512MiB",
-  },
-  async (req: any, res: any): Promise<void> => {
-    return corsHandlerDomain(req, res, async (): Promise<void> => {
-      if (req.method === "OPTIONS") {
-        res.status(204).end();
-        return;
-      }
-
-      const path = req.path || "";
-
-      if (path === "/favicon.ico" || path === "/favicon.png") {
-        res.redirect(302, "https://jurio.it/logo.webp");
-        return;
-      }
-
-      if (path === "/.well-known/mcp/server-card/" || path === "/.well-known/mcp/server-card") {
-        res.status(200).json({
-          name: "Jurio MCP Server",
-          version: "1.0.0",
-          description: "Server MCP per la ricerca nella giurisprudenza italiana",
-        });
-        return;
-      }
-
-      // ----------------------------------------------------------------------
-      // OAUTH DISCOVERY: /.well-known/oauth-protected-resource
-      // ----------------------------------------------------------------------
-      if (path === "/.well-known/oauth-protected-resource" || path === "/.well-known/oauth-protected-resource/") {
-        res.status(200).json({
-          resource: "https://juriomcpserver-vqoobrenua-ew.a.run.app",
-          authorization_servers: ["https://juriomcpserver-vqoobrenua-ew.a.run.app"]
-        });
-        return;
-      }
-
-      // ----------------------------------------------------------------------
-      // OAUTH DISCOVERY: /.well-known/oauth-authorization-server (RFC 8414)
-      // ----------------------------------------------------------------------
-      if (path === "/.well-known/oauth-authorization-server" || path === "/.well-known/oauth-authorization-server/" || path === "/.well-known/openid-configuration") {
-        res.status(200).json({
-          issuer: "https://juriomcpserver-vqoobrenua-ew.a.run.app",
-          authorization_endpoint: "https://juriomcpserver-vqoobrenua-ew.a.run.app/authorize",
-          token_endpoint: "https://juriomcpserver-vqoobrenua-ew.a.run.app/token",
-          registration_endpoint: "https://juriomcpserver-vqoobrenua-ew.a.run.app/register",
-          response_types_supported: ["code"],
-          grant_types_supported: ["authorization_code"],
-          code_challenge_methods_supported: ["S256", "plain"]
-        });
-        return;
-      }
-
-      // ----------------------------------------------------------------------
-      // OAUTH DCR: POST /register (Dynamic Client Registration - RFC 7591)
-      // ----------------------------------------------------------------------
-      if (path === "/register" && req.method === "POST") {
-        res.status(201).json({
-          client_id: "jurio_claude_client_id_auto",
-          client_secret: "jurio_secret_dummy",
-          client_id_issued_at: Math.floor(Date.now() / 1000),
-          grant_types: ["authorization_code"],
-          response_types: ["code"],
-          redirect_uris: req.body?.redirect_uris || []
-        });
-        return;
-      }
-      
-      // ----------------------------------------------------------------------
-      // FLUSSO OAUTH2 - ENDPOINT /authorize
-      // ----------------------------------------------------------------------
-      if (req.method === "GET" && path === "/authorize") {
-        const { client_id, redirect_uri, state, response_type } = req.query;
-
-        if (response_type !== "code") {
-          res.status(400).send("Unsupported response_type. Must be 'code'.");
-          return;
-        }
-
-        const loginUrl = new URL("https://jurio.it/oauth-login");
-        if (client_id) loginUrl.searchParams.append("client_id", String(client_id));
-        if (redirect_uri) loginUrl.searchParams.append("redirect_uri", String(redirect_uri));
-        if (state) loginUrl.searchParams.append("state", String(state));
-
-        res.redirect(302, loginUrl.toString());
-        return;
-      }
-
-      // ----------------------------------------------------------------------
-      // FLUSSO OAUTH2 - ENDPOINT /token
-      // ----------------------------------------------------------------------
-      if (req.method === "POST" && path === "/token") {
-        const code = req.body?.code || req.query?.code;
-        const grant_type = req.body?.grant_type || req.query?.grant_type;
-
-        if (grant_type !== "authorization_code" || !code) {
-          res.status(400).json({ error: "unsupported_grant_type" });
-          return;
-        }
-
-        try {
-          const codeRef = db.collection("oauth_codes").doc(code);
-          const codeSnap = await codeRef.get();
-
-          if (!codeSnap.exists) {
-            res.status(401).json({ error: "invalid_grant", error_description: "Codice non valido o scaduto" });
-            return;
-          }
-
-          const codeData = codeSnap.data();
-          const uid = codeData?.uid;
-
-          // Bruciamo il codice per evitare replay attack
-          await codeRef.delete();
-
-          // Generiamo il token definitivo
-          const accessToken = randomBytes(32).toString("hex");
-
-          await db.collection("oauth_tokens").doc(accessToken).set({
-            uid: uid,
-            createdAt: FieldValue.serverTimestamp(),
-            client_id: req.body?.client_id || req.query?.client_id || "claude_web"
-          });
-
-          res.status(200).json({
-            access_token: accessToken,
-            token_type: "Bearer",
-            expires_in: 31536000,
-          });
-        } catch (err) {
-          console.error("[JURIO-MCP] Errore scambio token:", err);
-          res.status(500).json({ error: "server_error" });
-        }
-        return;
-      }
-
-      // ----------------------------------------------------------------------
-      // HANDSHAKE BASE E ESECUZIONE MCP
-      // ----------------------------------------------------------------------
-      if (req.method === "GET" && (path === "" || path === "/")) {
-        res.status(200).json({
-          name: "Jurio MCP Server",
-          status: "active",
-        });
-        return;
-      }
-      
-      const authHeader =
-        typeof req.headers?.authorization === "string"
-          ? req.headers.authorization
-          : "";
-
-      const server = createMcpServer(authHeader);
-
-      const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined,
-        enableJsonResponse: true,
-      });
-
-      res.on("close", () => {
-        void transport.close().catch((error: unknown) => {
-          console.error("[JURIO-MCP] Errore chiusura transport:", error);
-        });
-      });
-
-      try {
-        await server.connect(transport);
-        console.log(`[JURIO-MCP] ${req.method} ${path}`);
-        await transport.handleRequest(req, res, req.body);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error("[JURIO-MCP] Errore MCP:", error);
-
-        if (!res.headersSent) {
-          res.status(500).json({
-            error: "MCP server error",
-            message,
-          });
-        }
-      }
-    });
-  }
+  { timeoutSeconds: 300, memory: "512MiB" },
+  app
 );
 
 // ============================================================================

@@ -11,7 +11,7 @@ const db = getDb();
 
 export const MAX_INPUT_CHARS = 1_000_000; 
 
-const AREE = {
+export const AREE = {
     1: "Diritto Costituzionale e Parlamentare",
     2: "Diritto Penale Sostanziale",
     3: "Diritto Penale Processuale",

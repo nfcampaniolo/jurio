@@ -1,15 +1,36 @@
 {
-"hosting": {
+  "hosting": {
     "public": "dist",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "cleanUrls": true,
     "trailingSlash": false,
     "rewrites": [
-      {
-        "source": "**",
-        "destination": "/app.html"
-      }
-    ]
+        {
+          "source": "/.well-known/**",
+          "run": {
+            "serviceId": "juriomcpserver",
+            "region": "europe-west1"
+          }
+        },
+        {
+          "source": "/mcp",
+          "run": {
+            "serviceId": "juriomcpserver",
+            "region": "europe-west1"
+          }
+        },
+        {
+          "source": "/mcp/**",
+          "run": {
+            "serviceId": "juriomcpserver",
+            "region": "europe-west1"
+          }
+        },
+        {
+          "source": "**",
+          "destination": "/app.html"
+        }
+      ]
   },
   "functions": [
     {
