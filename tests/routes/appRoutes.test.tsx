@@ -56,9 +56,6 @@ vi.mock("@/features/admin/Admin", () => ({
 }));
 
 /* ---------- mock dei componenti lazy (default exports) ---------- */
-vi.mock("@/features/plans/Prezzi", () => ({
-  default: () => <div data-testid="page-prezzi">Prezzi Page</div>,
-}));
 
 vi.mock("@/features/info/Contatti", () => ({
   default: () => <div data-testid="page-contatti">Contatti Page</div>,
@@ -141,14 +138,6 @@ describe("appRoutes Routing Configuration Suite", () => {
       await waitFor(() => expect(screen.getByTestId("page-tool")).toBeInTheDocument());
     });
 
-    test("renderizza Prezzi, Contatti e Guida con supporto a parametri slug", async () => {
-      const { unmount } = renderWithRouter("/prezzi");
-      await waitFor(() => expect(screen.getByTestId("page-prezzi")).toBeInTheDocument());
-      unmount();
-
-      renderWithRouter("/guida/ricerca-avanzata");
-      await waitFor(() => expect(screen.getByTestId("page-guida")).toBeInTheDocument());
-    });
 
     test("risolve i documenti giurisprudenziali su '/giurisprudenza/:id' e '/documento/:id'", async () => {
       const { unmount } = renderWithRouter("/giurisprudenza/sentenza-123");

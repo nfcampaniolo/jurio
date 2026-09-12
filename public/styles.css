@@ -2842,8 +2842,8 @@ details[open] > div.faq-content-inner {
   display: grid;
   place-items: center;
 
-  width: 47px;
-  height: 47px;
+  width: 75px;
+  height: 75px;
 
   border: 1px solid rgba(255,255,255,.12);
   border-radius: 50%;
@@ -2859,7 +2859,7 @@ details[open] > div.faq-content-inner {
 }
 
 .node-top {
-  top: 0;
+  top: 7px;
   left: 50%;
 
   transform: translateX(-50%);
@@ -2877,6 +2877,13 @@ details[open] > div.faq-content-inner {
   top: 50%;
 
   transform: translateY(-50%);
+}
+
+.node-bottom {
+  bottom: 7px;
+  left: 50%;
+
+  transform: translateX(-50%);
 }
 
 

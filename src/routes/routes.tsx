@@ -63,7 +63,6 @@ const Admin = lazy(() =>
   }))
 );
 
-const Prezzi = lazy(() => import("@/features/plans/Prezzi"));
 const Contatti = lazy(() => import("@/features/info/Contatti"));
 const NotFound = lazy(() => import("@/shared/NotFound"));
 const Session = lazy(() => import("@/features/auth/Session"));
@@ -102,11 +101,6 @@ export const appRoutes: RouteObject[] = [
   {
     path: "/oauth-login",
     element: <OAuthLogin />,
-  },
-
-  {
-    path: "/prezzi",
-    element: <Prezzi />,
   },
 
   {
