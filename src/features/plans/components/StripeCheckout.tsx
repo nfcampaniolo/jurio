@@ -2,7 +2,7 @@ import React from "react";
 import { toast } from "react-hot-toast";
 import { getStripePublishableKey } from "@/config/env";
 import { type StripeCheckoutProps, createCheckoutSessionServer, fetchPlanPrice } from "@/features/plans/hooks/stripeCheckout";
-import { Loader2 } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 
 type ExtendedStripeProps = StripeCheckoutProps & {
   activeCoupon?: { code: string; percentage: number } | null;
@@ -45,23 +45,33 @@ export default function StripeCheckout({
     return () => { cancelled = true; };
   }, [planId]);
 
-  if (!publishableKey || loadingPrice || priceErr || !amount) {
+  // --- STATO: CARICAMENTO (Altezza fissa anti-sfarfallio) ---
+  if (!publishableKey || loadingPrice) {
     return (
-      <div className="flex items-center justify-center py-6 text-(--color-muted) gap-2">
-        <Loader2 size={16} className="animate-spin text-(--color-text)" />
-        <span className="text-xs font-bold uppercase tracking-widest">Caricamento Stripe...</span>
+      <div className="flex flex-col items-center justify-center w-full h-full min-h-62.5 text-(--color-muted) gap-4">
+        <Loader2 size={24} className="animate-spin text-(--color-text)" />
+        <span className="text-[0.72rem] font-[850] uppercase tracking-[0.15em]">Connessione a Stripe...</span>
       </div>
     ); 
   }
 
-  // --- CALCOLO SCONTO UI FRONTEND ---
+  // --- STATO: ERRORE ---
+  if (priceErr || !amount) {
+    return (
+      <div className="flex flex-col items-center justify-center w-full h-full min-h-62.5 text-red-500 gap-3">
+        <AlertCircle size={24} />
+        <span className="text-[0.72rem] font-[850] uppercase tracking-[0.15em]">Errore Prezzo</span>
+        <span className="text-[0.85rem] font-light text-center max-w-xs">{priceErr}</span>
+      </div>
+    );
+  }
+
   const basePriceNum = parseFloat(amount.replace(",", "."));
   const hasCoupon = activeCoupon && activeCoupon.percentage > 0;
   const finalPriceNum = hasCoupon ? basePriceNum - (basePriceNum * (activeCoupon.percentage / 100)) : basePriceNum;
   
   const finalPriceStr = finalPriceNum.toFixed(2).replace(".", ",");
   const basePriceStr = basePriceNum.toFixed(2).replace(".", ",");
-  // ----------------------------------
 
   const onPay = async () => {
     try {
@@ -84,42 +94,45 @@ export default function StripeCheckout({
     }
   };
 
+  // --- STATO FINALE: Rimosso motion.div per evitare conflitti visivi ---
   return (
-    <div className="relative rounded-md border border-(--color-border) bg-(--color-surface) p-5 shadow-xs overflow-hidden">
-      {/* LA LINEA DI RIGORE SUPERIORE (Unico tocco di colore) */}
-      <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
-
-      <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
-          <div className="text-sm font-medium text-(--color-text) flex items-center gap-2.5 tracking-tight">
-            Stripe
-            {hasCoupon && (
-              <span className="px-2 py-0.5 text-[9px] font-bold bg-(--color-bg) border border-(--color-border) text-(--color-text) rounded-sm uppercase tracking-widest">
-                Coupon {activeCoupon.percentage}%
-              </span>
-            )}
-          </div>
-          <div className="mt-1.5 text-xs text-(--color-muted) font-light flex flex-wrap items-center gap-1.5">
-            <span>Piano:</span> 
-            <span className="font-semibold text-(--color-text) uppercase tracking-wider text-[10px] px-2 py-0.5 rounded-sm bg-(--color-bg) border border-(--color-border)">
-              {planId}
+    <div className="flex flex-col justify-between w-full h-full min-h-62.5">
+      <div className="mb-6">
+        <div className="flex items-center gap-3 mb-5">
+          <h4 className="text-[1.25rem] font-medium text-(--color-text) tracking-[-0.02em]" style={{ fontFamily: 'var(--font-serif)' }}>
+            Riepilogo Ordine
+          </h4>
+          {hasCoupon && (
+            <span className="px-2 py-0.75 text-[0.6rem] font-extrabold bg-[rgba(224,163,46,0.1)] border border-(--color-primary) text-(--color-primary) rounded-[3px] uppercase tracking-widest">
+              Coupon {activeCoupon.percentage}%
             </span>
-            <span className="mx-1 opacity-50">&bull;</span>
-            
-            <span>Totale:</span>
-            {hasCoupon ? (
-               <>
-                 <span className="ml-1 text-sm font-semibold text-(--color-text)">
-                   € {finalPriceStr}
-                 </span>
-                 <span className="ml-2 text-xs font-light line-through text-(--color-muted)">
-                   € {basePriceStr}
-                 </span>
-               </>
-            ) : (
-               <span className="ml-1 font-semibold text-(--color-text)">€ {basePriceStr}</span>
-            )}
-            <span className="ml-1 uppercase text-[10px] opacity-80">({priceCurrency})</span>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-3 p-5 rounded-xl bg-(--color-surface) border border-(--color-border) shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)]">
+          <div className="flex items-center justify-between">
+            <span className="text-[0.85rem] text-(--color-muted) font-light">Piano Selezionato</span>
+            <span className="text-[0.75rem] font-extrabold uppercase tracking-widest text-(--color-text)">{planId}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-[0.85rem] text-(--color-muted) font-light">Valuta</span>
+            <span className="text-[0.75rem] font-extrabold uppercase tracking-widest text-(--color-text)">{priceCurrency}</span>
+          </div>
+          
+          <hr className="my-2 border-t border-(--color-border)" />
+          
+          <div className="flex items-end justify-between">
+            <span className="text-[0.85rem] text-(--color-text) font-medium">Totale da pagare</span>
+            <div className="text-right">
+              {hasCoupon && (
+                <div className="text-[0.85rem] font-light line-through text-(--color-muted) mb-1">
+                  € {basePriceStr}
+                </div>
+              )}
+              <div className="text-[1.35rem] font-medium text-(--color-text) tracking-[-0.02em] leading-none">
+                € {finalPriceStr}
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -127,11 +140,17 @@ export default function StripeCheckout({
       <button
         onClick={onPay}
         disabled={submitting}
-        className="w-full rounded-md bg-(--color-text) text-(--color-surface) px-4 py-3 text-xs font-bold uppercase tracking-widest disabled:opacity-30 disabled:cursor-not-allowed hover:opacity-90 transition-all outline-none shadow-xs flex items-center justify-center gap-2"
+        className="w-full mt-auto rounded-lg bg-(--color-text) text-(--color-surface) px-6 py-3.5 text-[0.85rem] font-bold outline-none disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 hover:shadow-lg transition-all flex items-center justify-center gap-3"
         aria-label="Paga con Stripe"
       >
-        {submitting && <Loader2 size={14} className="animate-spin" />}
-        <span>{submitting ? "Reindirizzamento..." : "Paga con Stripe"}</span>
+        {submitting ? (
+          <>
+            <Loader2 size={16} className="animate-spin" />
+            <span>Reindirizzamento...</span>
+          </>
+        ) : (
+          <span>Procedi con il Pagamento</span>
+        )}
       </button>
     </div>
   );

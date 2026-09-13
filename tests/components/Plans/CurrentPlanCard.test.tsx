@@ -5,13 +5,6 @@ import type { PlanUI } from "@/features/plans/hooks/plans";
 import type { StatusNormalized } from "@/features/plans/hooks/planlDomain";
 import type { Variants } from "framer-motion";
 
-/* ---------- mock react-icons/fa ---------- */
-vi.mock("react-icons/fa", () => ({
-  FaCheck: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg data-testid="icon-check" {...props} />
-  ),
-}));
-
 /* ---------- mock framer-motion ---------- */
 vi.mock("framer-motion", async () => {
   const ReactActual = await import("react");
@@ -42,22 +35,15 @@ describe("CurrentPlanCard Component Suite", () => {
   const baseActivePlan: PlanUI = {
     id: "plan-pro",
     name: "Piano Professional",
-    priceLabel: "€49/mese",
-    features: [
-      { name: "Accesso completo alla ricerca giurisprudenziale", included: true },
-      { name: "Assistente AI illimitato", included: true },
-      { name: "Opzione non inclusa", included: false },
-    ],
+    priceLabel: "€49",
+    features: [],
   } as unknown as PlanUI;
 
   const baseUpgradePlan: PlanUI = {
     id: "plan-enterprise",
     name: "Piano Enterprise",
-    priceLabel: "€99/mese",
-    features: [
-      { name: "Analisi massime automatizzata", included: true },
-      { name: "Supporto dedicato prioritario", included: true },
-    ],
+    priceLabel: "€99",
+    features: [],
   } as unknown as PlanUI;
 
   beforeEach(() => {
@@ -72,7 +58,7 @@ describe("CurrentPlanCard Component Suite", () => {
       isNone: false,
       activePlan: baseActivePlan,
       upgradePlan: baseUpgradePlan,
-      cycleLabel: "Fatturazione annuale",
+      cycleLabel: "al mese",
       shouldReduceMotion: false,
       openPaymentForPlan: mockOpenPaymentForPlan,
       fadeUp: dummyVariants,
@@ -84,26 +70,26 @@ describe("CurrentPlanCard Component Suite", () => {
   };
 
   test("renderizza correttamente la card per un piano Attivo con dettagli sul rinnovo e CTA di upgrade", () => {
-    renderCurrentPlanCard();
+    renderCurrentPlanCard({ cycleLabel: "al mese" });
 
-    // Badge di status
-    expect(screen.getByText("Il tuo Status")).toBeInTheDocument();
+    // Eyebrow e badge di status
+    expect(screen.getByText("Stato Attuale")).toBeInTheDocument();
     expect(screen.getByText("Attivo")).toBeInTheDocument();
 
-    // Titolo del piano e costo rinnovo
+    // Nome piano e prezzo di rinnovo formattato
     expect(screen.getByText("Piano Professional")).toBeInTheDocument();
-    expect(screen.getByText("€49/mese")).toBeInTheDocument();
-    expect(screen.getByText("(Fatturazione annuale)")).toBeInTheDocument();
+    expect(screen.getByText("€49")).toBeInTheDocument();
+    expect(screen.getByText(/\/mese/i)).toBeInTheDocument();
 
     // Bottone di upgrade
-    const upgradeBtn = screen.getByRole("button", { name: "Upgrade a Piano Enterprise" });
+    const upgradeBtn = screen.getByRole("button", { name: "Esegui l'Upgrade" });
     expect(upgradeBtn).toBeInTheDocument();
 
     fireEvent.click(upgradeBtn);
     expect(mockOpenPaymentForPlan).toHaveBeenCalledWith("Piano Enterprise");
   });
 
-  test("renderizza la card in stato Admin con privilegi illimitati e nessun costo rinnovo", () => {
+  test("renderizza la card in stato Admin con privilegi illimitati e nessun prezzo o CTA", () => {
     renderCurrentPlanCard({
       isAdmin: true,
       activePlan: null,
@@ -113,20 +99,27 @@ describe("CurrentPlanCard Component Suite", () => {
     expect(screen.getByText("Admin")).toBeInTheDocument();
     expect(screen.getByText("Accesso Completo")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Sei un amministratore di sistema. Hai accesso illimitato a tutte le funzionalità senza restrizioni."
-      )
+      screen.getByText("Accesso illimitato alle funzionalità del sistema.")
     ).toBeInTheDocument();
 
-    // Non mostra prezzo rinnovo
+    // Non mostra prezzo rinnovo né pulsanti di upgrade
     expect(screen.queryByText(/Rinnovo:/i)).not.toBeInTheDocument();
-
-    // Bottone disabilitato per piano massimo
-    const maxPlanBtn = screen.getByRole("button", { name: "Sei al piano massimo" });
-    expect(maxPlanBtn).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Esegui l'Upgrade" })).not.toBeInTheDocument();
   });
 
-  test("renderizza la card in stato Periodo di Prova (Trial) con lista delle feature attive e preview dell'upgrade", () => {
+  test("mostra il badge 'Piano Massimo Raggiunto' per utenti standard senza upgrade disponibili", () => {
+    renderCurrentPlanCard({
+      isAdmin: false,
+      isNone: false,
+      activePlan: baseActivePlan,
+      upgradePlan: null,
+    });
+
+    expect(screen.getByText("Piano Massimo Raggiunto")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Esegui l'Upgrade" })).not.toBeInTheDocument();
+  });
+
+  test("renderizza la card in stato Periodo di Prova (Trial) con copy dedicato e CTA di upgrade", () => {
     renderCurrentPlanCard({
       isTrial: true,
       activePlan: baseActivePlan,
@@ -136,23 +129,10 @@ describe("CurrentPlanCard Component Suite", () => {
     expect(screen.getByText("In Prova")).toBeInTheDocument();
     expect(screen.getByText("Periodo di Prova")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Stai testando tutte le potenzialità della piattaforma. Al termine, i tuoi dati saranno conservati."
-      )
+      screen.getByText("Esplora tutte le potenzialità della piattaforma senza limitazioni.")
     ).toBeInTheDocument();
 
-    // Servizi attivi nel piano (mostra solo included: true)
-    expect(screen.getByText("Servizi attivi nel tuo piano")).toBeInTheDocument();
-    expect(screen.getByText("Accesso completo alla ricerca giurisprudenziale")).toBeInTheDocument();
-    expect(screen.getByText("Assistente AI illimitato")).toBeInTheDocument();
-    expect(screen.queryByText("Opzione non inclusa")).not.toBeInTheDocument();
-
-    // Preview upgrade features
-    expect(
-      screen.getByText("Sblocca il potenziale completo passando a Piano Enterprise:")
-    ).toBeInTheDocument();
-    expect(screen.getByText("Analisi massime automatizzata")).toBeInTheDocument();
-    expect(screen.getByText("Supporto dedicato prioritario")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Esegui l'Upgrade" })).toBeInTheDocument();
   });
 
   test("renderizza lo stato Scaduto quando isNone è true e activePlan è null", () => {
@@ -165,21 +145,19 @@ describe("CurrentPlanCard Component Suite", () => {
     expect(screen.getByText("Scaduto")).toBeInTheDocument();
     expect(screen.getByText("Nessun piano attivo")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Il tuo piano è scaduto. Scegli una delle opzioni qui sotto per riattivare i servizi."
-      )
+      screen.getByText("Scegli un piano per iniziare ad operare.")
     ).toBeInTheDocument();
   });
 
-  test("renderizza lo stato 'Da verificare' quando activePlan è null e isNone è false", () => {
+  test("renderizza lo stato 'Verifica' quando activePlan è null e isNone è false", () => {
     renderCurrentPlanCard({
       isNone: false,
       activePlan: null,
       upgradePlan: null,
     });
 
-    expect(screen.getByText("Da verificare")).toBeInTheDocument();
-    expect(screen.getByText("Piano non riconosciuto")).toBeInTheDocument();
+    expect(screen.getByText("Verifica")).toBeInTheDocument();
+    expect(screen.getByText("Non riconosciuto")).toBeInTheDocument();
   });
 
   test("supporta shouldReduceMotion impostato a true senza errori di rendering", () => {

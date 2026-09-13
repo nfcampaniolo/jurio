@@ -46,7 +46,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import PaymentModal from "@/features/plans/components/PaymentModal"; // <-- adegua il path se necessario
+import PaymentModal from "@/features/plans/components/PaymentModal";
 
 describe("PaymentModal Component Suite", () => {
   const mockOnClose = vi.fn<() => void>();
@@ -207,7 +207,7 @@ describe("PaymentModal Component Suite", () => {
 
     expect(screen.getByText("€ 80")).toBeInTheDocument();
     expect(screen.getByText("€ 100")).toHaveClass("line-through");
-    expect(screen.queryByText("Doppio Sconto Attivo")).toBeNull();
+    expect(screen.queryByText("Doppio Sconto Applicato")).toBeNull();
   });
 
   test("applica la riduzione percentuale del coupon promozionale sul prezzo base", () => {
@@ -225,10 +225,10 @@ describe("PaymentModal Component Suite", () => {
     expect(screen.getByText("€ 80")).toBeInTheDocument();
     expect(screen.getByText("€ 100")).toHaveClass("line-through");
     expect(screen.getByText("Coupon Applicato: JURIO20 (20%)")).toBeInTheDocument();
-    expect(screen.queryByText("Doppio Sconto Attivo")).toBeNull();
+    expect(screen.queryByText("Doppio Sconto Applicato")).toBeNull();
   });
 
-  test("gestisce il Doppio Sconto Attivo combinando sconto nativo e coupon", () => {
+  test("gestisce il Doppio Sconto Applicato combinando sconto nativo e coupon", () => {
     render(
       <PaymentModal
         open={true}
@@ -241,7 +241,7 @@ describe("PaymentModal Component Suite", () => {
     );
 
     // Doppio sconto: initial = 150 (barrato), final = 100 - (100 * 0.50) = 50
-    expect(screen.getByText("Doppio Sconto Attivo")).toBeInTheDocument();
+    expect(screen.getByText("Doppio Sconto Applicato")).toBeInTheDocument();
     expect(screen.getByText("€ 50")).toBeInTheDocument();
     expect(screen.getByText("€ 150")).toHaveClass("line-through");
   });

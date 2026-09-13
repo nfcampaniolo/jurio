@@ -55,7 +55,7 @@ vi.mock("framer-motion", async () => {
 });
 
 /* ---------- component ---------- */
-import { DiscountCoupon } from "@/features/plans/components/DiscountCoupon"; // <-- adegua il path se necessario
+import { DiscountCoupon } from "@/features/plans/components/DiscountCoupon";
 
 describe("DiscountCoupon Component Suite", () => {
   const mockOnApplyCoupon = vi.fn<(coupon: CouponData) => void>();
@@ -79,15 +79,12 @@ describe("DiscountCoupon Component Suite", () => {
       />
     );
 
-    expect(screen.getByLabelText("Hai un codice promozionale?")).toBeInTheDocument();
-
-    const input = screen.getByPlaceholderText("Es. SCONTO20");
+    const input = screen.getByPlaceholderText("Hai un codice promozionale?");
     expect(input).toBeInTheDocument();
     expect(input).toHaveValue("");
 
     const submitBtn = screen.getByRole("button", { name: "Applica" });
     expect(submitBtn).toBeDisabled();
-    expect(screen.getByTestId("fa-ticket-alt")).toBeInTheDocument();
   });
 
   test("normalizza l'input convertendolo in maiuscolo e limitando la lunghezza a 12 caratteri", () => {
@@ -99,7 +96,7 @@ describe("DiscountCoupon Component Suite", () => {
       />
     );
 
-    const input = screen.getByPlaceholderText("Es. SCONTO20");
+    const input = screen.getByPlaceholderText("Hai un codice promozionale?");
     const submitBtn = screen.getByRole("button", { name: "Applica" });
 
     fireEvent.change(input, { target: { value: "promozione2026extra" } });
@@ -123,7 +120,7 @@ describe("DiscountCoupon Component Suite", () => {
       />
     );
 
-    const input = screen.getByPlaceholderText("Es. SCONTO20");
+    const input = screen.getByPlaceholderText("Hai un codice promozionale?");
     fireEvent.change(input, { target: { value: "jurio20" } });
 
     const submitBtn = screen.getByRole("button", { name: "Applica" });
@@ -157,7 +154,7 @@ describe("DiscountCoupon Component Suite", () => {
       />
     );
 
-    const input = screen.getByPlaceholderText("Es. SCONTO20");
+    const input = screen.getByPlaceholderText("Hai un codice promozionale?");
     fireEvent.change(input, { target: { value: "welcome10" } });
 
     fireEvent.submit(input.closest("form")!);
@@ -184,7 +181,7 @@ describe("DiscountCoupon Component Suite", () => {
       />
     );
 
-    const input = screen.getByPlaceholderText("Es. SCONTO20");
+    const input = screen.getByPlaceholderText("Hai un codice promozionale?");
     fireEvent.change(input, { target: { value: "SCADUTO50" } });
 
     fireEvent.click(screen.getByRole("button", { name: "Applica" }));
@@ -208,17 +205,17 @@ describe("DiscountCoupon Component Suite", () => {
       />
     );
 
-    const input = screen.getByPlaceholderText("Es. SCONTO20");
+    const input = screen.getByPlaceholderText("Hai un codice promozionale?");
     fireEvent.change(input, { target: { value: "PROMO10" } });
 
     fireEvent.click(screen.getByRole("button", { name: "Applica" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Errore durante la verifica del codice.")).toBeInTheDocument();
+      expect(screen.getByText("Errore durante la verifica.")).toBeInTheDocument();
     });
   });
 
-  test("renderizza la card del coupon attivo con percentuale, durata e stato di attivazione", () => {
+  test("renderizza la card del coupon attivo con codice, percentuale e icona di successo", () => {
     const activeCouponData: CouponData = {
       code: "SPRING30",
       percentage: 30,
@@ -234,14 +231,13 @@ describe("DiscountCoupon Component Suite", () => {
     );
 
     expect(screen.getByText("SPRING30")).toBeInTheDocument();
-    expect(screen.getByText("Attivo")).toBeInTheDocument();
-    expect(screen.getByText(/30% di sconto/i)).toBeInTheDocument();
-    expect(screen.getByText(/Valido per sempre/i)).toBeInTheDocument();
+    expect(screen.getByText("-30% applicato")).toBeInTheDocument();
+    expect(screen.getByTestId("fa-check-circle")).toBeInTheDocument();
 
-    expect(screen.queryByPlaceholderText("Es. SCONTO20")).not.toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Hai un codice promozionale?")).not.toBeInTheDocument();
   });
 
-  test("invoca onRemoveCoupon e pulisce l'input quando si clicca sul pulsante di rimozione", () => {
+  test("invoca onRemoveCoupon quando si clicca sul pulsante di rimozione", () => {
     const activeCouponData: CouponData = {
       code: "BLACKFRIDAY",
       percentage: 50,
@@ -256,7 +252,7 @@ describe("DiscountCoupon Component Suite", () => {
       />
     );
 
-    const removeBtn = screen.getByRole("button", { name: "Rimuovi coupon" });
+    const removeBtn = screen.getByTestId("fa-times").closest("button")!;
     expect(removeBtn).toBeInTheDocument();
 
     fireEvent.click(removeBtn);

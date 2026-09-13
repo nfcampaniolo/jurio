@@ -71,9 +71,9 @@ export default function PaymentModal({
 }: Props) {
   const title = useMemo(() => `Pagamento – Piano ${planName}`, [planName]);
   const planId = useMemo(() => toPlanId(planName), [planName]);
-  
   const pricing = useMemo(() => getModalPricing(basePrice, initialPrice, activeCoupon), [basePrice, initialPrice, activeCoupon]);
 
+  // Chiusura tramite ESC
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
@@ -81,62 +81,69 @@ export default function PaymentModal({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
+  // Blocco scroll del body
   useEffect(() => {
     if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => { document.body.style.overflow = prev; };
+    const body = document.body;
+    const originalOverflow = body.style.overflow;
+    
+    body.style.overflow = "hidden";
+    
+    return () => { 
+      body.style.overflow = originalOverflow; 
+    };
   }, [open]);
 
   return (
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+          className="fixed inset-0 z-9999 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
           role="dialog"
           aria-modal="true"
           aria-label={title}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: "easeOut" }}
         >
+          {/* Backdrop accessibile */}
           <motion.button
             type="button"
-            className="absolute inset-0 cursor-default bg-transparent"
+            className="absolute inset-0 cursor-default bg-transparent border-none outline-none"
             onMouseDown={(e) => { if (e.currentTarget === e.target) onClose(); }}
             aria-label="Chiudi modale"
           />
 
+          {/* Pannello Modale */}
           <motion.div
-            className="relative w-full max-w-xl rounded-lg bg-(--color-surface) border border-(--color-border) shadow-(--shadow-soft) max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden"
-            initial={{ opacity: 0, y: 18, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 18, scale: 0.98 }}
-            transition={{ type: "spring", stiffness: 520, damping: 38, mass: 0.9 }}
+            className="relative w-full max-w-xl rounded-3xl bg-(--color-surface) border border-(--color-border) shadow-[0_20px_60px_rgba(0,0,0,0.2)] max-h-[calc(100vh-2rem)] flex flex-col overflow-hidden will-change-transform"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
           >
-            {/* LA LINEA DI RIGORE SUPERIORE (Unico tocco di colore) */}
-            <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
-
-            <div className="flex items-start justify-between gap-4 border-b border-(--color-border) bg-(--color-bg) px-6 py-5 mt-1">
+            {/* HEADER */}
+            <div className="flex items-start justify-between gap-4 border-b border-(--color-border) px-8 py-7 bg-(--color-surface)">
               <div className="min-w-0 flex-1">
-                <h3 className="text-base md:text-lg font-medium text-(--color-text) tracking-tight">
+                <h3 className="text-[1.5rem] font-medium text-(--color-text) tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>
                   {title}
                 </h3>
                 
                 {pricing && (
-                  <div className="mt-3 flex flex-col gap-1.5">
+                  <div className="mt-4 flex flex-col gap-2">
                     {pricing.isDoubleDiscount && (
-                      <span className="w-fit text-[10px] font-bold px-2 py-0.5 rounded-sm bg-red-500/10 text-red-600 dark:text-red-400 uppercase tracking-widest border border-red-500/30">
-                        Doppio Sconto Attivo
+                      <span className="w-fit text-[0.65rem] font-extrabold px-2.5 py-1 rounded-sm bg-[rgba(224,163,46,0.1)] text-(--color-primary) border border-(--color-primary) uppercase tracking-widest">
+                        Doppio Sconto Applicato
                       </span>
                     )}
-                    <div className="flex items-baseline gap-3 mt-1">
-                      <span className="text-xs font-bold uppercase tracking-widest text-(--color-muted)">Totale:</span>
-                      <span className="text-xl font-semibold text-(--color-text)">
+                    <div className="flex items-baseline gap-3">
+                      <span className="text-[0.72rem] font-[850] uppercase tracking-[0.15em] text-(--color-muted)">Totale:</span>
+                      <span className="text-[2rem] font-medium text-(--color-text) tracking-[-0.03em] leading-none">
                         {pricing.finalPriceLabel}
                       </span>
                       {pricing.hasDiscount && (
-                        <span className="text-sm font-light line-through text-(--color-muted)">
+                        <span className="text-[1rem] font-light line-through text-(--color-muted)">
                           {pricing.initialPriceLabel}
                         </span>
                       )}
@@ -147,16 +154,20 @@ export default function PaymentModal({
 
               <button
                 onClick={onClose}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md text-(--color-muted) hover:text-(--color-text) hover:bg-(--color-surface) transition-colors outline-none"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-(--color-muted) hover:text-(--color-text) hover:bg-(--color-bg) transition-colors outline-none shrink-0"
                 type="button"
                 aria-label="Chiudi"
               >
-                ✕
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
               </button>
             </div>
 
-            <div className="px-6 py-6 flex-1 min-h-0 overflow-y-auto overscroll-contain bg-(--color-surface)">
-              <div className="rounded-md border border-(--color-border) bg-(--color-bg) p-5 shadow-xs">
+            {/* BODY */}
+            <div className="px-8 py-8 flex-1 overflow-y-auto overscroll-contain bg-(--color-surface)">
+              <div className="relative rounded-2xl border border-(--color-border) bg-(--color-bg) shadow-[inset_0_2px_8px_rgba(0,0,0,0.02)] min-h-75 p-6 flex flex-col">
                 <StripeCheckout
                   planId={planId}
                   activeCoupon={activeCoupon}
@@ -169,12 +180,15 @@ export default function PaymentModal({
               </div>
             </div>
 
-            <div className="flex items-center justify-between border-t border-(--color-border) bg-(--color-bg) px-6 py-4">
-              <div className="text-xs text-(--color-muted) font-light">Transazione sicura gestita da Stripe.</div>
+            {/* FOOTER */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-(--color-border) bg-[rgba(224,163,46,0.02)] px-8 py-5">
+              <div className="text-[0.75rem] text-(--color-muted) font-light">
+                Transazione sicura gestita integralmente da <strong className="font-medium text-(--color-text)">Stripe</strong>.
+              </div>
               <button
                 onClick={onClose}
                 type="button"
-                className="rounded-md bg-(--color-surface) border border-(--color-border) px-4 py-2 text-xs font-bold uppercase tracking-widest text-(--color-muted) hover:text-(--color-text) transition-colors outline-none"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-lg border border-(--color-border) bg-transparent text-(--color-text) text-[0.85rem] font-bold outline-none hover:bg-(--color-surface) transition-colors shrink-0"
               >
                 Annulla
               </button>

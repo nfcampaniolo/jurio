@@ -1,7 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
-import type { PlanUI } from  "@/features/plans/hooks/plans";
+import type { PlanUI } from "@/features/plans/hooks/plans";
 import type { CouponData } from "@/features/plans/hooks/discount";
 
 /* ---------- tipi mock pricing ---------- */
@@ -59,13 +59,6 @@ vi.mock("@/features/plans/hooks/usePlans", () => ({
     mockGetDynamicPricing(plan, coupon),
 }));
 
-/* ---------- mock lucide-react ---------- */
-vi.mock("lucide-react", () => ({
-  Loader2: (props: React.SVGProps<SVGSVGElement> & { size?: number }) => (
-    <svg data-testid="icon-loader-2" {...props} />
-  ),
-}));
-
 /* ---------- mock ConfirmModal ---------- */
 interface MockConfirmModalProps {
   isOpen: boolean;
@@ -102,7 +95,7 @@ vi.mock("@/shared/components/ConfirmModal", () => ({
 }));
 
 /* ---------- component ---------- */
-import { TeamPlansSection } from "@/features/plans/components/TeamPlansSection"; // <-- adegua il path se necessario
+import { TeamPlansSection } from "@/features/plans/components/TeamPlansSection";
 
 describe("TeamPlansSection Component Suite", () => {
   const mockOpenPaymentForPlan = vi.fn<(planName: string) => void>();
@@ -171,56 +164,40 @@ describe("TeamPlansSection Component Suite", () => {
     return render(<TeamPlansSection {...defaultProps} />);
   };
 
-  test("renderizza lo stato di caricamento quando non vi sono piani Team disponibili nella lista", () => {
+  test("non renderizza nulla nel DOM quando non vi sono piani Team disponibili", () => {
     const nonTeamPlans: PlanUI[] = [
       { id: "single-1", name: "Essential", price: 49 } as unknown as PlanUI,
     ];
 
-    renderSection({ plans: nonTeamPlans });
-
-    expect(screen.getByTestId("icon-loader-2")).toBeInTheDocument();
-    expect(
-      screen.getByText("Caricamento pacchetti studio in corso...")
-    ).toBeInTheDocument();
+    const { container } = renderSection({ plans: nonTeamPlans });
+    expect(container.firstChild).toBeNull();
   });
 
-  test("filtra, ordina per prezzo crescente e formatta i nomi dei piani Team (es. 'team 3' -> 'Team da 3')", () => {
+  test("filtra, ordina per prezzo crescente e formatta i titoli dei piani Team", () => {
     renderSection();
 
     expect(screen.queryByText("Piano Individuale Essential")).toBeNull();
 
-    expect(screen.getByRole("heading", { name: /Team da 3/i, level: 4 })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /Team da 5/i, level: 4 })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /Team da 7/i, level: 4 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Team 3", level: 4 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Team 5", level: 4 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Team 7", level: 4 })).toBeInTheDocument();
 
     expect(screen.getByText("€ 299")).toBeInTheDocument();
     expect(screen.getByText("€ 499")).toBeInTheDocument();
     expect(screen.getByText("€ 699")).toBeInTheDocument();
   });
 
-  test("assegna il badge 'Miglior Valore' al piano in seconda posizione o con flag highlighted", () => {
-    renderSection();
-
-    const badge = screen.getByText("Miglior Valore");
-    expect(badge).toBeInTheDocument();
-
-    const team5Heading = screen.getByRole("heading", { name: /Team da 5/i, level: 4 });
-    const team5Card = team5Heading.closest(".relative.flex.flex-col") as HTMLElement;
-    expect(within(team5Card).getByText("Miglior Valore")).toBeInTheDocument();
-    expect(team5Card).toHaveClass("border-2");
-  });
-
   test("mostra il dettaglio dello sconto percentuale e prezzo barrato se presente", () => {
     renderSection();
 
     expect(screen.getByText(/€\s*580/i)).toHaveClass("line-through");
-    expect(screen.getByText(/Risparmi il 15%/i)).toBeInTheDocument();
+    expect(screen.getByText("-15%")).toBeInTheDocument();
   });
 
-  test("invoca handlePlanClick al click sul bottone 'Attiva Workspace'", () => {
+  test("invoca handlePlanClick al click sul bottone di attivazione del piano", () => {
     renderSection();
 
-    const buttons = screen.getAllByRole("button", { name: "Attiva Workspace" });
+    const buttons = screen.getAllByRole("button", { name: "Ottieni" });
     expect(buttons).toHaveLength(3);
 
     fireEvent.click(buttons[0]);
@@ -231,15 +208,12 @@ describe("TeamPlansSection Component Suite", () => {
     );
   });
 
-  test("naviga verso la pagina /contatti al click sul bottone 'Parla con un consulente'", () => {
+  test("renderizza il link diretto per contattare il supporto studio Enterprise", () => {
     renderSection();
 
-    const consultButton = screen.getByRole("button", { name: "Parla con un consulente" });
-    expect(consultButton).toBeInTheDocument();
-
-    fireEvent.click(consultButton);
-
-    expect(mockTeamPlansState.navigate).toHaveBeenCalledWith("/contatti");
+    const consultLink = screen.getByRole("link", { name: "Parla con noi" });
+    expect(consultLink).toBeInTheDocument();
+    expect(consultLink).toHaveAttribute("href", "/contatti");
   });
 
   test("renderizza e gestisce le azioni del ConfirmModal per l'utente già owner di un gruppo", () => {
@@ -249,9 +223,9 @@ describe("TeamPlansSection Component Suite", () => {
 
     const modal = screen.getByTestId("mock-confirm-modal");
     expect(modal).toBeInTheDocument();
-    expect(screen.getByText("Conferma acquisto abbonamento Team")).toBeInTheDocument();
+    expect(screen.getByText("Acquisto Abbonamento Team")).toBeInTheDocument();
 
-    const confirmBtn = screen.getByRole("button", { name: "Procedi all'acquisto" });
+    const confirmBtn = screen.getByRole("button", { name: "Procedi" });
     fireEvent.click(confirmBtn);
     expect(mockTeamPlansState.handleConfirmOwnerPurchase).toHaveBeenCalledWith(
       mockOpenPaymentForPlan

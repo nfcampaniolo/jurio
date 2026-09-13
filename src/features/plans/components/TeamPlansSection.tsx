@@ -2,9 +2,8 @@ import React from "react";
 import type { PlanUI } from "@/features/plans/hooks/plans";
 import type { CouponData } from "@/features/plans/hooks/discount";
 import { getDynamicPricing } from "@/features/plans/hooks/usePlans";
-import { Loader2 } from "lucide-react";
 import { ConfirmModal } from "@/shared/components/ConfirmModal";
-import { useTeamPlans } from "@/features/teams/hooks/useTeamPlans"; // Importa la logica sopra
+import { useTeamPlans } from "@/features/teams/hooks/useTeamPlans"; 
 import { useAuth } from "@/context/useAuth";
 
 interface TeamPlansSectionProps {
@@ -23,194 +22,122 @@ export const TeamPlansSection: React.FC<TeamPlansSectionProps> = ({
   userHasTeam = false,
 }) => {
   const { user } = useAuth();
-  const userId = user?.uid;
-  const {
-    isOwnerModalOpen,
-    handlePlanClick,
-    handleConfirmOwnerPurchase,
-    handleCancelOwnerPurchase,
-    navigate
-  } = useTeamPlans(userId, userHasTeam);
+  
+  const { 
+    isOwnerModalOpen, 
+    handlePlanClick, 
+    handleConfirmOwnerPurchase, 
+    handleCancelOwnerPurchase 
+  } = useTeamPlans(user?.uid, userHasTeam);
+
+  const teamPlans = plans
+    .filter(p => p.id?.toLowerCase().includes("team") || p.name?.toLowerCase().includes("team"))
+    .sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+
+  if (teamPlans.length === 0) return null;
 
   return (
     <>
-      <div 
-        ref={teamsRef} 
-        id="teams" 
-        className="relative w-full bg-(--color-bg) border-t border-(--color-border) py-12 px-4 sm:px-6"
-      >
-        <div className="max-w-5xl mx-auto w-full flex flex-col items-center">
-          
-          <div className="text-center mb-8 space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-sm bg-(--color-surface) border border-(--color-border) text-(--color-text) text-[10px] font-bold uppercase tracking-widest mb-1 shadow-xs">
-              Soluzioni Team & Studi Legali
+      <section ref={teamsRef} id="teams" className="py-16">
+        <div className="max-w-275 mx-auto px-4 sm:px-6">
+          <div className="relative p-10 sm:p-16 rounded-3xl bg-(--color-surface) border border-(--color-border) shadow-[0_20px_60px_rgba(0,0,0,0.05)] overflow-hidden z-10">
+            
+            {/* Elementi decorativi background */}
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_100%_0%,rgba(224,163,46,0.03)_0%,transparent_50%)] -z-10 pointer-events-none" />
+            <div className="absolute -top-25 -right-25 w-105 h-105 rounded-full border border-(--color-text) opacity-5 shadow-[0_0_0_60px_rgba(0,0,0,0.015)] pointer-events-none -z-10" />
+
+            <div className="max-w-162.5 mb-12 text-left">
+              <div className="text-(--color-primary) mb-4 text-[0.68rem] font-bold uppercase tracking-widest">
+                Soluzioni Team & Studi Legali
+              </div>
+              <h2 className="text-[clamp(2rem,3.5vw,2.75rem)] tracking-[-0.035em] mb-5 leading-[1.05] text-(--color-text)" style={{ fontFamily: 'var(--font-serif)' }}>
+                Scalabilità, risparmio e collaborazione in un unico <em>Workspace</em>.
+              </h2>
+              <p className="text-(--color-muted) font-light text-[1.05rem] leading-[1.6]">
+                Abbatti i costi di licenza e centralizza la gestione dello studio. Fascicoli condivisi, fatturazione unica e gestione flessibile degli accessi in un ambiente blindato.
+              </p>
             </div>
-            <h3 className="text-xl sm:text-2xl md:text-3xl font-medium text-(--color-text) tracking-tight" >
-              Scalabilità, risparmio e collaborazione in un unico Workspace
-            </h3>
-            <p className="text-xs sm:text-sm text-(--color-muted) font-light max-w-xl mx-auto leading-relaxed">
-              Abbatti i costi di licenza fino al 35% e centralizza la gestione dello studio. Con i pacchetti Team hai fascicoli condivisi, fatturazione unica e gestione flessibile degli accessi.
-            </p>
-          </div>
 
-          <div className="flex overflow-x-auto snap-x snap-mandatory pb-4 pt-8 w-[calc(100%+2rem)] -ml-4 px-4 sm:w-[calc(100%+3rem)] sm:-ml-6 sm:px-6 md:w-full md:ml-0 md:px-0 md:grid md:grid-cols-3 gap-5 mb-8 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden after:content-[''] after:min-w-px after:shrink-0 md:after:hidden">           
-            {(() => {
-              const teamPlans = plans
-                .filter(p => (p.name || "").toLowerCase().includes("team") || (p.id || "").toLowerCase().includes("team"))
-                .sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
-
-              if (teamPlans.length === 0) {
-                return (
-                  <div className="w-full col-span-1 md:col-span-3 text-center py-8 text-(--color-muted)">
-                    <Loader2 size={20} className="animate-spin text-(--color-text) mx-auto mb-2" />
-                    <span className="text-xs font-bold uppercase tracking-widest">Caricamento pacchetti studio in corso...</span>
-                  </div>
-                );
-              }
-
-              return teamPlans.map((plan, index) => {
-                const isHighlighted = plan.highlighted || index === 1;
-                const rawName = plan.name.toLowerCase();
-                const displayName = rawName.includes("team") && !rawName.includes("da") 
-                  ? rawName.replace(/team\s*/i, "Team da ") 
-                  : rawName;
-
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">           
+              {teamPlans.map((plan) => {
                 const pricing = getDynamicPricing(plan, activeCoupon);
+                const displayName = plan.name.replace(/team\s*/i, "Team ");
 
                 return (
-                  <div 
-                    key={plan.id}
-                    className={`relative shrink-0 w-[82vw] sm:w-70 md:w-auto snap-center flex flex-col bg-(--color-surface) rounded-lg p-6 text-center transition-all duration-200 shadow-(--shadow-soft) h-full ${
-                      isHighlighted 
-                        ? "border-2 border-(--color-text)" 
-                        : "border border-(--color-border) hover:border-(--color-text)"
-                    }`}
-                  >
-
-                    {isHighlighted && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-(--color-text) text-(--color-surface) text-[9px] font-bold uppercase tracking-widest px-3 py-1 rounded-sm shadow-xs whitespace-nowrap">
-                        Miglior Valore
-                      </div>
-                    )}
+                  <div key={plan.id} className="relative flex flex-col bg-(--color-bg) border border-(--color-border) rounded-2xl p-8 transition-all duration-300 hover:-translate-y-1 hover:border-[rgba(224,163,46,0.4)] hover:shadow-[0_10px_30px_rgba(0,0,0,0.06)] overflow-hidden group">
+                    <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(224,163,46,0.05),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                     
-                    <h4 className={`font-medium text-(--color-text) tracking-tight capitalize mb-1 ${isHighlighted ? "text-lg mt-1" : "text-lg"}`}>
-                      {displayName}
-                    </h4>
-                    <p className="text-xs text-(--color-muted) font-light mb-5">Workspace integrato • 12 Mesi</p>
+                    <h4 className="text-[1.25rem] font-[850] text-(--color-text) mb-1" style={{ fontFamily: 'var(--font-serif)' }}>{displayName}</h4>
+                    <p className="text-[0.75rem] text-(--color-muted) mb-6">Workspace integrato &middot; 12 Mesi</p>
                     
-                    <div className="flex flex-col items-center gap-1 mb-6 mt-auto">
+                    <div className="flex flex-col mt-auto mb-8">
                       {pricing.hasDiscount ? (
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-light line-through text-(--color-muted)">
-                            {pricing.initialPriceLabel}
-                          </span>
-                          <span className="text-[9px] font-bold px-2 py-0.5 rounded-sm bg-(--color-bg) border border-(--color-border) text-(--color-text) uppercase tracking-wider">
-                            Risparmi il {pricing.percentage}%
-                          </span>
+                        <div className="flex items-center gap-2 mb-1 h-4.5">
+                          <span className="text-[0.85rem] line-through text-(--color-muted)">{pricing.initialPriceLabel}</span>
+                          <span className="text-[0.6rem] font-extrabold px-1.5 py-0.5 border border-(--color-primary) text-(--color-primary) bg-[rgba(224,163,46,0.1)] rounded-[3px]">-{pricing.percentage}%</span>
                         </div>
                       ) : (
-                        <div className="h-4" /> 
+                        <div className="h-4.5 mb-1" />
                       )}
-                      
-                      <div className={`font-medium text-(--color-text) tracking-tight ${isHighlighted ? "text-3xl" : "text-2xl"}`}>
-                        {pricing.finalPriceLabel}
+                      <div className="text-[2.5rem] font-medium leading-none text-(--color-text) tracking-[-0.03em]">{pricing.finalPriceLabel}</div>
+                      <div className="text-[0.65rem] font-extrabold text-(--color-muted) uppercase tracking-[0.14em] mt-1.5">
+                        Fattura unica &middot; IVA inc.
                       </div>
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-(--color-muted) mt-1">
-                        all'anno • fattura unica con IVA
-                      </span>
                     </div>
 
-                    <div className="w-full">
-                      <button
-                        type="button"
-                        onClick={() => handlePlanClick(plan.name, openPaymentForPlan)}
-                        className={`w-full px-5 py-2.5 rounded-md text-xs font-bold uppercase tracking-widest transition-all outline-none shadow-xs ${
-                          isHighlighted 
-                            ? "bg-(--color-text) text-(--color-surface) hover:opacity-90" 
-                            : "border border-(--color-border) bg-(--color-surface) text-(--color-text) hover:border-(--color-text)"
-                        }`}
-                      >
-                        Attiva Workspace
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handlePlanClick(plan.name, openPaymentForPlan)}
+                      className="w-full py-3 rounded-lg border border-(--color-border) bg-transparent text-(--color-text) text-[0.85rem] font-bold text-center outline-none hover:bg-(--color-surface)"
+                    >
+                      {plan.cta || "Ottieni"}
+                    </button>
                   </div>
                 );
-              });
-            })()}
-          </div>
-
-          <div className="relative w-full bg-(--color-surface) border border-(--color-border) rounded-lg p-6 md:p-7 mb-8 shadow-(--shadow-soft) text-left overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
-
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-5 pb-4 border-b border-(--color-border) mt-1">
-              <h4 className="text-sm font-bold uppercase tracking-wider text-(--color-text) flex items-center gap-2">
-                <span className="p-1 bg-(--color-bg) border border-(--color-border) rounded-sm">
-                  <svg className="w-4 h-4 text-(--color-text) opacity-80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h5m0 0v-5a2 2 0 00-2-2h-2a2 2 0 00-2 2v5" />
-                  </svg>
-                </span>
-                Vantaggi del Workspace Condiviso
-              </h4>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-(--color-text) bg-(--color-bg) border border-(--color-border) px-2.5 py-1 rounded-sm w-fit">
-                Gestione centralizzata
-              </span>
+              })}
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="flex flex-col gap-1.5">
-                <div className="text-xs font-bold uppercase tracking-wider text-(--color-text) flex items-center gap-1.5">
-                  <span className="text-(--color-muted)">01.</span> Lavoro Simultaneo
-                </div>
-                <p className="text-xs text-(--color-muted) font-light leading-relaxed">
-                  Lavora insieme ai colleghi sugli stessi fascicoli, documenti e bozze AI. Il gestore imposta ruoli e visibilità dal pannello dedicato.
-                </p>
+
+            <h4 className="text-[0.72rem] font-[850] text-(--color-text) uppercase tracking-[0.14em] mb-6 mt-6">
+              Caratteristiche del Workspace
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-(--color-border) pt-10 text-left">
+              <div className="relative border-t border-(--color-border) pt-4">
+                <div className="absolute -top-px left-0 w-8 h-px bg-(--color-primary)" />
+                <div className="text-[0.72rem] font-[850] text-(--color-primary) tracking-[0.15em] mb-2">01. SETUP IMMEDIATO</div>
+                <p className="text-[0.95rem] text-(--color-muted) leading-normal font-light">Assegna le licenze ai collaboratori tramite invito mail. Unica fattura contabile per tutto lo studio.</p>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <div className="text-xs font-bold uppercase tracking-wider text-(--color-text) flex items-center gap-1.5">
-                  <span className="text-(--color-muted)">02.</span> Voucher Flessibili (365g)
-                </div>
-                <p className="text-xs text-(--color-muted) font-light leading-relaxed">
-                  Ogni codice riscatta 1 anno di piano Business. Puoi usarli sia per la prima attivazione di un collega che per i rinnovi.
-                </p>
+              <div className="relative border-t border-(--color-border) pt-4">
+                <div className="absolute -top-px left-0 w-8 h-px bg-(--color-primary)" />
+                <div className="text-[0.72rem] font-[850] text-(--color-primary) tracking-[0.15em] mb-2">02. ZERO SPRECHI</div>
+                <p className="text-[0.95rem] text-(--color-muted) leading-normal font-light">I 365 giorni decorrono dal momento dell'attivazione della singola licenza, ottimizzando l'investimento.</p>
               </div>
-              <div className="flex flex-col gap-1.5">
-                <div className="text-xs font-bold uppercase tracking-wider text-(--color-text) flex items-center gap-1.5">
-                  <span className="text-(--color-muted)">03.</span> Nessuna Scadenza
-                </div>
-                <p className="text-xs text-(--color-muted) font-light leading-relaxed">
-                  I voucher non scadono mai: <strong className="font-semibold text-(--color-text)">i 365 giorni decorrono solo dal momento del riscatto</strong> del singolo utente, azzerando gli sprechi.
-                </p>
+              <div className="relative border-t border-(--color-border) pt-4">
+                <div className="absolute -top-px left-0 w-8 h-px bg-(--color-primary)" />
+                <div className="text-[0.72rem] font-[850] text-(--color-primary) tracking-[0.15em] mb-2">03. CONTROLLO TOTALE</div>
+                <p className="text-[0.95rem] text-(--color-muted) leading-normal font-light">Pannello admin per gestire permessi, condivisione fascicoli e modelli di atti in tempo reale.</p>
               </div>
             </div>
-          </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 w-full border-t border-(--color-border) pt-6">
-            <div className="text-center sm:text-left">
-              <p className="text-xs font-bold uppercase tracking-wider text-(--color-text)">
-                Studio strutturato o più di 7 avvocati?
-              </p>
-              <p className="text-xs text-(--color-muted) font-light mt-0.5">
-                Richiedi una quotazione Enterprise con fatturazione personalizzata, integrazioni API e onboarding dedicato.
-              </p>
+            {/* Enterprise Box */}
+            <div className="mt-14 p-8 bg-(--color-bg) border border-(--color-border) rounded-2xl flex flex-col sm:flex-row gap-6 items-center justify-between transition-shadow duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] text-left">
+              <div>
+                <p className="text-[1.1rem] font-medium text-(--color-text) mb-1" style={{ fontFamily: 'var(--font-serif)' }}>Più di 7 collaboratori?</p>
+                <p className="text-[0.85rem] text-(--color-muted) font-light">Richiedi una quotazione Enterprise con integrazioni API e onboarding dedicato.</p>
+              </div>
+              <a href="/contatti" className="px-6 py-3 shrink-0 rounded-lg border border-(--color-border) bg-transparent text-(--color-text) text-[0.85rem] font-bold outline-none hover:bg-(--color-surface)">
+                Parla con noi
+              </a>
             </div>
-            <button
-              type="button"
-              onClick={() => navigate("/contatti")}
-              className="px-5 py-2.5 rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text) text-xs font-bold uppercase tracking-widest hover:border-(--color-text) transition-colors outline-none shadow-xs shrink-0"
-            >
-              Parla con un consulente
-            </button>
-          </div>
 
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Modale di conferma per l'owner */}
       <ConfirmModal
         isOpen={isOwnerModalOpen}
-        title="Conferma acquisto abbonamento Team"
-        message="Risulti attualmente proprietario di un gruppo attivo. Desideri procedere con l'acquisto per ottenere nuovi voucher da distribuire ai membri del tuo team?"
-        confirmText="Procedi all'acquisto"
+        title="Acquisto Abbonamento Team"
+        message="Risulti proprietario di un gruppo. Vuoi procedere all'acquisto di nuovi voucher da distribuire?"
+        confirmText="Procedi"
         cancelText="Annulla"
         onConfirm={() => handleConfirmOwnerPurchase(openPaymentForPlan)}
         onCancel={handleCancelOwnerPurchase}

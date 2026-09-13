@@ -37,10 +37,11 @@ vi.mock("@/features/plans/hooks/stripeCheckout", () => ({
 
 vi.mock("lucide-react", () => ({
   Loader2: (props: React.SVGProps<SVGSVGElement>) => <svg data-testid="icon-loader" {...props} />,
+  AlertCircle: (props: React.SVGProps<SVGSVGElement>) => <svg data-testid="icon-alert" {...props} />,
 }));
 
 /* ---------- subject under test ---------- */
-import StripeCheckout from "@/features/plans/components/StripeCheckout"; // Adatta il path in base alla struttura delle cartelle
+import StripeCheckout from "@/features/plans/components/StripeCheckout";
 
 describe("StripeCheckout Component Suite", () => {
   const originalLocation = window.location;
@@ -49,7 +50,6 @@ describe("StripeCheckout Component Suite", () => {
     vi.clearAllMocks();
     vi.spyOn(console, "error").mockImplementation(() => {});
 
-    // Mock window.location.assign
     Object.defineProperty(window, "location", {
       configurable: true,
       value: { assign: vi.fn() },
@@ -69,14 +69,27 @@ describe("StripeCheckout Component Suite", () => {
 
     render(<StripeCheckout planId="business" />);
 
-    expect(screen.getByText("Caricamento Stripe...")).toBeInTheDocument();
+    expect(screen.getByText("Connessione a Stripe...")).toBeInTheDocument();
     expect(screen.getByTestId("icon-loader")).toBeInTheDocument();
+  });
+
+  test("mostra lo stato di errore se fetchPlanPrice fallisce", async () => {
+    mockFetchPlanPrice.mockRejectedValueOnce(new Error("Errore nel recupero del listino"));
+
+    render(<StripeCheckout planId="business" />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Errore Prezzo")).toBeInTheDocument();
+      expect(screen.getByText("Errore nel recupero del listino")).toBeInTheDocument();
+      expect(screen.getByTestId("icon-alert")).toBeInTheDocument();
+    });
   });
 
   test("renderizza correttamente il prezzo e i dettagli del piano dopo il fetch", async () => {
     render(<StripeCheckout planId="business" currency="EUR" />);
 
     await waitFor(() => {
+      expect(screen.getByText("Riepilogo Ordine")).toBeInTheDocument();
       expect(screen.getByText("business")).toBeInTheDocument();
       expect(screen.getByText("€ 29,99")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Paga con Stripe" })).toBeInTheDocument();
@@ -93,7 +106,7 @@ describe("StripeCheckout Component Suite", () => {
     await waitFor(() => {
       expect(screen.getByText("Coupon 20%")).toBeInTheDocument();
       expect(screen.getByText("€ 23,99")).toBeInTheDocument();
-      expect(screen.getByText("€ 29,99")).toBeInTheDocument(); // Prezzo base barrato
+      expect(screen.getByText("€ 29,99")).toBeInTheDocument();
     });
   });
 

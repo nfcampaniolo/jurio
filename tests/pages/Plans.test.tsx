@@ -337,20 +337,20 @@ describe("Plans Page Suite", () => {
     mockProfileState.loading = true;
     const { unmount } = render(<Plans />);
 
-    expect(screen.getByText("Caricamento in corso...")).toBeInTheDocument();
+    expect(screen.getByText("Caricamento...")).toBeInTheDocument();
     unmount();
 
     mockProfileState.loading = false;
     mockProfileState.user = null;
     render(<Plans />);
 
-    expect(screen.getByText("Caricamento in corso...")).toBeInTheDocument();
+    expect(screen.getByText("Caricamento...")).toBeInTheDocument();
   });
 
   test("mostra lo stato di caricamento dei piani e poi renderizza la struttura completa", async () => {
     render(<Plans />);
 
-    expect(screen.getByRole("status")).toHaveTextContent("Caricamento piani…");
+    expect(screen.getByText("Caricamento piani...")).toBeInTheDocument();
 
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: "Il tuo Piano", level: 1 })).toBeInTheDocument();
@@ -367,9 +367,7 @@ describe("Plans Page Suite", () => {
     render(<Plans />);
 
     await waitFor(() => {
-      const alertEl = screen.getByRole("alert");
-      expect(alertEl).toBeInTheDocument();
-      expect(alertEl).toHaveTextContent("Errore caricamento piani: Errore di rete database piani");
+      expect(screen.getByText("Errore: Errore di rete database piani")).toBeInTheDocument();
     });
   });
 
@@ -380,20 +378,19 @@ describe("Plans Page Suite", () => {
     const { rerender } = render(<Plans />);
 
     await waitFor(() => {
-      expect(screen.getByText(/Periodo di prova attivo \(7 giorni\)/i)).toBeInTheDocument();
-      expect(screen.getByText(/Mancano/i)).toBeInTheDocument();
-      expect(screen.getByText("3")).toBeInTheDocument();
+      expect(screen.getByText("Periodo di prova attivo")).toBeInTheDocument();
+      expect(screen.getByText("3 giorni rimanenti")).toBeInTheDocument();
     });
+
+    // 1 giorno rimanente (singolare)
+    mockTrialState.trialLeft = 1;
+    rerender(<Plans />);
+    expect(screen.getByText("1 giorno rimanente")).toBeInTheDocument();
 
     // Prova terminata (0 giorni)
     mockTrialState.trialLeft = 0;
     rerender(<Plans />);
-    expect(screen.getByText("La prova è terminata.")).toBeInTheDocument();
-
-    // Errore prova
-    mockTrialState.trialErr = "Errore lettura scadenza trial";
-    rerender(<Plans />);
-    expect(screen.getByText("Errore lettura scadenza trial")).toBeInTheDocument();
+    expect(screen.getByText("Prova terminata")).toBeInTheDocument();
   });
 
   test("naviga indietro al profilo al click sul pulsante header", async () => {

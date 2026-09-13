@@ -83,14 +83,14 @@ describe("PaymentHistory Component Suite", () => {
     render(<PaymentHistory uid="user-123" />);
 
     expect(screen.getByTestId("icon-loader-2")).toBeInTheDocument();
-    expect(screen.getByText("Caricamento storico pagamenti...")).toBeInTheDocument();
+    expect(screen.getByText("Caricamento storico...")).toBeInTheDocument();
   });
 
   test("non avvia la richiesta se uid è una stringa vuota", () => {
     render(<PaymentHistory uid="" />);
 
     expect(mockFetchUserPayments).not.toHaveBeenCalled();
-    expect(screen.getByText("Caricamento storico pagamenti...")).toBeInTheDocument();
+    expect(screen.getByText("Caricamento storico...")).toBeInTheDocument();
   });
 
   test("renderizza lo stato vuoto (empty state) quando non ci sono transazioni registrate", async () => {
@@ -179,7 +179,6 @@ describe("PaymentHistory Component Suite", () => {
 
     unmount();
 
-    // Risoluzione asincrona post-unmount non deve sollevare warning/errori
     resolvePromise!(mockPaymentsList);
     await expect(promise).resolves.toEqual(mockPaymentsList);
   });
