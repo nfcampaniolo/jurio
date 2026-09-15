@@ -1259,3 +1259,26 @@ export async function updateUserDocuments(uidDelete: string, uidOwner: string) {
     await Promise.all(batches.map(batch => batch.commit()));
   }
 }
+
+/**
+ * Incrementa il contatore 'rag' di +1 per un array di ID documento.
+ * Utilizza un Firestore Batch per ottimizzare le performance.
+ */
+export async function incrementRagCounter(collectionName: string, documentIds: string[]): Promise<void> {
+  if (!documentIds || documentIds.length === 0) return;
+
+  try {
+    const batch = db.batch();
+    const collectionRef = db.collection(collectionName);
+
+    documentIds.forEach((id) => {
+      const docRef = collectionRef.doc(id);
+      batch.update(docRef, { rag: FieldValue.increment(1) });
+    });
+
+    await batch.commit();
+    console.log(`[JURIO-RAG-UPDATE] Aggiornati ${documentIds.length} documenti nella collection '${collectionName}'.`);
+  } catch (error) {
+    console.error(`[JURIO-RAG-UPDATE] Errore durante l'incremento del campo rag:`, error);
+  }
+}

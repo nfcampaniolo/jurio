@@ -4,7 +4,7 @@ import { getDb } from "../deps";
 import { enableFirebaseTelemetry } from '@genkit-ai/firebase';
 import { FieldValue } from "firebase-admin/firestore";
 import { CFG } from "./config";
-import { makeRiferimentiNormativiKeys } from "../utils";
+import { makeRiferimentiNormativiKeys, incrementRagCounter } from "../utils";
 import { mapToObject, createEmbedding, getSafeDistance} from "./helper";
 
 const db = getDb();
@@ -28,10 +28,7 @@ export const ricercaDatabaseInterno = ai.defineTool(
   async (input, { context }) => {
     try {
       const { tipo_ricerca, query, numero_sentenza } = input;
-
-      // Legge dbLimit (topK) dal context, con default a 10
       const safeLimit = context?.dbLimit ?? 10; 
-      
       const finalQuery = (query || numero_sentenza || "").trim();
       
       if (!finalQuery) {
@@ -73,7 +70,13 @@ export const ricercaDatabaseInterno = ai.defineTool(
           return [{ messaggio: `Nessuna sentenza trovata nel database interno per l'identificativo: ${identificativo}.` }];
         }
 
-        return Array.from(uniqueDocs.values()).map(doc => {
+        // --- NUOVA LOGICA: UPDATE RAG ---
+        const resultDocs = Array.from(uniqueDocs.values());
+        const extractedIds = resultDocs.map(doc => doc.id);
+        await incrementRagCounter("sentences", extractedIds);
+        // --------------------------------
+
+        return resultDocs.map(doc => {
           const data = doc.data();
           return { id: doc.id, ...data, organo_giudicante: data.organo_giudicante, _type: "giurisprudenza_puntuale" };
         });
@@ -96,6 +99,11 @@ export const ricercaDatabaseInterno = ai.defineTool(
            return [{ messaggio: `Nessun provvedimento trovato nel database interno per il riferimento normativo richiesto (${keys.join(", ")}).` }];
         }
         
+        // --- NUOVA LOGICA: UPDATE RAG ---
+        const extractedIds = snap.docs.map(doc => doc.id);
+        await incrementRagCounter("sentences", extractedIds);
+        // --------------------------------
+
         return snap.docs.map(doc => {
             const data = doc.data();
             return { ...mapToObject(doc, keys), id: doc.id, organo_giudicante: data.organo_giudicante, _type: "giurisprudenza_normativa" };
@@ -123,7 +131,14 @@ export const ricercaDatabaseInterno = ai.defineTool(
         };
       });
 
-      return results.filter((r: any) => r._distance <= CFG.MAX_ALLOWED_DISTANCE).slice(0, safeLimit);
+      const finalResults = results.filter((r: any) => r._distance <= CFG.MAX_ALLOWED_DISTANCE).slice(0, safeLimit);
+
+      // --- NUOVA LOGICA: UPDATE RAG ---
+      const extractedIds = finalResults.map((r: any) => r.id);
+      await incrementRagCounter("sentences", extractedIds);
+      // --------------------------------
+
+      return finalResults;
 
     } catch (err: unknown) {
       console.error("[Tool: ricercaDatabaseInterno] Errore:", err);
@@ -153,7 +168,6 @@ export const ricercaFascicoloUtente = ai.defineTool(
       const sanitizedQuery = input.query.trim();
       const queryVector = await createEmbedding(sanitizedQuery);
       
-      // Legge dbLimit (topK) dal context, con default a 10
       const safeLimit = context?.dbLimit ?? 10;
       
       let qOwner: FirebaseFirestore.Query = db.collection("document_chunks").where("user", "==", userId);
@@ -192,19 +206,28 @@ export const ricercaFascicoloUtente = ai.defineTool(
         if (!uniqueDocsMap.has(doc.id)) uniqueDocsMap.set(doc.id, data);
       });
 
-      const combinedDocs = Array.from(uniqueDocsMap.values());
-      if (combinedDocs.length === 0) return [{ messaggio: "Nessun paragrafo rilevante trovato nei documenti. Attendi qualche istante se il file è stato appena caricato." }];
+      // --- MODIFICA: Lavoriamo con le entries per non perdere l'ID del chunk ---
+      const combinedEntries = Array.from(uniqueDocsMap.entries());
+      if (combinedEntries.length === 0) {
+        return [{ messaggio: "Nessun paragrafo rilevante trovato nei documenti. Attendi qualche istante se il file è stato appena caricato." }];
+      }
 
-      return combinedDocs
-        .sort((a, b) => ((a.index as number) || 0) - ((b.index as number) || 0))
-        .slice(0, safeLimit)
-        .map(c => ({
-          documento_id: c.parentId,
-          nome_file: c.nome_file || c.titolo || "Documento utente",
-          testo_paragrafo: c.text,
-          posizione_originale: c.index,
-          _type: "document_chunk",
-        }));
+      const slicedDocs = combinedEntries
+        .sort((a, b) => ((a[1].index as number) || 0) - ((b[1].index as number) || 0))
+        .slice(0, safeLimit);
+
+      // --- NUOVA LOGICA: UPDATE RAG SUI CHUNK ESTRATTI ---
+      const extractedIds = slicedDocs.map(([id, _data]) => id);
+      await incrementRagCounter("document_chunks", extractedIds);
+      // --------------------------------------------------
+
+      return slicedDocs.map(([id, c]) => ({
+        documento_id: c.parentId, // Manteniamo il riferimento al doc genitore come prima
+        nome_file: c.nome_file || c.titolo || "Documento utente",
+        testo_paragrafo: c.text,
+        posizione_originale: c.index,
+        _type: "document_chunk",
+      }));
 
     } catch (err: unknown) {
       console.error(`Errore ricercaFascicoloUtente:`, err);
@@ -216,14 +239,14 @@ export const ricercaFascicoloUtente = ai.defineTool(
 export const webSearchTool = ai.defineTool(
   {
     name: 'ricercaWebLegale',
-    description: 'Cerca online riforme recentissime, notizie o approfondimenti legali su fonti certificate.',
+    description: "Da usare TASSATIVAMENTE per cercare informazioni, aggiornamenti, testi o dettagli su leggi, norme, articoli di codice, provvedimenti normativi o prassi (es. Agenzia delle Entrate, INPS, prassi bancaria). Cerca online su fonti certificate.",
     inputSchema: z.object({
       query: z.string(),
       focus: z.enum(["istituzionale", "editoriale", "tutto"]).default("tutto"),
     }),
     outputSchema: z.any(),
   },
-  // 👈 Estraiamo il `context` (passato da ai.generate) dal secondo parametro (tipizzato come any per sicurezza TS)
+
   async (input, options?: any) => {
     try {
       const apiKey = process.env.TAVILY_API_KEY;
@@ -244,7 +267,7 @@ export const webSearchTool = ai.defineTool(
           query: input.query,
           search_depth: "basic",
           include_domains: finalDomains,
-          max_results: webLimit, // 👈 Adesso la ricerca estrae esattamente i risultati richiesti
+          max_results: webLimit,
           include_answer: false,
           include_raw_content: false,
         }),

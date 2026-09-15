@@ -1,4 +1,4 @@
-import { FaLinkedin, FaInstagram } from 'react-icons/fa';
+import { FaInstagram } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import React from 'react';
 
@@ -42,22 +42,9 @@ export const Footer: React.FC = () => {
             </span>
 
             <div className="flex gap-4">
+            
               <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-(--color-muted) hover:text-(--color-text) transition-colors focus:outline-none"
-                aria-label="Visita la nostra pagina LinkedIn"
-              >
-                <FaLinkedin
-                  className="w-5 h-5"
-                  aria-hidden="true"
-                  focusable={false}
-                />
-              </a>
-
-              <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/jurio.it/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-(--color-muted) hover:text-(--color-text) transition-colors focus:outline-none"
@@ -84,9 +71,9 @@ export const Footer: React.FC = () => {
               Supporto
             </span>
 
-            <Link to="/prezzi" className={linkClasses}>
+            <a href="/prezzi" className={linkClasses}>
               Prezzi
-            </Link>
+            </a>
 
             <Link to="/contatti" className={linkClasses}>
               Contattaci

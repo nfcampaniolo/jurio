@@ -63,14 +63,25 @@ export const legalAgentFlow = ai.defineFlow(
 
     try {
       if (!skipTurn1) {
+        
+        // --- INIEZIONE DI RIGIDITÀ PER IL TRIAGE (TURNO 1) ---
+        const turn1Messages = [...messages];
+        turn1Messages.push({
+          role: "system",
+          content: [{ 
+            text: "REGOLA TASSATIVA DI ORCHESTRAZIONE: Se l'utente nomina o fa riferimento a una legge, una norma, un articolo di legge, una prassi (es. Agenzia Entrate, INPS, prassi bancaria, ecc.) o un qualsiasi testo normativo, DEVI OBBLIGATORIAMENTE invocare il tool 'webSearchTool'. È severamente vietato rispondere attingendo solo alla tua memoria interna per questi argomenti." 
+          }]
+        });
+        // ----------------------------------------------------
+
         // --- TURNO 1: Triage Agentico ---
         const turn1Response = await ai.generate({
           model: selectedModel,
-          messages: messages,
+          messages: turn1Messages,
           tools: dynamicTools,
           returnToolRequests: true,
-          config: { temperature: 0.05 },
-          context: toolContext, // Contesto dinamico coi limiti iniettato
+          config: { temperature: 0.0 },
+          context: toolContext, 
           onChunk: (chunk) => {
             try {
               const toolName = chunk.content?.find(part => part.toolRequest)?.toolRequest?.name;
@@ -95,7 +106,6 @@ export const legalAgentFlow = ai.defineFlow(
               executedTools.add(req.name);
 
               try {
-                // BUGFIX APPLICATO: Controllo robusto sui metadati Genkit dell'Action
                 const toolDef = dynamicTools.find(t => 
                   t.name === req.name || 
                   t.__action?.name === req.name || 
@@ -113,6 +123,7 @@ export const legalAgentFlow = ai.defineFlow(
             })
           );
 
+          // Ripristiniamo l'uso di 'messages' (quello pulito) per salvare lo storico corretto
           messages.push(turn1Response.message);
           messages.push({ role: "tool" as const, content: toolResponses.filter(Boolean) });
         }
@@ -124,8 +135,8 @@ export const legalAgentFlow = ai.defineFlow(
         
         finalResponse = await ai.generate({
           model: selectedModel,
-          messages: messages,
-          tools: [], // Forza la generazione testuale
+          messages: messages, // <--- Qui usiamo lo storico pulito (senza la forzatura del Turno 1)
+          tools: [], 
           config: { temperature: 0.05 },
           onChunk: (chunk) => { if (chunk.text) sendChunk({ text: chunk.text }); }
         });

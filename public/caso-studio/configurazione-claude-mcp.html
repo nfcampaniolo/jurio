@@ -3,49 +3,37 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>Come Affinare una Ricerca Giurisprudenziale con AI | Jurio</title>
+        <title>Integrazione MCP su Claude.ai: Porta la Giurisprudenza sull'AI | Jurio</title>
         <meta
             name="description"
-            content="Scopri come funziona la ricerca semantica e il modello RAG applicato alla giurisprudenza: come viene indicizzato un testo denso e come formulare l'input ideale."
+            content="Guida ufficiale per collegare il server MCP di Jurio a Claude.ai. Scopri come integrare la banca dati giuridica con registrazione dinamica OAuth2 in pochi clic."
         />
         <meta
             name="keywords"
-            content="ricerca semantica giurisprudenza, RAG giurisprudenziale, retrieval augmented generation diritto, testo denso giurisprudenza, come cercare sentenze AI, embedding giuridici, massime precedenti normativi, Jurio"
+            content="Claude ai MCP, Model Context Protocol Claude, integrazione AI legale, configurazione MCP Jurio, OAuth2 Claude, ricerca giurisprudenziale AI, assistente legale AI, RAG giuridico"
         />
-        <link rel="canonical" href="https://jurio.it/caso-studio/come-affinare-ricerca-giurisprudenziale-semantica" />
-        <meta property="og:title" content="Come Affinare una Ricerca Giurisprudenziale con AI | Jurio" />
+        <link rel="canonical" href="https://jurio.it/caso-studio/configurazione-claude-mcp" />
+        <meta property="og:title" content="Integrazione MCP su Claude.ai: Porta la Giurisprudenza sull'AI | Jurio" />
         <meta
             property="og:description"
-            content="Guida all'architettura RAG e alla ricerca semantica: dall'indicizzazione del testo denso (fattispecie, massime, norme e precedenti) alla costruzione strategica della query."
+            content="Connetti in modo sicuro l'intelligenza di Claude.ai al database giuridico di Jurio tramite MCP e OAuth2. Trasforma il tuo assistente in un esperto di diritto italiano."
         />
         <meta property="og:type" content="article" />
         <meta
             property="og:url"
-            content="https://jurio.it/caso-studio/come-affinare-ricerca-giurisprudenziale-semantica"
+            content="https://jurio.it/caso-studio/configurazione-claude-mcp"
         />
         <meta property="og:image" content="https://jurio.it/logo.webp" />
         <script type="application/ld+json">
             {
                 "@context": "https://schema.org",
                 "@type": "TechArticle",
-                "headline": "Come Affinare una Ricerca Giurisprudenziale con AI",
-                "description": "Funzionamento del modello RAG, ricerca semantica vettoriale e indicizzazione a testo denso nella ricerca giurisprudenziale.",
-                "author": {
-                    "@type": "Organization",
-                    "name": "Jurio",
-                    "url": "https://jurio.it"
-                },
+                "headline": "Come configurare l'integrazione MCP di Jurio su Claude.ai",
+                "description": "Guida passo-passo per aggiungere Jurio come connettore MCP personalizzato su Claude.ai sfruttando l'autenticazione OAuth2.",
                 "publisher": {
                     "@type": "Organization",
                     "name": "Jurio",
-                    "logo": {
-                        "@type": "ImageObject",
-                        "url": "https://jurio.it/logo.webp"
-                    }
-                },
-                "mainEntityOfPage": {
-                    "@type": "WebPage",
-                    "@id": "https://jurio.it/caso-studio/come-affinare-ricerca-giurisprudenziale-semantica"
+                    "url": "https://jurio.it"
                 }
             }
         </script>
@@ -1108,184 +1096,174 @@
         <a href="#main-content" class="skip-link">Vai al contenuto principale</a>
         <div id="header"></div>
         <main id="main-content">
-            <!-- HERO SECTION: RAG, SEMANTICA E INPUT -->
+            <!-- HERO SECTION -->
             <section class="section hero container">
                 <div class="hero-copy reveal">
-                    <span class="eyebrow">Architettura RAG &amp; Ricerca Semantica</span>
-                    <h1>Come Affinare una Ricerca Giurisprudenziale con AI</h1>
+                    <span class="eyebrow">Guida Ufficiale · Integrazione MCP</span>
+                    <h1>Porta la giurisprudenza reale su <em>Claude.ai</em></h1>
                     <p class="hero-lead">
-                        La ricerca semantica non confronta semplici parole chiave: calcola la vicinanza vettoriale tra concetti. 
-                        In un'architettura RAG (Retrieval-Augmented Generation), ogni sentenza viene indicizzata attraverso un 
-                        <strong>testo denso strutturato</strong> che sintetizza fattispecie, massima, normativa e precedenti richiamati. 
-                        Comprendere questo meccanismo è la chiave per formulare input capaci di estrarre esattamente il precedente rilevante.
+                        Integrare il database giuridico di Jurio all'interno di Claude non è mai stato così semplice. 
+                        Grazie al protocollo <strong>MCP (Model Context Protocol)</strong> e alla registrazione dinamica <strong>OAuth2</strong>, 
+                        bastano pochi clic sull'interfaccia web di Claude. Nessuna API Key da copiare manualmente. Nessun codice.
                     </p>
                     <div class="hero-actions">
-                        <a href="/ricerca" class="button button-primary">Prova la ricerca semantica</a>
-                        <a href="#come-funziona" class="button button-secondary">Come funziona il RAG</a>
+                        <a href="https://claude.ai" target="_blank" rel="noopener" class="button button-primary">Apri Claude.ai</a>
+                        <a href="#guida-passo-passo" class="button button-secondary">Leggi la guida</a>
                     </div>
                 </div>
             </section>
 
-            <!-- CONTESTO: IL TESTO DENSO E L'INDICIZZAZIONE VETTORIALE -->
-            <section id="come-funziona" class="section container">
+            <!-- CONTESTO: PERCHÉ CLAUDE CON MCP -->
+            <section class="section container">
                 <div class="section-heading reveal">
-                    <h2>L'anatomia dell'indicizzazione</h2>
+                    <h2>Un flusso di lavoro nativo e sicuro</h2>
                     <p>
-                        Perché una ricerca semantica funzioni davvero in ambito giuridico, non basta vettorizzare il testo grezzo 
-                        di una sentenza. Il modello RAG si fonda su un <em>testo denso sintetico</em> che ne codifica l'essenza logico-giuridica.
+                        Aggiungere Jurio come connettore personalizzato significa permettere a Claude di accedere 
+                        in autonomia, e in totale sicurezza, all'archivio giurisprudenziale massimizzato.
                     </p>
                 </div>
                 <div class="integration-grid reveal" data-stagger>
                     <div class="card reveal">
-                        <span class="card-tag">01 · Fattispecie &amp; Massima</span>
-                        <h3>Il nucleo decisorio</h3>
+                        <span class="card-tag">Standard Aperto</span>
+                        <h3>Basta copia e incolla</h3>
                         <p>
-                            L'indicizzazione isola il fatto storico-giuridico concreto (la condotta, l'evento, il contesto materiale) 
-                            e lo ancora al principio di diritto enunciato dal giudice. In questo modo l'embedding vettoriale cattura la sostanza del giudizio e non il mero stile redazionale.
+                            Dimentica la vecchia procedura in cui dovevi cercare le sentenze altrove per poi caricarle nel prompt. 
+                            Ora l'intelligenza artificiale interroga il motore di ricerca Jurio autonomamente mentre discute con te del caso.
                         </p>
                     </div>
                     <div class="card reveal">
-                        <span class="card-tag">02 · Norme &amp; Precedenti</span>
-                        <h3>La rete dei riferimenti</h3>
+                        <span class="card-tag">Sicurezza OAuth2</span>
+                        <h3>Nessun token esposto</h3>
                         <p>
-                            All'interno del blocco semantico vengono incorporati gli articoli di legge applicati e la giurisprudenza 
-                            conforme o contraria citata nella motivazione. Ciò consente al motore di raggruppare orientamenti affini anche in assenza di citazioni testuali identiche.
+                            L'integrazione sfrutta il protocollo di autenticazione OAuth2 con registrazione dinamica del client. 
+                            Questo significa zero gestione manuale di chiavi segrete o stringhe di testo. Il link è crittografato e gestito direttamente dalle piattaforme.
                         </p>
                     </div>
                     <div class="card reveal">
-                        <span class="card-tag">03 · Spazio Vettoriale</span>
-                        <h3>La distanza concettuale</h3>
+                        <span class="card-tag">Dati Certificati</span>
+                        <h3>Zero Allucinazioni</h3>
                         <p>
-                            La query dell'utente viene trasformata in un vettore multidimensionale. Il recupero (retrieval) seleziona le decisioni 
-                            il cui testo denso ha la massima prossimità geometrica rispetto alla fattispecie e al problema dedotto nell'input.
+                            Connettendo Jurio, vincoli Claude a utilizzare esclusivamente i provvedimenti ufficiali della Cassazione presenti nei nostri server, 
+                            eliminando il rischio di riferimenti normativi o numerici inventati.
                         </p>
                     </div>
                 </div>
             </section>
 
-            <!-- GUIDA PRATICA: COME COSTRUIRE L'INPUT IDEALE -->
-            <section class="section container">
+            <!-- GUIDA PASSO PASSO -->
+            <section id="guida-passo-passo" class="section container">
                 <div class="section-heading reveal">
-                    <h2>Come costruire l'input per il motore RAG</h2>
-                    <p>Dalla logica booleana alla descrizione del problema: i criteri per massimizzare la pertinenza del retrieval.</p>
+                    <h2>Configurazione passo-passo</h2>
+                    <p>Segui queste istruzioni per impostare il connettore Jurio MCP direttamente nelle impostazioni di Claude.ai.</p>
                 </div>
                 <ul class="steps reveal" data-stagger>
                     <li class="step reveal">
                         <span class="step-num">01</span>
-                        <h3>Esplicita il fatto concreto</h3>
+                        <h3>Accedi a Claude.ai e naviga nelle impostazioni</h3>
                         <p>
-                            Non limitarti a indicare la materia astratta ("responsabilità medica"). Specifica la condotta contestata 
-                            (es. ritardo diagnostico, omessa prescrizione di esami strumentali) e l'evento lesivo specifico.
+                            Effettua l'accesso su <strong>claude.ai</strong>. Dalla barra laterale sinistra, clicca sulla voce <strong>Personalizza</strong>, 
+                            spostati nella scheda <strong>Connettori</strong> e premi il pulsante <strong>Aggiungi</strong> (o <em>Aggiungi connettore personalizzato</em>).
                         </p>
                     </li>
                     <li class="step reveal">
                         <span class="step-num">02</span>
-                        <h3>Formula il nodo giuridico</h3>
+                        <h3>Inserisci i parametri del Server</h3>
                         <p>
-                            Dichiara il punto controverso: il criterio del "più probabile che non", la ripartizione dell'onere probatorio, 
-                            o la causa sopravvenuta da sola sufficiente a determinare l'evento.
+                            Nel modulo che si apre, inserisci <strong>Jurio</strong> nel campo "Nome". 
+                            Subito sotto, nel campo "URL Server", digita esattamente <strong>https://jurio.it/mcp</strong> e clicca su Continua.
                         </p>
                     </li>
                     <li class="step reveal">
                         <span class="step-num">03</span>
-                        <h3>Richiama coordinate normative</h3>
+                        <h3>Configura l'autenticazione OAuth2</h3>
                         <p>
-                            Includi gli istituti e le norme chiave (es. art. 1218 c.c., art. 2043 c.c., Legge Gelli-Bianco). 
-                            Questo orienta lo spazio semantico verso il corretto statuto di responsabilità.
+                            Alla voce "Autenticazione", spunta l'opzione <strong>Richiesto quando il server lo richiede</strong> (è la scelta consigliata) oppure <em>Sempre obbligatorio</em>. 
+                            Procedi alla sezione successiva.
                         </p>
                     </li>
                     <li class="step reveal">
                         <span class="step-num">04</span>
-                        <h3>Elimina le parole rumorose</h3>
+                        <h3>Attiva la registrazione dinamica</h3>
                         <p>
-                            Evita formule procedurali generiche che appiattiscono il vettore semantico ("in punto di diritto", "si chiede se") 
-                            e concentrati sugli elementi fattuali discriminanti del tuo caso.
+                            Nella sezione "Client OAuth", seleziona <strong>Nessun client ID — registratene uno automaticamente</strong>. 
+                            Questa opzione sfrutta la registrazione dinamica di Jurio, eliminando la necessità di configurare client personalizzati. Salva la configurazione.
                         </p>
                     </li>
                     <li class="step reveal">
                         <span class="step-num">05</span>
-                        <h3>Verifica il primo ranking</h3>
+                        <h3>Collega l'account Jurio</h3>
                         <p>
-                            Analizza se i primi risultati agganciano la fattispecie corretta. Se il motore devia verso ambiti contigui, 
-                            scopri quale termine o concetto ambivalente ha spostato il centroide del vettore.
+                            Torna alla schermata dei connettori. Sulla scheda di Jurio vedrai lo stato "Non sei ancora connesso". 
+                            Clicca sul pulsante <strong>Collega</strong> per essere reindirizzato al login protetto sul portale Jurio.
                         </p>
                     </li>
                     <li class="step reveal">
                         <span class="step-num">06</span>
-                        <h3>Affina per differenza</h3>
+                        <h3>Pronto all'uso</h3>
                         <p>
-                            Aggiungi l'elemento specializzante mancante (ad es. la natura contrattuale del rapporto, o il decorso causale alternativo) 
-                            per convergere sulle pronunce più pertinenti.
+                            Una volta inserite le credenziali, il token OAuth2 viene registrato istantaneamente in Claude. 
+                            L'assistente è ora autorizzato a interrogare in totale autonomia la nostra banca dati giuridica durante le tue sessioni di lavoro.
                         </p>
                     </li>
                 </ul>
             </section>
 
-            <!-- DIMOSTRAZIONE TECNICA: ANATOMIA DI UN RECUPERO -->
+            <!-- DIMOSTRAZIONE TECNICA -->
             <section id="demo" class="section container">
                 <div class="section-heading reveal">
-                    <h2>Dimostrazione pratica</h2>
+                    <h2>La differenza sul campo</h2>
                     <p>
-                        Come il testo denso indicizzato dialoga con la query formulata dall'utente nel processo di retrieval semantico.
+                        Ecco cosa succede quando chiedi a Claude di scrivere un parere legale con e senza il connettore MCP Jurio attivo.
                     </p>
                 </div>
                 <div class="court-card reveal">
                     <div class="court-header">
-                        <h3>Dall'input alla correlazione vettoriale</h3>
-                        <p>Esempio di allineamento tra la query complessa e il chunk denso indicizzato a monte</p>
+                        <h3>Caso pratico: Redazione di parere giuridico</h3>
+                        <p>Prompt utente: "Scrivimi un parere sugli oneri probatori nel demansionamento lavorativo."</p>
                     </div>
                     <dl class="sections-list">
-                        <dt>INPUT UTENTE OTTIMIZZATO</dt>
+                        <dt>Claude Base (SENZA CONNETTORE)</dt>
                         <dd>
-                            Responsabilità civile della struttura sanitaria per danno da ritardo diagnostico in presenza di sintomatologia atipica. 
-                            Ripartizione dell'onere della prova sul nesso causale tra condotta omissiva dei sanitari e perdita di chance di sopravvivenza, 
-                            con applicazione del criterio probabilistico civilistico (art. 1218 e 1223 c.c.).
+                            Risponde in modo astratto richiamando principi generali (art. 2103 c.c.). Spesso inventa numeri di sentenze 
+                            per sembrare autorevole ("allucinazioni"). Il risultato è inutilizzabile per un atto professionale formale.
                         </dd>
-                        <dt>COME LAVORA LA RICERCA SEMANTICA</dt>
+                        <dt>Claude Potenziato (CON JURIO MCP)</dt>
                         <dd>
-                            L'algoritmo non effettua un mero matching lessicale delle singole parole. Il testo viene proiettato nello spazio vettoriale, 
-                            individuando relazioni semantiche tra "sintomatologia atipica", "errore diagnostico", "prova liberatoria della struttura" 
-                            e "criterio controfattuale".
+                            Claude riconosce la necessità di una verifica giuridica. Interpella silenziosamente <strong>https://jurio.it/mcp</strong> 
+                            tramite il token OAuth2 appena configurato. Estrae le massime e i provvedimenti reali della Cassazione e redige 
+                            il parere con riferimenti esatti, riportando i fatti e il principio di diritto effettivo.
                         </dd>
-                        <dt>IL TESTO DENSO INDICIZZATO NEL DATABASE (DOCUMENT CHUNK)</dt>
+                        <dt>Sicurezza del flusso dati</dt>
                         <dd>
-                            <strong>Fattispecie:</strong> Paziente ricoverato con quadro clinico subdolo; omessa esecuzione di TC toraco-addominale che avrebbe consentito di intercettare tempestivamente la patologia letale.<br />
-                            <strong>Massima / Principio:</strong> In tema di responsabilità contrattuale sanitaria, grava sull'attore la prova del nesso causale secondo il criterio del "più probabile che non", spettando alla struttura la prova dell'impossibilità sopravvenuta della prestazione per causa non imputabile.<br />
-                            <strong>Riferimenti Normativi:</strong> Artt. 1218, 1223, 2697 c.c.; L. 24/2017.<br />
-                            <strong>Precedenti Richiamati:</strong> Cass. Civ., Sez. Un., n. 577/2008; Cass. Sez. III, n. 28991/2019.
-                        </dd>
-                        <dt>VALORE AGGIUNTO DEL MODELLO RAG</dt>
-                        <dd>
-                            Grazie all'arricchimento preliminare del testo (che unisce fatto, diritto e orientamenti pregressi in un unico vettore denso), 
-                            il modello di retrieval restituisce in cima al ranking le sentenze che risolvono esattamente quel conflitto di causalità omissiva, 
-                            azzerando i falsi positivi tipici della ricerca a parole chiave.
+                            L'integrazione Claude.ai scambia esclusivamente la "query" di ricerca col server Jurio. 
+                            Le informazioni riservate dei tuoi clienti o le bozze dei tuoi atti rimangono protette nell'ambiente Claude e non vengono inviate ai nostri archivi.
                         </dd>
                     </dl>
                 </div>
             </section>
 
-            <!-- CALLOUT DI APPROFONDIMENTO -->
+            <!-- CALLOUT DI APPROFONDIMENTO (PITCH COMMERCIALE) -->
             <section class="section container">
                 <div class="pricing-banner reveal">
                     <div>
-                        <h2>Il RAG oltre la <em>keyword</em></h2>
+                        <h2>L'ecosistema <em>definitivo</em> per il LegalTech</h2>
                         <p>
-                            Nei sistemi tradizionali a parola chiave, una ricerca formulata con termini complessi porta spesso a zero risultati 
-                            oppure a centinaia di sentenze fuorvianti che condividono una sola locuzione.
+                            Studi legali, uffici legali aziendali e giuristi d'impresa stanno integrando i server MCP per un motivo semplice: 
+                            uniscono l'interfaccia dell'AI che già usano (Claude) alla precisione della migliore banca dati specializzata.
                         </p>
                         <p style="font-size: 0.95rem; margin-top: 1rem">
-                            Con l'indicizzazione del testo denso in Jurio, la query può essere discorsiva, dettagliata e ricca di sfumature giuridiche. 
-                            L'architettura RAG estrae il contesto rilevante e lo passa al modello di linguaggio garantendo risposte motivate, 
-                            fondate unicamente su decisioni ufficiali e verificate.
+                            Niente frammentazione degli strumenti. Configuri il connettore una volta sola tramite OAuth2 
+                            e mantieni l'operatività in un'unica finestra. Tu indichi la strategia giuridica, 
+                            Claude e Jurio collaborano in background per recuperare la massima giurisprudenziale esatta e argomentarla nel documento.
                         </p>
                     </div>
                     <div class="pricing-cta">
                         <ul class="pricing-points">
-                            <li>Indicizzazione a testo denso (Fatto + Diritto)</li>
-                            <li>Calcolo della similarità su embedding giuridici</li>
-                            <li>Tracciamento di norme e precedenti collegati</li>
-                            <li>Superamento dei limiti della ricerca booleana</li>
-                            <li>Isolamento immediato del nodo causale e probatorio</li>
+                            <li>Configurazione web nativa su Claude.ai</li>
+                            <li>Autenticazione sicura OAuth2 "One-Click"</li>
+                            <li>Dati giurisprudenziali garantiti e certificati</li>
+                            <li>Infrastruttura veloce su Google Cloud</li>
+                            <li>Assistenza dedicata in caso di problemi di login</li>
                         </ul>
                     </div>
                 </div>
@@ -1294,40 +1272,39 @@
             <!-- FAQ SECTION -->
             <section class="section container">
                 <div class="section-heading reveal">
-                    <h2>FAQ</h2>
-                    <p>Approfondimenti su RAG, embedding e ricerca semantica nel diritto</p>
+                    <h2>FAQ: Autenticazione e Connettori</h2>
+                    <p>Le risposte alle domande più comuni sulla configurazione di Jurio su Claude.ai.</p>
                 </div>
                 <div class="faq reveal">
                     <details>
-                        <summary>Cos'è esattamente il RAG (Retrieval-Augmented Generation)?</summary>
+                        <summary>Cos'è la "Registrazione dinamica" (Nessun Client ID)?</summary>
                         <div class="faq-content-inner">
-                            Il RAG è un'architettura che combina un motore di recupero documentale (retrieval) e un modello generativo (LLM). 
-                            Invece di affidarsi alla sola "memoria" probabilistica del modello linguistico, il sistema recupera prima 
-                            le sentenze pertinenti dal database vettoriale e le fornisce all'AI come contesto certo per formulare sintesi, note e risposte prive di allucinazioni.
+                            È una funzione avanzata del protocollo OAuth2 che permette a Claude.ai e a Jurio di scambiarsi in automatico 
+                            i certificati di sicurezza al momento del collegamento. Non dovrai generare, copiare o incollare lunghe stringhe di codice (API Key). 
+                            Fa tutto il sistema in background per garantirti la massima facilità e sicurezza.
                         </div>
                     </details>
                     <details>
-                        <summary>Cos'è il "testo denso" indicizzato per ogni sentenza?</summary>
+                        <summary>Cosa succede quando clicco sul pulsante "Collega"?</summary>
                         <div class="faq-content-inner">
-                            Le sentenze contengono decine di pagine con formule di rito, parti descrittive e passaggi procedurali. Il testo denso 
-                            è una sintesi strutturata ad alta densità semantica che estrae in un unico blocco: i fatti salienti (la fattispecie), 
-                            il principio di diritto (la massima), le norme primarie applicate e i precedenti richiamati dal collegio giudicante.
+                            Vieni momentaneamente trasferito sulla pagina di login sicura di Jurio. Inserendo le tue credenziali utente, 
+                            autorizzi Claude ad accedere al motore di ricerca giurisprudenziale a tuo nome. Al termine verrai reindirizzato 
+                            di nuovo a Claude e l'integrazione sarà attiva.
                         </div>
                     </details>
                     <details>
-                        <summary>In cosa differisce la ricerca semantica dalla ricerca tradizionale per parole chiave?</summary>
+                        <summary>Se ho problemi con l'autenticazione OAuth2, a chi posso rivolgermi?</summary>
                         <div class="faq-content-inner">
-                            La ricerca a parole chiave verifica unicamente la presenza lessicale esatta dei termini cercati. 
-                            La ricerca semantica converte la query e i documenti in vettori numerici (embedding), calcolando la loro vicinanza concettuale. 
-                            Questo consente di trovare sentenze pertinenti anche se utilizzano sinonimi, formulazioni diverse o perifrasi giuridiche differenti.
+                            Se la schermata di reindirizzamento restituisce un errore o il pulsante "Collega" in Claude.ai non aggiorna lo stato della connessione, 
+                            il nostro team tecnico è a disposizione. Visita la pagina <strong>/contatti</strong> per ricevere assistenza immediata sull'integrazione.
                         </div>
                     </details>
                     <details>
-                        <summary>Perché descrivere la fattispecie concreta migliora i risultati del ranking?</summary>
+                        <summary>Jurio usa i miei prompt per addestrare modelli AI?</summary>
                         <div class="faq-content-inner">
-                            Perché il motore vettoriale riconosce la struttura del conflitto materiale. Fornire elementi come il tipo di condotta, 
-                            la tempestività dell'intervento o la dinamica dell'inadempimento ancora il vettore della query allo specifico cluster giurisprudenziale 
-                            che ha trattato casi analoghi, escludendo le pronunce astrattamente rilevanti ma fattualmente incongrue.
+                            No. Il server MCP di Jurio riceve esclusivamente la query di ricerca ottimizzata da Claude (es. "risarcimento danno biologico") 
+                            e risponde fornendo i testi delle sentenze. I tuoi documenti, i tuoi prompt originali e i dati dei tuoi clienti non transitano 
+                            sui nostri server per il salvataggio o l'addestramento (training).
                         </div>
                     </details>
                 </div>
@@ -1337,20 +1314,20 @@
             <section id="prova" class="section container cta">
                 <div class="cta-box reveal">
                     <div>
-                        <h2>L’essenziale della<br /><em>ricerca giuridica</em>.</h2>
+                        <h2>L’intelligenza artificiale<br /><em>ora fa davvero giurisprudenza</em>.</h2>
                         <p>
-                            Prova Jurio per 7 giorni: giurisprudenza delle Corti Supreme già analizzata, massimizzata e
-                            interrogabile con un motore semantico RAG, in un ambiente essenziale e rigoroso.
+                            Apri la sezione "Personalizza" su Claude.ai, segui la nostra guida in 6 passaggi per connettere Jurio tramite OAuth2 
+                            e inizia a redigere pareri legali fondati su sentenze reali in pochi minuti.
                         </p>
                         <ul class="pricing-points" style="margin-top: 1.5rem; color: var(--color-muted)">
-                            <li style="color: var(--color-muted)">Nessuna carta richiesta</li>
-                            <li style="color: var(--color-muted)">7 giorni full access</li>
-                            <li style="color: var(--color-muted)">Infrastruttura sicura e riservata</li>
+                            <li style="color: var(--color-muted)">Configurazione senza codice</li>
+                            <li style="color: var(--color-muted)">Login sicuro tramite OAuth2</li>
+                            <li style="color: var(--color-muted)">Prova gratuita di 7 giorni disponibile</li>
                         </ul>
                     </div>
                     <div class="pricing-cta">
-                        <a href="/login" class="button button-primary">Prova gratuita 1 settimana</a>
-                        <small>Attivazione istantanea</small>
+                        <a href="/login" class="button button-primary">Registrati su Jurio</a>
+                        <small>Richiesto per il collegamento a Claude</small>
                     </div>
                 </div>
             </section>

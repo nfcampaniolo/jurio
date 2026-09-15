@@ -11,110 +11,112 @@
 
 ## AI Legal Research for Professionals
 
-**Jurio** è una piattaforma LegalTech basata sull'intelligenza artificiale, progettata per rendere la ricerca, l'analisi e la preparazione del lavoro giuridico **più rapide, efficienti e produttive**.
+**Jurio** is an AI-powered LegalTech platform designed to make legal research, document analysis, and professional legal workflows **faster, more efficient, and more productive**.
 
 🌐 **Website:** https://jurio.it/
 
-> **Find faster. Understand faster. Work faster.**
+> **Find faster. Understand better. Work smarter.**
 
 ---
 
-## 🚀 Why Jurio?
+## Overview
 
-Il lavoro legale richiede tempo.
+Legal work often requires significant time to identify relevant authorities, compare legal positions, analyze decisions, review documents, and turn research into professional output.
 
-Ricercare precedenti, confrontare orientamenti, analizzare decisioni, individuare informazioni rilevanti e trasformarle in documenti professionali può richiedere ore di lavoro.
+**Jurio is built to reduce this operational overhead.**
 
-**Jurio nasce per ridurre questo costo operativo.**
+The platform combines artificial intelligence, semantic search, document analysis, and workflow-oriented tools to support legal professionals throughout the research and drafting process.
 
-Con Jurio puoi:
+With Jurio, professionals can:
 
-* cercare informazioni giuridiche attraverso l'AI;
-* individuare contenuti e precedenti rilevanti;
-* analizzare documenti giuridici;
-* sintetizzare decisioni complesse;
-* esplorare problemi giuridici attraverso la ricerca semantica;
-* supportare la preparazione e la redazione di documenti;
-* utilizzare gli strumenti AI direttamente all'interno di Microsoft Word.
+* Search legal information using AI-assisted queries
+* Identify relevant legal sources and precedents
+* Analyze legal documents and judicial decisions
+* Summarize complex legal material
+* Explore legal issues through semantic search
+* Extract relevant arguments and key information
+* Support the preparation of professional documents
+* Access AI-powered tools directly within Microsoft Word
 
-**Meno tempo speso nella ricerca.
-Più tempo dedicato al lavoro a valore.**
-
----
-
-## 💼 Built for Legal Professionals
-
-Jurio non è un generico chatbot.
-
-È progettato per il **lavoro professionale nel settore legale**.
-
-### ⚖️ Lawyers
-
-Accelera la ricerca di precedenti e l'analisi delle informazioni necessarie alla preparazione di atti, pareri e strategie.
-
-### 🏢 Law Firms
-
-Riduci le attività ripetitive e aumenta la produttività del team.
-
-### ⚙️ Legal Departments
-
-Supporta i team legali nell'analisi documentale e nella ricerca di informazioni rilevanti.
-
-### 👔 Professionals
-
-Un ambiente AI dedicato al lavoro giuridico, invece di uno strumento AI general purpose.
+**Less time spent searching. More time spent on substantive legal work.**
 
 ---
 
-## 🧠 AI-Powered Legal Research
+## Built for Legal Professionals
 
-Jurio combina **intelligenza artificiale, ricerca semantica e analisi documentale** per rendere più efficiente il processo di ricerca giuridica.
+Jurio is not intended to be a general-purpose chatbot.
+
+It is designed around the requirements of **professional legal work**, with a focus on research, analysis, context, and productivity.
+
+### Lawyers
+
+Accelerate the identification of relevant precedents and legal information for the preparation of pleadings, opinions, strategies, and other professional work.
+
+### Law Firms
+
+Reduce repetitive research and document-analysis tasks while improving the efficiency and consistency of legal workflows.
+
+### Legal Departments
+
+Support in-house legal teams with document analysis, information retrieval, research, and AI-assisted workflows.
+
+### Legal Professionals
+
+Work with an AI environment specifically designed around legal research and professional legal activities rather than general-purpose use cases.
+
+---
+
+## AI-Powered Legal Research
+
+Jurio combines **artificial intelligence, semantic search, information retrieval, and document analysis** to streamline the legal research process.
 
 ### Semantic Legal Search
 
-Non limitarti a cercare una parola.
+Traditional keyword search requires users to know exactly what terms appear in the relevant source.
 
-**Descrivi il problema giuridico che stai cercando di risolvere.**
+Jurio is designed to work at the level of **meaning and legal context**.
 
-La ricerca semantica permette di individuare informazioni rilevanti anche quando la formulazione della domanda è diversa da quella presente nei documenti.
+Instead of asking:
 
-Da:
+> "Which judgment contains this phrase?"
 
-> "Quale sentenza devo cercare?"
+you can ask:
 
-a:
+> "Which precedents address this legal issue?"
 
-> "Quali precedenti affrontano questo problema giuridico?"
-
----
-
-## 🔎 AI-Powered Analysis
-
-Jurio utilizza modelli di intelligenza artificiale per assistere il professionista nell'analisi del contenuto giuridico.
-
-Le funzionalità includono:
-
-* sintesi di documenti;
-* analisi di decisioni;
-* individuazione dei punti chiave;
-* confronto di contenuti;
-* estrazione di argomentazioni;
-* analisi del contesto giuridico;
-* supporto alla preparazione di documenti.
-
-L'obiettivo è semplice:
-
-**ridurre il tempo necessario per arrivare all'informazione utile.**
+Semantic search helps identify relevant information even when the wording of a query differs from the wording used in the underlying legal material.
 
 ---
 
-## 📝 Jurio + Microsoft Word (WORK IN PROGRESS)
+## AI-Powered Analysis
 
-La ricerca giuridica non dovrebbe interrompere la fase di redazione.
+Jurio uses AI models to assist with the analysis of legal content and documents.
 
-Per questo Jurio è progettato per integrarsi direttamente con **Microsoft Word** attraverso un add-in dedicato.
+Core capabilities include:
 
-Il workflow diventa:
+* Document summarization
+* Decision analysis
+* Key-point extraction
+* Content comparison
+* Argument identification
+* Legal-context analysis
+* Research-assisted drafting
+
+The objective is straightforward:
+
+**Reduce the time required to reach relevant, actionable information.**
+
+---
+
+## Jurio + Microsoft Word
+
+> **Work in progress**
+
+Legal research should not require professionals to constantly switch between applications.
+
+Jurio is designed to integrate directly with **Microsoft Word** through a dedicated Office Add-in, bringing AI-assisted research and analysis closer to the drafting environment.
+
+The intended workflow is:
 
 ```text
 Search
@@ -130,15 +132,13 @@ Refine
 
 ### Your legal research. Where you write.
 
-L'obiettivo è portare l'intelligenza artificiale **nel punto in cui il professionista lavora già ogni giorno**.
+The goal is to make relevant AI capabilities available directly within the environment where legal professionals already create and refine their work.
 
 ---
 
-## 📚 From Research to Draft
+## From Research to Draft
 
-Il valore di Jurio non è soltanto trovare un'informazione.
-
-È trasformare rapidamente l'informazione in **lavoro utile**.
+Jurio is designed not only to find information, but to help transform that information into **usable professional output**.
 
 ```text
 Legal Problem
@@ -154,83 +154,83 @@ Legal Reasoning
 Professional Draft
 ```
 
-Jurio mira a ridurre:
+Jurio aims to reduce:
 
-* ricerca manuale;
-* consultazione ripetitiva di documenti;
-* copia e incolla tra applicazioni;
-* passaggi inutili tra strumenti;
-* tempo necessario per trasformare la ricerca in output professionale.
-
----
-
-## 🎯 Built Around Productivity
-
-Il tempo di un professionista ha un valore economico.
-
-Ogni attività ripetitiva sottrae tempo ad attività a maggior valore.
-
-Jurio punta a ridurre il tempo necessario per:
-
-**trovare → capire → confrontare → utilizzare**
-
-le informazioni giuridiche.
-
-> **Legal intelligence should increase legal productivity.**
+* Manual research
+* Repetitive document review
+* Unnecessary copying and pasting
+* Context switching between applications
+* The time required to transform research into professional work
 
 ---
 
-## 🔥 Core Capabilities
+## Productivity by Design
+
+Professional legal work depends on time, accuracy, and efficient access to information.
+
+Jurio is built around a simple productivity principle:
+
+**Find → Understand → Compare → Apply**
+
+The platform is intended to reduce the operational cost associated with repetitive research and information-processing tasks while keeping the professional in control of the final work product.
+
+> **Legal intelligence should improve legal productivity.**
+
+---
+
+## Core Capabilities
 
 ### Semantic Jurisprudence Search
 
-Ricerca basata sul significato e sul contesto, non soltanto sulle keyword.
+Search based on meaning, context, and legal concepts rather than keywords alone.
 
 ### AI Summarization
 
-Sintesi rapida di contenuti giuridici complessi.
+Generate concise summaries of complex legal documents and decisions.
 
 ### Legal Document Analysis
 
-Analisi assistita di documenti e decisioni.
+Analyze documents and judicial decisions to identify relevant information, arguments, and issues.
 
 ### Context-Aware AI
 
-Workflow AI costruiti utilizzando il contesto recuperato durante la ricerca.
+Build AI-assisted workflows around the legal context retrieved during research.
 
 ### Microsoft Word Integration
 
-Accesso alle funzionalità di Jurio direttamente nell'ambiente di redazione.
+Access Jurio capabilities directly within the professional drafting environment.
 
 ### Citation-Grounded Workflows
 
-Architettura progettata per mantenere il collegamento tra output AI e informazioni utilizzate come riferimento.
+Design AI workflows around retrieved information and maintain a connection between generated output and the underlying sources used as context.
 
 ---
 
-## 🌐 The Jurio Platform
+## The Jurio Platform
 
-Jurio è pensato come un ecosistema dedicato al lavoro legale.
+Jurio is designed as an ecosystem for professional legal workflows.
 
 ### Web Platform
 
 https://jurio.it/
 
+The main environment for legal research, analysis, and AI-assisted workflows.
+
 ### AI Legal Engine
 
-Motore AI per ricerca, recupero del contesto e analisi.
+The AI layer responsible for search, retrieval, context processing, and analysis.
 
 ### Microsoft Word Add-in
 
-Integrazione diretta nell'ambiente di redazione professionale.
+An integrated interface for accessing Jurio capabilities directly from Microsoft Word.
 
 ### Cloud Infrastructure
 
-Servizi cloud per autenticazione, dati e workflow AI.
+Cloud services supporting authentication, application services, data handling, and AI workflows.
 
 ---
 
-## 🏗️ Technology
+## Technology
 
 ### Frontend
 
@@ -243,7 +243,7 @@ Servizi cloud per autenticazione, dati e workflow AI.
 
 * Google Genkit
 * Large Language Models
-* Retrieval-Augmented Generation
+* Retrieval-Augmented Generation (RAG)
 * Semantic Search
 * Vector Search
 
@@ -251,7 +251,7 @@ Servizi cloud per autenticazione, dati e workflow AI.
 
 * Microsoft Office.js
 * Microsoft Word Add-in
-* Taskpane Application
+* Task Pane Application
 
 ### Cloud
 
@@ -267,23 +267,23 @@ Servizi cloud per autenticazione, dati e workflow AI.
 
 ---
 
-## 🔐 Security & Trust
+## Security & Trust
 
-Nel settore legale, sicurezza e controllo dei dati sono requisiti fondamentali.
+Security, privacy, and access control are fundamental requirements for legal technology.
 
-Jurio è progettato con particolare attenzione a:
+Jurio is developed with a focus on:
 
 **Security · Privacy · Authentication · Access Control · Data Protection**
 
-Il progetto `jurio-it` ha inoltre superato la verifica del brand **Google OAuth** per i relativi flussi di autenticazione.
+The `jurio-it` project has also completed Google OAuth brand verification for its relevant authentication flows.
 
 > **Security is part of the product, not an afterthought.**
 
 ---
 
-## 🚀 Start with Jurio
+## Start with Jurio
 
-Scopri Jurio:
+Explore the platform:
 
 ### https://jurio.it/
 
@@ -291,21 +291,22 @@ Scopri Jurio:
 
 ---
 
-## 🧩 Project Structure
+## Project Structure
 
 ```text
 jurio/
-├── .firebase/                  # config Firebase locale
-├── .github/                    # workflow GitHub
-├── .firebaserc                 # progetto Firebase
+
+├── .firebase/                  # Local Firebase configuration
+├── .github/                    # GitHub workflows
+├── .firebaserc                 # Firebase project configuration
 ├── .gitignore
 ├── README.md
 ├── app.html
-├── build/                      # build output generato
-├── coverage/                   # coverage reports
+├── build/                      # Generated build output
+├── coverage/                   # Test coverage reports
 ├── eslint.config.js
 ├── firebase.json
-├── functions/                  # Cloud Functions Firebase
+├── functions/                  # Firebase Cloud Functions
 │   ├── .gitignore
 │   ├── package.json
 │   ├── package-lock.json
@@ -316,8 +317,8 @@ jurio/
 ├── index_rules.txt
 ├── package-lock.json
 ├── package.json
-├── public/                     # asset statici e pagine HTML
-│   ├── *.html                  # privacy, gdpr, guida, etc.
+├── public/                     # Static assets and HTML pages
+│   ├── *.html                  # Privacy, GDPR, guide, etc.
 │   ├── *.png
 │   ├── *.webp
 │   ├── *.mp4
@@ -327,7 +328,7 @@ jurio/
 │   ├── google-icon.svg
 │   ├── site.webmanifest
 │   └── ...
-├── src/                        # app principale
+├── src/                        # Main application
 │   ├── App.tsx
 │   ├── index.css
 │   ├── main.tsx
@@ -353,7 +354,7 @@ jurio/
 │   ├── routes/
 │   ├── shared/
 │   └── test/
-├── tests/                      # test frontend
+├── tests/                      # Frontend tests
 │   ├── App.test.tsx
 │   ├── main.test.tsx
 │   ├── css.test.ts
@@ -375,12 +376,12 @@ jurio/
 
 ---
 
-## ⚙️ Getting Started
+## Getting Started
 
 ### Requirements
 
 * Node.js 18+
-* npm or yarn
+* npm or Yarn
 * Firebase CLI
 * Microsoft Office Add-in development certificates
 * Microsoft Word for local testing
@@ -389,7 +390,9 @@ jurio/
 
 ```bash
 git clone https://github.com/your-org/jurio.git
+
 cd jurio
+
 npm install
 ```
 
@@ -401,15 +404,14 @@ Create a `.env.local` file in the project root:
 NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=jurio-it
-
 GENKIT_API_KEY=your_genkit_or_gemini_api_key
 ```
 
-**Never commit production credentials, API keys or secrets to the repository.**
+**Never commit production credentials, API keys, or secrets to the repository.**
 
 ---
 
-## 🏃 Running Locally
+## Running Locally
 
 ### Web Application
 
@@ -427,27 +429,31 @@ Then sideload the Office Add-in manifest into Microsoft Word.
 
 ---
 
-## 🧪 Development Principles
+## Development Principles
 
 ### Relevance
 
-Return information that is actually useful for the legal problem being investigated.
+Return information that is relevant to the legal problem being investigated.
 
 ### Productivity
 
-Reduce the number of manual operations necessary to move from research to professional output.
+Reduce the number of manual operations required to move from research to professional output.
 
 ### Reliability
 
-Build AI workflows around relevant retrieved context and maintain control over the information used to generate results.
+Build AI workflows around relevant retrieved context while maintaining control over the information used to generate results.
+
+### Professional Control
+
+AI should assist the professional rather than replace professional judgment.
 
 ---
 
-## 📈 The Vision
+## Vision
 
-Il futuro del lavoro legale non sarà semplicemente avere accesso a più informazioni.
+The future of legal technology is not simply about providing access to more information.
 
-Sarà **riuscire a trasformare rapidamente le informazioni giuste in lavoro professionale**.
+It is about **turning the right information into useful professional work as efficiently as possible**.
 
 ```text
 Information
@@ -461,31 +467,37 @@ Productivity
 
 ---
 
-## 💰 Product Philosophy
+## Product Philosophy
 
-Jurio non nasce per essere un altro strumento AI generico.
+Jurio is not intended to be another general-purpose AI tool.
 
-Nasce per diventare una **productivity platform per il lavoro legale**.
+It is being developed as a **productivity platform for legal professionals**, focused on the specific workflow from legal research to professional output.
 
-Il valore dell'AI non è quanto testo riesce a generare.
+The value of AI is not measured by how much text it can generate.
 
-È **quanto lavoro utile riesce a far risparmiare**.
+It is measured by **how much valuable work it can help professionals accomplish more efficiently**.
 
 ---
 
-## 📄 License
+## License
 
 **Proprietary Software**
 
 Copyright © 2026 Jurio.
+
 All rights reserved.
 
-This repository and its source code are proprietary and may not be copied, modified, distributed or commercially exploited without prior authorization.
+This repository and its source code are proprietary and may not be copied, modified, distributed, or commercially exploited without prior authorization.
 
 ---
 
-## Jurio ⚖️
+# Jurio ⚖️
 
 **AI Legal Research for Professionals**
 
 https://jurio.it/
+
+```
+
+Questa versione è volutamente più **corporate / institutional**: meno claim da marketing, più focus su prodotto, workflow, affidabilità e contesto professionale. Una modifica che farei anche al branding è sostituire lo slogan **“Find faster. Understand better. Work smarter.”** con una tagline ancora più istituzionale, ad esempio **“Legal Intelligence for Professional Work.”**
+```

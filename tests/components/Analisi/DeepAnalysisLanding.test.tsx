@@ -1,23 +1,10 @@
-import { describe, test, expect, vi, beforeEach } from "vitest";
+import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
 import { DeepAnalysisLanding } from "@/features/analisi/components/DeepAnalysisLanding";
 import { useReducedMotion } from "framer-motion";
 
-/* ---------- hoisted mocks ---------- */
-const { mockNavigate } = vi.hoisted(() => ({
-  mockNavigate: vi.fn(),
-}));
-
-/* ---------- mock router & framer-motion ---------- */
-vi.mock("react-router-dom", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("react-router-dom")>();
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
-
+/* ---------- mock framer-motion ---------- */
 vi.mock("framer-motion", async (importOriginal) => {
   const actual = await importOriginal<typeof import("framer-motion")>();
   return {
@@ -57,10 +44,29 @@ vi.mock("@/features/search/components/CTASection", () => ({
 
 const mockedUseReducedMotion = vi.mocked(useReducedMotion);
 
-describe("DeepAnalysisLanding Component Suite", () =>{
+describe("DeepAnalysisLanding Component Suite", () => {
+  const originalLocation = window.location;
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockedUseReducedMotion.mockReturnValue(false);
+
+    // Mock di window.location per testare il reindirizzamento nativo
+    const locationMock = {
+      ...originalLocation,
+      href: "http://localhost:3000/",
+    };
+    Object.defineProperty(window, "location", {
+      value: locationMock,
+      writable: true,
+    });
+  });
+
+  afterEach(() => {
+    Object.defineProperty(window, "location", {
+      value: originalLocation,
+      writable: true,
+    });
   });
 
   test("renderizza l'intestazione principale, la descrizione e le 4 fasi del workflow", () => {
@@ -74,7 +80,6 @@ describe("DeepAnalysisLanding Component Suite", () =>{
       screen.getByText(/uno strumento evoluto di intelligence giuridica pensato per gli studi legali/i)
     ).toBeInTheDocument();
 
-    // Verifica la presenza di tutte le 4 fasi (list items)
     const workflowItems = screen.getAllByRole("listitem");
     expect(workflowItems).toHaveLength(4);
 
@@ -94,13 +99,13 @@ describe("DeepAnalysisLanding Component Suite", () =>{
     expect(screen.getByText("Elaborazione atti e fascicoli")).toBeInTheDocument();
   });
 
-  test("naviga verso '/prezzi' al clic sulla CTA dei piani", () => {
+  test("reindirizza alla pagina dei prezzi al clic sulla CTA dei piani", () => {
     render(<DeepAnalysisLanding />);
 
     const ctaButton = screen.getByRole("button", { name: /attiva l'analisi assistita su un documento esterno/i });
     fireEvent.click(ctaButton);
 
-    expect(mockNavigate).toHaveBeenCalledWith("/prezzi");
+    expect(window.location.href).toBe("/prezzi");
   });
 
   test("renderizza la sezione CTA lazy loaded", async () => {

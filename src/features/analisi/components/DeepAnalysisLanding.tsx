@@ -3,7 +3,6 @@ import React, { Suspense, lazy } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Compass, Landmark, Route, Scale } from "lucide-react";
 import { ButtonCTA } from '@/shared/components/ButtonCTA';
-import { useNavigate } from 'react-router-dom';
 const CTASection = lazy(() => import('@/features/search/components/CTASection'));
 
 const workflowSteps = [
@@ -35,10 +34,9 @@ const workflowSteps = [
 
 export const DeepAnalysisLanding: React.FC = () => {
   const shouldReduceMotion = useReducedMotion();
-  const navigate = useNavigate();
-    const handleClick = () => {
-    navigate('/prezzi');
-    };
+  const handleClick = () => {
+    window.location.href = '/prezzi';
+  };
   return (
     <section aria-labelledby="deep-analysis-heading" className="py-10 bg-(--color-bg)">
       <div className="mx-auto flex flex-col items-center px-6 max-w-7xl">

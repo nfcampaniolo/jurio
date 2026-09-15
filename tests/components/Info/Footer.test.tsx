@@ -50,19 +50,13 @@ describe("Footer Component Suite", () => {
     ).toBeInTheDocument();
   });
 
-  test("renderizza i canali social con link sicuri a schede esterne", () => {
+test("renderizza i canali social con link sicuri a schede esterne", () => {
     render(<Footer />);
 
     expect(screen.getByText("Seguici")).toBeInTheDocument();
 
-    const linkedInLink = screen.getByRole("link", { name: "Visita la nostra pagina LinkedIn" });
-    expect(linkedInLink).toHaveAttribute("href", "https://linkedin.com");
-    expect(linkedInLink).toHaveAttribute("target", "_blank");
-    expect(linkedInLink).toHaveAttribute("rel", "noopener noreferrer");
-    expect(screen.getByTestId("fa-linkedin")).toBeInTheDocument();
-
     const instagramLink = screen.getByRole("link", { name: "Visita la nostra pagina Instagram" });
-    expect(instagramLink).toHaveAttribute("href", "https://instagram.com");
+    expect(instagramLink).toHaveAttribute("href", "https://www.instagram.com/jurio.it/");
     expect(instagramLink).toHaveAttribute("target", "_blank");
     expect(instagramLink).toHaveAttribute("rel", "noopener noreferrer");
     expect(screen.getByTestId("fa-instagram")).toBeInTheDocument();

@@ -4,7 +4,7 @@ import { Timestamp, FieldValue, Query, WriteBatch } from "firebase-admin/firesto
 import { getAdmin, getDb, getAdminAuth, getAdminStorage, sanitize } from "./deps";
 import { MAX_INPUT_CHARS, PROMPT_MASSIMAZIONE, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, PlanDoc, getStripe, getWebhookSecret,normalizePlanId, handleEmbeddingCreation, handleEmbeddingDocumentCreation, handleFascicoloCreation, handleEmbeddingManualCreation, DeepAnalysisRequestBody, DeepAnalysisConfig, DEFAULT_CONFIG } from "./params";
 import { enqueueWelcomeEmail, enqueueTrialEmail, queuePurchaseEmailOnceStripe, enqueueDowngradeEmail, enqueueContactEmail, enqueueVoucherEmail, enqueueWelcomeTeamEmail, enqueueRemoveTeamEmail, enqueueCloseTeamEmail } from "./email";
-import { corsHandlerDomain, requireAppCheck, requireUidFromAuthHeader, consumePerMinuteFeature, consumeDailyFeature, getKeywordStems, calculateMatchScore, applyHighlightWithRegex, generateHighlightRegex, runUpdateFonte, runUpdateMetadata, runCleanupDuplicates, processFascicoloDocs, processSubscriptionInTx, tryScheduleDowngradeTask, updateUserDocuments, removeUserVisibilityFromDocuments} from "./utils";
+import { corsHandlerDomain, requireAppCheck, requireUidFromAuthHeader, consumePerMinuteFeature, consumeDailyFeature, getKeywordStems, calculateMatchScore, applyHighlightWithRegex, generateHighlightRegex, runUpdateFonte, runUpdateMetadata, runCleanupDuplicates, processFascicoloDocs, processSubscriptionInTx, tryScheduleDowngradeTask, updateUserDocuments, removeUserVisibilityFromDocuments, incrementRagCounter} from "./utils";
 import { scheduleDowngradeTask, DowngradeTxResult, computeAndSaveWeeklyStats, computeAndSaveMonthlyUsage } from "./tasks";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import OpenAI from "openai";
@@ -480,6 +480,8 @@ export const vectorSearchJurio = onRequest(
 
         const topMatches = finalItems.filter((item: any) => item._matchCount >= minRequiredKeywords);
         const regularMatches = finalItems.filter((item: any) => item._matchCount < minRequiredKeywords);
+        const extractedIds = finalItems.map((d: any) => d.id);
+        await incrementRagCounter(collectionName, extractedIds);
 
         return res.status(200).json({
           ids: finalItems.map((d: any) => d.id),
