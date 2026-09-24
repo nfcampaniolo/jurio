@@ -223,20 +223,12 @@ describe("PromptDashboard Suite", () => {
     expect(mockHandleBackToList).toHaveBeenCalledTimes(1);
   });
 
-  test("apre automaticamente il creator e pulisce l'hash quando URL contiene '#crea'", () => {
+  test("richiama handleOpenCreator al mount se l'URL contiene '#crea'", () => {
     window.location.hash = "#crea";
-    const replaceStateSpy = vi.spyOn(window.history, "replaceState");
 
     renderComponent();
 
     expect(mockHandleOpenCreator).toHaveBeenCalledTimes(1);
-    expect(replaceStateSpy).toHaveBeenCalledWith(
-      null,
-      "",
-      window.location.pathname + window.location.search
-    );
-
-    replaceStateSpy.mockRestore();
   });
 
   test("mostra ConfirmModal e inoltra conferme o annullamenti quando isDeleteModalOpen è true", () => {

@@ -62,12 +62,8 @@ describe("PromptCreator Component Suite", () => {
   /* RENDERING INIZIALE & POPSTATE                                              */
   /* -------------------------------------------------------------------------- */
   describe("Inizializzazione e Routing Hash", () => {
-    test("imposta hash #crea nella cronologia e richiama onBack su evento popstate", () => {
-      const pushStateSpy = vi.spyOn(window.history, "pushState");
-
+    test("richiama onBack su evento popstate", () => {
       render(<PromptCreator onBack={mockOnBack} />);
-
-      expect(pushStateSpy).toHaveBeenCalledWith({ view: "crea" }, "", "#crea");
 
       window.dispatchEvent(new PopStateEvent("popstate"));
       expect(mockOnBack).toHaveBeenCalledTimes(1);

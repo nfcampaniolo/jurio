@@ -5,6 +5,7 @@ import type { PromptBuilderForm, SavedPrompt } from "@/interfaces/interfaces";
 /* ---------- hoisted mocks ---------- */
 const {
   mockNavigate,
+  mockUseLocation,
   mockToast,
   mockFetchWithSecurity,
   mockGetPrompt,
@@ -18,6 +19,7 @@ const {
   mockDeleteDoc,
 } = vi.hoisted(() => ({
   mockNavigate: vi.fn(),
+  mockUseLocation: vi.fn(() => ({ hash: "", pathname: "/dashboard", search: "", state: null, key: "default" })),
   mockToast: {
     success: vi.fn(),
     error: vi.fn(),
@@ -40,6 +42,7 @@ const {
 vi.mock("react-router-dom", () => ({
   __esModule: true,
   useNavigate: () => mockNavigate,
+  useLocation: () => mockUseLocation(),
 }));
 
 vi.mock("react-hot-toast", () => ({
@@ -94,12 +97,14 @@ const createMockSseResponse = (chunks: string[], status = 200) => {
 };
 
 /* ---------- subject under test ---------- */
-import { usePromptGenerator, usePromptDashboard } from "@/features/prompt/hooks/usePromptGenerator"; // <-- adegua il path di import se necessario
+import { usePromptGenerator, usePromptDashboard } from "@/features/prompt/hooks/usePromptGenerator";
 
 describe("Prompt Hooks Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthState.currentUser = { uid: "usr_flv_2026" };
+    // Resetta useLocation al suo stato di default prima di ogni test
+    mockUseLocation.mockReturnValue({ hash: "", pathname: "/dashboard", search: "", state: null, key: "default" });
     vi.spyOn(console, "error").mockImplementation(() => {});
     vi.spyOn(console, "warn").mockImplementation(() => {});
   });
@@ -296,7 +301,8 @@ describe("Prompt Hooks Suite", () => {
         result.current.handleOpenCreator(baseTemplate);
       });
 
-      expect(result.current.view).toBe("create");
+      // L'hook usa navigate("#crea"), verifichiamo che venga chiamato correttamente
+      expect(mockNavigate).toHaveBeenCalledWith("#crea");
       expect(result.current.selectedTemplate).toEqual({
         ...baseTemplate,
         title: "Formula Decreto Ingiuntivo (Copia)",
@@ -306,25 +312,23 @@ describe("Prompt Hooks Suite", () => {
         result.current.handleOpenCreator();
       });
 
-      expect(result.current.view).toBe("create");
+      expect(mockNavigate).toHaveBeenCalledWith("#crea");
       expect(result.current.selectedTemplate).toBeUndefined();
     });
 
-    test("handleBackToList reimposta la vista a 'list', resetta il template e naviga indietro (-1)", () => {
+    test("handleBackToList resetta il template e naviga alla pathname rimuovendo l'hash", () => {
+      // Simuliamo che l'URL contenga l'hash "#crea"
+      mockUseLocation.mockReturnValue({ hash: "#crea", pathname: "/dashboard", search: "", state: null, key: "default" });
+      
       const { result } = renderHook(() => usePromptDashboard());
-
-      act(() => {
-        result.current.handleOpenCreator();
-      });
-      expect(result.current.view).toBe("create");
 
       act(() => {
         result.current.handleBackToList();
       });
 
-      expect(result.current.view).toBe("list");
       expect(result.current.selectedTemplate).toBeUndefined();
-      expect(mockNavigate).toHaveBeenCalledWith(-1);
+      // Il nuovo hook naviga verso `location.pathname` anziché usare -1
+      expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
     });
 
     test("gestisce l'apertura e l'annullamento del modale di cancellazione", () => {

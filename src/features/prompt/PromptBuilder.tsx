@@ -27,9 +27,8 @@ export const PromptDashboard: React.FC = () => {
 useEffect(() => {
   if (window.location.hash.includes("#crea")) {
     handleOpenCreator();
-    // RIMOSSO il window.history.replaceState, non serve più
   }
-}, []); // <-- Aggiungi l'array vuoto qui!
+}); 
 
   const animationProps = {
     initial: shouldReduceMotion ? false : ({ opacity: 0, y: 10 } as TargetAndTransition),

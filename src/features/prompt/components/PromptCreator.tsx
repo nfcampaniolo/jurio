@@ -80,7 +80,6 @@ useEffect(() => {
   return () => {
     window.removeEventListener("popstate", handlePopState);
   };
-  // L'array vuoto previene un fastidioso bug di ri-render infinito dei listener
 });
 
   useEffect(() => {
