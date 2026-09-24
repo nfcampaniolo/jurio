@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="it">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Intelligenza Artificiale in Microsoft Word: L'Add-in di Jurio | Jurio</title>
+        <meta
+            name="description"
+            content="Scopri come l'Add-in di Jurio porta la ricerca giurisprudenziale e l'AI generativa direttamente in Microsoft Word. Sviluppato con React e Office.js."
+        />
+        <meta
+            name="keywords"
+            content="Microsoft Word Add-in, AI Word avvocati, LegalTech Word, Jurio Add-in, Office.js React, redazione atti AI, intelligenza artificiale integrata, Next.js LegalTech"
+        />
+        <link rel="canonical" href="https://jurio.it/tecnologia/intelligenza-artificiale-microsoft-word" />
+        <meta property="og:title" content="Intelligenza Artificiale in Microsoft Word: L'Add-in di Jurio | Jurio" />
+        <meta
+            property="og:description"
+            content="Non cambiare le tue abitudini. Abbiamo portato la potenza di Jurio direttamente dove scrivi i tuoi atti: dentro Microsoft Word."
+        />
+        <meta property="og:type" content="article" />
+        <meta
+            property="og:url"
+            content="https://jurio.it/tecnologia/intelligenza-artificiale-microsoft-word"
+        />
+        <meta property="og:image" content="https://jurio.it/images/word-addin-hero-cover.webp" />
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "TechArticle",
+                "headline": "L'Intelligenza Artificiale in Microsoft Word: L'architettura dell'Add-in di Jurio",
+                "image": "https://jurio.it/images/word-addin-hero-cover.webp",
+                "description": "Come abbiamo utilizzato React, Next.js e Office.js per creare un Add-in nativo per Microsoft Word, integrando l'AI di Jurio nel flusso di lavoro degli avvocati.",
+                "publisher": {
+                    "@type": "Organization",
+                    "name": "Jurio",
+                    "url": "https://jurio.it"
+                }
+            }
+        </script>
+        <style>
+            :root {
+                --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+                --font-serif: "Lora", "Merriweather", Georgia, "Times New Roman", serif;
+                --color-bg: #f5f6f7;
+                --color-surface: #ffffff;
+                --color-text: #1a1d21;
+                --color-primary: #e0a32e;
+                --color-primary-hover: #f0b541;
+                --color-border: #d6d9de;
+                --color-muted: #5f6672;
+                --shadow-soft: 0 14px 45px rgba(42, 34, 24, 0.07);
+                --shadow-hover: 0 22px 60px rgba(42, 34, 24, 0.11);
+                --container: 1180px;
+                --radius: 18px;
+                --button-bg: var(--color-text);
+                --button-text: var(--color-bg);
+                --button-bg-hover: var(--color-primary);
+                --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+                --ease-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
+            }
+            * { box-sizing: border-box; }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --color-bg: #111111; --color-surface: #1a1a1a; --color-text: #e6e7ea;
+                    --color-primary: #e0a32e; --color-primary-hover: #f0b541;
+                    --color-border: #2e2e2e; --color-muted: #a1a7b0;
+                    --shadow-soft: 0 8px 18px rgba(0, 0, 0, 0.45);
+                }
+                .skip-link { background: var(--color-text); color: var(--color-bg); }
+                .button-primary, .header-cta { color: var(--color-bg); background: var(--color-text); }
+                .header-cta:hover { background: #fff; }
+                .pricing-banner { background: #0f0e0d; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.32); }
+                .pricing-banner p, .pricing-points { color: #d1c8bc; }
+                .pricing-cta .button-primary { color: #181613; background: #f7f1e8; }
+                ::selection { background: rgba(213, 168, 95, 0.24); }
+            }
+            html { scroll-behavior: smooth; }
+            body { margin: 0; min-width: 320px; background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; line-height: 1.75; overflow-x: hidden; }
+            a, body, button { font-family: var(--font-sans); }
+            h1, h2, h3 { font-family: var(--font-serif); }
+            a { color: inherit; }
+            img { max-width: 100%; display: block; }
+            :focus-visible { outline: 3px solid rgba(154, 107, 37, 0.55); outline-offset: 4px; }
+            ::selection { background: rgba(224, 163, 46, 0.18); color: var(--color-text); }
+            .skip-link { position: fixed; left: 1rem; top: 1rem; z-index: 1000; transform: translateY(-160%); transition: transform 0.18s ease; background: var(--color-text); color: #fff; padding: 0.7rem 1rem; border-radius: 10px; font-weight: 700; text-decoration: none; }
+            .skip-link:focus { transform: translateY(0); }
+            .container { width: min(var(--container), calc(100% - 40px)); margin-inline: auto; }
+            .site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--color-surface) 88%, transparent); border-bottom: 1px solid var(--color-border); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); transition: box-shadow 0.35s var(--ease-smooth), background-color 0.35s ease, border-color 0.35s ease; }
+            .site-header.is-scrolled { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06); }
+            .header-inner { min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 2rem; transition: min-height 0.35s var(--ease-smooth); }
+            .site-header.is-scrolled .header-inner { min-height: 68px; }
+            .brand { font-family: var(--font-serif); font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 700; text-decoration: none; letter-spacing: -0.03em; }
+            .nav { display: flex; align-items: center; gap: 1.7rem; }
+            .nav a { text-decoration: none; color: var(--color-muted); font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; transition: color 0.18s ease; position: relative; }
+            .nav a:hover { color: var(--color-text); }
+            .header-cta { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 1.1rem; border-radius: 10px; background: var(--button-bg); color: var(--button-text); text-decoration: none; font-size: 0.9rem; font-weight: 750; transition: transform 0.18s ease, background 0.18s ease; }
+            .header-cta:hover { background: var(--button-bg-hover); transform: translateY(-1px); }
+            .section { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+            .hero { padding: clamp(3.2rem, 6vw, 5.5rem) 0 3.8rem; position: relative; isolation: isolate; }
+            .hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: clamp(2.5rem, 6vw, 5.5rem); align-items: center; }
+            .eyebrow { display: inline-flex; margin-bottom: 1.2rem; color: var(--color-primary); font-size: 0.72rem; font-weight: 850; text-transform: uppercase; letter-spacing: 0.18em; gap: 0.45rem; align-items: center; }
+            .eyebrow::before { content: ""; width: 22px; height: 1px; background: currentColor; opacity: 0.75; }
+            .hero h1 { margin: 0; font-family: var(--font-serif); font-weight: 500; letter-spacing: -0.045em; font-size: clamp(3rem, 6vw, 5.4rem); line-height: 0.98; text-wrap: balance; }
+            .hero h1 em { color: var(--color-primary); font-style: italic; }
+            .hero-lead { margin: 1.5rem 0 0; max-width: 660px; font-size: clamp(1.05rem, 1.5vw, 1.24rem); line-height: 1.75; color: var(--color-text); }
+            .hero-actions { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 2rem; }
+            .button { display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; min-height: 48px; padding: 0 1.15rem; border-radius: 10px; text-decoration: none; font-weight: 750; border: 1px solid transparent; transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease; position: relative; overflow: hidden; }
+            .button-primary { color: var(--button-text); background: var(--button-bg); }
+            .button-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(36, 33, 29, 0.12); }
+            .button-secondary { background: var(--color-surface); border-color: var(--color-border); }
+            .button-secondary:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); }
+
+            /* --- IMMAGINI --- */
+            .article-figure { margin: 3.5rem auto; max-width: 960px; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-soft); border: 1px solid var(--color-border); background: var(--color-surface); transition: transform 0.4s var(--ease-smooth), box-shadow 0.4s var(--ease-smooth); }
+            .article-figure:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+            .article-figure img { width: 100%; height: auto; display: block; aspect-ratio: 16/9; object-fit: contain; background-color: var(--color-bg); }
+            .article-figure figcaption { padding: 1.15rem 1.5rem; font-size: 0.9rem; color: var(--color-muted); text-align: center; border-top: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-surface) 95%, var(--color-text)); }
+            .hero-image-wrapper { border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-soft); border: 1px solid var(--color-border); }
+            .hero-image-wrapper img { width: 100%; height: auto; display: block; aspect-ratio: 4/3; object-fit: cover; }
+            @media (prefers-color-scheme: dark) { .article-figure img, .hero-image-wrapper img { filter: brightness(0.9) contrast(1.05); } }
+
+            /* --- LAYOUT --- */
+            .integration-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+            .card { padding: 2rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); box-shadow: var(--shadow-soft); transition: transform 0.55s; }
+            .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+            .card-tag { color: var(--color-primary); font-size: 0.68rem; font-weight: 850; letter-spacing: 0.14em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.5rem; }
+            .card-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+            .card h3 { margin: 0.7rem 0 0.85rem; font-family: var(--font-serif); font-size: 1.55rem; line-height: 1.15; }
+            .card p { margin: 0; color: var(--color-muted); line-height: 1.72; font-size: 0.97rem; }
+            
+            .section-heading { max-width: 760px; margin: 0 auto 3rem; text-align: center; }
+            .section-heading h2 { margin: 0 0 0.9rem; font-family: var(--font-serif); font-size: clamp(2.25rem, 4vw, 3.6rem); line-height: 1.05; }
+            .section-heading p { margin: 0 auto; color: var(--color-muted); font-size: 1.05rem; line-height: 1.75; }
+            
+            .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin: 0; padding: 0; }
+            .step { padding: 2rem; list-style-type: none; border-top: 1px solid var(--color-border); }
+            .step-num { font-size: 0.72rem; font-weight: 850; color: var(--color-primary); display: inline-flex; align-items: center; gap: 0.5rem; }
+            .step h3 { margin: 0.85rem 0 0.65rem; font-family: var(--font-serif); font-size: 1.55rem; line-height: 1.15; }
+            .step p { margin: 0; color: var(--color-muted); line-height: 1.7; }
+
+            .pricing-banner { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr); gap: 2rem; padding: clamp(2rem, 5vw, 4rem); background: #27231f; color: #f9f6ef; border-radius: 24px; box-shadow: 0 20px 60px rgba(36, 33, 29, 0.16); }
+            .pricing-banner h2 { margin: 0; font-family: var(--font-serif); font-size: clamp(2.5rem, 5vw, 4.7rem); line-height: 0.98; }
+            .pricing-banner h2 em { color: #e2b96f; font-style: italic; }
+            .pricing-banner p { margin: 1.1rem 0 0; color: #cfc7bc; line-height: 1.75; font-size: 1.02rem; }
+            .pricing-points { list-style: none; padding: 0; color: #ddd5ca; margin-top: 1.4rem; display: grid; gap: 0.7rem; }
+            .pricing-points li { display: flex; gap: 0.65rem; }
+            .pricing-points li::before { content: "✓"; color: #e2b96f; font-weight: 800; }
+            .pricing-cta .button-primary { background: #f7f1e8; color: #27231f; }
+
+            /* --- ANIMAZIONI --- */
+            .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.8s var(--ease-smooth), transform 0.8s var(--ease-smooth); }
+            .reveal.reveal-right { transform: translateX(30px); }
+            .reveal.is-visible { opacity: 1; transform: none; }
+            [data-stagger] > .reveal:nth-child(2) { transition-delay: 70ms; }
+            [data-stagger] > .reveal:nth-child(3) { transition-delay: 140ms; }
+
+            @media (max-width: 1050px) { .hero-grid, .integration-grid, .steps, .pricing-banner { grid-template-columns: 1fr; } }
+        </style>
+        <link rel="stylesheet" href="https://jurio.it/styles.css" />
+    </head>
+    <body>
+        <a href="#main-content" class="skip-link">Vai al contenuto principale</a>
+        <div id="header"></div>
+        <main id="main-content">
+            
+            <!-- HERO SECTION -->
+            <section class="section hero container">
+                <div class="hero-grid">
+                    <div class="hero-copy reveal">
+                        <span class="eyebrow">Tecnologia · UX & Frontend</span>
+                        <h1>L'Intelligenza Artificiale dove <em>lavori già</em>.</h1>
+                        <p class="hero-lead">
+                            Sappiamo che gli avvocati passano l'80% della loro giornata su Microsoft Word. 
+                            Ecco perché non ti chiediamo di cambiare abitudini: abbiamo sviluppato un Add-in nativo 
+                            che porta il motore di Jurio direttamente all'interno dei tuoi documenti.
+                        </p>
+                        <div class="hero-actions">
+                            <a href="#il-problema" class="button button-primary">Scopri l'architettura</a>
+                        </div>
+                    </div>
+                    <div class="hero-image-wrapper reveal reveal-right">
+                        <!-- Immagine: Mockup di Microsoft Word con la barra laterale di Jurio attiva -->
+                        <img 
+                            src="/images/word-addin-hero-cover.webp" 
+                            alt="Mockup dell'interfaccia di Jurio integrata in Microsoft Word" 
+                            width="800" 
+                            height="600"
+                            fetchpriority="high"
+                        />
+                    </div>
+                </div>
+            </section>
+
+            <!-- IL PROBLEMA DEL CONTEXT SWITCHING -->
+            <section id="il-problema" class="section container">
+                <div class="section-heading reveal">
+                    <h2>Il paradosso del "Cambio Finestra"</h2>
+                    <p>
+                        Le web app tradizionali sono eccellenti per la ricerca, ma interrompono brutalmente il flusso di stesura di un atto. 
+                        Questo fenomeno è noto come <em>Context Switching</em>, ed è il nemico numero uno della concentrazione.
+                    </p>
+                </div>
+                <div class="integration-grid reveal" data-stagger>
+                    <div class="card reveal">
+                        <span class="card-tag">Il Limite</span>
+                        <h3>Uscire per cercare</h3>
+                        <p>
+                            Mentre scrivi una comparsa, ti sorge un dubbio. Devi minimizzare Word, aprire il browser, loggarti nella banca dati, 
+                            cercare la massima, copiarla e incollarla di nuovo in Word.
+                        </p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-tag">La Soluzione</span>
+                        <h3>Zero attrito</h3>
+                        <p>
+                            Con l'Add-in di Jurio, evidenzi una frase direttamente nel tuo documento Word. 
+                            Con un clic, l'AI analizza il testo selezionato, recupera la giurisprudenza pertinente 
+                            e inserisce la citazione formattata nel documento.
+                        </p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-tag">L'Ecosistema</span>
+                        <h3>Tecnologia invisibile</h3>
+                        <p>
+                            Per ottenere questa fluidità apparente, abbiamo nascosto una complessa infrastruttura web 
+                            dietro un'interfaccia familiare. L'utente vede Word, ma sotto il cofano c'è un'applicazione moderna.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- L'ARCHITETTURA TECNICA: REACT E OFFICE.JS -->
+            <section id="architettura" class="section container">
+                <div class="section-heading reveal">
+                    <h2>Costruito per il futuro: React e Office.js</h2>
+                    <p>I vecchi "plugin" lenti e macchinosi sono storia. L'Add-in di Jurio è una vera e propria Web App incorporata.</p>
+                </div>
+                
+                <figure class="article-figure reveal">
+                    <!-- Immagine: Schema architettonico Office.js <-> React/Next.js <-> Jurio Backend -->
+                    <img 
+                        src="/images/schema-word-react-jurio.webp" 
+                        alt="Schema tecnico dell'interazione tra Microsoft Word (WebView2), le API Office.js, l'interfaccia React e il backend di Jurio."
+                        width="1200" 
+                        height="675" 
+                        loading="lazy"
+                        decoding="async"
+                    />
+                    <figcaption>L'Add-in di Word renderizza la nostra interfaccia React (Next.js) all'interno di un browser integrato protetto.</figcaption>
+                </figure>
+
+                <ul class="steps reveal" data-stagger style="margin-top: 3rem;">
+                    <li class="step reveal">
+                        <span class="step-num">01</span>
+                        <h3>Il motore: React e Next.js</h3>
+                        <p>
+                            L'interfaccia che vedi nella barra laterale di Word è sviluppata interamente in <strong>React</strong> con <strong>TypeScript</strong>. 
+                            Questo ci permette di offrirti un'interfaccia reattiva, veloce e che condivide la stessa solidità della nostra Web App principale.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">02</span>
+                        <h3>Il ponte: Office JavaScript API</h3>
+                        <p>
+                            Per far parlare la nostra app React con il tuo documento, usiamo <strong>Office.js</strong>. 
+                            È la libreria ufficiale di Microsoft che permette al nostro codice di leggere il testo che hai selezionato, 
+                            analizzarne lo stile e inserire nuovi paragrafi senza rovinare la formattazione del tuo atto.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">03</span>
+                        <h3>Distribuzione Cloud Centralizzata</h3>
+                        <p>
+                            Essendo basato su web (Next.js), l'Add-in non richiede installazioni pesanti né aggiornamenti manuali. 
+                            Ogni volta che miglioriamo l'AI di Jurio o introduciamo una nuova funzione, tu la vedi immediatamente in Word al riavvio, senza fare nulla.
+                        </p>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- L'ESPERIENZA UTENTE -->
+            <section id="esperienza-utente" class="section container">
+                <div class="section-heading reveal">
+                    <h2>Dal codice al lavoro reale</h2>
+                    <p>
+                        Tutta questa tecnologia serve a un unico scopo: farti risparmiare tempo senza farti rinunciare al controllo.
+                    </p>
+                </div>
+                
+                <figure class="article-figure reveal">
+                    <!-- Immagine: Animazione o screenshot pulito del Task Pane laterale che inserisce una clausola -->
+                    <img 
+                        src="/images/jurio-word-interface.webp" 
+                        alt="Task pane laterale di Jurio all'interno di Word che suggerisce revisioni e cita precedenti."
+                        width="1200" 
+                        height="675" 
+                        loading="lazy"
+                        decoding="async"
+                    />
+                    <figcaption>Il Task Pane di Jurio si affianca al documento, mantenendo il contesto visivo e operativo sempre attivo.</figcaption>
+                </figure>
+
+                <div class="integration-grid reveal" data-stagger style="margin-top: 3rem;">
+                    <div class="card reveal">
+                        <span class="card-tag">Funzionalità</span>
+                        <h3>Revisione Intelligente</h3>
+                        <p>
+                            Stai scrivendo una clausola. La selezioni, apri Jurio e chiedi: <em>"Verifica se questa clausola è in linea con l'ultima giurisprudenza della Cassazione"</em>. 
+                            Jurio analizza, corregge e propone il nuovo testo, che puoi inserire nel documento con un clic.
+                        </p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-tag">Sicurezza Dati</span>
+                        <h3>Privacy al primo posto</h3>
+                        <p>
+                            A differenza degli assistenti generalisti, il nostro Add-in non "legge" tutto il tuo documento indiscriminatamente. 
+                            Elabora e invia al cloud di Jurio solo ed esclusivamente le specifiche porzioni di testo che <em>tu</em> decidi di evidenziare e inviare.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CALLOUT COMMERCIALE FINALE -->
+            <section class="section container">
+                <div class="pricing-banner reveal">
+                    <div>
+                        <h2>L'evoluzione del tuo studio parte da <em>Word</em>.</h2>
+                        <p>
+                            L'obiettivo di Jurio non è fornirti un ennesimo software da imparare a usare, ma potenziare 
+                            lo strumento su cui tu e i tuoi collaboratori siete già maestri.
+                        </p>
+                        <p style="font-size: 0.95rem; margin-top: 1rem">
+                            Con il nostro Add-in ufficiale, unisci la sicurezza della ricerca giurisprudenziale italiana basata su RAG 
+                            alla comodità assoluta di un assistente integrato nel tuo editor di testi preferito. Disponibile per Windows, Mac e Word on the Web.
+                        </p>
+                    </div>
+                    <div class="pricing-cta">
+                        <ul class="pricing-points">
+                            <li>Integrato nativamente in Microsoft Word</li>
+                            <li>Sviluppato con le moderne tecnologie Web (React)</li>
+                            <li>Analisi del testo selezionato (Context-aware)</li>
+                            <li>Nessun aggiornamento manuale richiesto</li>
+                        </ul>
+                        <a href="/login" class="button button-primary" style="margin-top: 1rem;">Prova Jurio per Microsoft Word</a>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+        <div id="footer"></div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", async () => {
+                const components = [{ selector: "#header", file: "/header.html" }, { selector: "#footer", file: "/footer.html" }];
+                await Promise.all(components.map(async ({ selector, file }) => {
+                    const element = document.querySelector(selector);
+                    if (!element) return;
+                    try {
+                        const response = await fetch(file);
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        element.innerHTML = await response.text();
+                    } catch (error) { console.error(`Errore nel caricamento di ${file}:`, error); }
+                }));
+            });
+
+            document.addEventListener("DOMContentLoaded", () => {
+                const observer = new IntersectionObserver((entries, obs) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add("is-visible");
+                            obs.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.1 });
+                document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+
+                const header = document.querySelector(".site-header");
+                window.addEventListener("scroll", () => {
+                    if (window.scrollY > 20) header.classList.add("is-scrolled");
+                    else header.classList.remove("is-scrolled");
+                }, { passive: true });
+            });
+        </script>
+    </body>
+</html>

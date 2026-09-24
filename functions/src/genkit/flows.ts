@@ -65,13 +65,19 @@ export const legalAgentFlow = ai.defineFlow(
       if (!skipTurn1) {
         
         // --- INIEZIONE DI RIGIDITÀ PER IL TRIAGE (TURNO 1) ---
-        const turn1Messages = [...messages];
-        turn1Messages.push({
-          role: "system",
-          content: [{ 
-            text: "REGOLA TASSATIVA DI ORCHESTRAZIONE: Se l'utente nomina o fa riferimento a una legge, una norma, un articolo di legge, una prassi (es. Agenzia Entrate, INPS, prassi bancaria, ecc.) o un qualsiasi testo normativo, DEVI OBBLIGATORIAMENTE invocare il tool 'webSearchTool'. È severamente vietato rispondere attingendo solo alla tua memoria interna per questi argomenti." 
-          }]
-        });
+        const turn1Messages = JSON.parse(JSON.stringify(messages));
+        const regolaTassativa = "REGOLA TASSATIVA DI ORCHESTRAZIONE: Se l'utente nomina o fa riferimento a una legge, una norma, un articolo di legge, una prassi (es. Agenzia Entrate, INPS, prassi bancaria, ecc.) o un qualsiasi testo normativo, DEVI OBBLIGATORIAMENTE invocare il tool 'webSearchTool'. È severamente vietato rispondere attingendo solo alla tua memoria interna per questi argomenti.";
+
+        if (turn1Messages.length > 0 && turn1Messages[0].role === "system") {
+          // Se esiste già un system prompt, appendiamo la regola al testo esistente
+          turn1Messages[0].content[0].text += `\n\n${regolaTassativa}`;
+        } else {
+          // Se non esiste, lo creiamo ex novo in prima posizione
+          turn1Messages.unshift({
+            role: "system",
+            content: [{ text: regolaTassativa }]
+          });
+        }
         // ----------------------------------------------------
 
         // --- TURNO 1: Triage Agentico ---

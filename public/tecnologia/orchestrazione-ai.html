@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="it">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Orchestrazione AI nel LegalTech: L'architettura di Jurio | Jurio</title>
+        <meta
+            name="description"
+            content="Scopri come Jurio utilizza un framework di orchestrazione avanzato per l'Intelligenza Artificiale. Flussi tipizzati, tool calling e osservabilità per un LegalTech affidabile."
+        />
+        <meta
+            name="keywords"
+            content="Orchestrazione AI, AI application framework, TypeScript LLM, observability AI, tool calling, architettura LegalTech, Jurio tech stack, determinismo AI"
+        />
+        <link rel="canonical" href="https://jurio.it/tecnologia/orchestrazione-ai" />
+        <meta property="og:title" content="Orchestrazione AI nel LegalTech: L'architettura di Jurio | Jurio" />
+        <meta
+            property="og:description"
+            content="Dietro le quinte di Jurio: come trasformiamo l'imprevedibilità dei Large Language Models in pipeline software deterministiche, sicure e tracciabili."
+        />
+        <meta property="og:type" content="article" />
+        <meta
+            property="og:url"
+            content="https://jurio.it/tecnologia/orchestrazione-ai"
+        />
+        <meta property="og:image" content="https://jurio.it/images/orchestration-hero-cover.webp" />
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "TechArticle",
+                "headline": "Orchestrazione AI nel LegalTech: L'architettura di Jurio",
+                "image": "https://jurio.it/images/orchestration-hero-cover.webp",
+                "description": "Un'analisi tecnica sull'orchestrazione dei flussi di Intelligenza Artificiale in Jurio, con focus su type-safety, observability e tool calling nativo.",
+                "publisher": {
+                    "@type": "Organization",
+                    "name": "Jurio",
+                    "url": "https://jurio.it"
+                }
+            }
+        </script>
+        <style>
+            :root {
+                --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+                --font-serif: "Lora", "Merriweather", Georgia, "Times New Roman", serif;
+                --color-bg: #f5f6f7;
+                --color-surface: #ffffff;
+                --color-text: #1a1d21;
+                --color-primary: #e0a32e;
+                --color-primary-hover: #f0b541;
+                --color-border: #d6d9de;
+                --color-muted: #5f6672;
+                --shadow-soft: 0 14px 45px rgba(42, 34, 24, 0.07);
+                --shadow-hover: 0 22px 60px rgba(42, 34, 24, 0.11);
+                --container: 1180px;
+                --radius: 18px;
+                --button-bg: var(--color-text);
+                --button-text: var(--color-bg);
+                --button-bg-hover: var(--color-primary);
+                --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+            }
+            * { box-sizing: border-box; }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --color-bg: #111111; --color-surface: #1a1a1a; --color-text: #e6e7ea;
+                    --color-primary: #e0a32e; --color-primary-hover: #f0b541;
+                    --color-border: #2e2e2e; --color-muted: #a1a7b0;
+                    --shadow-soft: 0 8px 18px rgba(0, 0, 0, 0.45);
+                }
+                .skip-link { background: var(--color-text); color: var(--color-bg); }
+                .button-primary, .header-cta { color: var(--color-bg); background: var(--color-text); }
+                .header-cta:hover { background: #fff; }
+                .pricing-banner { background: #0f0e0d; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.32); }
+                .pricing-banner p, .pricing-points { color: #d1c8bc; }
+                .pricing-cta .button-primary { color: #181613; background: #f7f1e8; }
+                ::selection { background: rgba(213, 168, 95, 0.24); }
+            }
+            html { scroll-behavior: smooth; }
+            body { margin: 0; min-width: 320px; background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; line-height: 1.75; overflow-x: hidden; }
+            a, body, button { font-family: var(--font-sans); }
+            h1, h2, h3 { font-family: var(--font-serif); }
+            a { color: inherit; }
+            img { max-width: 100%; display: block; }
+            :focus-visible { outline: 3px solid rgba(154, 107, 37, 0.55); outline-offset: 4px; }
+            ::selection { background: rgba(224, 163, 46, 0.18); color: var(--color-text); }
+            .container { width: min(var(--container), calc(100% - 40px)); margin-inline: auto; }
+            
+            /* Header */
+            .site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--color-surface) 88%, transparent); border-bottom: 1px solid var(--color-border); backdrop-filter: blur(14px); transition: box-shadow 0.35s var(--ease-smooth), min-height 0.35s var(--ease-smooth); }
+            .site-header.is-scrolled { box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06); }
+            .header-inner { min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
+            .site-header.is-scrolled .header-inner { min-height: 68px; }
+            .brand { font-family: var(--font-serif); font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 700; text-decoration: none; letter-spacing: -0.03em; }
+            
+            /* Sezioni e Hero */
+            .section { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+            .hero { padding: clamp(3.2rem, 6vw, 5.5rem) 0 3.8rem; position: relative; isolation: isolate; }
+            .hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: clamp(2.5rem, 6vw, 5.5rem); align-items: center; }
+            .eyebrow { display: inline-flex; margin-bottom: 1.2rem; color: var(--color-primary); font-size: 0.72rem; font-weight: 850; text-transform: uppercase; letter-spacing: 0.18em; gap: 0.45rem; align-items: center; }
+            .eyebrow::before { content: ""; width: 22px; height: 1px; background: currentColor; opacity: 0.75; }
+            .hero h1 { margin: 0; font-family: var(--font-serif); font-weight: 500; letter-spacing: -0.045em; font-size: clamp(3rem, 6vw, 5.4rem); line-height: 0.98; text-wrap: balance; }
+            .hero h1 em { color: var(--color-primary); font-style: italic; }
+            .hero-lead { margin: 1.5rem 0 0; max-width: 660px; font-size: clamp(1.05rem, 1.5vw, 1.24rem); line-height: 1.75; color: var(--color-text); }
+            
+            /* Immagini e Codice */
+            .article-figure { margin: 3.5rem auto; max-width: 960px; border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-soft); border: 1px solid var(--color-border); background: var(--color-surface); transition: transform 0.4s var(--ease-smooth); }
+            .article-figure:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+            .article-figure img { width: 100%; height: auto; display: block; aspect-ratio: 16/9; object-fit: cover; }
+            .article-figure figcaption { padding: 1.15rem 1.5rem; font-size: 0.9rem; color: var(--color-muted); text-align: center; border-top: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-surface) 95%, var(--color-text)); }
+            .hero-image-wrapper { border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow-soft); border: 1px solid var(--color-border); }
+            
+            /* Blocco Codice */
+            .code-block {
+                background: #1e1e1e;
+                color: #d4d4d4;
+                padding: 1.75rem;
+                border-radius: var(--radius);
+                overflow-x: auto;
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+                font-size: 0.85rem;
+                line-height: 1.6;
+                margin: 2rem auto;
+                max-width: 860px;
+                border: 1px solid var(--color-border);
+                box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+            }
+            .code-block span.keyword { color: #569cd6; }
+            .code-block span.function { color: #dcdcaa; }
+            .code-block span.string { color: #ce9178; }
+            .code-block span.comment { color: #6a9955; font-style: italic; }
+
+            /* Grid e Card */
+            .integration-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+            .card { padding: 2rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); box-shadow: var(--shadow-soft); transition: transform 0.55s; }
+            .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+            .card-tag { color: var(--color-primary); font-size: 0.68rem; font-weight: 850; letter-spacing: 0.14em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 0.5rem; }
+            .card-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+            .card h3 { margin: 0.7rem 0 0.85rem; font-family: var(--font-serif); font-size: 1.55rem; line-height: 1.15; }
+            .card p { margin: 0; color: var(--color-muted); line-height: 1.72; font-size: 0.97rem; }
+            
+            .section-heading { max-width: 760px; margin: 0 auto 3rem; text-align: center; }
+            .section-heading h2 { margin: 0 0 0.9rem; font-family: var(--font-serif); font-size: clamp(2.25rem, 4vw, 3.6rem); line-height: 1.05; }
+            .section-heading p { margin: 0 auto; color: var(--color-muted); font-size: 1.05rem; line-height: 1.75; }
+            
+            .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin: 0; padding: 0; }
+            .step { padding: 2rem; list-style-type: none; border-top: 1px solid var(--color-border); }
+            .step-num { font-size: 0.72rem; font-weight: 850; color: var(--color-primary); display: inline-flex; align-items: center; gap: 0.5rem; }
+            .step h3 { margin: 0.85rem 0 0.65rem; font-family: var(--font-serif); font-size: 1.55rem; line-height: 1.15; }
+            .step p { margin: 0; color: var(--color-muted); line-height: 1.7; }
+
+            .pricing-banner { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr); gap: 2rem; padding: clamp(2rem, 5vw, 4rem); background: #27231f; color: #f9f6ef; border-radius: 24px; }
+            .pricing-banner h2 { margin: 0; font-family: var(--font-serif); font-size: clamp(2.5rem, 5vw, 4.7rem); line-height: 0.98; }
+            .pricing-banner h2 em { color: #e2b96f; font-style: italic; }
+            .pricing-points { list-style: none; padding: 0; color: #ddd5ca; margin-top: 1.4rem; display: grid; gap: 0.7rem; }
+            .pricing-points li { display: flex; gap: 0.65rem; }
+            .pricing-points li::before { content: "✓"; color: #e2b96f; font-weight: 800; }
+
+            /* Animazioni */
+            .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.8s var(--ease-smooth), transform 0.8s var(--ease-smooth); }
+            .reveal.reveal-right { transform: translateX(30px); }
+            .reveal.is-visible { opacity: 1; transform: none; }
+            [data-stagger] > .reveal:nth-child(2) { transition-delay: 70ms; }
+            [data-stagger] > .reveal:nth-child(3) { transition-delay: 140ms; }
+
+            @media (max-width: 1050px) { .hero-grid, .integration-grid, .steps, .pricing-banner { grid-template-columns: 1fr; } }
+        </style>
+        <link rel="stylesheet" href="https://jurio.it/styles.css" />
+    </head>
+    <body>
+        <div id="header"></div>
+        <main id="main-content">
+            
+            <!-- HERO SECTION: FOCUS TECNOLOGICO PURO -->
+            <section class="section hero container">
+                <div class="hero-grid">
+                    <div class="hero-copy reveal">
+                        <span class="eyebrow">Tecnologia · Architettura Software</span>
+                        <h1>L'AI non è magia. È <em>Ingegneria del Software</em>.</h1>
+                        <p class="hero-lead">
+                            Inviare una stringa di testo a un modello e sperare in una buona risposta non basta per costruire un prodotto LegalTech affidabile. 
+                            Scopri come l'<strong>Orchestrazione AI</strong> di Jurio ci permette di gestire flussi complessi, validare rigidamente gli input ed eliminare la scatola nera dell'intelligenza artificiale.
+                        </p>
+                    </div>
+                    <div class="hero-image-wrapper reveal reveal-right">
+                        <!-- Rendering astratto dell'orchestrazione software -->
+                        <img 
+                            src="/images/orchestration-hero-cover.webp" 
+                            alt="Architettura software astratta raffigurante nodi di un framework di orchestrazione dati" 
+                            width="800" 
+                            height="600"
+                            fetchpriority="high"
+                        />
+                    </div>
+                </div>
+            </section>
+
+            <!-- IL PROBLEMA DELLE CHIAMATE API NUDE -->
+            <section id="il-problema" class="section container">
+                <div class="section-heading reveal">
+                    <h2>Il limite delle architetture base</h2>
+                    <p>
+                        Se il backend si limita a fare da "passacarte" tra l'utente e il modello linguistico, l'intero applicativo eredita le debolezze strutturali dell'AI.
+                    </p>
+                </div>
+                <div class="integration-grid reveal" data-stagger>
+                    <div class="card reveal">
+                        <span class="card-tag">Non-Deterministico</span>
+                        <h3>Output Imprevedibili</h3>
+                        <p>
+                            I modelli linguistici sono entità probabilistiche. Senza un layer di orchestrazione rigoroso, la stessa analisi giuridica posta due volte 
+                            potrebbe generare risposte strutturalmente diverse, compromettendo le interfacce utente a valle.
+                        </p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-tag">Debug Complesso</span>
+                        <h3>La Scatola Nera</h3>
+                        <p>
+                            Quando viene generata un'informazione imprecisa, a chi diamo la colpa? È il prompt? È il sistema di recupero documenti? 
+                            Senza strumenti di "tracing" granulare, fare il debug di una pipeline di Intelligenza Artificiale è un incubo.
+                        </p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-tag">Isolamento</span>
+                        <h3>Mancanza di Strumenti</h3>
+                        <p>
+                            Un modello isolato non può consultare database aggiornati né eseguire calcoli precisi. L'integrazione fluida 
+                            e sicura di "Tools" esterni durante la generazione è la vera sfida ingegneristica.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- LA SOLUZIONE: L'ORCHESTRAZIONE IN JURIO -->
+            <section id="orchestrazione" class="section container">
+                <div class="section-heading reveal">
+                    <h2>Il Framework di Orchestrazione</h2>
+                    <p>Abbiamo progettato Jurio attorno a un livello architetturale che tratta l'AI come un normale componente software, soggetto a test e validazioni.</p>
+                </div>
+                
+                <figure class="article-figure reveal">
+                    <!-- Immagine: UI di tracing personalizzata o schema a blocchi (Observability) -->
+                    <img 
+                        src="/images/orchestration-tracing-ui.webp" 
+                        alt="Interfaccia di telemetria e tracing che mostra le tempistiche e i log di una pipeline AI complessa."
+                        width="1200" 
+                        height="675" 
+                        loading="lazy"
+                        decoding="async"
+                    />
+                    <figcaption>Il nostro sistema di Telemetria: ogni step (estrazione entità, ricerca semantica, generazione finale) è tracciato e ispezionabile.</figcaption>
+                </figure>
+
+                <ul class="steps reveal" data-stagger style="margin-top: 3rem;">
+                    <li class="step reveal">
+                        <span class="step-num">01</span>
+                        <h3>Flussi (Flows) al posto dei Prompt</h3>
+                        <p>
+                            In Jurio non eseguiamo chiamate isolate. Definiamo dei <em>Flows</em> (Flussi). Un flusso è una funzione strettamente tipizzata 
+                            che accetta parametri di ingresso rigorosi e garantisce la restituzione di strutture dati valide.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">02</span>
+                        <h3>Tool Calling Nativo</h3>
+                        <p>
+                            Il nostro framework gestisce nativamente il <em>Tool Calling</em>. Diamo al modello la consapevolezza di funzioni esterne 
+                            (come interrogare la banca dati della Cassazione). L'orchestratore sospende autonomamente il modello, 
+                            esegue la logica di business in sicurezza e restituisce i dati per riprendere la generazione.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">03</span>
+                        <h3>Osservabilità totale</h3>
+                        <p>
+                            Implementiamo una telemetria profonda. Ogni esecuzione salva un *trace* completo in background. 
+                            Se un'analisi impiega troppo tempo, l'albero di esecuzione ci mostra immediatamente se il collo di bottiglia 
+                            era la latenza del database vettoriale o l'elaborazione del modello stesso.
+                        </p>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- SEZIONE CODICE: IL DIETRO LE QUINTE -->
+            <section id="codice" class="section container">
+                <div class="section-heading reveal">
+                    <h2>Il codice: Type-Safety nel LegalTech</h2>
+                    <p>Ecco un esempio astratto di come garantiamo che il motore restituisca sempre e solo i dati previsti dal nostro frontend, senza formattazioni creative.</p>
+                </div>
+                
+                <!-- Blocco di codice visivo (Senza nomi di framework specifici) -->
+                <div class="code-block reveal">
+<pre><code><span class="keyword">import</span> { Orchestrator, SchemaBuilder } <span class="keyword">from</span> <span class="string">'@jurio/core'</span>;
+<span class="keyword">import</span> { giurisprudenzaSearchTool } <span class="keyword">from</span> <span class="string">'@jurio/tools'</span>;
+
+<span class="comment">// 1. Definiamo lo schema rigoroso di Output (Type-Safety)</span>
+<span class="keyword">const</span> LegalAnalysisSchema = SchemaBuilder.object({
+  sintesi: SchemaBuilder.string().describe(<span class="string">"Sintesi del principio di diritto"</span>),
+  fonti: SchemaBuilder.array(SchemaBuilder.string()).describe(<span class="string">"ID univoci sentenze citate"</span>),
+  punteggioPertinenza: SchemaBuilder.number().min(0).max(100)
+});
+
+<span class="comment">// 2. Definiamo il Flow di orchestrazione tipizzato</span>
+<span class="keyword">export const</span> analyzeLegalIssue = Orchestrator.defineFlow(
+  {
+    name: <span class="string">'analyzeLegalIssue'</span>,
+    input: SchemaBuilder.string(),
+    output: LegalAnalysisSchema,
+  },
+  <span class="keyword">async</span> (query) => {
+    <span class="comment">// Il framework gestisce i loop del Tool Calling e forza la struttura JSON finale</span>
+    <span class="keyword">const</span> result = <span class="keyword">await</span> Orchestrator.generate({
+      prompt: <span class="string">`Analizza il quesito e cita le fonti rilevanti: ${query}`</span>,
+      tools: [giurisprudenzaSearchTool],
+      enforceSchema: LegalAnalysisSchema
+    });
+
+    <span class="comment">// La compilazione TypeScript assicura che 'result' sia valido</span>
+    <span class="keyword">return</span> result; 
+  }
+);</code></pre>
+                </div>
+                <p style="text-align: center; color: var(--color-muted); font-size: 0.95rem; max-width: 700px; margin: 0 auto;" class="reveal">
+                    L'AI non è vista come un "chatbot testuale", ma come una funzione asincrona fortemente tipizzata che produce oggetti di dominio prevedibili.
+                </p>
+            </section>
+
+            <!-- CALLOUT COMMERCIALE -->
+            <section class="section container">
+                <div class="pricing-banner reveal">
+                    <div>
+                        <h2>Un'architettura pronta per l'Enterprise.</h2>
+                        <p>
+                            Progettare un layer di orchestrazione proprietario ci rende "Model Agnostic". 
+                            Jurio non è legato a filo doppio alle API di un singolo fornitore: possiamo sostituire il motore di intelligenza artificiale sottostante in qualsiasi momento, 
+                            garantendo sempre l'accesso alla migliore tecnologia disponibile sul mercato.
+                        </p>
+                        <p style="font-size: 0.95rem; margin-top: 1rem">
+                            Questo approccio ingegneristico puro è ciò che ci permette di offrire SLA (Service Level Agreement) rigorosi, 
+                            mantenendo le promesse di stabilità, sicurezza e precisione richieste dai grandi studi legali.
+                        </p>
+                    </div>
+                    <div class="pricing-cta">
+                        <ul class="pricing-points">
+                            <li>Orchestrazione Type-Safe end-to-end</li>
+                            <li>Tracing e Logging granulare (Observability)</li>
+                            <li>Integrazione nativa di Tool e API esterne</li>
+                            <li>Infrastruttura Model Agnostic</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+        <div id="footer"></div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", async () => {
+                const components = [{ selector: "#header", file: "/header.html" }, { selector: "#footer", file: "/footer.html" }];
+                await Promise.all(components.map(async ({ selector, file }) => {
+                    const element = document.querySelector(selector);
+                    if (!element) return;
+                    try {
+                        const response = await fetch(file);
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        element.innerHTML = await response.text();
+                    } catch (error) { console.error(`Errore nel caricamento di ${file}:`, error); }
+                }));
+            });
+
+            document.addEventListener("DOMContentLoaded", () => {
+                const observer = new IntersectionObserver((entries, obs) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add("is-visible");
+                            obs.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.1 });
+                document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+            });
+        </script>
+    </body>
+</html>

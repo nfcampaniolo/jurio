@@ -1,4 +1,4 @@
-import { FaInstagram } from 'react-icons/fa';
+import { FaInstagram, FaLinkedin } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import React from 'react';
 
@@ -51,6 +51,20 @@ export const Footer: React.FC = () => {
                 aria-label="Visita la nostra pagina Instagram"
               >
                 <FaInstagram
+                  className="w-5 h-5"
+                  aria-hidden="true"
+                  focusable={false}
+                />
+              </a>
+
+              <a
+                href="https://www.linkedin.com/company/jurio-it/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-(--color-muted) hover:text-(--color-text) transition-colors focus:outline-none"
+                aria-label="Visita la nostra pagina LinkedIn"
+              >
+                <FaLinkedin
                   className="w-5 h-5"
                   aria-hidden="true"
                   focusable={false}

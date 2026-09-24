@@ -1,0 +1,1428 @@
+<!doctype html>
+<html lang="it">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>RAG e AI Legale: Come Jurio Azzera le Allucinazioni | Jurio</title>
+        <meta
+            name="description"
+            content="Scopri come la tecnologia RAG (Retrieval-Augmented Generation) permette a Jurio di fornire risposte giuridiche basate esclusivamente su sentenze reali della Cassazione, eliminando le allucinazioni dell'AI."
+        />
+        <meta
+            name="keywords"
+            content="RAG giuridico, allucinazioni AI, intelligenza artificiale avvocati, Retrieval-Augmented Generation, ricerca giurisprudenziale, sentenze Cassazione, AI legale Italia, Jurio RAG"
+        />
+        <link rel="canonical" href="https://jurio.it/tecnologia/rag-allucinazioni-ai" />
+        <meta property="og:title" content="RAG e AI Legale: Come Jurio Azzera le Allucinazioni | Jurio" />
+        <meta
+            property="og:description"
+            content="Nel settore legale l'AI non può sbagliare. Ecco come Jurio usa il RAG per ancorare ogni analisi legale alla vera giurisprudenza italiana, evitando le allucinazioni."
+        />
+        <meta property="og:type" content="article" />
+        <meta
+            property="og:url"
+            content="https://jurio.it/tecnologia/rag-allucinazioni-ai"
+        />
+        <meta property="og:image" content="https://jurio.it/images/rag-hero-cover.webp" />
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "TechArticle",
+                "headline": "RAG e AI Legale: Come Jurio Azzera le Allucinazioni",
+                "image": "https://jurio.it/images/rag-hero-cover.webp",
+                "description": "Un'analisi approfondita di come l'architettura RAG (Retrieval-Augmented Generation) in Jurio previene le allucinazioni dei LLM nella ricerca giurisprudenziale italiana.",
+                "publisher": {
+                    "@type": "Organization",
+                    "name": "Jurio",
+                    "url": "https://jurio.it"
+                }
+            }
+        </script>
+        <style>
+            :root {
+                --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+                --font-serif: "Lora", "Merriweather", Georgia, "Times New Roman", serif;
+                --color-bg: #f5f6f7;
+                --color-surface: #ffffff;
+                --color-text: #1a1d21;
+                --color-primary: #e0a32e;
+                --color-primary-hover: #f0b541;
+                --color-border: #d6d9de;
+                --color-muted: #5f6672;
+                --shadow-soft: 0 14px 45px rgba(42, 34, 24, 0.07);
+                --shadow-hover: 0 22px 60px rgba(42, 34, 24, 0.11);
+                --container: 1180px;
+                --radius: 18px;
+                --button-bg: var(--color-text);
+                --button-text: var(--color-bg);
+                --button-bg-hover: var(--color-primary);
+                --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+                --ease-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
+            }
+            * {
+                box-sizing: border-box;
+            }
+            @media (prefers-color-scheme: dark) {
+                :root {
+                    --color-bg: #111111;
+                    --color-surface: #1a1a1a;
+                    --color-text: #e6e7ea;
+                    --color-primary: #e0a32e;
+                    --color-primary-hover: #f0b541;
+                    --color-border: #2e2e2e;
+                    --color-muted: #a1a7b0;
+                    --shadow-soft: 0 8px 18px rgba(0, 0, 0, 0.45);
+                }
+                .skip-link {
+                    background: var(--color-text);
+                    color: var(--color-bg);
+                }
+                .button-primary,
+                .header-cta {
+                    color: var(--color-bg);
+                    background: var(--color-text);
+                }
+                .header-cta:hover {
+                    background: #fff;
+                }
+                .demo-media {
+                    background: #25221f;
+                }
+                .pricing-banner {
+                    background: #0f0e0d;
+                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.32);
+                }
+                .pricing-banner p,
+                .pricing-points {
+                    color: #d1c8bc;
+                }
+                .pricing-cta .button-primary {
+                    color: #181613;
+                    background: #f7f1e8;
+                }
+                ::selection {
+                    background: rgba(213, 168, 95, 0.24);
+                }
+            }
+            html {
+                scroll-behavior: smooth;
+            }
+            body {
+                margin: 0;
+                min-width: 320px;
+                background: var(--color-bg);
+                color: var(--color-text);
+                font-family: var(--font-sans);
+                -webkit-font-smoothing: antialiased;
+                text-rendering: optimizeLegibility;
+                line-height: 1.75;
+                overflow-x: hidden;
+            }
+            a,
+            body,
+            button {
+                font-family: var(--font-sans);
+            }
+            h1,
+            h2,
+            h3 {
+                font-family: var(--font-serif);
+            }
+            a {
+                color: inherit;
+            }
+            img,
+            video {
+                max-width: 100%;
+            }
+            img {
+                display: block;
+            }
+            a,
+            button {
+                -webkit-tap-highlight-color: transparent;
+            }
+            :focus-visible {
+                outline: 3px solid rgba(154, 107, 37, 0.55);
+                outline-offset: 4px;
+            }
+            ::selection {
+                background: rgba(224, 163, 46, 0.18);
+                color: var(--color-text);
+            }
+            .skip-link {
+                position: fixed;
+                left: 1rem;
+                top: 1rem;
+                z-index: 1000;
+                transform: translateY(-160%);
+                transition: transform 0.18s ease;
+                background: var(--color-text);
+                color: #fff;
+                padding: 0.7rem 1rem;
+                border-radius: 10px;
+                font-weight: 700;
+                text-decoration: none;
+            }
+            .skip-link:focus {
+                transform: translateY(0);
+            }
+            .container {
+                width: min(var(--container), calc(100% - 40px));
+                margin-inline: auto;
+            }
+            .serif {
+                font-family: var(--font-serif);
+            }
+            .site-header {
+                position: sticky;
+                top: 0;
+                z-index: 50;
+                background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+                border-bottom: 1px solid var(--color-border);
+                backdrop-filter: blur(14px);
+                -webkit-backdrop-filter: blur(14px);
+                transition:
+                    box-shadow 0.35s var(--ease-smooth),
+                    background-color 0.35s ease,
+                    border-color 0.35s ease;
+            }
+            .site-header.is-scrolled {
+                box-shadow: 0 8px 28px rgba(0, 0, 0, 0.06);
+            }
+            .header-inner {
+                min-height: 78px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 2rem;
+                transition: min-height 0.35s var(--ease-smooth);
+            }
+            .site-header.is-scrolled .header-inner {
+                min-height: 68px;
+            }
+            .brand {
+                font-family: var(--font-serif);
+                font-size: clamp(1.75rem, 3vw, 2.25rem);
+                font-weight: 700;
+                text-decoration: none;
+                letter-spacing: -0.03em;
+                transition:
+                    transform 0.35s var(--ease-smooth),
+                    opacity 0.2s ease;
+            }
+            .brand:hover {
+                transform: translateY(-1px);
+            }
+            .nav {
+                display: flex;
+                align-items: center;
+                gap: 1.7rem;
+            }
+            .nav a {
+                text-decoration: none;
+                color: var(--color-muted);
+                font-size: 0.72rem;
+                font-weight: 800;
+                text-transform: uppercase;
+                letter-spacing: 0.14em;
+                transition: color 0.18s ease;
+                position: relative;
+            }
+            .nav a:hover {
+                color: var(--color-text);
+            }
+            .nav a::after {
+                content: "";
+                position: absolute;
+                left: 0;
+                right: 0;
+                bottom: -0.45rem;
+                height: 1px;
+                background: var(--color-primary);
+                transform: scaleX(0);
+                transform-origin: right;
+                transition: transform 0.35s var(--ease-smooth);
+            }
+            .nav a:focus-visible::after,
+            .nav a:hover::after {
+                transform: scaleX(1);
+                transform-origin: left;
+            }
+            .header-cta {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 44px;
+                padding: 0 1.1rem;
+                border-radius: 10px;
+                background: var(--button-bg);
+                color: var(--button-text);
+                text-decoration: none;
+                font-size: 0.9rem;
+                font-weight: 750;
+                transition:
+                    transform 0.18s ease,
+                    background 0.18s ease;
+            }
+            .header-cta:hover {
+                background: var(--button-bg-hover);
+                transform: translateY(-1px);
+            }
+            main {
+                overflow: clip;
+            }
+            .section {
+                padding: clamp(4.5rem, 8vw, 7rem) 0;
+            }
+            .hero {
+                padding: clamp(3.2rem, 6vw, 5.5rem) 0 3.8rem;
+                position: relative;
+                isolation: isolate;
+            }
+            .hero::before {
+                content: "";
+                position: absolute;
+                width: min(52vw, 720px);
+                height: min(52vw, 720px);
+                right: -18vw;
+                top: -16vw;
+                border-radius: 50%;
+                border: 1px solid rgba(224, 163, 46, 0.14);
+                box-shadow:
+                    0 0 0 70px rgba(224, 163, 46, 0.045),
+                    0 0 0 140px rgba(224, 163, 46, 0.022);
+                pointer-events: none;
+                z-index: -1;
+            }
+            .hero-grid {
+                display: grid;
+                grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+                gap: clamp(2.5rem, 6vw, 5.5rem);
+                align-items: center;
+            }
+            .hero-copy {
+                position: relative;
+            }
+            .hero-copy::before {
+                content: "";
+                position: absolute;
+                left: -24px;
+                top: 0.5rem;
+                width: 2px;
+                height: 74px;
+                background: var(--color-primary);
+                opacity: 0.9;
+                transform-origin: top;
+                animation: heroLine 0.9s var(--ease-smooth) both;
+            }
+            @keyframes heroLine {
+                from {
+                    transform: scaleY(0);
+                    opacity: 0;
+                }
+                to {
+                    transform: scaleY(1);
+                    opacity: 0.9;
+                }
+            }
+            .eyebrow {
+                display: inline-flex;
+                margin-bottom: 1.2rem;
+                color: var(--color-primary);
+                font-size: 0.72rem;
+                font-weight: 850;
+                text-transform: uppercase;
+                letter-spacing: 0.18em;
+                gap: 0.45rem;
+                align-items: center;
+            }
+            .eyebrow::before {
+                content: "";
+                width: 22px;
+                height: 1px;
+                background: currentColor;
+                opacity: 0.75;
+            }
+            .hero h1 {
+                margin: 0;
+                font-family: var(--font-serif);
+                font-weight: 500;
+                letter-spacing: -0.045em;
+                font-size: clamp(3rem, 6vw, 5.4rem);
+                line-height: 0.98;
+                text-wrap: balance;
+            }
+            .cta-box h2 em,
+            .hero h1 em,
+            .pricing-banner h2 em {
+                color: var(--color-primary);
+                font-style: italic;
+                transition: filter 0.35s ease;
+            }
+            .cta-box h2 em:hover,
+            .hero h1 em:hover,
+            .pricing-banner h2 em:hover {
+                filter: saturate(1.08);
+            }
+            .hero-lead {
+                margin: 1.5rem 0 0;
+                max-width: 660px;
+                font-size: clamp(1.05rem, 1.5vw, 1.24rem);
+                line-height: 1.75;
+                color: var(--color-text);
+            }
+            .hero-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.8rem;
+                margin-top: 2rem;
+            }
+            .button {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0.6rem;
+                min-height: 48px;
+                padding: 0 1.15rem;
+                border-radius: 10px;
+                text-decoration: none;
+                font-weight: 750;
+                border: 1px solid transparent;
+                transition:
+                    transform 0.18s ease,
+                    box-shadow 0.18s ease,
+                    background 0.18s ease;
+                position: relative;
+                overflow: hidden;
+                isolation: isolate;
+            }
+            .button::before,
+            .cta-box .button::before,
+            .hero-actions .button::before,
+            .pricing-cta .button::before {
+                content: "";
+                position: absolute;
+                inset: 0 auto 0 -120%;
+                width: 90%;
+                transform: skewX(-18deg);
+                background: rgba(255, 255, 255, 0.13);
+                transition: transform 0.55s var(--ease-smooth);
+                z-index: -1;
+            }
+            .button:hover::before,
+            .cta-box .button:hover::before,
+            .hero-actions .button:hover::before,
+            .pricing-cta .button:hover::before {
+                transform: translateX(240%) skewX(-18deg);
+            }
+            .button-primary {
+                color: var(--button-text);
+                background: var(--button-bg);
+                box-shadow: 0 10px 24px rgba(36, 33, 29, 0.08);
+            }
+            .button-primary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 16px 34px rgba(36, 33, 29, 0.12);
+            }
+            .button-secondary {
+                background: var(--color-surface);
+                border-color: var(--color-border);
+            }
+            .button-secondary:hover {
+                transform: translateY(-2px);
+                box-shadow: var(--shadow-soft);
+            }
+
+            /* --- STILI PER IMMAGINI PERSONALIZZATE ARTICOLI --- */
+            .article-figure {
+                margin: 3.5rem auto;
+                max-width: 960px;
+                border-radius: var(--radius);
+                overflow: hidden;
+                box-shadow: var(--shadow-soft);
+                border: 1px solid var(--color-border);
+                background: var(--color-surface);
+                transition: transform 0.4s var(--ease-smooth), box-shadow 0.4s var(--ease-smooth);
+            }
+            .article-figure:hover {
+                transform: translateY(-4px);
+                box-shadow: var(--shadow-hover);
+            }
+            .article-figure img {
+                width: 100%;
+                height: auto;
+                display: block;
+                /* Aspect ratio previene i salti di layout durante il caricamento */
+                aspect-ratio: 16/9; 
+                object-fit: contain;
+                background-color: var(--color-bg);
+            }
+            .article-figure figcaption {
+                padding: 1.15rem 1.5rem;
+                font-size: 0.9rem;
+                color: var(--color-muted);
+                text-align: center;
+                border-top: 1px solid var(--color-border);
+                background: color-mix(in srgb, var(--color-surface) 95%, var(--color-text));
+            }
+            .hero-image-wrapper {
+                border-radius: var(--radius);
+                overflow: hidden;
+                box-shadow: var(--shadow-soft);
+                border: 1px solid var(--color-border);
+            }
+            .hero-image-wrapper img {
+                width: 100%;
+                height: auto;
+                display: block;
+                aspect-ratio: 4/3;
+                object-fit: cover;
+            }
+            @media (prefers-color-scheme: dark) {
+                .article-figure img,
+                .hero-image-wrapper img {
+                    filter: brightness(0.9) contrast(1.05);
+                }
+            }
+            /* ------------------------------------------------ */
+
+            .integration-grid {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 1rem;
+            }
+            .card {
+                position: relative;
+                padding: 2rem;
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: var(--radius);
+                box-shadow: var(--shadow-soft);
+                transition:
+                    transform 0.55s var(--ease-smooth),
+                    box-shadow 0.55s var(--ease-smooth),
+                    border-color 0.35s ease;
+                overflow: hidden;
+            }
+            .card:hover {
+                transform: translateY(-4px);
+                box-shadow: var(--shadow-hover);
+            }
+            .card::after {
+                content: "";
+                position: absolute;
+                inset: auto -15% -70% 45%;
+                height: 180px;
+                border-radius: 50%;
+                border: 1px solid rgba(224, 163, 46, 0.12);
+                transform: rotate(-10deg);
+                transition:
+                    transform 0.6s var(--ease-smooth),
+                    opacity 0.35s ease;
+                opacity: 0.45;
+                pointer-events: none;
+            }
+            .card:hover::after {
+                transform: translate(-12px, -10px) rotate(-4deg);
+                opacity: 0.9;
+            }
+            .card-tag {
+                color: var(--color-primary);
+                font-size: 0.68rem;
+                font-weight: 850;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            .card-tag::before {
+                content: "";
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: currentColor;
+            }
+            .card h3 {
+                margin: 0.7rem 0 0.85rem;
+                font-family: var(--font-serif);
+                font-size: 1.55rem;
+                line-height: 1.15;
+                letter-spacing: -0.02em;
+                font-weight: 600;
+            }
+            .card p {
+                margin: 0;
+                color: var(--color-muted);
+                line-height: 1.72;
+                font-size: 0.97rem;
+            }
+            .section-heading {
+                max-width: 760px;
+                margin: 0 auto 3rem;
+                text-align: center;
+            }
+            .section-heading h2 {
+                margin: 0 0 0.9rem;
+                font-family: var(--font-serif);
+                font-weight: 500;
+                letter-spacing: -0.035em;
+                font-size: clamp(2.25rem, 4vw, 3.6rem);
+                line-height: 1.05;
+            }
+            .section-heading p {
+                margin: 0 auto;
+                color: var(--color-muted);
+                font-size: 1.05rem;
+                line-height: 1.75;
+            }
+            .steps {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 1rem;
+                margin: 0;
+                padding: 0;
+            }
+            .step {
+                padding: 2rem;
+                list-style-type: none;
+                border-top: 1px solid var(--color-border);
+                position: relative;
+                min-height: 210px;
+                transition:
+                    transform 0.55s var(--ease-smooth),
+                    box-shadow 0.55s var(--ease-smooth),
+                    border-color 0.35s ease;
+            }
+            .step::after {
+                content: "";
+                position: absolute;
+                left: 2rem;
+                bottom: 0;
+                width: 38px;
+                height: 1px;
+                background: var(--color-primary);
+                transform: scaleX(0.35);
+                transform-origin: left;
+                transition: transform 0.45s var(--ease-smooth);
+            }
+            .step:hover::after {
+                transform: scaleX(1);
+            }
+            .step-num {
+                font-size: 0.72rem;
+                font-weight: 850;
+                letter-spacing: 0.15em;
+                color: var(--color-primary);
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+            .step-num::after {
+                content: "";
+                width: 42px;
+                height: 1px;
+                background: currentColor;
+                opacity: 0.35;
+            }
+            .step h3 {
+                margin: 0.85rem 0 0.65rem;
+                font-family: var(--font-serif);
+                font-size: 1.55rem;
+                line-height: 1.15;
+            }
+            .step p {
+                margin: 0;
+                color: var(--color-muted);
+                line-height: 1.7;
+            }
+            .pricing-banner {
+                position: relative;
+                overflow: hidden;
+                display: grid;
+                grid-template-columns: minmax(0, 1.15fr) minmax(280px, 0.85fr);
+                gap: 2rem;
+                align-items: center;
+                padding: clamp(2rem, 5vw, 4rem);
+                background: #27231f;
+                color: #f9f6ef;
+                border-radius: 24px;
+                box-shadow: 0 20px 60px rgba(36, 33, 29, 0.16);
+                transform: translateZ(0);
+                transition:
+                    transform 0.55s var(--ease-smooth),
+                    box-shadow 0.55s var(--ease-smooth),
+                    border-color 0.35s ease;
+            }
+            .pricing-banner:hover {
+                box-shadow: 0 24px 70px rgba(36, 33, 29, 0.2);
+            }
+            .pricing-banner::before {
+                content: "";
+                position: absolute;
+                left: -20%;
+                bottom: -30%;
+                width: 55%;
+                aspect-ratio: 1;
+                border-radius: 50%;
+                border: 1px solid rgba(255, 255, 255, 0.06);
+                box-shadow:
+                    0 0 0 42px rgba(255, 255, 255, 0.02),
+                    0 0 0 84px rgba(255, 255, 255, 0.015);
+                pointer-events: none;
+            }
+            .pricing-banner::after {
+                content: "";
+                position: absolute;
+                width: 420px;
+                height: 420px;
+                right: -160px;
+                top: -180px;
+                border-radius: 50%;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                box-shadow:
+                    0 0 0 60px rgba(255, 255, 255, 0.025),
+                    0 0 0 120px rgba(255, 255, 255, 0.018);
+            }
+            .pricing-banner h2 {
+                margin: 0;
+                font-family: var(--font-serif);
+                font-size: clamp(2.5rem, 5vw, 4.7rem);
+                line-height: 0.98;
+                letter-spacing: -0.045em;
+                font-weight: 500;
+                position: relative;
+                z-index: 1;
+            }
+            .pricing-banner p {
+                margin: 1.1rem 0 0;
+                color: #cfc7bc;
+                max-width: 700px;
+                line-height: 1.75;
+                font-size: 1.02rem;
+                position: relative;
+                z-index: 1;
+            }
+            .pricing-points {
+                display: grid;
+                gap: 0.7rem;
+                margin: 1.4rem 0 0;
+                padding: 0;
+                list-style: none;
+                color: #ddd5ca;
+                position: relative;
+                z-index: 1;
+            }
+            .pricing-points li {
+                display: flex;
+                gap: 0.65rem;
+                align-items: flex-start;
+            }
+            .pricing-points li::before {
+                content: "✓";
+                color: #e2b96f;
+                font-weight: 800;
+            }
+            .pricing-cta {
+                position: relative;
+                z-index: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                justify-content: center;
+                gap: 0.8rem;
+            }
+            .pricing-cta .button-primary {
+                background: #f7f1e8;
+                color: #27231f;
+                border-color: #f7f1e8;
+            }
+            .pricing-cta small {
+                color: #a9a095;
+                font-size: 0.72rem;
+                text-transform: uppercase;
+                letter-spacing: 0.14em;
+            }
+            .faq {
+                max-width: 900px;
+                margin: 0 auto;
+                border: 1px solid var(--color-border);
+                border-radius: var(--radius);
+                overflow: hidden;
+                background: var(--color-surface);
+                box-shadow: var(--shadow-soft);
+                transition:
+                    transform 0.55s var(--ease-smooth),
+                    box-shadow 0.55s var(--ease-smooth),
+                    border-color 0.35s ease;
+            }
+            details + details {
+                border-top: 1px solid var(--color-border);
+            }
+            .faq details {
+                transition: background-color 0.25s ease;
+            }
+            .faq details:hover {
+                background: color-mix(in srgb, var(--color-surface) 94%, var(--color-bg));
+            }
+            summary {
+                list-style: none;
+                cursor: pointer;
+                padding: 1.35rem 1.5rem;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 1rem;
+                transition: background-color 0.25s ease;
+                font-family: var(--font-serif);
+                font-size: 1.15rem;
+                position: relative;
+            }
+            summary::-webkit-details-marker {
+                display: none;
+            }
+            summary::after {
+                content: "";
+                flex: 0 0 auto;
+                width: 10px;
+                height: 10px;
+                border-right: 2px solid var(--color-muted);
+                border-bottom: 2px solid var(--color-muted);
+                transform: translateY(-25%) rotate(45deg);
+                transition:
+                    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                    border-color 0.3s ease;
+            }
+            details[open] summary::after {
+                transform: translateY(25%) rotate(225deg);
+                border-color: var(--color-text);
+            }
+            summary::before {
+                content: "";
+                position: absolute;
+                left: 1.5rem;
+                bottom: 0;
+                width: 0;
+                height: 1px;
+                background: var(--color-primary);
+                transition: width 0.45s var(--ease-smooth);
+            }
+            details[open] summary::before {
+                width: calc(100% - 3rem);
+            }
+            details > div.faq-content-inner {
+                margin: 0;
+                padding: 0 1.5rem;
+                color: var(--color-muted);
+                line-height: 1.75;
+                display: block;
+                max-height: 0;
+                opacity: 0;
+                transform: translateY(-10px);
+                transition:
+                    max-height 0.3s ease,
+                    opacity 0.2s ease,
+                    transform 0.2s ease,
+                    padding-bottom 0.3s ease;
+            }
+            details[open] > div.faq-content-inner {
+                padding-bottom: 1.35rem;
+                max-height: 800px;
+                opacity: 1;
+                transform: translateY(0);
+                transition:
+                    max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                    opacity 0.35s ease 50ms,
+                    transform 0.35s ease 50ms,
+                    padding-bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .cta {
+                padding-top: 1rem;
+            }
+            .cta-box {
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) auto;
+                gap: 2rem;
+                align-items: center;
+                padding: clamp(2rem, 5vw, 4.5rem);
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: 24px;
+                box-shadow: var(--shadow-soft);
+                position: relative;
+                overflow: hidden;
+                transition:
+                    transform 0.55s var(--ease-smooth),
+                    box-shadow 0.55s var(--ease-smooth),
+                    border-color 0.35s ease;
+            }
+            .cta-box::before {
+                content: "";
+                position: absolute;
+                width: 240px;
+                height: 240px;
+                right: -70px;
+                bottom: -150px;
+                border-radius: 50%;
+                border: 1px solid rgba(224, 163, 46, 0.13);
+                box-shadow: 0 0 0 40px rgba(224, 163, 46, 0.035);
+                pointer-events: none;
+            }
+            .cta-box h2 {
+                margin: 0;
+                font-family: var(--font-serif);
+                font-size: clamp(2.4rem, 4.6vw, 4.3rem);
+                line-height: 1;
+                letter-spacing: -0.045em;
+                font-weight: 500;
+                position: relative;
+                z-index: 1;
+            }
+            .cta-box p {
+                margin: 1rem 0 0;
+                color: var(--color-muted);
+                max-width: 760px;
+                line-height: 1.75;
+                position: relative;
+                z-index: 1;
+            }
+            .court-card {
+                display: flex;
+                flex-direction: column;
+                padding: 2.25rem;
+                background: var(--color-surface);
+                border: 1px solid var(--color-border);
+                border-radius: var(--radius);
+                box-shadow: var(--shadow-soft);
+                transition:
+                    transform 0.4s var(--ease-smooth),
+                    box-shadow 0.4s var(--ease-smooth);
+                margin-top: 2rem;
+            }
+            .court-card:hover {
+                transform: translateY(-4px);
+                box-shadow: var(--shadow-hover);
+            }
+            .court-header {
+                margin-bottom: 2rem;
+                padding-bottom: 1.5rem;
+                border-bottom: 2px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+            }
+            .court-header h3 {
+                font-family: var(--font-serif);
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin: 0 0 0.85rem 0;
+                color: var(--color-text);
+                letter-spacing: -0.02em;
+            }
+            .court-header p {
+                margin: 0;
+                color: var(--color-muted);
+                font-size: 0.95rem;
+                line-height: 1.6;
+            }
+            .sections-list {
+                display: flex;
+                flex-direction: column;
+                gap: 1.25rem;
+                margin: 0;
+                padding: 0;
+            }
+            .sections-list dt {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.8rem;
+                font-weight: 850;
+                color: var(--color-text);
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                margin-bottom: 0.4rem;
+            }
+            .sections-list dt::before {
+                content: "";
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: var(--color-primary);
+            }
+            .sections-list dd {
+                margin: 0 0 0 1rem;
+                font-size: 0.92rem;
+                color: var(--color-muted);
+                line-height: 1.6;
+                padding-bottom: 1.25rem;
+                border-bottom: 1px dashed var(--color-border);
+            }
+            .sections-list dd:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+            }
+            .reveal {
+                opacity: 0;
+                transform: translateY(28px);
+                transition:
+                    opacity 0.8s var(--ease-smooth),
+                    transform 0.8s var(--ease-smooth);
+                will-change: opacity, transform;
+            }
+            .reveal.reveal-left {
+                transform: translateX(-30px);
+            }
+            .reveal.reveal-right {
+                transform: translateX(30px);
+            }
+            .reveal.reveal-scale {
+                transform: translateY(22px) scale(0.97);
+            }
+            .reveal.is-visible {
+                opacity: 1;
+                transform: none;
+            }
+            [data-stagger] > .reveal:nth-child(2) {
+                transition-delay: 70ms;
+            }
+            [data-stagger] > .reveal:nth-child(3) {
+                transition-delay: 140ms;
+            }
+            [data-stagger] > .reveal:nth-child(4) {
+                transition-delay: 210ms;
+            }
+            [data-stagger] > .reveal:nth-child(5) {
+                transition-delay: 280ms;
+            }
+            [data-stagger] > .reveal:nth-child(6) {
+                transition-delay: 350ms;
+            }
+            @media (max-width: 1050px) {
+                .nav {
+                    gap: 1rem;
+                }
+                .nav a:nth-child(3) {
+                    display: none;
+                }
+                .hero-grid {
+                    grid-template-columns: 1fr;
+                }
+                .hero-copy {
+                    max-width: 820px;
+                }
+                .hero-copy::before {
+                    display: none;
+                }
+                .integration-grid,
+                .steps {
+                    grid-template-columns: 1fr;
+                }
+                .pricing-banner {
+                    grid-template-columns: 1fr;
+                }
+            }
+            @media (max-width: 720px) {
+                .container {
+                    width: min(var(--container), calc(100% - 28px));
+                }
+                .site-header {
+                    position: static;
+                }
+                .header-inner {
+                    min-height: 70px;
+                }
+                .nav {
+                    display: none;
+                }
+                .hero {
+                    padding-top: 2.4rem;
+                }
+                .hero h1 {
+                    font-size: clamp(2.8rem, 14vw, 4rem);
+                }
+                .hero-actions,
+                .hero-actions .button {
+                    width: 100%;
+                }
+                .hero::before {
+                    width: 420px;
+                    height: 420px;
+                    right: -230px;
+                    top: -90px;
+                }
+                .cta-box {
+                    grid-template-columns: 1fr;
+                }
+                .pricing-banner::before {
+                    opacity: 0.6;
+                }
+                .reveal,
+                .reveal.reveal-left,
+                .reveal.reveal-right,
+                .reveal.reveal-scale {
+                    transform: translateY(22px);
+                }
+                .article-figure {
+                    margin: 2rem auto;
+                }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                html {
+                    scroll-behavior: auto;
+                }
+                *,
+                ::after,
+                ::before {
+                    transition-duration: 0.01ms !important;
+                    animation-duration: 0.01ms !important;
+                    animation-iteration-count: 1 !important;
+                }
+                details > div.faq-content-inner,
+                details[open] > div.faq-content-inner {
+                    max-height: none;
+                    opacity: 1;
+                    transform: none;
+                }
+                .hero-copy::before {
+                    animation: none;
+                }
+                .reveal {
+                    opacity: 1;
+                    transform: none !important;
+                }
+            }
+        </style>
+        <link rel="stylesheet" href="https://jurio.it/styles.css" />
+    </head>
+    <body>
+        <a href="#main-content" class="skip-link">Vai al contenuto principale</a>
+        <div id="header"></div>
+        <main id="main-content">
+            <!-- HERO SECTION: GRID CON IMMAGINE -->
+            <section class="section hero container">
+                <div class="hero-grid">
+                    <div class="hero-copy reveal">
+                        <span class="eyebrow">Tecnologia · Motore di Ricerca</span>
+                        <h1>L'Intelligenza Artificiale che <em>non inventa</em> sentenze.</h1>
+                        <p class="hero-lead">
+                            Nel mondo legale, un'informazione sbagliata può compromettere un'intera causa. Scopri come Jurio 
+                            utilizza l'architettura <strong>RAG (Retrieval-Augmented Generation)</strong> per impedire ai modelli linguistici 
+                            di generare allucinazioni, vincolando le risposte esclusivamente alla vera giurisprudenza della Corte di Cassazione.
+                        </p>
+                        <div class="hero-actions">
+                            <a href="#come-funziona" class="button button-primary">Scopri il funzionamento</a>
+                        </div>
+                    </div>
+                    <div class="hero-image-wrapper reveal reveal-right">
+                        <!-- Sostituisci il src con il percorso del tuo rendering / copertina personalizzata -->
+                        <img 
+                            src="/images/rag-hero-cover.webp" 
+                            alt="Rappresentazione astratta del flusso di dati sicuri per la giurisprudenza italiana" 
+                            width="800" 
+                            height="600"
+                            fetchpriority="high"
+                        />
+                    </div>
+                </div>
+            </section>
+
+            <!-- CONTESTO: PERCHÉ IL RAG È FONDAMENTALE -->
+            <section class="section container">
+                <div class="section-heading reveal">
+                    <h2>Il rischio dei modelli standard</h2>
+                    <p>
+                        Chiedere a un'AI generica di scrivere un parere legale è pericoloso. Senza una banca dati autorevole, 
+                        l'intelligenza artificiale tende a "compiacere" l'utente inventando precedenti inesistenti.
+                    </p>
+                </div>
+                <div class="integration-grid reveal" data-stagger>
+                    <div class="card reveal">
+                        <span class="card-tag">Il Problema</span>
+                        <h3>Allucinazioni Legali</h3>
+                        <p>
+                            I Large Language Models (LLM) sono formidabili nel linguaggio, ma non sono database. Se interrogati 
+                            su giurisprudenza specifica, spesso combinano numeri di sentenze reali con massime inventate, 
+                            creando i famigerati "falsi d'autore".
+                        </p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-tag">La Soluzione</span>
+                        <h3>Cos'è il RAG?</h3>
+                        <p>
+                            Il <em>Retrieval-Augmented Generation</em> è un pattern architetturale che inverte il processo. 
+                            Prima di far parlare l'AI, il sistema esegue una ricerca semantica in un database sicuro, 
+                            fornendo al modello solo documenti reali da cui trarre la risposta.
+                        </p>
+                    </div>
+                    <div class="card reveal">
+                        <span class="card-tag">Il Dato di Jurio</span>
+                        <h3>Fonti Certificate</h3>
+                        <p>
+                            Il RAG funziona solo se il database sottostante è impeccabile. Jurio alimenta il suo motore 
+                            esclusivamente con il patrimonio della Suprema Corte di Cassazione, garantendo un "ground truth" 
+                            inattaccabile per i professionisti del diritto.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- GUIDA PASSO PASSO: COME FUNZIONA IL FLUSSO -->
+            <section id="come-funziona" class="section container">
+                <div class="section-heading reveal">
+                    <h2>Il flusso RAG: step-by-step</h2>
+                    <p>Ecco cosa succede in millisecondi sotto il cofano di Jurio quando inserisci un prompt.</p>
+                </div>
+                
+                <!-- FIGURA 1: INFOGRAFICA DEL FLUSSO RAG -->
+                <figure class="article-figure reveal">
+                    <!-- Sostituisci il src con il tuo diagramma di flusso personalizzato esportato in webp -->
+                    <img 
+                        src="/images/schema-rag-jurio.webp" 
+                        alt="Diagramma di flusso dell'architettura RAG in Jurio: dalla domanda dell'utente alla ricerca delle sentenze in Cassazione fino alla generazione della risposta AI."
+                        width="1200" 
+                        height="675" 
+                        loading="lazy"
+                        decoding="async"
+                    />
+                    <figcaption>L'architettura RAG fa da "filtro di verità" tra la tua domanda e il modello di Intelligenza Artificiale.</figcaption>
+                </figure>
+
+                <ul class="steps reveal" data-stagger style="margin-top: 3rem;">
+                    <li class="step reveal">
+                        <span class="step-num">01</span>
+                        <h3>La tua Domanda (Prompt)</h3>
+                        <p>
+                            Un avvocato inserisce un quesito giuridico complesso nella chat di Jurio, ad esempio: 
+                            <em>"Quali sono gli orientamenti recenti sul licenziamento per giustificato motivo oggettivo in caso di riorganizzazione?"</em>.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">02</span>
+                        <h3>Vettorizzazione (Embedding)</h3>
+                        <p>
+                            Il nostro sistema trasforma la tua domanda in una stringa matematica (vettore). 
+                            Questo permette di capire il <em>significato</em> giuridico della tua richiesta, andando oltre le semplici parole chiave.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">03</span>
+                        <h3>Recupero (Retrieval)</h3>
+                        <p>
+                            Jurio cerca all'interno del suo database le massime e le sentenze della Cassazione i cui vettori 
+                            sono semanticamente più vicini alla tua domanda. Estraiamo solo i precedenti realmente pertinenti.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">04</span>
+                        <h3>Iniezione del Contesto</h3>
+                        <p>
+                            Costruiamo un nuovo "super-prompt". Diciamo all'intelligenza artificiale: <em>"Rispondi alla domanda dell'utente 
+                            utilizzando ESCLUSIVAMENTE questi documenti allegati"</em>, passandogli le sentenze appena trovate.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">05</span>
+                        <h3>Generazione Vincolata</h3>
+                        <p>
+                            Il modello linguistico analizza le sentenze fornite. Sfrutta le sue capacità di ragionamento per 
+                            sintetizzare, confrontare gli orientamenti e redigere l'argomentazione, senza poter inventare nulla di nuovo.
+                        </p>
+                    </li>
+                    <li class="step reveal">
+                        <span class="step-num">06</span>
+                        <h3>Risposta con Citazioni</h3>
+                        <p>
+                            Ottieni una risposta discorsiva, chiara e pronta per essere inserita in un atto, 
+                            con l'indicazione esatta di sezioni, date e numeri delle pronunce della Cassazione citate.
+                        </p>
+                    </li>
+                </ul>
+            </section>
+
+            <!-- DIMOSTRAZIONE TECNICA: CONFRONTO -->
+            <section id="confronto" class="section container">
+                <div class="section-heading reveal">
+                    <h2>AI Standard vs. Jurio (RAG)</h2>
+                    <p>
+                        La differenza sostanziale nell'architettura delle risposte.
+                    </p>
+                </div>
+                
+                <div class="court-card reveal">
+                    <div class="court-header">
+                        <h3>Gestione di un quesito di nicchia</h3>
+                        <p>Perché l'orchestrazione del dato fa la differenza in tribunale.</p>
+                    </div>
+                    <dl class="sections-list">
+                        <dt>LLM Standard (es. ChatGPT puro)</dt>
+                        <dd>
+                            Se il modello non ha visto sufficienti esempi di una specifica sentenza italiana durante l'addestramento originale, 
+                            tenta di indovinare basandosi su pattern linguistici plausibili. Genera una citazione apparentemente corretta 
+                            che in realtà appartiene a tutt'altra materia o non esiste affatto.
+                        </dd>
+                        <dt>Il blocco architettonico in Jurio</dt>
+                        <dd>
+                            Con il RAG, il modello non deve "ricordare" le sentenze. La sua memoria a lungo termine viene bypassata. 
+                            Il modello si limita a "leggere" il fascicolo di sentenze che Jurio gli ha appena recuperato in tempo reale.
+                        </dd>
+                        <dt>Trasparenza e Verificabilità</dt>
+                        <dd>
+                            Ogni affermazione prodotta dall'AI in Jurio è mappata direttamente a un documento PDF o a una massima testuale presente a sistema. 
+                            Il professionista può cliccare sul riferimento generato e leggere il testo integrale della fonte.
+                        </dd>
+                    </dl>
+                </div>
+            </section>
+
+            <!-- CALLOUT DI APPROFONDIMENTO (PITCH COMMERCIALE) -->
+            <section class="section container">
+                <div class="pricing-banner reveal">
+                    <div>
+                        <h2>Un assistente che ha <em>studiato</em> sui tuoi stessi testi.</h2>
+                        <p>
+                            L'implementazione RAG di Jurio è pensata specificamente per il diritto italiano. Non ci limitiamo a 
+                            collegare un database a un'AI: ottimizziamo le strategie di chunking e i modelli di embedding 
+                            per comprendere il gergo tecnico-giuridico e la complessa struttura logica delle massime della Cassazione.
+                        </p>
+                        <p style="font-size: 0.95rem; margin-top: 1rem">
+                            Questo livello di affidabilità ti permette di delegare a Jurio la prima fase di ricerca massiva, 
+                            sapendo che i fondamenti della tua argomentazione poggeranno sempre su basi solide e verificabili, 
+                            dimezzando i tempi di preparazione degli atti.
+                        </p>
+                    </div>
+                    <div class="pricing-cta">
+                        <ul class="pricing-points">
+                            <li>Zero rischio di citazioni inventate (Allucinazioni)</li>
+                            <li>Fonti aggiornate costantemente</li>
+                            <li>Ragionamento deduttivo su basi reali</li>
+                            <li>Click-through al documento originale</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAQ SECTION -->
+            <section class="section container">
+                <div class="section-heading reveal">
+                    <h2>FAQ: AI e Allucinazioni Legali</h2>
+                    <p>I dubbi più comuni sulla sicurezza dei dati e l'affidabilità delle risposte.</p>
+                </div>
+                <div class="faq reveal">
+                    <details>
+                        <summary>Cosa si intende esattamente per "allucinazione" dell'AI?</summary>
+                        <div class="faq-content-inner">
+                            Un'allucinazione si verifica quando un'intelligenza artificiale genera un'informazione falsa presentandola come un fatto assolutamente certo. 
+                            In ambito giuridico, questo si traduce solitamente nell'invenzione di numeri di sentenza, date o principi di diritto inesistenti.
+                        </div>
+                    </details>
+                    <details>
+                        <summary>Perché Jurio è diverso da ChatGPT?</summary>
+                        <div class="faq-content-inner">
+                            ChatGPT è un modello generalista che si affida ai dati "imparati a memoria" durante il training iniziale. 
+                            Jurio, grazie al RAG, usa l'intelligenza artificiale solo come "motore di ragionamento testuale", mentre 
+                            il "serbatoio della conoscenza" è costituito unicamente da una banca dati giurisprudenziale italiana certificata.
+                        </div>
+                    </details>
+                    <details>
+                        <summary>Cosa succede se Jurio non trova sentenze rilevanti?</summary>
+                        <div class="faq-content-inner">
+                            Questo è il più grande vantaggio del RAG: se il sistema di ricerca (Retrieval) non trova precedenti pertinenti 
+                            per la tua fattispecie, l'AI è istruita per ammettere di non avere informazioni sufficienti a sistema, 
+                            rifiutandosi categoricamente di inventare una risposta per riempire il vuoto.
+                        </div>
+                    </details>
+                    <details>
+                        <summary>I documenti che carico su Jurio vengono usati per addestrare l'AI?</summary>
+                        <div class="faq-content-inner">
+                            Assolutamente no. Il pattern RAG che utilizziamo ci permette di fornire i tuoi documenti (o le sentenze trovate) 
+                            al modello linguistico solo in modalità "lettura" per la singola sessione. I dati non vengono mai utilizzati 
+                            per il re-training dei modelli base, garantendo il pieno rispetto della privacy dello studio legale.
+                        </div>
+                    </details>
+                </div>
+            </section>
+
+            <!-- CALL TO ACTION FINALE -->
+            <section id="prova" class="section container cta">
+                <div class="cta-box reveal">
+                    <div>
+                        <h2>La ricerca giuridica del futuro è <em>sicura</em>.</h2>
+                        <p>
+                            Smetti di perdere ore tra centinaia di massime o di rischiare citazioni inesatte. 
+                            Affidati a un motore RAG progettato in Italia, per gli avvocati italiani.
+                        </p>
+                        <ul class="pricing-points" style="margin-top: 1.5rem; color: var(--color-muted)">
+                            <li style="color: var(--color-muted)">Risposte basate sulla Cassazione</li>
+                            <li style="color: var(--color-muted)">Architettura Anti-Allucinazione</li>
+                            <li style="color: var(--color-muted)">Integrazione diretta nei tuoi flussi di lavoro</li>
+                        </ul>
+                    </div>
+                    <div class="pricing-cta">
+                        <a href="/login" class="button button-primary">Prova Jurio Gratis</a>
+                        <small>Nessuna carta di credito richiesta</small>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <div id="footer"></div>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", async () => {
+                const components = [
+                    { selector: "#header", file: "/header.html" },
+                    { selector: "#footer", file: "/footer.html" },
+                ];
+
+                await Promise.all(
+                    components.map(async ({ selector, file }) => {
+                        const element = document.querySelector(selector);
+                        if (!element) return;
+                        try {
+                            const response = await fetch(file);
+                            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                            element.innerHTML = await response.text();
+                        } catch (error) {
+                            console.error(`Errore nel caricamento di ${file}:`, error);
+                        }
+                    })
+                );
+            });
+        </script>
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const observerOptions = {
+                    root: null,
+                    rootMargin: "0px",
+                    threshold: 0.1,
+                };
+
+                const observer = new IntersectionObserver((entries, observer) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add("is-visible");
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, observerOptions);
+
+                document.querySelectorAll(".reveal").forEach((el) => {
+                    observer.observe(el);
+                });
+
+                const header = document.querySelector(".site-header");
+                window.addEventListener(
+                    "scroll",
+                    () => {
+                        if (!header) return;
+                        if (window.scrollY > 20) {
+                            header.classList.add("is-scrolled");
+                        } else {
+                            header.classList.remove("is-scrolled");
+                        }
+                    },
+                    { passive: true }
+                );
+            });
+        </script>
+    </body>
+</html>

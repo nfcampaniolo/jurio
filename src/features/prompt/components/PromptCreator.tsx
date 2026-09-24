@@ -67,21 +67,21 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
 
   const watchFields = watch("fields");
 
-  useEffect(() => {
-    if (!window.location.hash.includes("crea")) {
-      window.history.pushState({ view: "crea" }, "", "#crea");
-    }
+useEffect(() => {
+  // NIENTE PIÙ pushState QUI. Lo gestisce handleOpenCreator.
 
-    const handlePopState = () => {
-      onBack();
-    };
+  const handlePopState = () => {
+    // Intercetta il tasto "Indietro" del browser
+    onBack();
+  };
 
-    window.addEventListener("popstate", handlePopState);
+  window.addEventListener("popstate", handlePopState);
 
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
-  }, [onBack]);
+  return () => {
+    window.removeEventListener("popstate", handlePopState);
+  };
+  // L'array vuoto previene un fastidioso bug di ri-render infinito dei listener
+});
 
   useEffect(() => {
     if (generatedPrompt && !isGenerating) {

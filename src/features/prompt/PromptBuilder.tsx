@@ -24,12 +24,12 @@ export const PromptDashboard: React.FC = () => {
     cancelDelete
   } = usePromptDashboard();
 
-  useEffect(() => {
-    if (window.location.hash.includes("#crea")) {
-      handleOpenCreator();
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    }
-  }, [handleOpenCreator]); 
+useEffect(() => {
+  if (window.location.hash.includes("#crea")) {
+    handleOpenCreator();
+    // RIMOSSO il window.history.replaceState, non serve più
+  }
+}, []); // <-- Aggiungi l'array vuoto qui!
 
   const animationProps = {
     initial: shouldReduceMotion ? false : ({ opacity: 0, y: 10 } as TargetAndTransition),

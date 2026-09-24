@@ -5,7 +5,8 @@ export type NotificationType =
   | "team" 
   | "account" 
   | "report" 
-  | "support" 
+  | "support"
+  | "vulnerability" 
   | "system";
 
 export interface JurioNotification {

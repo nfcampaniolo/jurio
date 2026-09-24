@@ -6,7 +6,7 @@ import { type SavedPrompt } from "@/interfaces/interfaces";
 import { getFirestore, collection, onSnapshot, doc, deleteDoc, orderBy, query } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getPrompt } from "@/config/env";
-import { useNavigate } from 'react-router-dom'; 
+import { useNavigate, useLocation } from 'react-router-dom'; 
 
 const PROMPT_ENDPOINT = getPrompt();
 
@@ -87,7 +87,8 @@ export const usePromptGenerator = () => {
 export const usePromptDashboard = () => {
   // Stato Navigazione
   const navigate = useNavigate();
-  const [view, setView] = useState<"list" | "create">("list");
+  const location = useLocation();
+  const view = location.hash.includes("crea") ? "create" : "list";
   const [selectedTemplate, setSelectedTemplate] = useState<SavedPrompt | undefined>(undefined);
 
   // Stato Dati
@@ -156,21 +157,24 @@ export const usePromptDashboard = () => {
 
   // 3. NAVIGAZIONE
   const handleOpenCreator = (template?: SavedPrompt) => {
-    if (template) {
-      setSelectedTemplate({
-        ...template,
-        title: `${template.title} (Copia)`
-      });
-    } else {
-      setSelectedTemplate(undefined);
-    }
-    setView("create");
-  };
+      if (template) {
+        setSelectedTemplate({
+          ...template,
+          title: `${template.title} (Copia)`
+        });
+      } else {
+        setSelectedTemplate(undefined);
+      }
+      // Sostituiamo semplicemente l'URL, React farà il resto
+      navigate("#crea");
+    };
 
   const handleBackToList = () => {
     setSelectedTemplate(undefined);
-    setView("list");
-    navigate(-1);
+    
+    if (location.hash.includes("crea")) {
+      navigate(location.pathname);
+    }
   };
 
   return {

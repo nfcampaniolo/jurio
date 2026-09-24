@@ -81,6 +81,8 @@
             .skip-link { background: var(--color-text); color: var(--color-bg); }
             .header-cta, .button-primary { color: var(--color-bg); background: var(--color-text); }
             .header-cta:hover { background: #ffffff; }
+            /* Aggiunta specifica per dark mode sul bottone secondario */
+            .button-secondary { background: #1a1a1a; border-color: #2e2e2e; color: #e6e7ea; }
             .demo-media { background: #25221f; }
             .pricing-banner { background: #0f0e0d; box-shadow: 0 20px 60px rgba(0, 0, 0, .32); }
             .pricing-banner p, .pricing-points { color: #d1c8bc; }
@@ -134,11 +136,15 @@
         .hero h1 em:hover, .cta-box h2 em:hover, .pricing-banner h2 em:hover { filter: saturate(1.08); }
         .hero-lead { margin: 1.5rem auto 0; max-width: 660px; font-size: clamp(1.05rem, 1.5vw, 1.24rem); line-height: 1.75; color: var(--color-text); }
         
+        /* Aggiunta stili per i bottoni multipli nella Hero */
+        .hero-actions { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 2rem; justify-content: center; }
         .button { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; min-height: 48px; padding: 0 1.15rem; border-radius: 10px; text-decoration: none; font-weight: 750; border: 1px solid transparent; transition: transform .18s ease, box-shadow .18s ease, background .18s ease; position: relative; overflow: hidden; isolation: isolate; }
         .button::before, .cta-box .button::before, .pricing-cta .button::before { content: ""; position: absolute; inset: 0 auto 0 -120%; width: 90%; transform: skewX(-18deg); background: rgba(255, 255, 255, .13); transition: transform .55s var(--ease-smooth); z-index: -1; }
         .button:hover::before, .cta-box .button:hover::before, .pricing-cta .button:hover::before { transform: translateX(240%) skewX(-18deg); }
         .button-primary { color: var(--button-text); background: var(--button-bg); box-shadow: 0 10px 24px rgba(36,33,29,.08); }
         .button-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(36,33,29,.12); }
+        .button-secondary { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text); }
+        .button-secondary:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); }
         
         .integration-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1.5rem; margin-top: 2rem;}
         .card { position: relative; padding: 2.25rem; background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius); box-shadow: var(--shadow-soft); transition: transform .55s var(--ease-smooth), box-shadow .55s var(--ease-smooth), border-color .35s ease; overflow: hidden; display: flex; flex-direction: column; }
@@ -217,6 +223,7 @@
             .hero { padding-top: 2.4rem; }
             .hero h1 { font-size: clamp(2.8rem, 14vw, 4rem); }
             .integration-grid { grid-template-columns: 1fr; }
+            .hero-actions .button { width: 100%; }
             .footer-grid { grid-template-columns: 1fr 1fr; }
             .footer-grid > div:first-child { grid-column: 1 / -1; }
             .footer-bottom { flex-direction: column; }
@@ -240,7 +247,6 @@
     <!-- Header -->
     <div id="header"></div> 
 
-
     <main id="main-content">
         <!-- Hero Section -->
         <section class="section hero container">
@@ -248,11 +254,17 @@
                 <span class="eyebrow">Casi di Studio</span>
                 <h1>Casi di Studio<br><em>e Automazioni Legali</em></h1>
                 <p class="hero-lead">Scopri come Jurio applica l'intelligenza artificiale ai workflow degli studi legali per automatizzare attività complesse, strutturare la giurisprudenza e ridurre il lavoro manuale.</p>
+                
+                <!-- Aggiunta del ponte CTA -->
+                <div class="hero-actions">
+                    <a href="#casi-pratici" class="button button-primary">Esplora i casi d'uso</a>
+                    <a href="/tecnologia" class="button button-secondary">Scopri la nostra architettura (RAG, MCP)</a>
+                </div>
             </div>
         </section>
 
         <!-- Grid dei Casi di Studio -->
-        <section class="section container" style="padding-top: 0;">
+        <section id="casi-pratici" class="section container" style="padding-top: 0;">
             <div class="integration-grid reveal" data-stagger>
                 
                 <!-- Card Integrazione Claude.ai MCP -->
@@ -362,6 +374,7 @@
                     </div>
                     <span class="card-link">Leggi il caso</span>
                 </a>
+                
                 <!-- Caso 8: Consulente Legale AI -->
                 <a href="caso-studio/consulente-legale-ai" class="card reveal" style="text-decoration: none;">
                     <span class="card-tag">Legal AI · Consulenza e Strategia</span>
