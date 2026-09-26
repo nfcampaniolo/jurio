@@ -1,10 +1,8 @@
+import { useState, type RefObject } from "react";
 import { motion } from "framer-motion";
 import { Scale, Globe, BookOpen } from "lucide-react";
 import { Typewriter } from "@/shared/components/Typewriter";
 import { type Source, type Message } from "@/interfaces/interfaces";
-import { type RefObject } from "react";
-
-// IMPORTA IL COMPONENTE DI FEEDBACK
 import { FeedbackComponent } from "@/shared/components/FeedbackComponent";
 
 interface MessageListProps {
@@ -26,8 +24,13 @@ export const MessageList = ({
   setActiveSourceId,
   handleSourceClick
 }: MessageListProps) => {
+  // Traccia gli ID dei messaggi che hanno concluso la digitazione a schermo
+  const [completedMessages, setCompletedMessages] = useState<Record<string, boolean>>({});
 
-  // Funzione per gestire il feedback inviato dal componente
+  const handleTypingComplete = (id: string) => {
+    setCompletedMessages((prev) => ({ ...prev, [id]: true }));
+  };
+
   return (
     <div className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:pr-16 space-y-4 md:space-y-6 scroll-smooth w-full custom-scrollbar">
       {messages.length === 0 ? (
@@ -40,8 +43,13 @@ export const MessageList = ({
       ) : (
         messages.map((msg, index) => {
           const isLastMessage = index === messages.length - 1;
+          const shouldAnimate = isLastMessage && !msg.isHistorical;
+
+          // Il messaggio è completamente visibile se:
+          // 1. Non deve essere animato (es. messaggi storici o non ultimi)
+          // 2. Oppure ha finito lo streaming ed ha completato la digitazione Typewriter
+          const isFullyDisplayed = !shouldAnimate || (!isStreaming && completedMessages[msg.id]);
           
-          // Estrapoliamo l'elenco degli ID dalle fonti, se presenti, da mandare in pasto al feedback
           const sourceIds = msg.sources 
             ? msg.sources.map(s => s.documento_id || s._id_interno || s.url_riferimento || s.link || 'fonte-sconosciuta')
             : [];
@@ -78,7 +86,8 @@ export const MessageList = ({
                       key={msg.id} 
                       text={msg.content} 
                       speed={5} 
-                      animate={isLastMessage && !msg.isHistorical}
+                      animate={shouldAnimate}
+                      onComplete={() => handleTypingComplete(msg.id)}
                     />
                   ) : (
                     <p className="whitespace-pre-wrap leading-relaxed wrap-break-word">{msg.content}</p>
@@ -124,16 +133,19 @@ export const MessageList = ({
                 )}
 
                 {/* --- COMPONENTE FEEDBACK --- */}
-                {msg.role === 'model' && msg.content && (
-                 <div className="self-end flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">
-                    Valuta questa risposta
-                  </span>
-
-                  <FeedbackComponent
-                    sourceIds={sourceIds}
-                  />
-                </div>
+                {/* Viene montato solo se il testo è completamente visualizzato */}
+                {msg.role === 'model' && msg.content && isFullyDisplayed && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="self-end flex items-center gap-2 mt-1"
+                  >
+                    <span className="text-xs text-muted-foreground">
+                      Valuta questa risposta
+                    </span>
+                    <FeedbackComponent sourceIds={sourceIds} />
+                  </motion.div>
                 )}
                 
               </div>

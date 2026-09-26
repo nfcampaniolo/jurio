@@ -1,36 +1,39 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import React from "react";
+import type { ChangeEvent, Dispatch, ReactNode, SetStateAction } from "react";
 
 /* ---------- mock react-router-dom ---------- */
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", () => ({
-  __esModule: true,
   useNavigate: () => mockNavigate,
 }));
 
 /* ---------- mock react-hot-toast ---------- */
 vi.mock("react-hot-toast", () => ({
-  __esModule: true,
   toast: {
     success: vi.fn(),
     error: vi.fn(),
   },
 }));
 
+/* ---------- mock react-icons/fi ---------- */
+vi.mock("react-icons/fi", () => ({
+  FiHome: () => <svg data-testid="icon-home" />,
+  FiSearch: () => <svg data-testid="icon-search" />,
+  FiDatabase: () => <svg data-testid="icon-database" />,
+  FiTag: () => <svg data-testid="icon-tag" />,
+  FiUploadCloud: () => <svg data-testid="icon-upload-cloud" />,
+  FiEdit3: () => <svg data-testid="icon-edit3" />,
+  FiBell: () => <svg data-testid="icon-bell" />,
+}));
+
 /* ---------- mock framer-motion ---------- */
 vi.mock("framer-motion", () => ({
-  __esModule: true,
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
   motion: {
-    div: React.forwardRef<
-      HTMLDivElement,
-      React.HTMLAttributes<HTMLDivElement> & { layoutId?: string }
-    >(({ children, ...props }, ref) => (
-      <div ref={ref} {...props}>
-        {children}
-      </div>
-    )),
+    div: ({ children, ...props }: { children?: ReactNode; layoutId?: string; [key: string]: unknown }) => (
+      <div {...props}>{children}</div>
+    ),
   },
 }));
 
@@ -50,22 +53,19 @@ let mockProfileReturn = {
 };
 
 vi.mock("@/features/profile/hooks/useProfile", () => ({
-  __esModule: true,
   useProfile: () => mockProfileReturn,
 }));
 
 const mockNavigateItem = vi.fn();
 vi.mock("@/routes/navigation", () => ({
-  __esModule: true,
   navigateItem: (...args: unknown[]) => mockNavigateItem(...args),
 }));
 
-/* ---------- mock services/admin ---------- */
+/* ---------- mock services/admin con alias corretto ---------- */
 const mockExecuteAdminMaintenanceTask = vi.fn();
 const mockExecuteAdminMergeCategoryTask = vi.fn();
 
 vi.mock("@/features/admin/hooks/admin", () => ({
-  __esModule: true,
   executeAdminMaintenanceTask: (...args: unknown[]) =>
     mockExecuteAdminMaintenanceTask(...args),
   executeAdminMergeCategoryTask: (...args: unknown[]) =>
@@ -74,7 +74,6 @@ vi.mock("@/features/admin/hooks/admin", () => ({
 
 /* ---------- mock subcomponents ---------- */
 vi.mock("@/features/profile/components/HeaderProfile", () => ({
-  __esModule: true,
   HeaderProfile: ({
     name,
     surname,
@@ -97,21 +96,15 @@ vi.mock("@/features/profile/components/HeaderProfile", () => ({
   ),
 }));
 
-vi.mock("@/features/admin/components//UploadMaxima", () => ({
-  __esModule: true,
+vi.mock("@/features/admin/components/UploadMaxima", () => ({
   UploadMaxima: () => <div data-testid="upload-maxima-section">Upload Maxima Content</div>,
 }));
 
-vi.mock("@/features/admin/components//FirebaseManual", () => ({
-  __esModule: true,
+vi.mock("@/features/admin/components/FirebaseManual", () => ({
   default: () => <div data-testid="firebase-manual-section">Firebase Manual Content</div>,
-  FirebaseManual: () => (
-    <div data-testid="firebase-manual-section">Firebase Manual Content</div>
-  ),
 }));
 
-vi.mock("@/features/admin/components//AdminTaxonomySection", () => ({
-  __esModule: true,
+vi.mock("@/features/admin/components/AdminTaxonomySection", () => ({
   AdminTaxonomySection: ({
     mergeParams,
     setMergeParams,
@@ -119,8 +112,8 @@ vi.mock("@/features/admin/components//AdminTaxonomySection", () => ({
     onMergeSubmit,
   }: {
     mergeParams: { vecchiaCategoria: string; nuovaCategoria: string | null };
-    setMergeParams: React.Dispatch<
-      React.SetStateAction<{ vecchiaCategoria: string; nuovaCategoria: string | null }>
+    setMergeParams: Dispatch<
+      SetStateAction<{ vecchiaCategoria: string; nuovaCategoria: string | null }>
     >;
     isMerging: boolean;
     onMergeSubmit: () => void;
@@ -147,8 +140,7 @@ vi.mock("@/features/admin/components//AdminTaxonomySection", () => ({
   ),
 }));
 
-vi.mock("@/features/admin/components//AdminMaintenanceSection", () => ({
-  __esModule: true,
+vi.mock("@/features/admin/components/AdminMaintenanceSection", () => ({
   AdminMaintenanceSection: ({
     maintenanceParams,
     isUpdating,
@@ -157,7 +149,7 @@ vi.mock("@/features/admin/components//AdminMaintenanceSection", () => ({
   }: {
     maintenanceParams: Record<string, string>;
     isUpdating: boolean;
-    onParamChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onParamChange: (e: ChangeEvent<HTMLInputElement>) => void;
     onMaintenanceSubmit: () => void;
   }) => (
     <div data-testid="maintenance-section">
@@ -174,13 +166,17 @@ vi.mock("@/features/admin/components//AdminMaintenanceSection", () => ({
   ),
 }));
 
-vi.mock("@/features/admin/components//AdminFooterLinks", () => ({
-  __esModule: true,
+vi.mock("@/features/admin/components/AdminNotificationsSection", () => ({
+  AdminNotificationsSection: () => (
+    <div data-testid="notifications-section">Notifications Content</div>
+  ),
+}));
+
+vi.mock("@/features/admin/components/AdminFooterLinks", () => ({
   AdminFooterLinks: () => <footer data-testid="admin-footer">Admin Footer Links</footer>,
 }));
 
 vi.mock("@/shared/components/ConfirmModal", () => ({
-  __esModule: true,
   ConfirmModal: ({
     isOpen,
     title,
@@ -253,13 +249,14 @@ describe("Admin Dashboard Component Suite", () => {
     );
   });
 
-  test("renderizza la barra dei tab per gli utenti admin con Upload Massivo attivo di default", () => {
+  test("renderizza la barra dei tab per gli utenti admin con Upload Massivo attivo di default e il tab Comunicazioni", () => {
     render(<Admin />);
 
     expect(screen.getByRole("button", { name: /Upload Massivo/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Contenuti & Prompt/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Tassonomia/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Manutenzione DB/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Comunicazioni/i })).toBeInTheDocument();
 
     expect(screen.getByTestId("upload-maxima-section")).toBeInTheDocument();
   });
@@ -272,20 +269,20 @@ describe("Admin Dashboard Component Suite", () => {
     expect(screen.queryByTestId("upload-maxima-section")).not.toBeInTheDocument();
   });
 
-  test("consente il passaggio da un tab all'altro visualizzando i componenti corrispondenti", () => {
+  test("consente il passaggio da un tab all'altro visualizzando i componenti corrispondenti (incluso Comunicazioni)", () => {
     render(<Admin />);
 
-    // Passa al tab Contenuti & Prompt
     fireEvent.click(screen.getByRole("button", { name: /Contenuti & Prompt/i }));
     expect(screen.getByTestId("firebase-manual-section")).toBeInTheDocument();
 
-    // Passa al tab Tassonomia
     fireEvent.click(screen.getByRole("button", { name: /Tassonomia/i }));
     expect(screen.getByTestId("taxonomy-section")).toBeInTheDocument();
 
-    // Passa al tab Manutenzione DB
     fireEvent.click(screen.getByRole("button", { name: /Manutenzione DB/i }));
     expect(screen.getByTestId("maintenance-section")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Comunicazioni/i }));
+    expect(screen.getByTestId("notifications-section")).toBeInTheDocument();
   });
 
   test("esegue handleMaintenance con parametri filtrati e mostra il messaggio di successo", async () => {

@@ -4,7 +4,7 @@ import { getDb } from "../deps";
 import { enableFirebaseTelemetry } from '@genkit-ai/firebase';
 import { FieldValue } from "firebase-admin/firestore";
 import { CFG } from "./config";
-import { makeRiferimentiNormativiKeys, incrementRagCounter } from "../utils";
+import { makeRiferimentiNormativiKeys, incrementRagCounter, consumeDailyFeature, consumePerMinuteFeature } from "../utils";
 import { mapToObject, createEmbedding, getSafeDistance} from "./helper";
 
 const db = getDb();
@@ -30,11 +30,12 @@ export const ricercaDatabaseInterno = ai.defineTool(
       const { tipo_ricerca, query, numero_sentenza } = input;
       const safeLimit = context?.dbLimit ?? 10; 
       const finalQuery = (query || numero_sentenza || "").trim();
+      const userId = context?.userId;
       
       if (!finalQuery) {
         return [{ messaggio: "ERRORE DI SISTEMA: Devi fornire obbligatoriamente un parametro di ricerca (query o numero_sentenza)." }];
       }
-      
+
       const uiFilters = context?.uiFilters || [];
 
       const applyFilters = (baseQuery: FirebaseFirestore.Query) => {
@@ -70,11 +71,9 @@ export const ricercaDatabaseInterno = ai.defineTool(
           return [{ messaggio: `Nessuna sentenza trovata nel database interno per l'identificativo: ${identificativo}.` }];
         }
 
-        // --- NUOVA LOGICA: UPDATE RAG ---
         const resultDocs = Array.from(uniqueDocs.values());
         const extractedIds = resultDocs.map(doc => doc.id);
         await incrementRagCounter("sentences", extractedIds);
-        // --------------------------------
 
         return resultDocs.map(doc => {
           const data = doc.data();
@@ -99,10 +98,8 @@ export const ricercaDatabaseInterno = ai.defineTool(
            return [{ messaggio: `Nessun provvedimento trovato nel database interno per il riferimento normativo richiesto (${keys.join(", ")}).` }];
         }
         
-        // --- NUOVA LOGICA: UPDATE RAG ---
         const extractedIds = snap.docs.map(doc => doc.id);
         await incrementRagCounter("sentences", extractedIds);
-        // --------------------------------
 
         return snap.docs.map(doc => {
             const data = doc.data();
@@ -111,7 +108,17 @@ export const ricercaDatabaseInterno = ai.defineTool(
       }
 
       // 3. BRANCH: Ricerca Semantica
-      const queryVector = await createEmbedding(finalQuery); 
+      if (!userId) {
+         return [{ messaggio: "ERRORE: Autenticazione mancante per il tracciamento della ricerca semantica." }];
+      }
+
+      const limits = { perMinute: 20, perDay: 200 };
+      const [queryVector] = await Promise.all([
+        createEmbedding(finalQuery),
+        consumePerMinuteFeature(userId, "research" as any, limits.perMinute),
+        consumeDailyFeature(userId, "research" as any, limits.perDay)
+      ]);
+
       let baseQuery = applyFilters(db.collection("sentences") as FirebaseFirestore.Query);
 
       const sSnap = await (baseQuery as any)
@@ -133,10 +140,8 @@ export const ricercaDatabaseInterno = ai.defineTool(
 
       const finalResults = results.filter((r: any) => r._distance <= CFG.MAX_ALLOWED_DISTANCE).slice(0, safeLimit);
 
-      // --- NUOVA LOGICA: UPDATE RAG ---
       const extractedIds = finalResults.map((r: any) => r.id);
       await incrementRagCounter("sentences", extractedIds);
-      // --------------------------------
 
       return finalResults;
 
@@ -166,7 +171,13 @@ export const ricercaFascicoloUtente = ai.defineTool(
       if (!userId) return [{ error: "Errore di autenticazione interno." }];
 
       const sanitizedQuery = input.query.trim();
-      const queryVector = await createEmbedding(sanitizedQuery);
+      const limits = { perMinute: 20, perDay: 200 };
+
+      const [queryVector] = await Promise.all([
+        createEmbedding(sanitizedQuery),
+        consumePerMinuteFeature(userId, "research" as any, limits.perMinute),
+        consumeDailyFeature(userId, "research" as any, limits.perDay)
+      ]);
       
       const safeLimit = context?.dbLimit ?? 10;
       
@@ -206,7 +217,6 @@ export const ricercaFascicoloUtente = ai.defineTool(
         if (!uniqueDocsMap.has(doc.id)) uniqueDocsMap.set(doc.id, data);
       });
 
-      // --- MODIFICA: Lavoriamo con le entries per non perdere l'ID del chunk ---
       const combinedEntries = Array.from(uniqueDocsMap.entries());
       if (combinedEntries.length === 0) {
         return [{ messaggio: "Nessun paragrafo rilevante trovato nei documenti. Attendi qualche istante se il file è stato appena caricato." }];
@@ -216,13 +226,11 @@ export const ricercaFascicoloUtente = ai.defineTool(
         .sort((a, b) => ((a[1].index as number) || 0) - ((b[1].index as number) || 0))
         .slice(0, safeLimit);
 
-      // --- NUOVA LOGICA: UPDATE RAG SUI CHUNK ESTRATTI ---
       const extractedIds = slicedDocs.map(([id, _data]) => id);
       await incrementRagCounter("document_chunks", extractedIds);
-      // --------------------------------------------------
 
       return slicedDocs.map(([id, c]) => ({
-        documento_id: c.parentId, // Manteniamo il riferimento al doc genitore come prima
+        documento_id: c.parentId,
         nome_file: c.nome_file || c.titolo || "Documento utente",
         testo_paragrafo: c.text,
         posizione_originale: c.index,
@@ -252,26 +260,32 @@ export const webSearchTool = ai.defineTool(
       const apiKey = process.env.TAVILY_API_KEY;
       if (!apiKey) return [{ error: "TAVILY_API_KEY non configurata." }];
 
+      const userId = options?.context?.userId;
+
       let finalDomains = [...CFG.DOMAINS_ISTITUZIONALE, ...CFG.DOMAINS_EDITORIALE];
       if (input.focus === "istituzionale") finalDomains = [...CFG.DOMAINS_ISTITUZIONALE];
       if (input.focus === "editoriale") finalDomains = [...CFG.DOMAINS_EDITORIALE];
 
-      // 👇 Leggiamo webLimit dal contesto, altrimenti applichiamo il default di 5
       const webLimit = options?.context?.webLimit ?? 5;
+      const limits = { perMinute: 20, perDay: 200 };
 
-      const response = await fetch("https://api.tavily.com/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          api_key: apiKey,
-          query: input.query,
-          search_depth: "basic",
-          include_domains: finalDomains,
-          max_results: webLimit,
-          include_answer: false,
-          include_raw_content: false,
+      const [response] = await Promise.all([
+        fetch("https://api.tavily.com/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            api_key: apiKey,
+            query: input.query,
+            search_depth: "basic",
+            include_domains: finalDomains,
+            max_results: webLimit,
+            include_answer: false,
+            include_raw_content: false,
+          }),
         }),
-      });
+        userId ? consumePerMinuteFeature(userId, "web_search" as any, limits.perMinute) : Promise.resolve(),
+        userId ? consumeDailyFeature(userId, "web_search" as any, limits.perDay) : Promise.resolve()
+      ]);
 
       const data = await response.json() as { results?: Array<{ title: string; url: string; content?: string }> };
       if (!data.results?.length) return [{ messaggio: "Nessun aggiornamento recente trovato." }];
@@ -303,6 +317,9 @@ export const analizzaDistinguishFattispecie = ai.defineTool(
     try {
       const { query } = input;
       const safeLimit = 3;
+      const userId = context?.userId;
+
+      if (!userId) return [{ messaggio: "Errore: userId mancante per il tracciamento della fattispecie." }];
       
       const uiFilters = context?.uiFilters || [];
 
@@ -316,7 +333,13 @@ export const analizzaDistinguishFattispecie = ai.defineTool(
         return q;
       };
 
-      const queryVector = await createEmbedding(query.trim());
+      const limits = { perMinute: 20, perDay: 200 };
+      const [queryVector] = await Promise.all([
+        createEmbedding(query.trim()),
+        consumePerMinuteFeature(userId, "research" as any, limits.perMinute),
+        consumeDailyFeature(userId, "research" as any, limits.perDay)
+      ]);
+
       let baseQuery = applyFilters(db.collection("sentences") as FirebaseFirestore.Query);
 
       const sSnap = await (baseQuery as any)

@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ConfirmModal } from "@/shared/components/ConfirmModal";
 import { HeaderProfile } from "@/features/profile/components/HeaderProfile";
 import type { Action } from "@/interfaces/interfaces";
-import { FiHome, FiSearch, FiDatabase, FiTag, FiUploadCloud, FiEdit3 } from "react-icons/fi";
+import { FiHome, FiSearch, FiDatabase, FiTag, FiUploadCloud, FiEdit3, FiBell } from "react-icons/fi";
 import { navigateItem } from "@/routes/navigation";
 
 // --- COMPONENTI ADMIN ---
@@ -15,6 +15,7 @@ import { AdminMaintenanceSection } from "@/features/admin/components/AdminMainte
 import { AdminTaxonomySection } from "@/features/admin/components/AdminTaxonomySection";
 import FirebaseManual from "@/features/admin/components/FirebaseManual";
 import { AdminFooterLinks } from "@/features/admin/components/AdminFooterLinks";
+import { AdminNotificationsSection } from "@/features/admin/components/AdminNotificationsSection";
 
 import { 
   executeAdminMaintenanceTask, 
@@ -24,7 +25,7 @@ import {
 } from "./hooks/admin"; 
 
 // Tipi per i Tab
-type AdminTab = "upload" | "content" | "taxonomy" | "maintenance";
+type AdminTab = "upload" | "content" | "taxonomy" | "maintenance" | "notifications";
 
 export const Admin: React.FC = () => {
   const navigate = useNavigate();
@@ -123,6 +124,7 @@ export const Admin: React.FC = () => {
     { id: "content", label: "Contenuti & Prompt", icon: <FiEdit3 className="mb-1 text-lg" /> },
     { id: "taxonomy", label: "Tassonomia", icon: <FiTag className="mb-1 text-lg" /> },
     { id: "maintenance", label: "Manutenzione DB", icon: <FiDatabase className="mb-1 text-lg" /> },
+    { id: "notifications", label: "Comunicazioni", icon: <FiBell className="mb-1 text-lg" /> },
   ] as const;
 
   return (
@@ -200,6 +202,9 @@ export const Admin: React.FC = () => {
                     onParamChange={(e) => setMaintenanceParams({ ...maintenanceParams, [e.target.name]: e.target.value })}
                     onMaintenanceSubmit={handleMaintenance}
                   />
+                )}
+                {activeTab === "notifications" && (
+                  <AdminNotificationsSection />
                 )}
               </motion.div>
             ) : null}

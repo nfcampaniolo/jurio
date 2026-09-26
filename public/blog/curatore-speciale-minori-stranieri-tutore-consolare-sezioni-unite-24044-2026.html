@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'wait_for_update': 500
+      });
+    </script>
+    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="869d54bc-6b13-4281-a6ab-489dc313a855" type="text/javascript"></script>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Meta e SEO allineati al contenuto -->
+    <title>Curatore Speciale per Minori Stranieri: Cassazione S.U. 24044/2026 | Jurio</title>
+    <meta name="description" content="Analisi di Cassazione, Sezioni Unite, n. 24044/2026: la competenza per la nomina del curatore speciale di minori stranieri in conflitto col tutore consolare e l'impatto dello status di rifugiato.">
+    <link rel="canonical" href="https://jurio.it/blog/curatore-speciale-minori-stranieri-tutore-consolare-sezioni-unite-24044-2026">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Minori ucraini e conflitto di interessi con il tutore: le Sezioni Unite sulla nomina del curatore speciale">
+    <meta property="og:description" content="L'evoluzione interpretativa sulle misure di protezione per i minori ucraini: dal tutore consolare alla curatela speciale, fino all'incidenza dello status di rifugiato.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://jurio.it/blog/curatore-speciale-minori-stranieri-tutore-consolare-sezioni-unite-24044-2026">
+    <meta property="og:image" content="https://jurio.it/blog/curatore-speciale-minori-stranieri-tutore-consolare-sezioni-unite-24044-2026.webp">
+    
+    <link rel="stylesheet" href="https://jurio.it/styles.css">
+    
+    <style>
+        :root {
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+            --font-serif: "Lora", "Merriweather", Georgia, "Times New Roman", serif;
+            /* Background & testo */
+            --color-bg: #f5f6f7;
+            --color-surface: #ffffff;
+            --color-text: #1a1d21;
+            /* Grigio istituzionale */
+            --color-primary: #e0a32e;
+            --color-primary-hover: #f0b541;
+            /* Neutri */
+            --color-border: #d6d9de;
+            --color-muted: #5f6672;
+            --shadow-soft: 0 6px 14px rgba(0, 0, 0, 0.08);
+            /* Tipografia */
+            --text-base-size: 16px;
+
+            --shadow-soft: 0 14px 45px rgba(42, 34, 24, .07);
+            --shadow-hover: 0 22px 60px rgba(42, 34, 24, .11);
+            --container: 1180px;
+            --radius: 18px;
+            --button-bg: var(--color-text);
+            --button-text: var(--color-bg);
+            --button-bg-hover: var(--color-primary);
+            --container: 1180px;
+            --text-base-size: 16px;
+        }
+
+        * { box-sizing: border-box; }
+
+        /* Tema chiaro/scuro: segue automaticamente la preferenza del sistema. */
+        @media (prefers-color-scheme: dark) {
+            :root {
+            --color-bg: #111111;
+            --color-surface: #1a1a1a;
+            --color-text: #e6e7ea;
+
+            --color-primary: #e0a32e;
+            --color-primary-hover: #f0b541;
+
+            --color-border: #2e2e2e;
+            --color-muted: #a1a7b0;
+
+            --shadow-soft: 0 8px 18px rgba(0, 0, 0, 0.45);
+            }
+
+            .skip-link { background: var(--color-text); color: var(--color-bg); }
+            .header-cta, .button-primary { color: var(--color-bg); background: var(--color-text); }
+            .header-cta:hover { background: #ffffff; }
+            .demo-media { background: #25221f; }
+            .pricing-banner {
+            background: #0f0e0d;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .32);
+            }
+            .pricing-banner p, .pricing-points { color: #d1c8bc; }
+            .pricing-cta .button-primary { color: #181613; background: #f7f1e8; }
+            ::selection { background: rgba(213, 168, 95, .24); }
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            min-width: 320px;
+            background: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--font-sans);
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            line-height: 1.75;
+        }
+        body, button, a { font-family: var(--font-sans); }
+        h1, h2, h3 {
+        font-family: var(--font-serif);
+        }
+        a { color: inherit; }
+        img, video { max-width: 100%; }
+        img { display: block; }
+        button, a { -webkit-tap-highlight-color: transparent; }
+        :focus-visible { outline: 3px solid rgba(154, 107, 37, .55); outline-offset: 4px; }
+        ::selection { background: rgba(154, 107, 37, .18); }
+
+        .skip-link {
+            position: fixed; left: 1rem; top: 1rem; z-index: 1000;
+            transform: translateY(-160%); transition: transform .18s ease;
+            background: var(--color-text); color: #fff; padding: .7rem 1rem;
+            border-radius: 10px; font-weight: 700; text-decoration: none;
+        }
+        .skip-link:focus { transform: translateY(0); }
+
+        .container { width: min(var(--container), calc(100% - 40px)); margin-inline: auto; }
+        .serif { font-family: var(--font-serif); }
+
+        .site-header {
+            position: sticky; top: 0; z-index: 50;
+            background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+            border-bottom: 1px solid var(--color-border);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        .header-inner {
+            min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 2rem;
+        }
+        .brand {
+            font-family: var(--font-serif); font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 700;
+            text-decoration: none; letter-spacing: -.03em;
+        }
+        .nav { display: flex; align-items: center; gap: 1.7rem; }
+        .nav a {
+            text-decoration: none; color: var(--color-muted); font-size: .72rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: .14em; transition: color .18s ease;
+        }
+        .nav a:hover { color: var(--color-text); }
+        .header-cta {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-height: 44px; padding: 0 1.1rem; border-radius: 10px;
+            background: var(--button-bg); color: var(--button-text); text-decoration: none; font-size: .9rem; font-weight: 750;
+            transition: transform .18s ease, background .18s ease;
+        }
+        .header-cta:hover { background: var(--button-bg-hover); transform: translateY(-1px); }
+
+        main { overflow: clip; }
+        .section { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+        .hero { padding: clamp(3.2rem, 6vw, 5.5rem) 0 3.8rem; }
+        .hero-grid {
+            display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+            gap: clamp(2.5rem, 6vw, 5.5rem); align-items: start;
+        }
+        .eyebrow {
+            display: inline-flex; margin-bottom: 1.2rem; color: var(--color-primary);
+            font-size: .72rem; font-weight: 850; text-transform: uppercase; letter-spacing: .18em;
+        }
+        .hero h1 {
+            margin: 0; font-family: var(--font-serif); font-weight: 500; letter-spacing: -.045em;
+            font-size: clamp(3rem, 6vw, 5.4rem); line-height: .98;
+            text-wrap: balance;
+        }
+        .hero h1 em { color: var(--color-primary); font-style: italic; }
+        .hero-lead {
+            margin: 1.5rem 0 0; max-width: 660px; font-size: clamp(1.05rem, 1.5vw, 1.24rem);
+            line-height: 1.75; color: var(--color-text);
+        }
+        .hero-support {
+            margin: 1rem 0 0; max-width: 560px; color: var(--color-muted); font-size: 1rem; line-height: 1.75;
+        }
+        .hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }
+        .button {
+            display: inline-flex; align-items: center; justify-content: center; gap: .6rem;
+            min-height: 48px; padding: 0 1.15rem; border-radius: 10px; text-decoration: none;
+            font-weight: 750; border: 1px solid transparent; transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+        .button-primary { color: var(--button-text); background: var(--button-bg); box-shadow: 0 10px 24px rgba(36,33,29,.08); }
+        .button-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(36,33,29,.12); }
+        .button-secondary { background: var(--color-surface); border-color: var(--color-border); }
+        .button-secondary:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); }
+
+        .demo-card {
+            position: relative; overflow: hidden; border: 1px solid var(--color-border);
+            border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-soft);
+        }
+        .demo-card::before, .accent::before {
+            content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--color-primary);
+        }
+        .demo-media { aspect-ratio: 16 / 10; background: #ece8df; }
+        .demo-media img, .demo-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .section-heading { max-width: 760px; margin: 0 auto 3rem; text-align: center; }
+        .section-heading h2 { margin: 0 0 .9rem; font-family: var(--font-serif); font-weight: 500; letter-spacing: -.035em; font-size: clamp(2.25rem, 4vw, 3.6rem); line-height: 1.05; }
+        .section-heading p { margin: 0 auto; color: var(--color-muted); font-size: 1.05rem; line-height: 1.75; }
+
+        .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; }
+        .step { padding: 2rem; list-style-type: none; border-top: 1px solid var(--color-border); }
+        .step-num { font-size: .72rem; font-weight: 850; letter-spacing: .15em; color: var(--color-primary); }
+        .step h3 { margin: .85rem 0 .65rem; font-family: var(--font-serif); font-size: 1.55rem; line-height: 1.15; }
+        .step p { margin: 0; color: var(--color-muted); line-height: 1.7; }
+
+        .faq { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            border: 1px solid var(--color-border); 
+            border-radius: var(--radius); 
+            overflow: hidden; 
+            background: var(--color-surface); 
+            box-shadow: var(--shadow-soft); 
+        }
+
+        details + details { 
+            border-top: 1px solid var(--color-border); 
+        }
+
+        summary {
+            list-style: none; 
+            cursor: pointer; 
+            padding: 1.35rem 1.5rem; 
+            font-weight: 700;
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 1rem;
+            transition: background-color 0.25s ease;
+        }
+
+        summary::-webkit-details-marker { 
+            display: none; 
+        }
+
+        summary:hover { 
+            background: color-mix(in srgb, var(--color-bg) 55%, transparent); 
+        }
+
+        summary::after {
+            content: ""; 
+            flex: 0 0 auto; 
+            width: 10px; 
+            height: 10px;
+            border-right: 2px solid var(--color-muted);
+            border-bottom: 2px solid var(--color-muted);
+            transform: translateY(-25%) rotate(45deg);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
+        }
+
+        details[open] summary::after { 
+            transform: translateY(25%) rotate(225deg); 
+            border-color: var(--color-text);
+        }
+
+        details > p {
+            margin: 0; 
+            padding: 0 1.5rem; 
+            color: var(--color-muted); 
+            line-height: 1.75;
+            display: block; 
+            max-height: 0; 
+            opacity: 0; 
+            transform: translateY(-10px);
+            transition: max-height 0.3s ease, opacity 0.2s ease, transform 0.2s ease, padding-bottom 0.3s ease;
+        }
+
+        details[open] > p {
+            padding-bottom: 1.35rem;
+            max-height: 20rem;
+            opacity: 1; 
+            transform: translateY(0); 
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                        opacity 0.35s ease 0.05s, 
+                        transform 0.35s ease 0.05s, 
+                        padding-bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cta { padding-top: 1rem; }
+        .cta-box { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2rem; align-items: center; padding: clamp(2rem, 5vw, 4.5rem); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 24px; box-shadow: var(--shadow-soft); }
+        .cta-box h2 { margin: 0; font-family: var(--font-serif); font-size: clamp(2.4rem, 4.6vw, 4.3rem); line-height: 1; letter-spacing: -.045em; font-weight: 500; }
+        .cta-box h2 em { color: var(--color-primary); font-style: italic; }
+        .cta-box p { margin: 1rem 0 0; color: var(--color-muted); max-width: 760px; line-height: 1.75; }
+
+        footer { margin-top: 4rem; padding: 4rem 0 2rem; border-top: 1px solid var(--color-border); background: var(--color-surface); }
+
+        /* --- Visual refresh --- */
+        :root {
+            --ease-smooth: cubic-bezier(.22, 1, .36, 1);
+            --ease-snappy: cubic-bezier(.2, .8, .2, 1);
+        }
+
+        body { overflow-x: hidden; }
+        ::selection { background: rgba(224, 163, 46, .18); color: var(--color-text); }
+
+        .demo-card {
+            transform: translateZ(0);
+            transition: transform .7s var(--ease-smooth), box-shadow .7s var(--ease-smooth);
+            will-change: transform;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .step {
+            position: relative;
+            min-height: 210px;
+            transition: transform .55s var(--ease-smooth), box-shadow .55s var(--ease-smooth), border-color .35s ease;
+        }
+
+        .step::after {
+            content: "";
+            position: absolute;
+            left: 2rem;
+            bottom: 0;
+            width: 38px;
+            height: 1px;
+            background: var(--color-primary);
+            transform: scaleX(.35);
+            transform-origin: left;
+            transition: transform .45s var(--ease-smooth);
+        }
+
+        .step:hover::after {
+            transform: scaleX(1);
+        }
+
+        .step-num {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .step-num::after {
+            content: "";
+            width: 42px;
+            height: 1px;
+            background: currentColor;
+            opacity: .35;
+        }
+
+        summary { position: relative; }
+        summary::before {
+            content: "";
+            position: absolute;
+            left: 1.5rem;
+            bottom: 0;
+            width: 0;
+            height: 1px;
+            background: var(--color-primary);
+            transition: width .45s var(--ease-smooth);
+        }
+        details[open] summary::before { width: calc(100% - 3rem); }
+
+        .cta-box { position: relative; overflow: hidden; transition: transform .55s var(--ease-smooth), box-shadow .55s var(--ease-smooth), border-color .35s ease; }
+        .cta-box::before {
+            content: "";
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            right: -70px;
+            bottom: -150px;
+            border-radius: 50%;
+            border: 1px solid rgba(224, 163, 46, .13);
+            box-shadow: 0 0 0 40px rgba(224, 163, 46, .035);
+            pointer-events: none;
+        }
+
+        /* Scroll reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity .8s var(--ease-smooth), transform .8s var(--ease-smooth);
+            will-change: opacity, transform;
+        }
+        .reveal.reveal-left { transform: translateX(-30px); }
+        .reveal.reveal-right { transform: translateX(30px); }
+        .reveal.is-visible {
+            opacity: 1 !important;
+            transform: none !important;
+        }
+
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            z-index: 200;
+            transform-origin: left;
+            transform: scaleX(0);
+            background: var(--color-primary);
+            pointer-events: none;
+            opacity: .9;
+        }
+
+        .legal-page { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+        .legal-header { max-width: 900px; margin: 0 auto 4.5rem; }
+        .legal-title { font-size: clamp(3rem, 6vw, 5rem); line-height: .98; text-wrap: balance; }
+        .legal-intro { margin: 1.5rem 0 0; max-width: 760px; color: var(--color-muted); font-size: 1.05rem; }
+        .legal-content { max-width: 900px; margin: 0 auto;}
+        .legal-content p {
+            text-align: justify;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
+        }
+        .legal-section { position: relative; padding: 2.8rem 0; border-top: 1px solid var(--color-border); }
+        .legal-section:first-child { padding-top: 0; border-top: 0; }
+        .legal-section h2 { font-size: clamp(1.55rem, 2.5vw, 2rem); font-weight: 600; line-height: 1.15; letter-spacing: -.025em; }
+        .legal-section p { max-width: 780px; margin: 0 0 1rem; }
+
+        .cookie-type-box {
+            padding: 1.5rem;
+            background-color: color-mix(in srgb, var(--color-bg) 50%, transparent);
+            border-left: 3px solid var(--color-primary);
+            border-radius: 12px;
+            border: 1px solid var(--color-border);
+            border-left-width: 4px;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .cookie-type-box h3 { margin: 0 0 0.5rem 0; color: var(--color-primary); font-family: var(--font-sans); font-size: 1.1rem; }
+
+        /* Note e Bibliografia */
+        sup a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 700;
+            padding: 0 0.15rem;
+            transition: color 0.2s ease;
+        }
+        sup a:hover {
+            color: var(--color-primary-hover);
+            text-decoration: underline;
+        }
+        .legal-list { max-width: 780px; margin: 1.2rem 0 0; padding-left: 1.5rem; }
+        .legal-list li { margin-bottom: .65rem; padding-left: .25rem; }
+        .legal-list li::marker { color: var(--color-primary); }
+        .legal-list a {
+            color: var(--color-primary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .legal-list a:hover {
+            text-decoration: underline;
+            color: var(--color-primary-hover);
+        }
+
+        /* Utility per link riservati (Paywall) */
+        .locked-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: var(--color-primary);
+            font-weight: 600;
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 4px;
+            transition: color .18s ease;
+        }
+        .locked-link:hover { color: var(--color-primary-hover); }
+        .locked-link svg { width: 14px; height: 14px; fill: currentColor; }
+
+        @media (max-width: 720px) {
+            .container { width: min(100% - 28px, var(--container)); }
+            .legal-page { padding: 3.5rem 0; }
+            .legal-header { margin-bottom: 2.5rem; }
+            .legal-title { font-size: clamp(2.7rem, 13vw, 3.7rem); }
+            .legal-section { padding: 2rem 0; }
+            .steps { grid-template-columns: 1fr; gap: 0; }
+            .step { min-height: 0; padding: 1.5rem 0 1.7rem; border-top: 1px solid var(--color-border); }
+            .step:first-child { border-top: 0; padding-top: 0; }
+            .cta-box { grid-template-columns: 1fr; gap: 1.5rem; padding: 1.7rem 1.35rem; border-radius: 18px; }
+            .cta-box h2 { font-size: clamp(2.2rem, 10vw, 3.2rem); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+            .scroll-progress { display: none; }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Elementi dinamici necessari agli script -->
+    <div id="scrollProgress" class="scroll-progress"></div>
+    <div id="header"></div>
+
+    <main class="legal-page container">
+        <!-- HEADER ARTICOLO -->
+        <header class="legal-header">
+            <span class="eyebrow">Diritto Internazionale Privato</span>
+            <h1 class="legal-title">Minori ucraini e conflitto di interessi con il tutore: le Sezioni Unite sulla nomina del curatore speciale</h1>
+            <p class="legal-intro serif" style="font-style: italic;">Come il sopravvenuto status di rifugiato disinnesca le misure temporanee straniere e ridisegna i confini della giurisdizione tra autorità consolare e giudice italiano. Un'analisi di Cass., Sez. Un., 26 luglio 2026, n. 24044.</p>
+            
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem; align-items: center; font-size: 0.85rem; color: var(--color-muted); font-weight: 600;">
+                <time datetime="2026-09-25">25 Sett. 2026</time>
+                <span>•</span>
+                <span>Cass., Sez. Un. civ., 26 luglio 2026, n. 24044</span>
+            </div>
+        </header>
+
+        <!-- IMMAGINE PRINCIPALE -->
+        <div class="demo-card" style="margin-bottom: 4.5rem; max-width: 900px; margin-inline: auto;">
+            <div class="demo-media" style="aspect-ratio: 21/9;">
+                <img src="https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&q=85&w=1920" alt="Dettaglio di un martelletto giudiziario su documenti legali, a simboleggiare la giurisdizione e il diritto internazionale" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+        </div>
+
+        <!-- CORPO DELL'ARTICOLO -->
+        <article class="legal-content">
+            
+            <!-- SEZIONE 1 -->
+            <section class="legal-section">
+                <h2>Il problema concreto: l'opposizione al rimpatrio</h2>
+                <p>Nella primavera del 2022, per sfuggire all'escalation militare, un gruppo di minori orfani ucraini è stato trasferito in Italia dalle autorità del Paese d'origine. Per tutelare i minori durante la permanenza all'estero, il Consolato ucraino in Sicilia ha nominato una tutrice internazionale. Tuttavia, il prolungarsi del conflitto ha incrinato l'equilibrio della misura temporanea: nel corso del 2023, a fronte di una richiesta di rimpatrio avanzata dall'Ambasciata ucraina, alcune minori — inserite nel tessuto scolastico italiano e seguite per gravi patologie — si sono opposte al rientro.</p>
+                <p>È in questa frattura che si inserisce il <strong>conflitto di interessi</strong> tra il rappresentante legale (la tutrice consolare orientata al rimpatrio) e le minori. La necessità di dare voce giuridica alle ragazze ha innescato un disallineamento giurisdizionale, culminato nella pronuncia delle <strong>Sezioni Unite civili della Corte di cassazione (sentenza 26 luglio 2026, n. 24044)</strong>. La Corte è stata chiamata a districare due nodi: chi è il giudice competente a nominare un curatore speciale in queste fattispecie e quale peso assuma, sulle misure straniere, la concessione in Italia dello status di rifugiato.</p>
+            </section>
+
+            <!-- SEZIONE 2 -->
+            <section class="legal-section">
+                <h2>Il filo conduttore normativo: tra diritto interno e convenzioni</h2>
+                <p>La soluzione del caso richiede il coordinamento di due livelli normativi apparentemente distanti ma uniti dalla finalità di tutela. Nel diritto interno, l'<strong>art. 360 del codice civile</strong> costituisce la norma di riferimento, attribuendo al giudice tutelare il potere di nominare un curatore speciale qualora sorga un'opposizione di interessi tra il minore e il tutore (o il protutore). A questa si affiancano gli artt. 78 e 80 c.p.c. (oggi affiancati dagli artt. 473-bis.7 e 473-bis.8 c.p.c.), che regolano la medesima esigenza, ma nell'alveo di un procedimento giurisdizionale pendente.</p>
+                <p>Tuttavia, l'elemento di estraneità (minori e tutore stranieri) impone l'applicazione del diritto internazionale privato. Tramite il rinvio mobile dell'art. 42 della L. 218/1995<sup><a href="#note-1" id="ref-1">1</a></sup>, la disciplina applicabile è la <strong>Convenzione dell'Aja del 19 ottobre 1996</strong>. La Convenzione stabilisce regole chiare:</p>
+                <ul class="legal-list">
+                    <li>L'art. 23 impone il <strong>riconoscimento automatico</strong> delle misure di protezione (inclusa la tutela) adottate dalle autorità di uno Stato contraente.</li>
+                    <li>L'art. 5 fissa la competenza generale in capo allo Stato di residenza abituale del minore.</li>
+                    <li>L'art. 6, cruciale in questa vicenda, prevede una deroga per i <strong>minori rifugiati</strong> o internazionalmente sfollati a causa di gravi disordini: in tal caso, la competenza si radica nello Stato in cui il minore si trova.</li>
+                </ul>
+            </section>
+
+            <!-- HIGHLIGHT -->
+            <aside class="cookie-type-box reveal">
+                <h3>Lo spartiacque: l'incidenza dello status di rifugiato</h3>
+                <p style="margin:0; font-size: 0.95rem;">Il 9 maggio 2024 la Commissione territoriale ha riconosciuto alle minori lo <strong>status di rifugiate</strong>. Questo evento non è processualmente neutro. Leggendo l'art. 6 della Convenzione dell'Aja del 1996 in combinato disposto con le direttive europee, le Sezioni Unite hanno statuito un <em>principio di cedevolezza</em>: "La protezione nazionale del Paese di origine attribuita al minore temporaneamente presente in Italia [...] è cedevole ove sopraggiunga la protezione internazionale con l'attribuzione dello status di minori rifugiate, e le misure di protezione nazionale già assunte [...] sono viziate da inefficacia sopravvenuta".</p>
+            </aside>
+
+            <!-- SEZIONE TIMELINE -->
+            <section class="legal-section">
+                <h2>L'evoluzione degli orientamenti: dalla Legge Zampa alle Sezioni Unite</h2>
+                <p>L'approdo delle Sezioni Unite è il risultato di un progressivo assestamento ermeneutico, sviluppatosi in quattro fasi chiave a partire dall'inizio dell'emergenza umanitaria.</p>
+                
+                <div class="steps" style="grid-template-columns: repeat(2, minmax(0,1fr)); gap: 1.5rem; margin-top: 2.5rem;">
+                    
+                    <div class="step reveal">
+                        <span class="step-num">Primavera 2022</span>
+                        <h3>Applicazione della L. Zampa</h3>
+                        <p>Nella fase iniziale, i tribunali minorili applicano rigidamente la L. 47/2017, qualificando i minori ucraini sfollati come "Stranieri Non Accompagnati" (MSNA) e nominando sistematicamente tutori provvisori italiani.</p>
+                    </div>
+
+                    <div class="step reveal">
+                        <span class="step-num">Giugno 2023</span>
+                        <h3>Riconoscimento del tutore consolare</h3>
+                        <p>Con le sentenze 17603 e 17633, la Cassazione afferma il riconoscimento automatico della nomina consolare (art. 23 Conv. 1996), escludendo che i minori provvisti di tutore straniero siano qualificabili come non accompagnati.</p>
+                    </div>
+
+                    <div class="step reveal">
+                        <span class="step-num">Fine 2023 - Inizio 2024</span>
+                        <h3>Il conflitto sul rimpatrio</h3>
+                        <p>Il riconoscimento della nomina consolare sposta il problema sul conflitto di interessi relativo al rimpatrio, generando forte incertezza su quale organo giudiziario interno sia competente a dirimerlo, con conseguente stallo processuale.</p>
+                    </div>
+
+                    <div class="step reveal">
+                        <span class="step-num">Luglio 2026</span>
+                        <h3>Le Sezioni Unite 24044</h3>
+                        <p>La Suprema Corte risolve definitivamente il disallineamento, stabilendo la cedevolezza delle misure straniere in caso di status di rifugiato e fissando l'ordine di competenze a cascata per la nomina del curatore speciale.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEZIONE 3 -->
+            <section class="legal-section">
+                <h2>La "cascata" delle competenze per la nomina del curatore</h2>
+                <p>Esaurita la questione preliminare sostanziale sull'inefficacia sopravvenuta, la Corte ha delineato l'esatto perimetro processuale relativo alla nomina del curatore speciale, configurando un sistema ordinato in tre passaggi:</p>
+                <ol class="legal-list">
+                    <li><strong>Competenza consolare primaria:</strong> In prima battuta, la risoluzione del conflitto spetta all'autorità diplomatica che ha nominato originariamente il tutore.</li>
+                    <li><strong>Competenza sussidiaria del Giudice Tutelare (art. 360 c.c.):</strong> Se il Console non provvede, o se adotta un provvedimento non riconoscibile in Italia ex art. 23 Convenzione dell'Aja (ad esempio, per il <em>mancato ascolto</em> del minore), la competenza trasla sul giudice tutelare del luogo in cui il minore ha i propri interessi in Italia.</li>
+                    <li><strong>Competenza del giudice del procedimento (artt. 78/80 c.p.c.):</strong> Qualora il conflitto sorga in relazione a un procedimento giurisdizionale già pendente o da instaurare (circostanza esclusa nel caso di specie al momento della richiesta al GT), il potere spetta al giudice di quel processo o al capo dell'ufficio.</li>
+                </ol>
+                <p>In via preliminare, le Sezioni Unite hanno altresì chiarito l'<strong>ammissibilità del ricorso straordinario ex art. 111, comma 7, Cost.</strong> avverso il provvedimento di nomina in questione. Pur discostandosi dalla giurisprudenza maggioritaria che nega natura decisoria ai provvedimenti di curatela volontaria<sup><a href="#note-2" id="ref-2">2</a></sup>, la Corte ha ritenuto che in questo specifico scenario il provvedimento definisca un conflitto intersoggettivo con effetti sui poteri di rappresentanza sostanziale (non solo processuale).</p>
+            </section>
+
+            <!-- SEZIONE 4 -->
+            <section class="legal-section">
+                <h2>Conclusioni e questioni aperte</h2>
+                <p>La sentenza n. 24044/2026 consegna agli operatori del diritto uno strumento interpretativo chirurgico. Sostituisce la sovrapposizione caotica delle giurisdizioni con un ordine sequenziale, e introduce la nozione di "inefficacia sopravvenuta" delle misure straniere a fronte del riconoscimento dello status di rifugiato.</p>
+                <p>Tuttavia, il quadro rimane in evoluzione. L'applicazione concreta del principio di sussidiarietà in capo al giudice tutelare dipenderà dalla valutazione caso per caso della "non riconoscibilità" degli atti consolari (es. il difetto di ascolto del minore, parametrato sull'art. 24 della Carta dei diritti fondamentali UE)<sup><a href="#note-3" id="ref-3">3</a></sup>. In assenza di pronunce di merito successive al luglio 2026 che abbiano già declinato questo nuovo schema, il bilanciamento tra cooperazione internazionale e ordine pubblico interno di protezione resterà il vero banco di prova per la giurisprudenza futura.</p>
+            </section>
+
+            <!-- FAQ -->
+            <section class="legal-section">
+                <h2>Domande Frequenti (FAQ)</h2>
+                <div class="faq reveal">
+                    <details>
+                        <summary>Chi è competente a nominare il curatore speciale del minore straniero?</summary>
+                        <p>Secondo le Sezioni Unite (sent. 24044/2026), la competenza spetta in primis al Console straniero. In via sussidiaria, se il Console non provvede o emette un atto non riconoscibile (es. per mancato ascolto), spetta al Giudice Tutelare ex art. 360 c.c. o, se vi è un giudizio in corso, al giudice del procedimento (artt. 78-80 c.p.c.).</p>
+                    </details>
+                    <details>
+                        <summary>Cosa accade se il minore in affidamento temporaneo ottiene lo status di rifugiato?</summary>
+                        <p>Le misure di protezione nazionale straniere — come la nomina di un tutore consolare in vista del successivo rimpatrio nel Paese in guerra — sono colpite da "inefficacia sopravvenuta", poiché incompatibili con la protezione internazionale garantita dallo Stato ospitante (che presuppone proprio il pericolo in caso di rientro).</p>
+                    </details>
+                    <details>
+                        <summary>Il provvedimento di nomina del curatore speciale è impugnabile in Cassazione?</summary>
+                        <p>Generalmente no, essendo un provvedimento revocabile di volontaria giurisdizione. Tuttavia, in casi come questo in cui il provvedimento definisce un vero e proprio conflitto intersoggettivo (tra minore e autorità straniera) su poteri di rappresentanza sostanziale, le Sezioni Unite hanno ritenuto ammissibile il ricorso straordinario ex art. 111, comma 7, Cost.</p>
+                    </details>
+                </div>
+            </section>
+
+            <!-- NOTE E BIBLIOGRAFIA -->
+            <section class="legal-section" id="bibliografia">
+                <h2>Note e Bibliografia</h2>
+                <ol class="legal-list" style="font-size: 0.85rem; color: var(--color-muted);">
+                    <li id="note-1">Come confermato anche da Cass., Sez. Un., 26 giugno 2023, n. 18199, il rinvio ex art. 42 L. 218/1995 alla Convenzione dell'Aja del 1961 si intende esteso, come "rinvio mobile", alla successiva Convenzione del 1996 tra gli Stati che l'hanno ratificata (ratifica italiana L. 101/2015). <a href="#ref-1" aria-label="Torna al testo">↩</a></li>
+                    <li id="note-2">La giurisprudenza consolidata in ambito commerciale e civile generale (es. Cass. n. 38883/2021, n. 12005/2024, n. 34391/2024) nega tipicamente la ricorribilità in Cassazione per assenza di decisorietà. <a href="#ref-2" aria-label="Torna al testo">↩</a></li>
+                    <li id="note-3">La pronuncia richiama a supporto alcune decisioni specifiche relative ai minori (Cass. 17633/2023) o questioni connesse (Cass. 28637/2023; ord. 33944/2024). Parimenti, le funzioni consolari menzionate trovano base nell'art. 50, c. 2, della Convenzione consolare bilaterale Italia-Ucraina (26 dicembre 2016). <a href="#ref-3" aria-label="Torna al testo">↩</a></li>
+                </ol>
+            </section>
+
+        </article>
+        
+        <!-- CTA JURIO FINALE -->
+        <div class="cta-box reveal" style="margin-top: 4rem; max-width: 900px; margin-inline: auto;">
+            <div>
+                <h2>Cerca. <em>Analizza.</em> Scegli.</h2>
+                <p>Ricerca e confronta l'evoluzione giurisprudenziale delle Sezioni Unite direttamente sulle fonti con l'IA di Jurio. Sblocca l'accesso illimitato a tutto il database giurisprudenziale integrato.</p>
+                <div class="hero-actions">
+                    <a href="/prezzi" class="button button-primary">Scopri i piani</a>
+                    <a href="/login" class="button button-secondary">Accedi</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const components = [
+                {
+                    selector: "#header",
+                    file: "/header.html",
+                },
+                {
+                    selector: "#footer",
+                    file: "/footer.html",
+                },
+            ];
+
+            await Promise.all(
+                components.map(async ({ selector, file }) => {
+                    const element = document.querySelector(selector);
+
+                    if (!element) return;
+
+                    try {
+                        const response = await fetch(file);
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+
+                        element.innerHTML = await response.text();
+                    } catch (error) {
+                        console.error(`Errore nel caricamento di ${file}:`, error);
+                    }
+                })
+            );
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const observerOptions = {
+                root: null,
+                rootMargin: "0px",
+                threshold: 0.1,
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("is-visible");
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
+
+            const header = document.querySelector(".site-header");
+
+            window.addEventListener(
+                "scroll",
+                () => {
+                    if (!header) return;
+
+                    if (window.scrollY > 20) {
+                        header.classList.add("is-scrolled");
+                    } else {
+                        header.classList.remove("is-scrolled");
+                    }
+                },
+                { passive: true }
+            );
+        });
+    </script>
+    <!-- SCRIPT PER REVEAL & SCROLL PROGRESS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const reveals = document.querySelectorAll('.reveal');
+            
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, {
+                    threshold: 0.1,
+                    rootMargin: '0px 0px -40px 0px'
+                });
+
+                reveals.forEach(el => observer.observe(el));
+            } else {
+                reveals.forEach(el => el.classList.add('is-visible'));
+            }
+
+            const progressBar = document.getElementById('scrollProgress');
+            if (progressBar) {
+                window.addEventListener('scroll', () => {
+                    const total = document.documentElement.scrollHeight - window.innerHeight;
+                    if (total > 0) {
+                        const progress = window.scrollY / total;
+                        progressBar.style.transform = `scaleX(${progress})`;
+                    }
+                }, { passive: true });
+            }
+        });
+    </script>
+
+    <!-- DATI STRUTTURATI SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Minori ucraini e conflitto di interessi con il tutore: le Sezioni Unite sulla nomina del curatore speciale",
+      "image": "https://jurio.it/blog/curatore-speciale-minori-stranieri-tutore-consolare-sezioni-unite-24044-2026.webp",
+      "author": {
+        "@type": "Organization",
+        "name": "Redazione Jurio"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Jurio",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://jurio.it/logo.webp"
+        }
+      },
+      "datePublished": "2026-09-25T09:00:00+02:00",
+      "dateModified": "2026-09-25T09:00:00+02:00",
+      "description": "Analisi di Cassazione, Sezioni Unite, n. 24044/2026: la competenza per la nomina del curatore speciale di minori stranieri in conflitto col tutore consolare e l'impatto dello status di rifugiato.",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://jurio.it/blog/curatore-speciale-minori-stranieri-tutore-consolare-sezioni-unite-24044-2026"
+      }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "Chi è competente a nominare il curatore speciale del minore straniero?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Secondo le Sezioni Unite (sent. 24044/2026), la competenza spetta in primis al Console straniero. In via sussidiaria, se il Console non provvede o emette un atto non riconoscibile (es. per mancato ascolto), spetta al Giudice Tutelare ex art. 360 c.c. o, se vi è un giudizio in corso, al giudice del procedimento (artt. 78-80 c.p.c.)."
+        }
+      }, {
+        "@type": "Question",
+        "name": "Cosa accade se il minore in affidamento temporaneo ottiene lo status di rifugiato?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Le misure di protezione nazionale straniere — come la nomina di un tutore consolare in vista del successivo rimpatrio nel Paese in guerra — sono colpite da 'inefficacia sopravvenuta', poiché incompatibili con la protezione internazionale garantita dallo Stato ospitante (che presuppone proprio il pericolo in caso di rientro)."
+        }
+      }, {
+        "@type": "Question",
+        "name": "Il provvedimento di nomina del curatore speciale è impugnabile in Cassazione?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Generalmente no, essendo un provvedimento revocabile di volontaria giurisdizione. Tuttavia, in casi come questo in cui il provvedimento definisce un vero e proprio conflitto intersoggettivo (tra minore e autorità straniera) su poteri di rappresentanza sostanziale, le Sezioni Unite hanno ritenuto ammissibile il ricorso straordinario ex art. 111, comma 7, Cost."
+        }
+      }]
+    }
+    </script>
+</body>
+</html>

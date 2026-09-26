@@ -14,7 +14,7 @@
     </script>
   <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="869d54bc-6b13-4281-a6ab-489dc313a855"  type="text/javascript"></script>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="application-name" content="Jurio">
   <meta name="theme-color" content="#f7f5f1" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#171614" media="(prefers-color-scheme: dark)">
@@ -57,6 +57,185 @@
     "inLanguage":"it-IT"
   }
   </script>
+
+  <style>
+    /* Custom Styles for Interactive Demo */
+    #interactive-demo {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background: radial-gradient(circle at center, #262420 0%, #171614 100%);
+      overflow: hidden;
+      cursor: none;
+      border-radius: 0; /* Bordo squadrato */
+      box-shadow: inset 0 0 60px rgba(0,0,0,0.6);
+      border: 1px solid rgba(226, 185, 111, 0.15);
+    }
+
+    .demo-card {
+      border-radius: 0 !important;
+    }
+
+    /* Grid background */
+    #interactive-demo::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image: 
+        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .doc-mockup {
+      position: absolute;
+      width: 120px;
+      height: 160px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 0; /* Bordo squadrato */
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      backdrop-filter: blur(8px);
+      transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      cursor: none;
+    }
+
+    .doc-mockup.scanning {
+      background: rgba(226, 185, 111, 0.08);
+      border-color: rgba(226, 185, 111, 0.6);
+      box-shadow: 0 15px 40px rgba(226, 185, 111, 0.15), 0 0 20px rgba(226, 185, 111, 0.1);
+      transform: scale(1.05) translateY(-5px) !important;
+      z-index: 10;
+    }
+
+    .doc-mockup .doc-line {
+      height: 4px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 0; /* Linee squadrate */
+      width: 100%;
+      transition: background 0.3s ease;
+    }
+
+    .doc-mockup .doc-line.title {
+      height: 8px;
+      width: 60%;
+      margin-bottom: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 0;
+    }
+
+    .doc-mockup .doc-line.short { width: 40%; }
+    .doc-mockup .doc-line.med { width: 80%; }
+
+    .doc-mockup.scanning .doc-line {
+      background: rgba(226, 185, 111, 0.35);
+    }
+    .doc-mockup.scanning .doc-line.title {
+      background: rgba(226, 185, 111, 0.7);
+    }
+
+    .crosshair-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 80px;
+      height: 80px;
+      pointer-events: none;
+      z-index: 50;
+      will-change: transform;
+    }
+
+    .crosshair {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .crosshair.scanning {
+      transform: scale(0.8) rotate(45deg);
+    }
+
+    .crosshair-j {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #fff;
+      font-size: 28px;
+      font-family: var(--font-serif, "Lora", serif);
+      font-weight: 600;
+      letter-spacing: -.04em;
+      text-shadow: 0 0 10px rgba(255,255,255,0.3);
+      transition: all 0.3s ease;
+    }
+
+    .crosshair.scanning .crosshair-j {
+      color: #e2b96f;
+      text-shadow: 0 0 15px rgba(226, 185, 111, 0.6);
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+
+    .bracket {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      transition: all 0.3s ease;
+    }
+
+    .crosshair.scanning .bracket {
+      border-color: #e2b96f;
+    }
+
+    .bracket-tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+    .bracket-tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+    .bracket-bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+    .bracket-br { bottom: 0; right: 0; border-left: none; border-top: none; }
+
+    .scanner-line-fx {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 120px;
+      height: 2px;
+      background: #e2b96f;
+      box-shadow: 0 0 10px #e2b96f;
+      opacity: 0;
+      transform: translate(-50%, -50%) rotate(-45deg);
+      transition: opacity 0.3s ease;
+    }
+
+    .crosshair.scanning .scanner-line-fx {
+      opacity: 1;
+      animation: scan-anim 1.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes scan-anim {
+      0% { transform: translate(-50%, -50%) rotate(-45deg) translateY(-35px); }
+      100% { transform: translate(-50%, -50%) rotate(-45deg) translateY(35px); }
+    }
+    
+    @media (max-width: 768px) {
+      #interactive-demo {
+        cursor: default;
+        aspect-ratio: 4 / 3;
+      }
+      .crosshair-container {
+        display: block; /* Mantiene visibile il mirino in auto-patrol */
+      }
+      .doc-mockup {
+        width: 95px;
+        height: 130px;
+        padding: 10px;
+      }
+    }
+  </style>
 </head>
 <body>
   <a class="skip-link" href="#contenuto">Salta al contenuto</a>
@@ -95,28 +274,51 @@
     </div>
 
     <div>
-      <div class="demo-card reveal reveal-scale" aria-label="Anteprima della piattaforma Jurio">
-        <div class="demo-media">
-          <video
-            class="demo-video"
-            width="1280"
-            height="800"
-            autoplay
-            muted
-            loop
-            playsinline
-            preload="metadata"
-            poster="/demo.webp"
-            aria-label="Demo della piattaforma Jurio per la ricerca giuridica"
-          >
-            <source src="/demo.mp4" type="video/mp4">
-            <img
-              src="/demo.webp"
-              width="1280"
-              height="800"
-              alt="Anteprima dell'interfaccia Jurio per la ricerca giuridica"
-            >
-          </video>
+      <div class="demo-card reveal reveal-scale" aria-label="Anteprima interattiva della piattaforma Jurio">
+        <div class="demo-media" id="interactive-demo">
+          
+          <!-- Abstract Legal Documents -->
+          <div class="doc-mockup" style="top: 15%; left: 15%; transform: rotate(-6deg);">
+            <div class="doc-line title"></div>
+            <div class="doc-line"></div>
+            <div class="doc-line"></div>
+            <div class="doc-line short"></div>
+            <div class="doc-line med" style="margin-top: 12px;"></div>
+            <div class="doc-line"></div>
+            <div class="doc-line short"></div>
+          </div>
+          
+          <div class="doc-mockup" style="top: 40%; right: 10%; transform: rotate(8deg);">
+            <div class="doc-line title"></div>
+            <div class="doc-line"></div>
+            <div class="doc-line med"></div>
+            <div class="doc-line"></div>
+            <div class="doc-line short" style="margin-top: 12px;"></div>
+            <div class="doc-line"></div>
+          </div>
+
+          <div class="doc-mockup" style="bottom: 10%; left: 40%; transform: rotate(-2deg);">
+            <div class="doc-line title"></div>
+            <div class="doc-line med"></div>
+            <div class="doc-line"></div>
+            <div class="doc-line short"></div>
+            <div class="doc-line"></div>
+            <div class="doc-line"></div>
+            <div class="doc-line med"></div>
+          </div>
+
+          <!-- Targeting Crosshair -->
+          <div class="crosshair-container" id="crosshair-tracker">
+            <div class="crosshair" id="crosshair-ui">
+              <div class="bracket bracket-tl"></div>
+              <div class="bracket bracket-tr"></div>
+              <div class="bracket bracket-bl"></div>
+              <div class="bracket bracket-br"></div>
+              <div class="crosshair-j">J</div>
+              <div class="scanner-line-fx"></div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -771,6 +973,131 @@
       window.addEventListener('scroll', updateScrollUI, { passive: true });
       window.addEventListener('resize', updateScrollUI, { passive: true });
     })();
+  </script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const demoContainer = document.getElementById('interactive-demo');
+      const tracker = document.getElementById('crosshair-tracker');
+      const ui = document.getElementById('crosshair-ui');
+      const mockups = Array.from(document.querySelectorAll('.doc-mockup'));
+
+      if (!demoContainer || !tracker || !ui || mockups.length === 0) return;
+
+      const isTouchOrMobile = () => {
+        return window.matchMedia("(hover: none)").matches || window.innerWidth <= 768;
+      };
+
+      let currentX = demoContainer.clientWidth / 2;
+      let currentY = demoContainer.clientHeight / 2;
+      let targetX = currentX;
+      let targetY = currentY;
+
+      // --- AUTONOMOUS MOBILE / TOUCH LOOP ---
+      let autoTargetIndex = 0;
+      let isDwelling = false;
+
+      const getDocCenter = (el) => {
+        return {
+          x: el.offsetLeft + el.offsetWidth / 2,
+          y: el.offsetTop + el.offsetHeight / 2
+        };
+      };
+
+      const setAutoTarget = (index) => {
+        const doc = mockups[index];
+        if (!doc) return;
+        const center = getDocCenter(doc);
+        targetX = center.x;
+        targetY = center.y;
+      };
+
+      const advanceAutoPatrol = () => {
+        isDwelling = false;
+        ui.classList.remove('scanning');
+        mockups.forEach(m => m.classList.remove('scanning'));
+
+        autoTargetIndex = (autoTargetIndex + 1) % mockups.length;
+        setAutoTarget(autoTargetIndex);
+      };
+
+      // Inizializza target mobile
+      if (isTouchOrMobile()) {
+        setAutoTarget(0);
+      }
+
+      // --- DESKTOP MOUSE EVENTS ---
+      let isInside = false;
+
+      demoContainer.addEventListener('mousemove', (e) => {
+        if (isTouchOrMobile()) return;
+        const rect = demoContainer.getBoundingClientRect();
+        targetX = e.clientX - rect.left;
+        targetY = e.clientY - rect.top;
+        isInside = true;
+      });
+
+      demoContainer.addEventListener('mouseleave', () => {
+        if (isTouchOrMobile()) return;
+        isInside = false;
+      });
+
+      demoContainer.addEventListener('mouseenter', () => {
+        if (isTouchOrMobile()) return;
+        isInside = true;
+      });
+
+      mockups.forEach((doc) => {
+        doc.addEventListener('mouseenter', () => {
+          if (isTouchOrMobile()) return;
+          ui.classList.add('scanning');
+          doc.classList.add('scanning');
+        });
+
+        doc.addEventListener('mouseleave', () => {
+          if (isTouchOrMobile()) return;
+          ui.classList.remove('scanning');
+          doc.classList.remove('scanning');
+        });
+      });
+
+      window.addEventListener('resize', () => {
+        if (isTouchOrMobile() && !isDwelling) {
+          setAutoTarget(autoTargetIndex);
+        }
+      });
+
+      // --- MAIN ANIMATION LOOP ---
+      const updateFrame = () => {
+        const onMobile = isTouchOrMobile();
+        const lerpFactor = onMobile ? 0.045 : 0.15; // Movimento più fluido e cadenzato su mobile
+
+        currentX += (targetX - currentX) * lerpFactor;
+        currentY += (targetY - currentY) * lerpFactor;
+
+        tracker.style.transform = `translate(calc(${currentX}px - 50%), calc(${currentY}px - 50%))`;
+
+        // Logica waypoint mobile
+        if (onMobile && !isDwelling) {
+          const dist = Math.hypot(targetX - currentX, targetY - currentY);
+          if (dist < 6) {
+            // Agganciato al documento: avvia scansione per 1.8 secondi
+            isDwelling = true;
+            const currentDoc = mockups[autoTargetIndex];
+            ui.classList.add('scanning');
+            if (currentDoc) currentDoc.classList.add('scanning');
+
+            setTimeout(() => {
+              advanceAutoPatrol();
+            }, 1800);
+          }
+        }
+
+        requestAnimationFrame(updateFrame);
+      };
+
+      requestAnimationFrame(updateFrame);
+    });
   </script>
 
 </body>

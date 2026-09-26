@@ -1,6 +1,7 @@
 // src/features/deep-analysis/components/AnalysisPromptSection.tsx
 import React, { useRef, useEffect, useState } from "react";
 import { Mic, MicOff } from "lucide-react";
+import { PromptEnhancer } from "@/shared/components/PromptEnhancer"; 
 import type {
   SpeechRecognitionEvent,
   SpeechRecognitionErrorEvent
@@ -109,20 +110,32 @@ export const AnalysisPromptSection: React.FC<AnalysisPromptSectionProps> = ({
           Istruzioni di Analisi
         </h3>
 
-        <button
-          type="button"
-          onClick={toggleListening}
-          disabled={isProcessing}
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest transition cursor-pointer outline-none ${
-            isListening 
-              ? "bg-red-500 text-white animate-pulse shadow-sm" 
-              : "bg-(--color-bg) border border-(--color-border) text-(--color-muted) hover:text-(--color-text)"
-          }`}
-          title={isListening ? "Ferma registrazione" : "Avvia dettatura vocale"}
-        >
-          {isListening ? <MicOff size={13} /> : <Mic size={13} />}
-          <span>{isListening ? "Ascoltando..." : "Detta"}</span>
-        </button>
+        {/* CONTENITORE AZIONI (Enhancer + Mic) */}
+        <div className="flex items-center gap-2">
+          
+          <PromptEnhancer 
+            inputValue={prompt}
+            setInputValue={setPrompt}
+            type="approfondimento"
+            disabled={isProcessing || isListening} 
+          />
+
+          <button
+            type="button"
+            onClick={toggleListening}
+            disabled={isProcessing}
+            className={`flex items-center gap-1.5 px-3 py-1.5 h-10 rounded-md text-[10px] font-bold uppercase tracking-widest transition cursor-pointer outline-none ${
+              isListening 
+                ? "bg-red-500 text-white animate-pulse shadow-sm" 
+                : "bg-(--color-bg) border border-(--color-border) text-(--color-muted) hover:text-(--color-text)"
+            }`}
+            title={isListening ? "Ferma registrazione" : "Avvia dettatura vocale"}
+          >
+            {isListening ? <MicOff size={14} /> : <Mic size={14} />}
+            <span className="hidden sm:inline">{isListening ? "Ascoltando..." : "Detta"}</span>
+          </button>
+
+        </div>
       </div>
       
       <textarea

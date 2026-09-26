@@ -3,14 +3,14 @@ import { setGlobalOptions } from "firebase-functions/v2/options";
 import { Timestamp, FieldValue, Query, WriteBatch } from "firebase-admin/firestore";
 import { getAdmin, getDb, getAdminAuth, getAdminStorage, sanitize } from "./deps";
 import { MAX_INPUT_CHARS, PROMPT_MASSIMAZIONE, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, PlanDoc, getStripe, getWebhookSecret,normalizePlanId, handleEmbeddingCreation, handleEmbeddingDocumentCreation, handleFascicoloCreation, handleEmbeddingManualCreation, DeepAnalysisRequestBody, DeepAnalysisConfig, DEFAULT_CONFIG } from "./params";
-import { enqueueWelcomeEmail, enqueueTrialEmail, queuePurchaseEmailOnceStripe, enqueueDowngradeEmail, enqueueContactEmail, enqueueVoucherEmail, enqueueWelcomeTeamEmail, enqueueRemoveTeamEmail, enqueueCloseTeamEmail } from "./email";
+import { enqueueWelcomeEmail, enqueueTrialEmail, queuePurchaseEmailOnceStripe, enqueueDowngradeEmail, enqueueContactEmail, enqueueVoucherEmail, enqueueWelcomeTeamEmail, enqueueRemoveTeamEmail, enqueueCloseTeamEmail, dispatchMailAndNotification } from "./email";
 import { corsHandlerDomain, requireAppCheck, requireUidFromAuthHeader, consumePerMinuteFeature, consumeDailyFeature, getKeywordStems, calculateMatchScore, applyHighlightWithRegex, generateHighlightRegex, runUpdateFonte, runUpdateMetadata, runCleanupDuplicates, processFascicoloDocs, processSubscriptionInTx, tryScheduleDowngradeTask, updateUserDocuments, removeUserVisibilityFromDocuments, incrementRagCounter} from "./utils";
 import { scheduleDowngradeTask, DowngradeTxResult, computeAndSaveWeeklyStats, computeAndSaveMonthlyUsage } from "./tasks";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import { SpeechClient } from "@google-cloud/speech";
-import { legalAgentFlow, legalAgentSupport, legalGeminiFallbackFlow, reasoningFlow, estraiMetadatiFlow, wordQuoteFlow, wordReviewFlow, promptBuilderFlow, researchAnalysisFlow, refineResearchFlow, generateSynthesisReportFlow } from './genkit/flows';
+import { legalAgentFlow, legalAgentSupport, legalGeminiFallbackFlow, reasoningFlow, estraiMetadatiFlow, wordQuoteFlow, wordReviewFlow, promptBuilderFlow, researchAnalysisFlow, refineResearchFlow, generateSynthesisReportFlow, enhancePromptFlow } from './genkit/flows';
 import { onSchedule } from "firebase-functions/v2/scheduler"; 
 // @ts-ignore
 import pdfExtract from "pdf-extraction";
@@ -58,7 +58,7 @@ app.use((req, res, next) => {
 app.get(["/.well-known/mcp/server-card", "/.well-known/mcp/server-card/"], (req, res) => {
   res.status(200).json({
     name: "Jurio MCP Server",
-    version: "1.0.0",
+    version: "1.0.4",
     description: "Server MCP per la ricerca nella giurisprudenza italiana",
   });
 });
@@ -290,7 +290,7 @@ export const vectorSearchJurio = onRequest(
           return res.status(401).json({ error: "Unauthorized: Access denied" });
         }
         
-        const limits = { perMinute: 20, perDay: 100 };
+        const limits = { perMinute: 20, perDay: 200 };
          
         const [embeddingPromiseResult, userSnap] = await Promise.all([
           oaClient.embeddings.create({
@@ -1579,6 +1579,80 @@ export const promptAgent = onRequest(
   }
 );
 
+export const enhancePromptAgent = onRequest(
+  { 
+    secrets: ["GOOGLE_GENAI_API_KEY"],
+    timeoutSeconds: 60,
+    memory: "512MiB"
+  }, 
+  async (req, res) => {
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // Gestione preflight (OPTIONS) e metodo (POST)
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+
+      try {
+        await requireAppCheck(req);
+        const uid = await requireUidFromAuthHeader(req);
+        const db = admin.firestore();
+        
+        // Controllo limitazioni/piani
+        const userSnap = await db.collection("register").doc(uid).get();
+        if (!userSnap.exists) { 
+          res.status(404).json({ error: "User not found" }); 
+          return; 
+        }
+
+        const planId = String(userSnap.data()?.planId ?? "");
+        if (!["prova", "admin", "business", "business_m"].includes(planId)) { 
+          res.status(403).json({ error: "Access denied" }); 
+          return; 
+        }
+
+        const limits = { perMinute: 5, perDay: 20 };
+        // Consumiamo le API, chiamiamo la feature "prompt_enhancer" per distinguerla a DB
+        await Promise.all([
+          consumePerMinuteFeature(uid, "prompt_enhancer" as any, limits.perMinute),
+          consumeDailyFeature(uid, "prompt_enhancer" as any, limits.perDay)
+        ]);
+
+        const { prompt, type, history } = req.body;
+
+        // Validazione
+        if (!prompt || typeof prompt !== "string") {
+          res.status(400).json({ error: "Bad Request: Prompt mancante o invalido." });
+          return;
+        }
+
+        if (type !== "chat" && type !== "approfondimento") {
+          res.status(400).json({ error: "Bad Request: Tipo di ottimizzazione non valido." });
+          return;
+        }
+
+        // Chiamata al Genkit Flow
+        const output = await enhancePromptFlow({
+          prompt,
+          type,
+          history
+        });
+        
+        // Risposta JSON diretta al Frontend
+        res.status(200).json({ 
+          enhancedPrompt: output.enhancedPrompt 
+        });
+
+      } catch (err: any) {
+        console.error("🔥 ERRORE PROMPT ENHANCER AGENT:", err);
+        // Risposta di errore standard JSON
+        res.status(500).json({ 
+          error: "Process failed", 
+          details: err.message || "Errore sconosciuto" 
+        });
+      }
+    });
+  }
+);
+
 // ============================================================================
 // ADMIN TASKS
 // ============================================================================
@@ -2047,6 +2121,144 @@ export const submitFeedback = onRequest(
   }
 );
 
+export const sendAdminNotification = onRequest(
+  { timeoutSeconds: 300, memory: "1GiB" },
+  (req, res) => {
+    return corsHandlerDomain(req, res, async () => {
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+
+      try {
+        // --- 1. SICUREZZA: APP CHECK E AUTH HEADER ---
+        await requireAppCheck(req);
+        const adminUid = await requireUidFromAuthHeader(req);
+
+        // --- 2. VERIFICA RUOLO NEL DATABASE (SOLO ADMIN) ---
+        const userSnap = await db.collection("register").doc(adminUid).get();
+        if (!userSnap.exists || String(userSnap.data()?.planId ?? "") !== "admin") { 
+          res.status(403).json({ error: "Access denied: Admins only" }); 
+          return; 
+        }
+
+        // --- 3. RATE LIMITING ---
+        const limits = { perMinute: 20, perDay: 500 };
+        await Promise.all([
+          consumePerMinuteFeature(adminUid, "admin_notif" as any, limits.perMinute),
+          consumeDailyFeature(adminUid, "admin_notif" as any, limits.perDay)
+        ]);
+
+        const {
+          targetMode,
+          consentFilter,
+          uid,
+          sendInApp,
+          sendEmail,
+          title,
+          message,
+          emailHtml,
+          link,
+          type
+        } = req.body;
+
+        let targetEmails: string[] = [];
+        let targetUids: string[] = [];
+        let useGlobalBroadcast = false;
+
+        // --- 4. IDENTIFICAZIONE DESTINATARI (COLLECTION "users") ---
+        if (targetMode === "single") {
+          if (!uid) throw new Error("UID mancante per target singolo");
+          targetUids.push(uid);
+          
+          if (sendEmail) {
+            const uDoc = await db.collection("users").doc(uid).get();
+            if (uDoc.exists && uDoc.data()?.email) {
+              targetEmails.push(uDoc.data()!.email);
+            }
+          }
+        } else if (targetMode === "broadcast") {
+          let usersQuery: FirebaseFirestore.Query = db.collection("users");
+          
+          if (consentFilter === "comms") {
+            usersQuery = usersQuery.where("consents.comms", "==", true);
+          } else if (consentFilter === "marketing") {
+            usersQuery = usersQuery.where("consents.marketing", "==", true);
+          } else {
+            useGlobalBroadcast = true;
+          }
+
+          const usersSnap = await usersQuery.get();
+          usersSnap.forEach(doc => {
+            const data = doc.data();
+            targetUids.push(doc.id);
+            if (sendEmail && data.email) {
+              targetEmails.push(data.email);
+            }
+          });
+        }
+
+        // --- 5. ESECUZIONE SCRITTURE ---
+        
+        // CASO SPECIALE: Ottimizzazione Broadcast Globale per In-App
+        if (sendInApp && useGlobalBroadcast && targetMode === "broadcast") {
+          await db.collection("broadcast").add({
+            title,
+            message,
+            type: type || "info",
+            link: link || "",
+            createdAt: FieldValue.serverTimestamp(),
+          });
+          // Svuotiamo gli UID per evitare di creare N documenti inutili in "notification"
+          targetUids = []; 
+        }
+
+        // Gestione a CHUNK (max 300 per non superare il limite di 500 batch ops in dispatchMailAndNotification)
+        const CHUNK_SIZE = 300; 
+        const maxLen = Math.max(targetEmails.length, targetUids.length);
+
+        for (let i = 0; i < maxLen; i += CHUNK_SIZE) {
+          const chunkEmails = targetEmails.slice(i, i + CHUNK_SIZE);
+          const chunkUids = targetUids.slice(i, i + CHUNK_SIZE);
+
+          // Prepariamo l'array di notifiche per il metodo custom
+          const notifications = sendInApp && chunkUids.length > 0
+            ? chunkUids.map(u => ({
+                uid: u,
+                title,
+                message,
+                type: type || "info",
+                link: link || "",
+              }))
+            : undefined;
+
+          // Se è una sola email la mettiamo in "to", altrimenti in "bcc"
+          const toAddress = sendEmail && chunkEmails.length === 1 ? chunkEmails[0] : undefined;
+          const bccAddresses = sendEmail && chunkEmails.length > 1 ? chunkEmails : undefined;
+
+          // Richiamiamo il tuo metodo
+          await dispatchMailAndNotification({
+            to: toAddress,
+            bcc: bccAddresses,
+            subject: title,
+            html: sendEmail ? emailHtml : undefined,
+            notifications: notifications,
+          });
+        }
+
+        res.status(200).json({ 
+          success: true, 
+          message: `Elaborazione completata. Destinatari identificati: ${Math.max(targetEmails.length, targetUids.length)}.` 
+        });
+
+      } catch (err: any) {
+        console.error("Errore Invio Notifiche Admin:", err);
+        const msg = err instanceof Error ? err.message : "Errore interno";
+        const status = (msg === "rate_limited" || msg === "quota_exceeded") ? 429 : 500;
+        res.status(status).json({ success: false, error: msg });
+      }
+    });
+  }
+);
+
 // ============================================================================
 // EMBEDDING FUNCTIONS
 // ============================================================================
@@ -2114,9 +2326,6 @@ export const extractDocumentText = onRequest(
       if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
 
       try {
-        await requireAppCheck(req);
-        const uid = await requireUidFromAuthHeader(req);
-
         const { storagePath } = req.body;
         
         if (!storagePath || typeof storagePath !== 'string') {
@@ -2124,12 +2333,75 @@ export const extractDocumentText = onRequest(
           return;
         }
 
-        // Controllo di sicurezza
+        // --- 1. LOGICA AUTH CONDIVISA ---
+        let uid: string = "";
+        const authHeader = req.headers.authorization || "";
+        const token = authHeader.replace("Bearer ", "").trim();
+        let isOAuthRequest = false;
+
+        if (token) {
+          const [tokenSnap, directUserSnap] = await Promise.all([
+            db.collection("oauth_tokens").doc(token).get(),
+            db.collection("register").doc(token).get()
+          ]);
+
+          if (tokenSnap.exists) {
+            uid = tokenSnap.data()?.uid;
+            isOAuthRequest = true;
+          } else if (directUserSnap.exists) {
+            uid = token;
+            isOAuthRequest = true;
+          }
+        }
+
+        if (!isOAuthRequest || !uid) {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        }
+
         if (!uid) {
-          res.status(403).json({ error: "Accesso negato a questo documento." });
+          res.status(401).json({ error: "Unauthorized: Access denied" });
           return;
         }
 
+        // --- 2. VERIFICA PIANO E LIMITI (Come vectorSearchJurio) ---
+        const limits = { perMinute: 20, perDay: 200 };
+        let userSnap;
+        
+        try {
+          // Scala le quote usando la stessa feature "research" e ottiene i dati utente
+          const results = await Promise.all([
+            db.collection("register").doc(uid).get(),
+            consumePerMinuteFeature(uid, "research" as any, limits.perMinute),
+            consumeDailyFeature(uid, "research" as any, limits.perDay)
+          ]);
+          userSnap = results[0];
+        } catch (limitErr: any) {
+          console.warn(`[JURIO-EXTRACT] Limite raggiunto per UID: ${uid}`);
+          res.status(429).json({ error: "Hai raggiunto il limite massimo di richieste." });
+          return;
+        }
+
+        if (!userSnap.exists) {
+          res.status(404).json({ error: "User not found" });
+          return;
+        }
+
+        const planId = String(userSnap.data()?.planId ?? "");
+        const allowedPlans = new Set([
+          "prova", "admin", "business", "personale", "business_m", "personale_m",
+        ]);
+
+        if (!allowedPlans.has(planId)) {
+          res.status(403).json({ 
+            error: "Access denied", 
+            message: "È richiesto un piano attivo per utilizzare l'estrazione." 
+          });
+          return;
+        }
+        // --- FINE VERIFICA PIANO E LIMITI ---
+
+        // --- 3. ESTRAZIONE DOCUMENTO ---
         const admin = getAdmin();
         const bucket = admin.storage().bucket();
         const file = bucket.file(storagePath);
@@ -2140,21 +2412,13 @@ export const extractDocumentText = onRequest(
           return;
         }
 
-        // Scarica il buffer in memoria
         const [buffer] = await file.download();
-
         const pdfData = await pdfExtract(buffer);
-
         let cleanedText = pdfData.text || "";
 
-        // 🧹 PULIZIA AVANZATA DEL TESTO
         cleanedText = cleanedText
-          // Sostituisce i ritorni a capo singoli (ma mantiene i paragrafi doppi)
-          // Molti PDF mettono un \n a fine riga anche se la frase continua.
           .replace(/([^\n])\n(?=[^\n])/g, "$1 ")
-          // Rimuove spazi multipli consecutivi
           .replace(/[ \t]+/g, " ")
-          // Rimuove linee vuote eccessive (più di due)
           .replace(/\n\s*\n\s*\n/g, "\n\n")
           .trim();
 

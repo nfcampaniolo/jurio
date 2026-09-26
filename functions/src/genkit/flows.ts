@@ -64,23 +64,18 @@ export const legalAgentFlow = ai.defineFlow(
     try {
       if (!skipTurn1) {
         
-        // --- INIEZIONE DI RIGIDITÀ PER IL TRIAGE (TURNO 1) ---
         const turn1Messages = JSON.parse(JSON.stringify(messages));
         const regolaTassativa = "REGOLA TASSATIVA DI ORCHESTRAZIONE: Se l'utente nomina o fa riferimento a una legge, una norma, un articolo di legge, una prassi (es. Agenzia Entrate, INPS, prassi bancaria, ecc.) o un qualsiasi testo normativo, DEVI OBBLIGATORIAMENTE invocare il tool 'webSearchTool'. È severamente vietato rispondere attingendo solo alla tua memoria interna per questi argomenti.";
 
         if (turn1Messages.length > 0 && turn1Messages[0].role === "system") {
-          // Se esiste già un system prompt, appendiamo la regola al testo esistente
           turn1Messages[0].content[0].text += `\n\n${regolaTassativa}`;
         } else {
-          // Se non esiste, lo creiamo ex novo in prima posizione
           turn1Messages.unshift({
             role: "system",
             content: [{ text: regolaTassativa }]
           });
         }
-        // ----------------------------------------------------
 
-        // --- TURNO 1: Triage Agentico ---
         const turn1Response = await ai.generate({
           model: selectedModel,
           messages: turn1Messages,
@@ -129,19 +124,17 @@ export const legalAgentFlow = ai.defineFlow(
             })
           );
 
-          // Ripristiniamo l'uso di 'messages' (quello pulito) per salvare lo storico corretto
           messages.push(turn1Response.message);
           messages.push({ role: "tool" as const, content: toolResponses.filter(Boolean) });
         }
       }
 
-      // --- TURNO 2: Sintesi Finale (Tools Off) ---
       if (skipTurn1 || (finalResponse?.toolRequests && finalResponse.toolRequests.length > 0)) {
         sendChunk({ status: "Sintesi finale..." });
         
         finalResponse = await ai.generate({
           model: selectedModel,
-          messages: messages, // <--- Qui usiamo lo storico pulito (senza la forzatura del Turno 1)
+          messages: messages,
           tools: [], 
           config: { temperature: 0.05 },
           onChunk: (chunk) => { if (chunk.text) sendChunk({ text: chunk.text }); }
@@ -507,7 +500,6 @@ export const wordReviewFlow = ai.defineFlow(
   async (input, { sendChunk }) => {
     sendChunk({ message: { status: "Lettura dell'atto e individuazione tesi critiche..." } });
 
-    // 1. Assembliamo i chunk in un formato leggibile per l'AI
     let contestoDocumento = `<TESTO_DOCUMENTO>\n`;
     input.chunks.forEach((chunk, index) => {
       if (chunk.trim()) {
@@ -526,7 +518,6 @@ export const wordReviewFlow = ai.defineFlow(
     ];
 
     try {
-      // 2. Chiamata agentica
       const response = await ai.generate({
         messages: messages as any,
         tools: [ricercaDatabaseInterno, webSearchTool, analizzaDistinguishFattispecie], 
@@ -555,18 +546,15 @@ export const wordReviewFlow = ai.defineFlow(
       });
       sendChunk({ message: { status: "Stesura dell'analisi e assegnazione semafori..." } });
 
-      // 🛡️ PARACADUTE ALGORITMICO: Se response.output è null, undefined o vuoto
       if (!response.output || !response.output.tesi) {
         console.warn("[GUARDRAIL] L'AI ha restituito un output nullo o vuoto. Forzo un array tesi vuoto.");
         return { tesi: [] };
       }
 
-      // 4. GUARDRAIL ALGORITMICO: Normalizzazione e Sterilizzazione
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
       const tesiNormalizzate = response.output.tesi.map((item, index) => {
         
-        // Tieni SOLO le fonti che hanno un ID reale e conforme al formato UUID
         const fontiPulite = (item.fonti || []).filter((f: any) => {
           const rawId = f.id !== undefined && f.id !== null ? String(f.id).trim() : "";
           const isValid = rawId !== "" && uuidRegex.test(rawId);
@@ -712,6 +700,58 @@ ${stringifiedSchema}
 );
 
 // ─────────────────────────────────────────────
+// FLOW — Enhance Prompting
+// ──
+
+export const enhancePromptFlow = ai.defineFlow(
+  {
+    name: 'enhancePromptFlow',
+    inputSchema: z.object({
+      prompt: z.string(),
+      type: z.enum(["chat", "approfondimento"]),
+      history: z.array(z.any()).optional(),
+    }),
+    outputSchema: z.object({
+      enhancedPrompt: z.string(),
+    }),
+  },
+  async (input) => {
+    let systemInstruction = "";
+
+    // Adattiamo il comportamento dell'IA al contesto in cui l'utente si trova
+    if (input.type === "chat") {
+      systemInstruction = `Sei un esperto avvocato cassazionista italiano. Il tuo compito è ottimizzare il prompt dell'utente per renderlo un quesito giuridico perfetto per un motore di ricerca legale AI.
+Regole Tassative:
+1. Riscrivi il testo migliorando la terminologia giuridica, rendendola più precisa e professionale.
+2. Isola chiaramente la premessa in fatto (se presente) dal quesito di diritto.
+3. NON rispondere alla domanda. Il tuo scopo è SOLO migliorare la formulazione della domanda stessa.
+4. RESTITUISCI ESCLUSIVAMENTE IL TESTO OTTIMIZZATO, senza preamboli, senza virgolette e senza frasi come "Ecco il prompt migliorato:".`;
+    } else if (input.type === "approfondimento") {
+      systemInstruction = `Sei un legal prompt engineer specializzato in ricerca giurisprudenziale e dottrinale. Il tuo compito è ottimizzare l'input dell'utente per definire con estrema precisione i criteri, il perimetro e l'ordinamento di una ricerca legale complessa affidata a un'IA.
+Regole Tassative:
+1. Riscrivi la richiesta specificando chiaramente il tipo di ricerca da effettuare, i criteri di ordinamento (es. cronologico decrescente, gerarchico per grado di giudizio, rilevanza) e la tipologia di fonti da privilegiare (es. Cassazione a Sezioni Unite, giurisprudenza di merito, prassi).
+2. Traduci eventuali espressioni colloquiali in terminologia tecnico-giuridica avanzata per massimizzare la precisione del motore di ricerca (retrieval).
+3. NON rispondere al quesito e non eseguire la ricerca. Il tuo scopo è SOLO formulare la direttiva di ricerca perfetta.
+4. RESTITUISCI ESCLUSIVAMENTE IL TESTO OTTIMIZZATO, senza preamboli, senza virgolette e senza frasi introduttive.`;
+    }
+
+    const { text } = await ai.generate({
+      config: {
+        temperature: 0.2,
+      },
+      messages: [
+        { role: "system", content: [{ text: systemInstruction }] },
+        { role: "user", content: [{ text: input.prompt }] }
+      ]
+    });
+
+    return {
+      enhancedPrompt: text.trim(),
+    };
+  }
+);
+
+// ─────────────────────────────────────────────
 // FLOW — Deep Analysis
 // ──
 
@@ -765,7 +805,6 @@ export const researchAnalysisFlow = ai.defineFlow(
       hasUserDocs && "ricercaFascicoloUtente",
     ].filter(Boolean) as string[];
 
-    // 1. CHIAMATA DI ESECUZIONE TOOL FORZATA
     const searchPrompt = `Agisci come un assistente di ricerca legale. 
 Esegui immediatamente le ricerche necessarie usando i tool disponibili per il seguente quesito:
 "${prompt}"
@@ -791,7 +830,6 @@ Raccogli tutte le massime, i precedenti e le informazioni utili sia a favore che
       throw new Error(`Errore di rete o timeout durante l'interrogazione delle banche dati: ${err.message}`);
     }
 
-    // 2. CHIAMATA DI MAPPATURA DIALETTICA
     const mappingSystemPrompt = `SEI JURIO, motore di analisi dialettica giuridica.
 Analizza i dati raccolti dalla ricerca precedente e compila la "Mappa Dialettica" per il quesito: "${prompt}".
 
@@ -808,7 +846,7 @@ REGOLE TASSATIVE:
     let mappingResponse;
     try {
       mappingResponse = await ai.generate({
-        model: aiModel, // Utilizzo dinamico del modello anche per il JSON mapping
+        model: aiModel,
         messages: [
           { role: "system", content: [{ text: mappingSystemPrompt }] },
           ...cleanHistory,
@@ -893,7 +931,6 @@ OBIETTIVO TASSATIVO:
 2. Raccogli tutte le informazioni necessarie per l'aggiornamento.
 3. STOP LOOP: Fai max 3 chiamate ai tool. Se non trovi nulla di nuovo, fermati.`;
 
-    // PASSO 1: Esecuzione dei tool di ricerca
     let searchResponse;
     try {
       searchResponse = await ai.generate({
@@ -918,7 +955,6 @@ OBIETTIVO TASSATIVO:
       throw err;
     }
 
-    // PASSO 2: Formattazione JSON strutturata
     const mappingSystemPrompt = `SEI JURIO. In base ai risultati della ricerca mirata appena eseguita, restituisci la mappa dialettica aggiornata e completa in formato JSON strutturato.
 REGOLE:
 1. Integra le nuove fonti trovate senza perdere quelle esistenti.

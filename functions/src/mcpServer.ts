@@ -6,12 +6,14 @@ import { getDb } from "./deps";
 import { AREE } from "./params";
 
 const JURIO_VECTOR_SEARCH_URL = "https://vectorsearchjurio-vqoobrenua-ew.a.run.app";
+const JURIO_EXTRACT_TEXT_URL = "https://extractdocumenttext-vqoobrenua-ew.a.run.app";
+
 const NOMI_AREE = Object.values(AREE).join("', '");
 
 export function createMcpServer(authHeader: string): McpServer {
   const server = new McpServer({
     name: "jurio-mcp",
-    version: "1.0.3",
+    version: "1.0.4",
   });
   
   // --------------------------------------------------------------------------
@@ -220,6 +222,81 @@ export function createMcpServer(authHeader: string): McpServer {
       } catch (error) {
         return {
           content: [{ type: "text", text: `Errore nella ricerca per materia: ${error instanceof Error ? error.message : String(error)}` }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+// --------------------------------------------------------------------------
+  // TOOL 5: ESTRAZIONE TESTO DA DOCUMENTO (PDF) VIA URL
+  // --------------------------------------------------------------------------
+  server.registerTool(
+    "estraiTestoDocumento",
+    {
+      title: "Estrai Testo Documento PDF da URL",
+      description: 
+        "Estrae e pulisce il testo da un documento PDF (es. una sentenza) salvato su Jurio a partire dal suo URL pubblico. " +
+        "USO: Utilizzalo quando hai ottenuto l'URL di un documento dai risultati di ricerca e hai bisogno di leggerne il testo integrale per un'analisi approfondita.",
+      inputSchema: {
+        url: z.string().describe("L'URL della sentenza su Jurio (es. 'https://jurio.it/giurisprudenza/8c0893ca-5a7a-471a-9ed0-128ab34d0bfa')."),
+      },
+    },
+    async ({ url }) => {
+      try {
+        // Estrazione robusta dell'ID ignorando query params o slash finali
+        const match = url.match(/\/giurisprudenza\/([^/?#]+)/);
+        const currentDocId = match ? match[1] : null;
+
+        if (!currentDocId) {
+          return { 
+            content: [{ type: "text", text: "Impossibile estrarre l'ID del documento dall'URL fornito. Assicurati che l'URL sia nel formato corretto." }], 
+            isError: true 
+          };
+        }
+
+        const storagePath = `sentences/${currentDocId}.pdf`;
+
+        const response = await fetch(JURIO_EXTRACT_TEXT_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(authHeader ? { Authorization: authHeader } : {}),
+          },
+          body: JSON.stringify({ storagePath }),
+        });
+
+        if (response.status === 401) {
+          return { content: [{ type: "text", text: "Sessione Jurio non valida o scaduta. Ricollega il tuo account Jurio dalle impostazioni del client MCP." }], isError: true };
+        }
+        if (response.status === 403) {
+          return { content: [{ type: "text", text: "Accesso non consentito: nessun piano attivo rilevato per leggere i documenti integrali." }], isError: false };
+        }
+        if (response.status === 404) {
+          return { content: [{ type: "text", text: "Errore: Il documento PDF non esiste nello storage per questo identificativo." }], isError: true };
+        }
+        if (response.status === 429) {
+          return { content: [{ type: "text", text: "Hai raggiunto il limite di estrazioni disponibili per il tuo piano. Riprova più tardi." }], isError: false };
+        }
+
+        const data = await response.json().catch(async () => ({ error: await response.text() }));
+
+        if (!response.ok) {
+          return {
+            content: [{ type: "text", text: `Errore dal backend Jurio (${response.status}): ${data.error ?? response.statusText}` }],
+            isError: true,
+          };
+        }
+
+        return { 
+          content: [{ 
+            type: "text", 
+            text: `ESTRAZIONE COMPLETATA (Pagine: ${data.pages})\n\n${data.text}` 
+          }] 
+        };
+      } catch (error) {
+        return {
+          content: [{ type: "text", text: `Errore di rete o timeout durante l'estrazione: ${error instanceof Error ? error.message : String(error)}` }],
           isError: true,
         };
       }

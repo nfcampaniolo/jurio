@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080, initial-scale=1.0">
+
+<title>Jurio — Blog Slide (Brown & Azzurro Italia)</title>
+
+<style>
+:root{
+  /* Palette Marrone Editoriale (Testa di Moro) & Azzurro Nazionale */
+  --bg:#1a1310;              /* Testa di moro profondo */
+  --text:#f5f0e9;            /* Bianco avorio caldo */
+  --text-body:#c7bcb0;       /* Tonalità calda chiara per i testi lunghi */
+  --muted:#9e9185;           /* Tortora caldo desaturato */
+  --azzurro:#1e74ea;         /* Azzurro Savoia / Nazionale */
+  --line:#312620;            /* Linee sottili calibrate sul marrone d'ombra */
+
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --serif:"Lora",Georgia,serif;
+}
+
+*{box-sizing:border-box}
+
+html,body{
+  margin:0;
+  padding:0;
+  background:#0c0907;
+}
+
+body{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  font-family:var(--sans);
+}
+
+.slide{
+  position:relative;
+
+  width:1080px;
+  height:1350px;
+
+  overflow:hidden;
+
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.header{
+  position:absolute;
+
+  top:58px;
+  left:72px;
+  right:72px;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.logo{
+  font-size:24px;
+  font-weight:800;
+  letter-spacing:-.03em;
+  color:var(--text);
+}
+
+.logo-mark{
+  display:inline-block;
+
+  width:10px;
+  height:10px;
+
+  margin-right:9px;
+
+  border-radius:50%;
+
+  background:var(--azzurro);
+  box-shadow:0 0 10px rgba(30,116,234,.45);
+}
+
+.source{
+  font-size:13px;
+  font-weight:700;
+  letter-spacing:.06em;
+
+  text-transform:uppercase;
+
+  color:var(--muted);
+}
+
+/* =========================================================
+   CONTENT
+   ========================================================= */
+
+.content{
+  position:absolute;
+
+  left:72px;
+  top:175px;
+
+  width:72%;
+  max-width:760px;
+}
+
+.index{
+  display:flex;
+  align-items:center;
+  gap:12px;
+
+  margin-bottom:58px;
+
+  color:var(--azzurro);
+
+  font-size:14px;
+  font-weight:800;
+
+  letter-spacing:.12em;
+}
+
+.index::after{
+  content:"";
+
+  width:42px;
+  height:2px;
+
+  background:var(--azzurro);
+}
+
+.eyebrow{
+  margin-bottom:25px;
+
+  font-size:14px;
+  font-weight:700;
+
+  letter-spacing:.12em;
+  text-transform:uppercase;
+
+  color:var(--azzurro);
+}
+
+h2{
+  margin:0;
+
+  max-width:720px;
+
+  font-family:var(--serif);
+
+  font-size:78px;
+  line-height:1.03;
+
+  letter-spacing:-.055em;
+
+  font-weight:500;
+  color:var(--text);
+
+  text-shadow:0 2px 4px rgba(0,0,0,.45);
+}
+
+h2 em{
+  color:var(--azzurro);
+  font-style:italic;
+}
+
+.text{
+  max-width:690px;
+
+  margin:34px 0 0;
+
+  color:var(--text-body);
+
+  font-size:30px;
+  line-height:1.48;
+}
+
+.text strong{
+  color:var(--text);
+  font-weight:700;
+}
+
+/* =========================================================
+   PUNTI
+   ========================================================= */
+
+.points{
+  display:grid;
+
+  grid-template-columns:1fr 1fr;
+
+  gap:42px;
+
+  max-width:700px;
+
+  margin-top:58px;
+}
+
+.point{
+  border-top:1px solid var(--line);
+
+  padding-top:18px;
+}
+
+.point-num{
+  margin-bottom:10px;
+
+  color:var(--azzurro);
+
+  font-size:12px;
+  font-weight:800;
+
+  letter-spacing:.12em;
+}
+
+.point-title{
+  margin-bottom:8px;
+
+  color:var(--text);
+
+  font-size:19px;
+  font-weight:800;
+}
+
+.point-desc{
+  color:var(--muted);
+
+  font-size:16px;
+  line-height:1.5;
+}
+
+/* =========================================================
+   SOURCE
+   ========================================================= */
+
+.source-line{
+  margin-top:55px;
+
+  max-width:680px;
+
+  padding-top:18px;
+
+  border-top:1px solid var(--line);
+
+  font-size:14px;
+  line-height:1.45;
+
+  color:var(--muted);
+}
+
+.source-line strong{
+  color:var(--text);
+}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.footer{
+  position:absolute;
+
+  left:72px;
+  right:72px;
+  bottom:52px;
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  color:var(--text);
+}
+
+.footer-left{
+  font-size:14px;
+  font-weight:700;
+}
+
+.footer-right{
+  font-size:14px;
+  color:#a59a90;
+}
+
+@media(max-width:900px){
+
+  .slide{
+    transform:scale(.72);
+    transform-origin:top left;
+    margin-bottom:-370px;
+  }
+
+}
+</style>
+</head>
+
+<body>
+
+<div class="slide">
+
+  <header class="header">
+
+    <div class="logo">
+      <span class="logo-mark"></span>Jurio
+    </div>
+
+    <div class="source">
+      Fonti · Jurio
+    </div>
+
+  </header>
+
+  <main class="content">
+
+    <div class="index" id="index">
+      02
+    </div>
+
+    <div class="eyebrow" id="eyebrow">
+      Il nodo
+    </div>
+
+    <h2 id="title"></h2>
+
+    <div class="text" id="text"></div>
+
+    <div class="points" id="points"></div>
+
+    <div class="source-line">
+      Sintesi costruita sulle
+      <strong>fonti e sui precedenti analizzati da Jurio.</strong>
+    </div>
+
+  </main>
+
+  <footer class="footer">
+
+    <div class="footer-left">
+      jurio.it
+    </div>
+
+    <div class="footer-right" id="page">
+      02 / 07
+    </div>
+
+  </footer>
+
+</div>
+
+<script>
+
+const CONFIG = {
+
+  index:"02",
+
+  eyebrow:"Il problema",
+
+  title:
+    "Il nodo del <em>2005.</em>",
+
+  text:
+    "Banca d’Italia sanziona lo schema ABI per le fideiussioni omnibus. Da allora, molti tribunali hanno esteso il problema anche alle garanzie successive.",
+
+  points:[
+    {
+      num:"01",
+      title:"Schema ABI",
+      desc:"Le clausole anticoncorrenziali diventano il centro del contenzioso."
+    },
+    {
+      num:"02",
+      title:"Effetto successivo",
+      desc:"La nullità viene spesso estesa automaticamente alle fideiussioni successive."
+    }
+  ],
+
+  page:"02 / 07"
+};
+
+const el = id => document.getElementById(id);
+
+el("index").textContent = CONFIG.index;
+el("eyebrow").textContent = CONFIG.eyebrow;
+el("title").innerHTML = CONFIG.title;
+el("text").innerHTML = CONFIG.text;
+el("page").textContent = CONFIG.page;
+
+if(CONFIG.points && CONFIG.points.length){
+
+  el("points").innerHTML = CONFIG.points.map(point => `
+
+    <article class="point">
+
+      <div class="point-num">
+        ${point.num}
+      </div>
+
+      <div class="point-title">
+        ${point.title}
+      </div>
+
+      <div class="point-desc">
+        ${point.desc}
+      </div>
+
+    </article>
+
+  `).join("");
+
+}else{
+
+  el("points").style.display="none";
+
+}
+
+</script>
+
+</body>
+</html>

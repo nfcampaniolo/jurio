@@ -1,10 +1,13 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React, { createRef } from "react";
+import type { SVGProps, HTMLAttributes } from "react";
+import { MessageList } from "@/features/chat/components/MessageList";
+import type { Message, Source } from "@/interfaces/interfaces";
 
 /* ---------- mock lucide-react ---------- */
 vi.mock("lucide-react", () => {
-  const Icon = (name: string) => (props: React.SVGProps<SVGSVGElement>) => (
+  const Icon = (name: string) => (props: SVGProps<SVGSVGElement>) => (
     <svg data-testid={`icon-${name}`} {...props} />
   );
   return {
@@ -15,24 +18,41 @@ vi.mock("lucide-react", () => {
 });
 
 /* ---------- mock framer-motion ---------- */
-vi.mock("framer-motion", async () => ({
+vi.mock("framer-motion", () => ({
   motion: {
     div: ({
       children,
       ...props
-    }: React.HTMLAttributes<HTMLDivElement> & { [key: string]: unknown }) => (
+    }: HTMLAttributes<HTMLDivElement>) => (
       <div {...props}>{children}</div>
     ),
   },
 }));
 
-/* ---------- mock Typewriter ---------- */
+/* ---------- mock Typewriter con invocazione di onComplete al mount ---------- */
 vi.mock("@/shared/components/Typewriter", () => ({
-  Typewriter: ({ text, animate }: { text: string; animate: boolean }) => (
-    <div data-testid="typewriter" data-animate={animate ? "true" : "false"}>
-      {text}
-    </div>
-  ),
+  Typewriter: ({
+    text,
+    animate,
+    onComplete,
+  }: {
+    text: string;
+    animate: boolean;
+    onComplete?: () => void;
+  }) => {
+    const onCompleteRef = React.useRef(onComplete);
+    onCompleteRef.current = onComplete;
+
+    React.useEffect(() => {
+      onCompleteRef.current?.();
+    }, []);
+
+    return (
+      <div data-testid="typewriter" data-animate={animate ? "true" : "false"}>
+        {text}
+      </div>
+    );
+  },
 }));
 
 /* ---------- mock FeedbackComponent ---------- */
@@ -43,10 +63,6 @@ vi.mock("@/shared/components/FeedbackComponent", () => ({
     </div>
   ),
 }));
-
-/* ---------- component ---------- */
-import { MessageList } from "@/features/chat/components/MessageList";
-import type { Message, Source } from "@/interfaces/interfaces";
 
 describe("MessageList", () => {
   const mockSetActiveSourceId = vi.fn();
@@ -199,7 +215,9 @@ describe("MessageList", () => {
     expect(screen.getByText("Normattiva")).toBeInTheDocument();
     expect(screen.getByTestId("icon-globe")).toBeInTheDocument();
 
-    expect(screen.getByText("Cass. Civ.: Ordinanza 1024/2026")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Cass\. Civ\.:\s*Ordinanza 1024\/2026/)
+    ).toBeInTheDocument();
     expect(screen.getByTestId("icon-book-open")).toBeInTheDocument();
 
     // Verifica Feedback con sourceIds corretti

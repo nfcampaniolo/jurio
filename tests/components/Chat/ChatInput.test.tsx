@@ -1,10 +1,13 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
-import React, { createRef } from "react";
+import { createRef } from "react";
+import type { SVGProps, HTMLAttributes, ReactNode } from "react";
+import { ChatInput } from "@/features/chat/components/ChatInput";
+import type { AttachedDocument } from "@/interfaces/interfaces";
 
 /* ---------- mock lucide-react ---------- */
 vi.mock("lucide-react", () => {
-  const Icon = (name: string) => (props: React.SVGProps<SVGSVGElement>) => (
+  const Icon = (name: string) => (props: SVGProps<SVGSVGElement>) => (
     <svg data-testid={`icon-${name}`} {...props} />
   );
   return {
@@ -21,19 +24,19 @@ vi.mock("lucide-react", () => {
 });
 
 /* ---------- mock framer-motion ---------- */
-vi.mock("framer-motion", async () => {
-  return {
-    motion: {
-      div: ({
-        children,
-        ...props
-      }: React.HTMLAttributes<HTMLDivElement> & { [key: string]: unknown }) => (
-        <div {...props}>{children}</div>
-      ),
-    },
-    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  };
-});
+vi.mock("framer-motion", () => ({
+  motion: {
+    div: ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => (
+      <div {...props}>{children}</div>
+    ),
+  },
+  AnimatePresence: ({ children }: { children: ReactNode }) => <>{children}</>,
+}));
+
+/* ---------- mock PromptEnhancer ---------- */
+vi.mock("@/shared/components/PromptEnhancer", () => ({
+  PromptEnhancer: () => <div data-testid="prompt-enhancer-mock" />,
+}));
 
 /* ---------- SpeechRecognition Class Mock ---------- */
 class MockSpeechRecognition {
@@ -52,10 +55,6 @@ class MockSpeechRecognition {
     MockSpeechRecognition.instance = this;
   }
 }
-
-/* ---------- component ---------- */
-import { ChatInput } from "@/features/chat/components/ChatInput"; // <-- adegua il path se necessario
-import type { AttachedDocument } from "@/interfaces/interfaces";
 
 describe("ChatInput", () => {
   const mockSetInputValue = vi.fn();
@@ -217,13 +216,13 @@ describe("ChatInput", () => {
 
     mockSetViewMode.mockClear();
 
-    // 2. Navigazione da tastiera: Pressione del tasto Enter (Risoluzione SonarQube)
+    // 2. Navigazione da tastiera: Enter
     fireEvent.keyDown(doc1Container, { key: "Enter" });
     expect(mockSetViewMode).toHaveBeenCalledWith("workspace");
 
     mockSetViewMode.mockClear();
 
-    // 3. Navigazione da tastiera: Pressione del tasto Spazio (Risoluzione SonarQube)
+    // 3. Navigazione da tastiera: Spazio
     fireEvent.keyDown(doc1Container, { key: " " });
     expect(mockSetViewMode).toHaveBeenCalledWith("workspace");
 
@@ -281,7 +280,7 @@ describe("ChatInput", () => {
     expect(screen.queryByText("Ascolto in corso...")).not.toBeInTheDocument();
 
     // 3. Simula evento onerror
-    fireEvent.click(micBtn); // Riavvia
+    fireEvent.click(micBtn);
     expect(screen.getByText("Ascolto in corso...")).toBeInTheDocument();
     act(() => {
       MockSpeechRecognition.instance!.onerror!({ error: "audio-capture" });
@@ -404,7 +403,8 @@ describe("ChatInput", () => {
     });
     expect(mockHandleSendMessage).not.toHaveBeenCalled();
 
-    // Nessun pulsante microfono renderizzato
+    // Nessun pulsante microfono o enhancer renderizzato
     expect(screen.queryByTitle(/Dettatura vocale/i)).not.toBeInTheDocument();
+    expect(screen.queryByTestId("prompt-enhancer-mock")).not.toBeInTheDocument();
   });
 });

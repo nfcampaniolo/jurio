@@ -8,6 +8,7 @@ import type {
   SpeechRecognitionEvent,
   SpeechRecognitionErrorEvent
 } from "@/shared/hooks/speech-recognition"; 
+import { PromptEnhancer } from "@/shared/components/PromptEnhancer";
 
 interface ChatInputProps {
   inputValue: string;
@@ -342,17 +343,31 @@ export const ChatInput = ({
               ) : (
                 <>
                   {!conflictText && (
-                    <button
-                      onClick={toggleRecording}
-                      disabled={isProcessingFiles || isStreaming}
-                      className={`w-10 h-10 flex items-center justify-center rounded-md transition-all duration-300 shrink-0 disabled:opacity-50 outline-none
-                        ${isRecording 
-                          ? 'bg-(--color-text) text-(--color-surface) animate-pulse' 
-                          : 'text-(--color-muted) hover:text-(--color-text) hover:bg-(--color-bg)'}`}
-                      title="Dettatura vocale (oppure dì 'invia' per spedire)"
-                    >
-                      <Mic size={18} className={isRecording ? "scale-110 transition-transform" : ""} />
-                    </button>
+                    <>
+                      {/* COMPONENTE PROMPT ENHANCER INIETTATO QUI */}
+                      <PromptEnhancer 
+                        inputValue={inputValue}
+                        setInputValue={(val) => {
+                          setInputValue(val);
+                          setConflictText(null); // Resetta eventuali conflitti vocali
+                        }}
+                        type={viewMode === 'workspace' ? 'approfondimento' : 'chat'}
+                        disabled={isProcessingFiles || isStreaming || isRecording}
+                      />
+
+                      {/* TASTO MICROFONO */}
+                      <button
+                        onClick={toggleRecording}
+                        disabled={isProcessingFiles || isStreaming}
+                        className={`w-10 h-10 flex items-center justify-center rounded-md transition-all duration-300 shrink-0 disabled:opacity-50 outline-none
+                          ${isRecording 
+                            ? 'bg-(--color-text) text-(--color-surface) animate-pulse' 
+                            : 'text-(--color-muted) hover:text-(--color-text) hover:bg-(--color-bg)'}`}
+                        title="Dettatura vocale (oppure dì 'invia' per spedire)"
+                      >
+                        <Mic size={18} className={isRecording ? "scale-110 transition-transform" : ""} />
+                      </button>
+                    </>
                   )}
 
                   <button 

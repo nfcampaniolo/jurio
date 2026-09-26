@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'wait_for_update': 500
+    });
+    </script>
+    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="869d54bc-6b13-4281-a6ab-489dc313a855"  type="text/javascript"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galleria Giurisprudenza | Jurio</title>
+    <meta name="description" content="Esplora le ultime analisi giurisprudenziali di Jurio, incluse le pronunce a Sezioni Unite della Cassazione.">
+    <link rel="canonical" href="https://jurio.it/blog">
+    
+    <!-- Open Graph SEO -->
+    <meta property="og:title" content="Galleria Giurisprudenza | Jurio">
+    <meta property="og:description" content="Esplora le ultime analisi giurisprudenziali di Jurio.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://jurio.it/blog">
+    <link rel="stylesheet" href="/styles.css">
+    
+    <!-- JSON-LD per SEO Avanzata (Galleria) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "headline": "Galleria Articoli e Giurisprudenza",
+      "description": "Galleria visiva degli approfondimenti giuridici di Jurio.",
+      "url": "https://jurio.it/blog",
+      "publisher": {
+        "@type": "Organization",
+        "name": "Jurio",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://jurio.it/logo.webp"
+        }
+      }
+    }
+    </script>
+
+    <style>
+        /* ==========================================================================
+           Stili Base
+           ========================================================================== */
+        :root {
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+            --font-serif: "Lora", "Merriweather", Georgia, "Times New Roman", serif;
+            --color-bg: #f5f6f7;
+            --color-surface: #ffffff;
+            --color-text: #1a1d21;
+            --color-primary: #e0a32e;
+            --color-primary-hover: #f0b541;
+            --color-border: #d6d9de;
+            --color-muted: #5f6672;
+            --container: 1180px;
+            --ease-smooth: cubic-bezier(.22, 1, .36, 1);
+        }
+
+        * { box-sizing: border-box; }
+        
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-bg: #111111;
+                --color-surface: #1a1a1a;
+                --color-text: #e6e7ea;
+                --color-primary: #e0a32e;
+                --color-primary-hover: #f0b541;
+                --color-border: #2e2e2e;
+            }
+            .skip-link { background: var(--color-text); color: var(--color-bg); }
+            ::selection { background: rgba(213, 168, 95, .24); }
+        }
+
+        html { scroll-behavior: smooth; }
+        body { margin: 0; min-width: 320px; background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; line-height: 1.75; overflow-x: hidden; }
+        h1, h2, h3 { font-family: var(--font-serif); }
+        a { color: inherit; -webkit-tap-highlight-color: transparent; }
+        img { max-width: 100%; display: block; }
+        :focus-visible { outline: 3px solid rgba(154, 107, 37, .55); outline-offset: 4px; }
+        
+        .skip-link { position: fixed; left: 1rem; top: 1rem; z-index: 1000; transform: translateY(-160%); transition: transform .18s ease; background: var(--color-text); color: #fff; padding: .7rem 1rem; border-radius: 10px; font-weight: 700; text-decoration: none; }
+        .skip-link:focus { transform: translateY(0); }
+        
+        .container { width: min(1400px, calc(100% - 40px)); margin-inline: auto; }
+        
+        /* Nav */
+        .site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--color-surface) 88%, transparent); border-bottom: 1px solid var(--color-border); backdrop-filter: blur(14px); transition: box-shadow .35s var(--ease-smooth); }
+        .site-header.is-scrolled { box-shadow: 0 8px 28px rgba(0, 0, 0, .06); }
+        
+        main { overflow: clip; }
+        .section { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+        
+        /* ==========================================================================
+           Piccolo Header di Pagina
+           ========================================================================== */
+        .page-header {
+            padding: 4rem 0 1.5rem;
+            text-align: center;
+        }
+        .page-header h1 {
+            margin: 0 0 0.5rem;
+            font-size: clamp(2.2rem, 5vw, 3.5rem);
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+        }
+        .page-header p {
+            margin: 0;
+            color: var(--color-muted);
+            font-size: clamp(1rem, 1.5vw, 1.15rem);
+        }
+        
+        /* ==========================================================================
+           IG Grid (Verticale 3:4, Gap 0)
+           ========================================================================== */
+        .ig-grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 0; 
+            margin-top: 1rem;
+            border: 1px solid var(--color-border);
+        }
+        
+        .ig-card { 
+            position: relative; 
+            display: block;
+            aspect-ratio: 3 / 4; 
+            overflow: hidden;
+            text-decoration: none;
+            isolation: isolate;
+            background: #000;
+            border-radius: 0; 
+        }
+
+        .ig-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.8s var(--ease-smooth), opacity 0.4s ease;
+        }
+
+        .ig-card:hover img {
+            transform: scale(1.05);
+            opacity: 0.6; 
+        }
+
+        /* Anteprima all'Hover */
+        .ig-card-preview {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.80); 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.4s var(--ease-smooth);
+            backdrop-filter: blur(5px);
+        }
+
+        .ig-card:hover .ig-card-preview {
+            opacity: 1;
+        }
+
+        .ig-card-preview h3 {
+            color: #ffffff;
+            font-size: clamp(1.1rem, 1.5vw, 1.35rem);
+            margin: 0 0 0.5rem 0;
+            line-height: 1.25;
+            font-family: var(--font-sans);
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            transform: translateY(20px);
+            transition: transform 0.5s var(--ease-smooth);
+        }
+
+        .ig-card-preview p {
+            color: #d1d5db;
+            font-size: 0.9rem;
+            margin: 0 0 1.5rem 0;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 4;
+            line-clamp: 4; /* Proprietà standard per compatibilità */
+            overflow: hidden;
+            transform: translateY(20px);
+            transition: transform 0.5s var(--ease-smooth);
+            transition-delay: 0.05s;
+        }
+
+        .ig-card-link-text {
+            color: var(--color-primary);
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transform: translateY(20px);
+            transition: transform 0.5s var(--ease-smooth);
+            transition-delay: 0.1s;
+        }
+        
+        .ig-card-link-text::after {
+            content: "→";
+            font-size: 1.1em;
+            transition: transform 0.2s ease;
+        }
+
+        .ig-card:hover .ig-card-preview h3,
+        .ig-card:hover .ig-card-preview p,
+        .ig-card:hover .ig-card-link-text {
+            transform: translateY(0);
+        }
+
+        .ig-card:hover .ig-card-link-text::after {
+            transform: translateX(4px);
+        }
+        
+        /* Animazioni Scroll */
+        .reveal { opacity: 0; transform: translateY(28px); transition: opacity .8s var(--ease-smooth), transform .8s var(--ease-smooth); will-change: opacity, transform; }
+        .reveal.is-visible { opacity: 1; transform: none; }
+        [data-stagger] > .reveal:nth-child(1) { transition-delay: 0ms; }
+        [data-stagger] > .reveal:nth-child(2) { transition-delay: 70ms; }
+        
+        /* ==========================================================================
+           Responsive Mobile
+           ========================================================================== */
+        @media (max-width: 1050px) {
+            .ig-grid { grid-template-columns: repeat(3, 1fr); }
+            .ig-card-preview { padding: 1.5rem; }
+        }
+        @media (max-width: 720px) {
+            /* 1. Ripristina il padding/margine laterale per header, footer e testi */
+            .container { width: min(1400px, calc(100% - 32px)); } 
+            
+            /* 2. Solo la griglia del blog va a tutto schermo da bordo a bordo */
+            #blog.container { 
+                width: 100%; 
+                max-width: 100%; 
+            }
+
+            .page-header { 
+                padding: 2.5rem 0 1rem; 
+                text-align: left;
+            }
+            .page-header h1 { font-size: clamp(2rem, 10vw, 2.5rem); }
+            
+            .ig-grid { 
+                grid-template-columns: repeat(2, 1fr); 
+                border: none;
+                margin-top: 1rem;
+            }
+            .ig-card-preview { padding: 1rem; }
+            .ig-card-preview p { display: none; } 
+            .ig-card-preview h3 { font-size: 0.95rem; }
+        }
+        
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+            *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+            .reveal { opacity: 1; transform: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="#main-content" class="skip-link">Vai al contenuto principale</a>
+
+    <!-- Container Header Dinamico -->
+    <div id="header"></div> 
+
+    <main id="main-content">
+
+        <!-- Piccolo Header descrittivo -->
+        <header class="page-header container reveal">
+            <h1>Blog e Giurisprudenza</h1>
+            <p>Esplora le nostre ultime analisi sulle pronunce rilevanti.</p>
+        </header>
+
+        <!-- Griglia Articoli -->
+        <section id="blog" class="section container" style="padding-top: 0; padding-bottom: 2rem;">
+            <div class="ig-grid reveal" data-stagger>
+                
+                <a href="https://jurio.it/blog/fideiussioni-bancarie-schema-abi-sezioni-unite-24825-2026.html" class="ig-card reveal" aria-label="Leggi: Fideiussioni e Clausole ABI">
+                    <img src="https://jurio.it/blog/fideiussioni-bancarie-schema-abi-sezioni-unite-24825-2026.webp" alt="Copertina Articolo Fideiussione">
+                    <div class="ig-card-preview">
+                        <h3>Fideiussione Specifica e Clausole ABI</h3>
+                        <p>SS.UU. n. 24825/2026: onere della prova sulle garanzie a valle e interruzione della decadenza ex art. 1957 c.c.</p>
+                        <span class="ig-card-link-text">Leggi articolo</span>
+                    </div>
+                </a>
+
+                <a href="https://jurio.it/blog/curatore-speciale-minori-stranieri-tutore-consolare-sezioni-unite-24044-2026.html" class="ig-card reveal" aria-label="Leggi: Fideiussioni e Clausole ABI">
+                    <img src="https://jurio.it/blog/curatore-speciale-minori-stranieri-tutore-consolare-sezioni-unite-24044-2026.webp" alt="Copertina Articolo Fideiussione">
+                    <div class="ig-card-preview">
+                        <h3>La cittadinanza del minore bipolide: le Sezioni Unite risolvono la minor issue</h3>
+                        <p>Con la sentenza n. 24045/2026, le Sezioni Unite della Cassazione chiariscono che il figlio minore con doppia cittadinanza fin dalla nascita non perde lo status civitatis per la naturalizzazione del genitore.</p>
+                        <span class="ig-card-link-text">Leggi articolo</span>
+                    </div>
+                </a>
+
+                <a href="https://jurio.it/blog/cittadinanza-minore-bipolide-sezioni-unite-24045-2026.html" class="ig-card reveal" aria-label="Leggi: Cittadinanza Minore Bipolide">
+                    <img src="https://jurio.it/blog/cittadinanza-minore-bipolide-sezioni-unite-24045-2026.webp" alt="Copertina Articolo Cittadinanza">
+                    <div class="ig-card-preview">
+                        <h3>Cittadinanza e Minore Bipolide</h3>
+                        <p>SS.UU. n. 24045/2026: il minore con doppia cittadinanza non perde lo status italiano alla naturalizzazione del genitore.</p>
+                        <span class="ig-card-link-text">Leggi articolo</span>
+                    </div>
+                </a>
+                
+            </div>
+        </section>
+    </main>
+
+    <!-- Container Footer Dinamico -->
+    <div id="footer"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+        const components = [
+            { selector: "#header", file: "/header.html" },
+            { selector: "#footer", file: "/footer.html" }
+        ];
+        await Promise.all(
+            components.map(async ({ selector, file }) => {
+            const element = document.querySelector(selector);
+            if (!element) return;
+            try {
+                const response = await fetch(file);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                element.innerHTML = await response.text();
+            } catch (error) {
+                console.error(`Errore nel caricamento di ${file}:`, error);
+            }
+            })
+        );
+        });
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const observerOptions = { root: null, rootMargin: "0px", threshold: 0.1 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("is-visible");
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+
+            const header = document.querySelector(".site-header");
+            if (header) {
+                window.addEventListener("scroll", () => {
+                    if (window.scrollY > 20) {
+                        header.classList.add("is-scrolled");
+                    } else {
+                        header.classList.remove("is-scrolled");
+                    }
+                }, { passive: true });
+            }
+        });
+    </script>
+</body>
+</html>

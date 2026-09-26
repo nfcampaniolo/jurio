@@ -389,7 +389,7 @@ jurio/
 ### Installation
 
 ```bash
-git clone https://github.com/your-org/jurio.git
+git clone https://github.com/nfcampaniolo/jurio.git
 
 cd jurio
 

@@ -1,25 +1,19 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
-import React from "react";
+import type { HTMLAttributes, ReactNode, SVGProps } from "react";
+import { AccessDenied } from "@/shared/components/AccessDenied";
+import { useReducedMotion } from "framer-motion";
 
 /* ---------- mock framer-motion ---------- */
 vi.mock("framer-motion", () => ({
   __esModule: true,
   useReducedMotion: vi.fn(() => false),
   motion: {
-    section: React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
-      ({ children, ...props }, ref) => (
-        <section ref={ref} {...props}>
-          {children}
-        </section>
-      )
+    section: ({ children, ...props }: HTMLAttributes<HTMLElement>) => (
+      <section {...props}>{children}</section>
     ),
-    div: React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-      ({ children, ...props }, ref) => (
-        <div ref={ref} {...props}>
-          {children}
-        </div>
-      )
+    div: ({ children, ...props }: HTMLAttributes<HTMLDivElement>) => (
+      <div {...props}>{children}</div>
     ),
   },
 }));
@@ -34,7 +28,7 @@ vi.mock("react-router-dom", () => ({
     "aria-label": ariaLabel,
   }: {
     to: string;
-    children: React.ReactNode;
+    children: ReactNode;
     className?: string;
     "aria-label"?: string;
   }) => (
@@ -47,83 +41,83 @@ vi.mock("react-router-dom", () => ({
 /* ---------- mock react-icons/fa ---------- */
 vi.mock("react-icons/fa", () => ({
   __esModule: true,
-  FaLock: (props: React.SVGProps<SVGSVGElement>) => (
+  FaLock: (props: SVGProps<SVGSVGElement>) => (
     <svg data-testid="icon-lock" {...props} />
   ),
-  FaEnvelope: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg data-testid="icon-envelope" {...props} />
+  FaCheck: (props: SVGProps<SVGSVGElement>) => (
+    <svg data-testid="icon-check" {...props} />
+  ),
+  FaArrowRight: (props: SVGProps<SVGSVGElement>) => (
+    <svg data-testid="icon-arrow-right" {...props} />
   ),
 }));
-
-/* ---------- component ---------- */
-import { AccessDenied } from "@/shared/components/AccessDenied"; // <-- adegua il path se necessario
-import { useReducedMotion } from "framer-motion";
 
 describe("AccessDenied Component Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  test("renderizza la sezione accessibile con aria-labelledby, il titolo principale e il testo informativo", () => {
+  test("renderizza la sezione modale accessibile con aria-labelledby, il titolo principale e il testo informativo", () => {
     render(<AccessDenied />);
 
-    const modalRegion = screen.getByRole("region", {
-      name: "Accesso non disponibile",
-    });
-    expect(modalRegion).toBeInTheDocument();
+    const modalDialog = screen.getByRole("dialog");
+    expect(modalDialog).toBeInTheDocument();
+    expect(modalDialog).toHaveAttribute("aria-modal", "true");
+    expect(modalDialog).toHaveAttribute("aria-labelledby", "access-gate-title");
 
     expect(
       screen.getByRole("heading", {
-        name: "Accesso non disponibile",
+        name: /Sblocca l[’']accesso con Jurio/i,
         level: 1,
       })
     ).toBeInTheDocument();
 
+    expect(screen.getByText("Esclusivo per Jurio")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /Al momento non hai accesso a questa tipologia di servizio\./i
-      )
+      screen.getByText(/Questa funzionalità è riservata alla community di/i)
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /Rivedi i tuoi piani e scegli quello più adatto alle tue esigenze\./i
-      )
+      screen.getByText(/7 giorni di prova gratuita/i)
     ).toBeInTheDocument();
   });
 
-  test("renderizza le icone di blocco (FaLock) e contatto (FaEnvelope)", () => {
+  test("renderizza le icone corrette (FaLock, FaCheck e FaArrowRight)", () => {
     render(<AccessDenied />);
 
     expect(screen.getByTestId("icon-lock")).toBeInTheDocument();
-    expect(screen.getByTestId("icon-envelope")).toBeInTheDocument();
+    expect(screen.getAllByTestId("icon-check")).toHaveLength(2);
+    expect(screen.getByTestId("icon-arrow-right")).toBeInTheDocument();
   });
 
-  test("renderizza i link di navigazione con attributi href e aria-label corretti", () => {
+  test("renderizza i punti di rassicurazione (Nessuna carta richiesta e Accesso completo)", () => {
     render(<AccessDenied />);
 
-    const plansLink = screen.getByRole("link", {
-      name: "Vai alla pagina dei piani disponibili",
-    });
-    expect(plansLink).toBeInTheDocument();
-    expect(plansLink).toHaveAttribute("href", "/profilo/piani");
-    expect(plansLink).toHaveTextContent("Vedi piani");
-
-    const contactLink = screen.getByRole("link", {
-      name: "Vai alla pagina contatti",
-    });
-    expect(contactLink).toBeInTheDocument();
-    expect(contactLink).toHaveAttribute("href", "/contatti");
-    expect(contactLink).toHaveTextContent("Contattaci");
-  });
-
-  test("renderizza la micro-copy di supporto in caso di errore", () => {
-    render(<AccessDenied />);
-
+    expect(screen.getByText("Nessuna carta richiesta")).toBeInTheDocument();
     expect(
-      screen.getByText(
-        "Se pensi si tratti di un errore, scrivici e ti aiuteremo subito."
-      )
+      screen.getByText("Accesso completo per 1 settimana")
     ).toBeInTheDocument();
+  });
+
+  test("renderizza i link di navigazione verso prova gratuita, login e supporto", () => {
+    render(<AccessDenied />);
+
+    const trialLink = screen.getByRole("link", {
+      name: /Inizia la prova gratuita/i,
+    });
+    expect(trialLink).toBeInTheDocument();
+    expect(trialLink).toHaveAttribute("href", "/profilo");
+
+    const loginLink = screen.getByRole("link", {
+      name: /Hai già un account\? Accedi/i,
+    });
+    expect(loginLink).toBeInTheDocument();
+    expect(loginLink).toHaveAttribute("href", "/login");
+
+    const supportLink = screen.getByRole("link", {
+      name: /Contatta il supporto/i,
+    });
+    expect(supportLink).toBeInTheDocument();
+    expect(supportLink).toHaveAttribute("href", "/contatti");
   });
 
   test("renderizza correttamente il componente quando useReducedMotion restituisce true", () => {
@@ -133,13 +127,14 @@ describe("AccessDenied Component Suite", () => {
 
     expect(
       screen.getByRole("heading", {
-        name: "Accesso non disponibile",
+        name: /Sblocca l[’']accesso con Jurio/i,
         level: 1,
       })
     ).toBeInTheDocument();
+
     expect(
       screen.getByRole("link", {
-        name: "Vai alla pagina dei piani disponibili",
+        name: /Inizia la prova gratuita/i,
       })
     ).toBeInTheDocument();
   });

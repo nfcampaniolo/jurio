@@ -1,31 +1,60 @@
-// Sostituisci il tuo Typewriter con questo:
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 interface TypewriterProps {
   text: string;
   speed?: number;
-  animate?: boolean; // <--- Nuova prop
+  animate?: boolean;
+  isStreaming?: boolean;
+  onComplete?: () => void;
 }
 
-export const Typewriter: React.FC<TypewriterProps> = ({ text, speed = 50, animate = true }) => {
-  const [displayedText, setDisplayedText] = useState(animate ? "" : text);
+export const Typewriter: React.FC<TypewriterProps> = ({ 
+  text, 
+  speed = 50, 
+  animate = true,
+  isStreaming = false,
+  onComplete 
+}) => {
+  // Tracciamo unicamente l'indice di avanzamento
   const [currentIndex, setCurrentIndex] = useState(animate ? 0 : text.length);
 
+  // Manteniamo il riferimento aggiornato alla callback per evitare re-trigger
+  const onCompleteRef = useRef(onComplete);
   useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
+  // STATO DERIVATO: se animate è false o il messaggio è storico, restituisce subito text
+  const displayedText = animate ? text.slice(0, currentIndex) : text;
+
+  useEffect(() => {
+    // Se non deve animare, l'effetto non deve eseguire né impostare alcuno stato
     if (!animate) return;
 
+    // Se ci sono ancora caratteri da digitare nel buffer
     if (currentIndex < text.length) {
       const timeout = setTimeout(() => {
-        setDisplayedText((prev) => prev + text[currentIndex]);
-        setCurrentIndex((prev) => prev + 1);
+        const nextIndex = currentIndex + 1;
+        setCurrentIndex(nextIndex);
+
+        // Notifica il completamento solo all'ultimo carattere e quando lo streaming è terminato
+        if (nextIndex >= text.length && !isStreaming) {
+          onCompleteRef.current?.();
+        }
       }, speed);
-  
+
       return () => clearTimeout(timeout);
     }
-  }, [currentIndex, text, speed, animate]);
+
+    // Se lo streaming termina quando il cursore ha già raggiunto la fine del testo
+    if (currentIndex >= text.length && text.length > 0 && !isStreaming) {
+      const timer = setTimeout(() => {
+        onCompleteRef.current?.();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, text.length, speed, animate, isStreaming]);
 
   return (
     <div className="

@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'wait_for_update': 500
+      });
+    </script>
+    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="869d54bc-6b13-4281-a6ab-489dc313a855" type="text/javascript"></script>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Meta e SEO allineati al contenuto -->
+    <title>La cittadinanza del minore bipolide: le Sezioni Unite risolvono la minor issue (Cass. 24045/2026) | Jurio</title>
+    <meta name="description" content="Con la sentenza n. 24045/2026, le Sezioni Unite della Cassazione chiariscono che il figlio minore con doppia cittadinanza fin dalla nascita non perde lo status civitatis per la naturalizzazione del genitore.">
+    <link rel="canonical" href="https://jurio.it/blog/cittadinanza-minore-bipolide-sezioni-unite-24045-2026">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="La cittadinanza del minore bipolide: le Sezioni Unite risolvono la minor issue">
+    <meta property="og:description" content="Il figlio minore, cittadino italiano iure sanguinis e straniero iure soli dalla nascita, non perde la cittadinanza in caso di naturalizzazione del genitore.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://jurio.it/blog/cittadinanza-minore-bipolide-sezioni-unite-24045-2026">
+    <meta property="og:image" content="https://jurio.it/blog/cittadinanza-minore-bipolide-sezioni-unite-24045-2026.webp">
+    
+    <link rel="stylesheet" href="https://jurio.it/styles.css">
+    
+    <style>
+        :root {
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+            --font-serif: "Lora", "Merriweather", Georgia, "Times New Roman", serif;
+            /* Background & testo */
+            --color-bg: #f5f6f7;
+            --color-surface: #ffffff;
+            --color-text: #1a1d21;
+            /* Grigio istituzionale */
+            --color-primary: #e0a32e;
+            --color-primary-hover: #f0b541;
+            /* Neutri */
+            --color-border: #d6d9de;
+            --color-muted: #5f6672;
+            --shadow-soft: 0 6px 14px rgba(0, 0, 0, 0.08);
+            /* Tipografia */
+            --text-base-size: 16px;
+
+            --shadow-soft: 0 14px 45px rgba(42, 34, 24, .07);
+            --shadow-hover: 0 22px 60px rgba(42, 34, 24, .11);
+            --container: 1180px;
+            --radius: 18px;
+            --button-bg: var(--color-text);
+            --button-text: var(--color-bg);
+            --button-bg-hover: var(--color-primary);
+            --container: 1180px;
+            --text-base-size: 16px;
+        }
+
+        * { box-sizing: border-box; }
+
+        /* Tema chiaro/scuro: segue automaticamente la preferenza del sistema. */
+        @media (prefers-color-scheme: dark) {
+            :root {
+            --color-bg: #111111;
+            --color-surface: #1a1a1a;
+            --color-text: #e6e7ea;
+
+            --color-primary: #e0a32e;
+            --color-primary-hover: #f0b541;
+
+            --color-border: #2e2e2e;
+            --color-muted: #a1a7b0;
+
+            --shadow-soft: 0 8px 18px rgba(0, 0, 0, 0.45);
+            }
+
+            .skip-link { background: var(--color-text); color: var(--color-bg); }
+            .header-cta, .button-primary { color: var(--color-bg); background: var(--color-text); }
+            .header-cta:hover { background: #ffffff; }
+            .demo-media { background: #25221f; }
+            .pricing-banner {
+            background: #0f0e0d;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .32);
+            }
+            .pricing-banner p, .pricing-points { color: #d1c8bc; }
+            .pricing-cta .button-primary { color: #181613; background: #f7f1e8; }
+            ::selection { background: rgba(213, 168, 95, .24); }
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            min-width: 320px;
+            background: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--font-sans);
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            line-height: 1.75;
+        }
+        body, button, a { font-family: var(--font-sans); }
+        h1, h2, h3 {
+        font-family: var(--font-serif);
+        }
+        a { color: inherit; }
+        img, video { max-width: 100%; }
+        img { display: block; }
+        button, a { -webkit-tap-highlight-color: transparent; }
+        :focus-visible { outline: 3px solid rgba(154, 107, 37, .55); outline-offset: 4px; }
+        ::selection { background: rgba(154, 107, 37, .18); }
+
+        .skip-link {
+            position: fixed; left: 1rem; top: 1rem; z-index: 1000;
+            transform: translateY(-160%); transition: transform .18s ease;
+            background: var(--color-text); color: #fff; padding: .7rem 1rem;
+            border-radius: 10px; font-weight: 700; text-decoration: none;
+        }
+        .skip-link:focus { transform: translateY(0); }
+
+        .container { width: min(var(--container), calc(100% - 40px)); margin-inline: auto; }
+        .serif { font-family: var(--font-serif); }
+
+        .site-header {
+            position: sticky; top: 0; z-index: 50;
+            background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+            border-bottom: 1px solid var(--color-border);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        .header-inner {
+            min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 2rem;
+        }
+        .brand {
+            font-family: var(--font-serif); font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 700;
+            text-decoration: none; letter-spacing: -.03em;
+        }
+        .nav { display: flex; align-items: center; gap: 1.7rem; }
+        .nav a {
+            text-decoration: none; color: var(--color-muted); font-size: .72rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: .14em; transition: color .18s ease;
+        }
+        .nav a:hover { color: var(--color-text); }
+        .header-cta {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-height: 44px; padding: 0 1.1rem; border-radius: 10px;
+            background: var(--button-bg); color: var(--button-text); text-decoration: none; font-size: .9rem; font-weight: 750;
+            transition: transform .18s ease, background .18s ease;
+        }
+        .header-cta:hover { background: var(--button-bg-hover); transform: translateY(-1px); }
+
+        main { overflow: clip; }
+        .section { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+        .hero { padding: clamp(3.2rem, 6vw, 5.5rem) 0 3.8rem; }
+        .hero-grid {
+            display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+            gap: clamp(2.5rem, 6vw, 5.5rem); align-items: start;
+        }
+        .eyebrow {
+            display: inline-flex; margin-bottom: 1.2rem; color: var(--color-primary);
+            font-size: .72rem; font-weight: 850; text-transform: uppercase; letter-spacing: .18em;
+        }
+        .hero h1 {
+            margin: 0; font-family: var(--font-serif); font-weight: 500; letter-spacing: -.045em;
+            font-size: clamp(3rem, 6vw, 5.4rem); line-height: .98;
+            text-wrap: balance;
+        }
+        .hero h1 em { color: var(--color-primary); font-style: italic; }
+        .hero-lead {
+            margin: 1.5rem 0 0; max-width: 660px; font-size: clamp(1.05rem, 1.5vw, 1.24rem);
+            line-height: 1.75; color: var(--color-text);
+        }
+        .hero-support {
+            margin: 1rem 0 0; max-width: 560px; color: var(--color-muted); font-size: 1rem; line-height: 1.75;
+        }
+        .hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }
+        .button {
+            display: inline-flex; align-items: center; justify-content: center; gap: .6rem;
+            min-height: 48px; padding: 0 1.15rem; border-radius: 10px; text-decoration: none;
+            font-weight: 750; border: 1px solid transparent; transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+        .button-primary { color: var(--button-text); background: var(--button-bg); box-shadow: 0 10px 24px rgba(36,33,29,.08); }
+        .button-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(36,33,29,.12); }
+        .button-secondary { background: var(--color-surface); border-color: var(--color-border); }
+        .button-secondary:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); }
+
+        .demo-card {
+            position: relative; overflow: hidden; border: 1px solid var(--color-border);
+            border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-soft);
+        }
+        .demo-card::before, .accent::before {
+            content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--color-primary);
+        }
+        .demo-media { aspect-ratio: 16 / 10; background: #ece8df; }
+        .demo-media img, .demo-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .section-heading { max-width: 760px; margin: 0 auto 3rem; text-align: center; }
+        .section-heading h2 { margin: 0 0 .9rem; font-family: var(--font-serif); font-weight: 500; letter-spacing: -.035em; font-size: clamp(2.25rem, 4vw, 3.6rem); line-height: 1.05; }
+        .section-heading p { margin: 0 auto; color: var(--color-muted); font-size: 1.05rem; line-height: 1.75; }
+
+        .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; }
+        .step { padding: 2rem; list-style-type: none; border-top: 1px solid var(--color-border); }
+        .step-num { font-size: .72rem; font-weight: 850; letter-spacing: .15em; color: var(--color-primary); }
+        .step h3 { margin: .85rem 0 .65rem; font-family: var(--font-serif); font-size: 1.55rem; line-height: 1.15; }
+        .step p { margin: 0; color: var(--color-muted); line-height: 1.7; }
+
+        .faq { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            border: 1px solid var(--color-border); 
+            border-radius: var(--radius); 
+            overflow: hidden; 
+            background: var(--color-surface); 
+            box-shadow: var(--shadow-soft); 
+        }
+
+        details + details { 
+            border-top: 1px solid var(--color-border); 
+        }
+
+        summary {
+            list-style: none; 
+            cursor: pointer; 
+            padding: 1.35rem 1.5rem; 
+            font-weight: 700;
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 1rem;
+            transition: background-color 0.25s ease;
+        }
+
+        summary::-webkit-details-marker { 
+            display: none; 
+        }
+
+        summary:hover { 
+            background: color-mix(in srgb, var(--color-bg) 55%, transparent); 
+        }
+
+        summary::after {
+            content: ""; 
+            flex: 0 0 auto; 
+            width: 10px; 
+            height: 10px;
+            border-right: 2px solid var(--color-muted);
+            border-bottom: 2px solid var(--color-muted);
+            transform: translateY(-25%) rotate(45deg);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
+        }
+
+        details[open] summary::after { 
+            transform: translateY(25%) rotate(225deg); 
+            border-color: var(--color-text);
+        }
+
+        details > p {
+            margin: 0; 
+            padding: 0 1.5rem; 
+            color: var(--color-muted); 
+            line-height: 1.75;
+            display: block; 
+            max-height: 0; 
+            opacity: 0; 
+            transform: translateY(-10px);
+            transition: max-height 0.3s ease, opacity 0.2s ease, transform 0.2s ease, padding-bottom 0.3s ease;
+        }
+
+        details[open] > p {
+            padding-bottom: 1.35rem;
+            max-height: 20rem;
+            opacity: 1; 
+            transform: translateY(0); 
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                        opacity 0.35s ease 0.05s, 
+                        transform 0.35s ease 0.05s, 
+                        padding-bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cta { padding-top: 1rem; }
+        .cta-box { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2rem; align-items: center; padding: clamp(2rem, 5vw, 4.5rem); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 24px; box-shadow: var(--shadow-soft); }
+        .cta-box h2 { margin: 0; font-family: var(--font-serif); font-size: clamp(2.4rem, 4.6vw, 4.3rem); line-height: 1; letter-spacing: -.045em; font-weight: 500; }
+        .cta-box h2 em { color: var(--color-primary); font-style: italic; }
+        .cta-box p { margin: 1rem 0 0; color: var(--color-muted); max-width: 760px; line-height: 1.75; }
+
+        footer { margin-top: 4rem; padding: 4rem 0 2rem; border-top: 1px solid var(--color-border); background: var(--color-surface); }
+
+        /* --- Visual refresh --- */
+        :root {
+            --ease-smooth: cubic-bezier(.22, 1, .36, 1);
+            --ease-snappy: cubic-bezier(.2, .8, .2, 1);
+        }
+
+        body { overflow-x: hidden; }
+        ::selection { background: rgba(224, 163, 46, .18); color: var(--color-text); }
+
+        .demo-card {
+            transform: translateZ(0);
+            transition: transform .7s var(--ease-smooth), box-shadow .7s var(--ease-smooth);
+            will-change: transform;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .step {
+            position: relative;
+            min-height: 210px;
+            transition: transform .55s var(--ease-smooth), box-shadow .55s var(--ease-smooth), border-color .35s ease;
+        }
+
+        .step::after {
+            content: "";
+            position: absolute;
+            left: 2rem;
+            bottom: 0;
+            width: 38px;
+            height: 1px;
+            background: var(--color-primary);
+            transform: scaleX(.35);
+            transform-origin: left;
+            transition: transform .45s var(--ease-smooth);
+        }
+
+        .step:hover::after {
+            transform: scaleX(1);
+        }
+
+        .step-num {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .step-num::after {
+            content: "";
+            width: 42px;
+            height: 1px;
+            background: currentColor;
+            opacity: .35;
+        }
+
+        summary { position: relative; }
+        summary::before {
+            content: "";
+            position: absolute;
+            left: 1.5rem;
+            bottom: 0;
+            width: 0;
+            height: 1px;
+            background: var(--color-primary);
+            transition: width .45s var(--ease-smooth);
+        }
+        details[open] summary::before { width: calc(100% - 3rem); }
+
+        .cta-box { position: relative; overflow: hidden; transition: transform .55s var(--ease-smooth), box-shadow .55s var(--ease-smooth), border-color .35s ease; }
+        .cta-box::before {
+            content: "";
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            right: -70px;
+            bottom: -150px;
+            border-radius: 50%;
+            border: 1px solid rgba(224, 163, 46, .13);
+            box-shadow: 0 0 0 40px rgba(224, 163, 46, .035);
+            pointer-events: none;
+        }
+
+        /* Scroll reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity .8s var(--ease-smooth), transform .8s var(--ease-smooth);
+            will-change: opacity, transform;
+        }
+        .reveal.reveal-left { transform: translateX(-30px); }
+        .reveal.reveal-right { transform: translateX(30px); }
+        .reveal.is-visible {
+            opacity: 1 !important;
+            transform: none !important;
+        }
+
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            z-index: 200;
+            transform-origin: left;
+            transform: scaleX(0);
+            background: var(--color-primary);
+            pointer-events: none;
+            opacity: .9;
+        }
+
+        .legal-page { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+        .legal-header { max-width: 900px; margin: 0 auto 4.5rem; }
+        .legal-title { font-size: clamp(3rem, 6vw, 5rem); line-height: .98; text-wrap: balance; }
+        .legal-intro { margin: 1.5rem 0 0; max-width: 760px; color: var(--color-muted); font-size: 1.05rem; }
+        .legal-content { max-width: 900px; margin: 0 auto;}
+        .legal-content p {
+            text-align: justify;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
+        }
+        .legal-section { position: relative; padding: 2.8rem 0; border-top: 1px solid var(--color-border); }
+        .legal-section:first-child { padding-top: 0; border-top: 0; }
+        .legal-section h2 { font-size: clamp(1.55rem, 2.5vw, 2rem); font-weight: 600; line-height: 1.15; letter-spacing: -.025em; }
+        .legal-section p { max-width: 780px; margin: 0 0 1rem; }
+
+        .cookie-type-box {
+            padding: 1.5rem;
+            background-color: color-mix(in srgb, var(--color-bg) 50%, transparent);
+            border-left: 3px solid var(--color-primary);
+            border-radius: 12px;
+            border: 1px solid var(--color-border);
+            border-left-width: 4px;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .cookie-type-box h3 { margin: 0 0 0.5rem 0; color: var(--color-primary); font-family: var(--font-sans); font-size: 1.1rem; }
+
+        /* Note e Bibliografia */
+        sup a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 700;
+            padding: 0 0.15rem;
+            transition: color 0.2s ease;
+        }
+        sup a:hover {
+            color: var(--color-primary-hover);
+            text-decoration: underline;
+        }
+        .legal-list { max-width: 780px; margin: 1.2rem 0 0; padding-left: 1.5rem; }
+        .legal-list li { margin-bottom: .65rem; padding-left: .25rem; }
+        .legal-list li::marker { color: var(--color-primary); }
+        .legal-list a {
+            color: var(--color-primary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .legal-list a:hover {
+            text-decoration: underline;
+            color: var(--color-primary-hover);
+        }
+
+        /* Utility per link riservati (Paywall) */
+        .locked-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: var(--color-primary);
+            font-weight: 600;
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 4px;
+            transition: color .18s ease;
+        }
+        .locked-link:hover { color: var(--color-primary-hover); }
+        .locked-link svg { width: 14px; height: 14px; fill: currentColor; }
+
+        @media (max-width: 720px) {
+            .container { width: min(100% - 28px, var(--container)); }
+            .legal-page { padding: 3.5rem 0; }
+            .legal-header { margin-bottom: 2.5rem; }
+            .legal-title { font-size: clamp(2.7rem, 13vw, 3.7rem); }
+            .legal-section { padding: 2rem 0; }
+            .steps { grid-template-columns: 1fr; gap: 0; }
+            .step { min-height: 0; padding: 1.5rem 0 1.7rem; border-top: 1px solid var(--color-border); }
+            .step:first-child { border-top: 0; padding-top: 0; }
+            .cta-box { grid-template-columns: 1fr; gap: 1.5rem; padding: 1.7rem 1.35rem; border-radius: 18px; }
+            .cta-box h2 { font-size: clamp(2.2rem, 10vw, 3.2rem); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+            .scroll-progress { display: none; }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Elementi dinamici necessari agli script -->
+    <div id="scrollProgress" class="scroll-progress"></div>
+    <div id="header"></div>
+
+    <main class="legal-page container">
+        <!-- HEADER ARTICOLO -->
+        <header class="legal-header">
+            <span class="eyebrow">Diritto Civile e Cittadinanza</span>
+            <h1 class="legal-title">La cittadinanza del minore bipolide: le Sezioni Unite risolvono la minor issue</h1>
+            <p class="legal-intro serif" style="font-style: italic;">Con la sentenza n. 24045 del 26 luglio 2026, le Sezioni Unite della Cassazione chiariscono definitivamente il rapporto tra l'art. 7 e l'art. 12 della legge 555/1912: il figlio minore che possiede doppia cittadinanza fin dalla nascita non perde lo status civitatis per la naturalizzazione del genitore.</p>
+            
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem; align-items: center; font-size: 0.85rem; color: var(--color-muted); font-weight: 600;">
+                <time datetime="2026-09-25">25 Sett. 2026</time>
+                <span>•</span>
+                <span>Cass., Sez. Un. civ., 26 luglio 2026, n. 24045</span>
+            </div>
+        </header>
+
+        <!-- IMMAGINE PRINCIPALE -->
+        <div class="demo-card" style="margin-bottom: 4.5rem; max-width: 900px; margin-inline: auto;">
+            <div class="demo-media" style="aspect-ratio: 21/9;">
+                <img src="https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=1280" alt="Palazzo di giustizia e bilancia" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+        </div>
+
+        <!-- CORPO DELL'ARTICOLO -->
+        <article class="legal-content">
+            
+            <!-- SEZIONE 1 -->
+            <section class="legal-section">
+                <h2>Il problema concreto: la minor issue</h2>
+                <p>Un cittadino italiano emigra in un Paese che applica lo <em>ius soli</em> (come il Venezuela o il Brasile). Lì nasce un figlio, il quale, nel medesimo istante, acquisisce due cittadinanze: quella italiana per discendenza (<em>iure sanguinis</em>) e quella dello Stato estero per nascita sul territorio. Qualche anno dopo, mentre il figlio è ancora minorenne e convivente, il genitore italiano decide di naturalizzarsi, perdendo di conseguenza la cittadinanza italiana.</p>
+                <p>Che ne è della cittadinanza italiana del figlio? È questo il nucleo della cosiddetta <em>minor issue</em>, un nodo che ha attraversato con alterne fortune oltre un secolo di applicazione della legge 13 giugno 1912, n. 555<sup><a href="#note-1" id="ref-1">1</a></sup>. Il dubbio non è meramente teorico: dalla sua risoluzione dipende il riconoscimento dello <em>status civitatis</em> per migliaia di discendenti che oggi agiscono in giudizio per ricostruire la propria linea genealogica.</p>
+            </section>
+
+            <!-- SEZIONE 2 -->
+            <section class="legal-section">
+                <h2>Il quadro normativo e il nodo interpretativo</h2>
+                <p>Per comprendere la genesi del dibattito, occorre guardare all'impianto della normativa originaria, antecedente alla riforma del 1992. La legge del 1912 prevede due disposizioni potenzialmente in attrito quando applicate al minore bipolide.</p>
+                <p>Da un lato, l'<strong>art. 7</strong> stabilisce una regola di salvaguardia: il cittadino italiano nato e residente in uno Stato estero, dal quale sia ritenuto proprio cittadino per nascita, conserva la cittadinanza italiana. Per rinunciarvi, dovrà attendere la maggiore età e manifestare un'espressa volontà in tal senso.</p>
+                <p>Dall'altro lato, l'<strong>art. 12, comma 2</strong>, disciplina gli effetti derivati della perdita della cittadinanza del genitore: i figli minori non emancipati di chi perde la cittadinanza divengono stranieri quando condividono la residenza col genitore <em>e acquistino la cittadinanza di uno Stato straniero</em>. Il dilemma ermeneutico si concentra sul rapporto tra queste due norme: l'art. 12 costituisce una deroga generale capace di azzerare la tutela offerta dall'art. 7, o disciplina un'ipotesi del tutto diversa?</p>
+            </section>
+
+            <!-- SEZIONE TIMELINE -->
+            <section class="legal-section">
+                <h2>L'evoluzione del contrasto giurisprudenziale</h2>
+                <p>Per gran parte del Novecento, l'amministrazione e la giurisprudenza hanno mantenuto le due fattispecie rigorosamente separate, per poi dividersi nettamente a partire dal 2018, rendendo inevitabile un intervento nomofilattico risolutivo.</p>
+                
+                <div class="steps" style="grid-template-columns: 1fr; gap: 1.5rem; margin-top: 2.5rem;">
+                    
+                    <div class="step reveal">
+                        <span class="step-num">1912 - 1990</span>
+                        <h3>Prassi amministrativa e preminenza dell'art. 7</h3>
+                        <p>Tramite due autorevoli pareri del Consiglio di Stato (n. 1820 del 1975 e n. 1060 del 1990), l'amministrazione consolida l'orientamento secondo cui il minore bipolide fin dalla nascita ricade esclusivamente nell'ambito applicativo dell'art. 7, garantendo la trasmissione ininterrotta della cittadinanza a prescindere dalle scelte successive del genitore.</p>
+                    </div>
+
+                    <div class="step reveal">
+                        <span class="step-num">2018 - 2024</span>
+                        <h3>La faglia del contrasto: prevalenza dell'art. 12</h3>
+                        <p>Alcune pronunce di merito, successivamente avallate in sede di legittimità dalla 
+                            <a href="/giurisprudenza/2b84291c-7f8a-491c-8b2b-581d9f8e4c77" class="locked-link" title="Riservato agli utenti Jurio">
+                                <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>
+                                Cass. n. 17161/2023
+                            </a> 
+                        e dalla Cass. n. 454/2024, propongono una rilettura sistematica. L'art. 12, comma 2, viene letto come eccezione specifica per il minore convivente col genitore naturalizzato, capace di neutralizzare la doppia cittadinanza. Questo orientamento viene recepito persino dal Ministero dell'Interno (Circ. 43347/2024).</p>
+                    </div>
+
+                    <div class="step reveal">
+                        <span class="step-num">Luglio 2026</span>
+                        <h3>Le Sezioni Unite chiudono il cerchio</h3>
+                        <p>Con le sentenze gemelle di fine luglio, in particolare la n. 24045/2026, la Suprema Corte disattende l'orientamento restrittivo e riafferma la tutela originaria del bipolide, smontando l'impianto della "perdita derivata" elaborata dalla giurisprudenza più recente.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEZIONE 3 -->
+            <section class="legal-section">
+                <h2>La decisione: tutela del bipolide e primato dell'art. 7</h2>
+                <p>Con la decisione n. 24045/2026<sup><a href="#note-2" id="ref-2">2</a></sup>, le Sezioni Unite hanno accolto la ricostruzione che mantiene separate le sfere applicative delle due disposizioni. Muovendo dal dato letterale, la Corte osserva che il secondo comma dell'art. 12 presuppone — per il testuale riferimento ai minori che <em>"acquistino"</em> una cittadinanza straniera — un evento successivo e dipendente da un fatto nuovo.</p>
+                <p>Il minore bipolide originario, che quella cittadinanza straniera la possiede sin dalla nascita per <em>ius soli</em> e non la "acquista" per effetto della scelta del genitore, resta semplicemente al di fuori del perimetro applicativo dell'art. 12, comma 2. L'art. 12 riguarda invece il diverso caso del minore che abbia <em>esclusivamente</em> la cittadinanza italiana e che, condividendo la residenza col genitore, ne acquisti una estera <em>non a titolo originario</em> ma di riflesso alla naturalizzazione dell'adulto.</p>
+            </section>
+
+            <!-- HIGHLIGHT -->
+            <aside class="cookie-type-box reveal">
+                <h3>I principi della "grande naturalizzazione" (SSUU 2022)</h3>
+                <p style="margin:0; font-size: 0.95rem;">Un ruolo determinante nel ragionamento della Corte è stato giocato dai principi già fissati con le sentenze Cass., sez. un., n. 25317 e 25318 del 2022<sup><a href="#note-3" id="ref-3">3</a></sup>. La cittadinanza per nascita si acquista a titolo originario e ha natura permanente e imprescrittibile. L'istituto della perdita della cittadinanza va interpretato restrittivamente, alla luce dei principi costituzionali sopravvenuti. Il diritto allo <em>status civitatis</em> può perdersi solo per rinuncia volontaria ed esplicita (art. 8 L. 555/1912), mai per un fatto passivamente subìto da un minore in dipendenza di una scelta genitoriale a cui resta estraneo.</p>
+            </aside>
+
+            <!-- SEZIONE 4 -->
+            <section class="legal-section">
+                <h2>L'intersezione con la giurisprudenza costituzionale e il nuovo art. 3-bis</h2>
+                <p>La pronuncia delle Sezioni Unite del luglio 2026 si colloca in un quadro normativo profondamente modificato dall'art. 1, comma 1, del D.L. 28 marzo 2025, n. 36 (convertito con L. 74/2025). Il legislatore ha infatti inserito il nuovo art. 3-bis nella legge n. 91/1992, il quale prevede che il cittadino nato all'estero in possesso di altra cittadinanza si consideri come non aver mai acquistato quella italiana, fatta salva la ricorrenza di precise condizioni derogatorie (tra cui l'avere già presentato domanda giudiziale entro il 27 marzo 2025).</p>
+                <p>Poiché il giudizio che ha originato la sentenza 24045/2026 era anteriore a tale sbarramento temporale, le Sezioni Unite hanno dovuto risolvere preliminarmente il nodo intertemporale. Richiamando la <strong>Corte Costituzionale (sent. n. 142/2025 e n. 63/2026)</strong><sup><a href="#note-4" id="ref-4">4</a></sup>, la Cassazione ha confermato che il previgente assetto (compresa l'interpretazione favorevole dell'art. 7) rimane applicabile a tutti i giudizi già pendenti, potendo così affrontare il merito interpretativo della <em>minor issue</em> limitatamente alla disciplina pre-riforma.</p>
+            </section>
+
+            <!-- FAQ -->
+            <section class="legal-section">
+                <h2>Domande Frequenti (FAQ)</h2>
+                <div class="faq reveal">
+                    <details>
+                        <summary>Il minore bipolide perde la cittadinanza se il genitore si naturalizza?</summary>
+                        <p>No. Secondo la pronuncia delle Sezioni Unite n. 24045/2026, il minore nato all'estero che possiede fin dalla nascita la doppia cittadinanza (iure sanguinis e iure soli) ricade nella disciplina dell'art. 7 della legge 555/1912 e conserva la cittadinanza italiana anche se il genitore convivente si naturalizza.</p>
+                    </details>
+                    <details>
+                        <summary>A chi si applica l'art. 12, comma 2, della L. 555/1912?</summary>
+                        <p>Si applica esclusivamente al minore che, possedendo inizialmente solo la cittadinanza italiana, acquisisca successivamente (non per nascita) la cittadinanza straniera come conseguenza della naturalizzazione del genitore convivente, perdendo così lo status italiano.</p>
+                    </details>
+                    <details>
+                        <summary>Il nuovo art. 3-bis L. 91/1992 (Riforma 2025) si applica ai giudizi in corso?</summary>
+                        <p>Per le cause incardinate giudizialmente o amministrativamente prima del 27 marzo 2025, no. La Corte Costituzionale (sent. 142/2025) ha chiarito che a tali procedimenti continua ad applicarsi la vecchia normativa. Tuttavia, la compatibilità eurounitaria della riforma per i casi successivi resta sub iudice dinanzi alla Corte di Giustizia UE (ord. 147/2026).</p>
+                    </details>
+                </div>
+            </section>
+
+            <!-- NOTE E BIBLIOGRAFIA -->
+            <section class="legal-section" id="bibliografia">
+                <h2>Note e Bibliografia</h2>
+                <ol class="legal-list" style="font-size: 0.85rem; color: var(--color-muted);">
+                    <li id="note-1">Legge 13 giugno 1912, n. 555, "Sulla cittadinanza italiana" (Artt. 1, 7, 8, 12). <a href="#ref-1" aria-label="Torna al testo">↩</a></li>
+                    <li id="note-2">Cass., Sez. Un. civ., 26 luglio 2026, n. 24045 (e le gemelle n. 24184 e n. 24185 del 29 luglio 2026). <a href="#ref-2" aria-label="Torna al testo">↩</a></li>
+                    <li id="note-3">Cass., Sez. Un. civ., 24 agosto 2022, n. 25317 e n. 25318 (sulla c.d. grande naturalizzazione). <a href="#ref-3" aria-label="Torna al testo">↩</a></li>
+                    <li id="note-4">Corte cost., sentenze n. 142/2025 e n. 63/2026. La compatibilità con il diritto UE della riforma per i giudizi instaurati dopo il 27 marzo 2025 è oggetto di rinvio pregiudiziale (Corte cost., ord. n. 147/2026). <a href="#ref-4" aria-label="Torna al testo">↩</a></li>
+                </ol>
+            </section>
+
+        </article>
+        
+        <!-- CTA JURIO FINALE -->
+        <div class="cta-box reveal" style="margin-top: 4rem; max-width: 900px; margin-inline: auto;">
+            <div>
+                <h2>Cerca. <em>Analizza.</em> Scegli.</h2>
+                <p>Ricerca e confronta l'evoluzione giurisprudenziale delle Sezioni Unite direttamente sulle fonti con l'IA di Jurio. Sblocca l'accesso illimitato a tutto il database giurisprudenziale integrato.</p>
+                <div class="hero-actions">
+                    <a href="/prezzi" class="button button-primary">Scopri i piani</a>
+                    <a href="/login" class="button button-secondary">Accedi</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const components = [
+                {
+                    selector: "#header",
+                    file: "/header.html",
+                },
+                {
+                    selector: "#footer",
+                    file: "/footer.html",
+                },
+            ];
+
+            await Promise.all(
+                components.map(async ({ selector, file }) => {
+                    const element = document.querySelector(selector);
+
+                    if (!element) return;
+
+                    try {
+                        const response = await fetch(file);
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+
+                        element.innerHTML = await response.text();
+                    } catch (error) {
+                        console.error(`Errore nel caricamento di ${file}:`, error);
+                    }
+                })
+            );
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const observerOptions = {
+                root: null,
+                rootMargin: "0px",
+                threshold: 0.1,
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("is-visible");
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
+
+            const header = document.querySelector(".site-header");
+
+            window.addEventListener(
+                "scroll",
+                () => {
+                    if (!header) return;
+
+                    if (window.scrollY > 20) {
+                        header.classList.add("is-scrolled");
+                    } else {
+                        header.classList.remove("is-scrolled");
+                    }
+                },
+                { passive: true }
+            );
+        });
+    </script>
+    <!-- SCRIPT PER REVEAL & SCROLL PROGRESS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const reveals = document.querySelectorAll('.reveal');
+            
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, {
+                    threshold: 0.1,
+                    rootMargin: '0px 0px -40px 0px'
+                });
+
+                reveals.forEach(el => observer.observe(el));
+            } else {
+                reveals.forEach(el => el.classList.add('is-visible'));
+            }
+
+            const progressBar = document.getElementById('scrollProgress');
+            if (progressBar) {
+                window.addEventListener('scroll', () => {
+                    const total = document.documentElement.scrollHeight - window.innerHeight;
+                    if (total > 0) {
+                        const progress = window.scrollY / total;
+                        progressBar.style.transform = `scaleX(${progress})`;
+                    }
+                }, { passive: true });
+            }
+        });
+    </script>
+
+    <!-- DATI STRUTTURATI SEO (Corretti per il contenuto sulla cittadinanza) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "La cittadinanza del minore bipolide: le Sezioni Unite risolvono la minor issue",
+      "image": "https://jurio.it/blog/cittadinanza-minore-bipolide-sezioni-unite-24045-2026.webp",
+      "author": {
+        "@type": "Organization",
+        "name": "Redazione Jurio"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Jurio",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://jurio.it/logo.webp"
+        }
+      },
+      "datePublished": "2026-09-25T09:00:00+02:00",
+      "dateModified": "2026-09-25T09:00:00+02:00",
+      "description": "Con la sentenza n. 24045 del 26 luglio 2026, le Sezioni Unite della Cassazione chiariscono definitivamente il rapporto tra l'art. 7 e l'art. 12 della legge 555/1912: il figlio minore che possiede doppia cittadinanza fin dalla nascita non perde lo status civitatis per la naturalizzazione del genitore.",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://jurio.it/blog/cittadinanza-minore-bipolide-sezioni-unite-24045-2026"
+      }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "Il minore bipolide perde la cittadinanza se il genitore si naturalizza?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. Secondo la pronuncia delle Sezioni Unite n. 24045/2026, il minore nato all'estero che possiede fin dalla nascita la doppia cittadinanza (iure sanguinis e iure soli) ricade nella disciplina dell'art. 7 della legge 555/1912 e conserva la cittadinanza italiana anche se il genitore convivente si naturalizza."
+        }
+      }, {
+        "@type": "Question",
+        "name": "A chi si applica l'art. 12, comma 2, della L. 555/1912?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Si applica esclusivamente al minore che, possedendo inizialmente solo la cittadinanza italiana, acquisisca successivamente (non per nascita) la cittadinanza straniera come conseguenza della naturalizzazione del genitore convivente, perdendo così lo status italiano."
+        }
+      }, {
+        "@type": "Question",
+        "name": "Il nuovo art. 3-bis L. 91/1992 (Riforma 2025) si applica ai giudizi in corso?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Per le cause incardinate giudizialmente o amministrativamente prima del 27 marzo 2025, no. La Corte Costituzionale (sent. 142/2025) ha chiarito che a tali procedimenti continua ad applicarsi la vecchia normativa. Tuttavia, la compatibilità eurounitaria della riforma per i casi successivi resta sub iudice dinanzi alla Corte di Giustizia UE (ord. 147/2026)."
+        }
+      }]
+    }
+    </script>
+</body>
+</html>
