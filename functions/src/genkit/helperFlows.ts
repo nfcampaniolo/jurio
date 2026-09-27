@@ -123,7 +123,7 @@ export interface ExecutionProfile {
 
 export function getExecutionProfile(promptLower: string): ExecutionProfile {
   if (promptLower.length < 150) {
-    return { model: "googleai/gemini-2.5-flash", dbLimit: 3, webLimit: 2 };
+    return { model: "vertexai/gemini-2.5-flash", dbLimit: 3, webLimit: 2 };
   }
   const hasComparison = /confronta|compara|differenz|distingu|paragon/i.test(promptLower);
   const hasApplicability = /si applica|applicabil|caso concreto|caso di specie|fattispecie|distinguishing/i.test(promptLower);
@@ -134,9 +134,9 @@ export function getExecutionProfile(promptLower: string): ExecutionProfile {
   const needsDeepReasoning = complexityScore >= 3;
 
   if (needsDeepReasoning) {
-    return { model: "googleai/gemini-1.5-pro", dbLimit: 5, webLimit: 3 };
+    return { model: "vertexai/gemini-1.5-pro", dbLimit: 5, webLimit: 3 };
   } else {
-    return { model: "googleai/gemini-2.5-flash", dbLimit: 5, webLimit: 2 };
+    return { model: "vertexai/gemini-2.5-flash", dbLimit: 5, webLimit: 2 };
   }
 }
 
@@ -530,7 +530,7 @@ Il linguaggio deve essere: freddo, tecnico, impersonale (terza persona). Privo d
 // ─────────────────────────────────────────────
 
 export async function getModelForUser(userId: string): Promise<string> {
-  if (!userId) return "googleai/gemini-2.5-flash";
+  if (!userId) return "vertexai/gemini-2.5-flash";
   
   try {
     const userDoc = await db.collection("register").doc(userId).get();
@@ -538,7 +538,7 @@ export async function getModelForUser(userId: string): Promise<string> {
     if (userDoc.exists) {
       const planId = userDoc.data()?.planId;
       if (["business", "business_m", "admin"].includes(planId)) {
-        return "googleai/gemini-2.5-pro";
+        return "vertexai/gemini-2.5-pro";
       }
     }
   } catch (error) {
@@ -546,7 +546,7 @@ export async function getModelForUser(userId: string): Promise<string> {
   }
   
   // Fallback di default
-  return "googleai/gemini-2.5-flash";
+  return "vertexai/gemini-2.5-flash";
 }
 
 export const isUrl = (val: string) => {

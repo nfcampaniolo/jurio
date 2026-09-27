@@ -85,7 +85,7 @@ export const AdminNotificationsSection: React.FC = () => {
         ) : (
           <div className="flex flex-col gap-2 w-full max-w-md">
             <label className="text-sm font-semibold">UID Utente</label>
-            <input type="text" name="uid" value={payload.uid || ""} onChange={handleChange} placeholder="es. TTHcCNy5WeOTarQep4jVItbByKg1" className="p-2 border border-(--color-border) rounded-lg bg-bg focus:ring-2 focus:ring-(--color-primary)" />
+            <input type="text" name="uid" value={payload.uid || ""} onChange={handleChange} placeholder="Inserisci uid" className="p-2 border border-(--color-border) rounded-lg bg-bg focus:ring-2 focus:ring-(--color-primary)" />
           </div>
         )}
       </div>

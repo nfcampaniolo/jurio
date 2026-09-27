@@ -18,7 +18,6 @@
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
     "@genkit-ai/firebase": "^1.31.0",
-    "@genkit-ai/google-genai": "^1.31.0",
     "@google-cloud/tasks": "^6.2.1",
     "@google-cloud/vision": "^5.3.4",
     "@headlessui/react": "^2.2.9",

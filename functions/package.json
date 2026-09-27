@@ -16,7 +16,7 @@
   "main": "lib/index.js",
   "dependencies": {
     "@genkit-ai/firebase": "^1.31.0",
-    "@genkit-ai/google-genai": "^1.31.0",
+    "@genkit-ai/google-genai": "^1.42.0",
     "@google-cloud/speech": "^7.5.0",
     "@google-cloud/tasks": "^6.2.1",
     "@modelcontextprotocol/sdk": "^1.30.0",

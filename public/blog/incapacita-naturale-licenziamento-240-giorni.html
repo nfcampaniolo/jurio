@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('consent', 'default', {
+        'analytics_storage': 'denied',
+        'ad_storage': 'denied',
+        'ad_user_data': 'denied',
+        'ad_personalization': 'denied',
+        'wait_for_update': 500
+      });
+    </script>
+    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="869d54bc-6b13-4281-a6ab-489dc313a855"  type="text/javascript"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incapacità Naturale e Licenziamento: Le Sezioni Unite sul Nuovo Termine (Cass. 23486/2026) | Jurio</title>
+    <meta name="description" content="Le Sezioni Unite (Cass. 23486/2026) e la Corte Costituzionale (111/2025) ridisegnano l'impugnazione del licenziamento per il lavoratore incapace. L'impatto sull'art. 6 l. 604/1966.">
+    <link rel="canonical" href="https://jurio.it/blog/incapacita-naturale-licenziamento-240-giorni">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Incapacità Naturale e Licenziamento: Il Dialogo fra Cassazione e Consulta">
+    <meta property="og:description" content="Come cambia l'impugnazione del licenziamento per il lavoratore in stato di incapacità. Analisi della sentenza delle Sezioni Unite n. 23486/2026.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://jurio.it/blog/incapacita-naturale-licenziamento-240-giorni">
+    <meta property="og:image" content="https://jurio.it/blog/incapacita-naturale-licenziamento-240-giorni.webp">
+    <link rel="stylesheet" href="https://jurio.it/styles.css">
+    <style>
+        :root {
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+            --font-serif: "Lora", "Merriweather", Georgia, "Times New Roman", serif;
+            /* Background & testo */
+            --color-bg: #f5f6f7;
+            --color-surface: #ffffff;
+            --color-text: #1a1d21;
+            /* Grigio istituzionale */
+            --color-primary: #e0a32e;
+            --color-primary-hover: #f0b541;
+            /* Neutri */
+            --color-border: #d6d9de;
+            --color-muted: #5f6672;
+            --shadow-soft: 0 6px 14px rgba(0, 0, 0, 0.08);
+            /* Tipografia */
+            --text-base-size: 16px;
+
+            --shadow-soft: 0 14px 45px rgba(42, 34, 24, .07);
+            --shadow-hover: 0 22px 60px rgba(42, 34, 24, .11);
+            --container: 1180px;
+            --radius: 18px;
+            --button-bg: var(--color-text);
+            --button-text: var(--color-bg);
+            --button-bg-hover: var(--color-primary);
+            --container: 1180px;
+            --text-base-size: 16px;
+        }
+
+        * { box-sizing: border-box; }
+
+        /* Tema chiaro/scuro: segue automaticamente la preferenza del sistema. */
+        @media (prefers-color-scheme: dark) {
+            :root {
+            --color-bg: #111111;
+            --color-surface: #1a1a1a;
+            --color-text: #e6e7ea;
+
+            --color-primary: #e0a32e;
+            --color-primary-hover: #f0b541;
+
+            --color-border: #2e2e2e;
+            --color-muted: #a1a7b0;
+
+            --shadow-soft: 0 8px 18px rgba(0, 0, 0, 0.45);
+            }
+
+            .skip-link { background: var(--color-text); color: var(--color-bg); }
+            .header-cta, .button-primary { color: var(--color-bg); background: var(--color-text); }
+            .header-cta:hover { background: #ffffff; }
+            .demo-media { background: #25221f; }
+            .pricing-banner {
+            background: #0f0e0d;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .32);
+            }
+            .pricing-banner p, .pricing-points { color: #d1c8bc; }
+            .pricing-cta .button-primary { color: #181613; background: #f7f1e8; }
+            ::selection { background: rgba(213, 168, 95, .24); }
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            min-width: 320px;
+            background: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--font-sans);
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            line-height: 1.75;
+        }
+        body, button, a { font-family: var(--font-sans); }
+        h1, h2, h3 {
+          font-family: var(--font-serif);
+        }
+        a { color: inherit; }
+        img, video { max-width: 100%; }
+        img { display: block; }
+        button, a { -webkit-tap-highlight-color: transparent; }
+        :focus-visible { outline: 3px solid rgba(154, 107, 37, .55); outline-offset: 4px; }
+        ::selection { background: rgba(154, 107, 37, .18); }
+
+        .skip-link {
+            position: fixed; left: 1rem; top: 1rem; z-index: 1000;
+            transform: translateY(-160%); transition: transform .18s ease;
+            background: var(--color-text); color: #fff; padding: .7rem 1rem;
+            border-radius: 10px; font-weight: 700; text-decoration: none;
+        }
+        .skip-link:focus { transform: translateY(0); }
+
+        .container { width: min(var(--container), calc(100% - 40px)); margin-inline: auto; }
+        .serif { font-family: var(--font-serif); }
+
+        .site-header {
+            position: sticky; top: 0; z-index: 50;
+            background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+            border-bottom: 1px solid var(--color-border);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        .header-inner {
+            min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 2rem;
+        }
+        .brand {
+            font-family: var(--font-serif); font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 700;
+            text-decoration: none; letter-spacing: -.03em;
+        }
+        .nav { display: flex; align-items: center; gap: 1.7rem; }
+        .nav a {
+            text-decoration: none; color: var(--color-muted); font-size: .72rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: .14em; transition: color .18s ease;
+        }
+        .nav a:hover { color: var(--color-text); }
+        .header-cta {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-height: 44px; padding: 0 1.1rem; border-radius: 10px;
+            background: var(--button-bg); color: var(--button-text); text-decoration: none; font-size: .9rem; font-weight: 750;
+            transition: transform .18s ease, background .18s ease;
+        }
+        .header-cta:hover { background: var(--button-bg-hover); transform: translateY(-1px); }
+
+        main { overflow: clip; }
+        .section { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+        .hero { padding: clamp(3.2rem, 6vw, 5.5rem) 0 3.8rem; }
+        .hero-grid {
+            display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+            gap: clamp(2.5rem, 6vw, 5.5rem); align-items: start;
+        }
+        .eyebrow {
+            display: inline-flex; margin-bottom: 1.2rem; color: var(--color-primary);
+            font-size: .72rem; font-weight: 850; text-transform: uppercase; letter-spacing: .18em;
+        }
+        .hero h1 {
+            margin: 0; font-family: var(--font-serif); font-weight: 500; letter-spacing: -.045em;
+            font-size: clamp(3rem, 6vw, 5.4rem); line-height: .98;
+            text-wrap: balance;
+        }
+        .hero h1 em { color: var(--color-primary); font-style: italic; }
+        .hero-lead {
+            margin: 1.5rem 0 0; max-width: 660px; font-size: clamp(1.05rem, 1.5vw, 1.24rem);
+            line-height: 1.75; color: var(--color-text);
+        }
+        .hero-support {
+            margin: 1rem 0 0; max-width: 560px; color: var(--color-muted); font-size: 1rem; line-height: 1.75;
+        }
+        .hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }
+        .button {
+            display: inline-flex; align-items: center; justify-content: center; gap: .6rem;
+            min-height: 48px; padding: 0 1.15rem; border-radius: 10px; text-decoration: none;
+            font-weight: 750; border: 1px solid transparent; transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+        .button-primary { color: var(--button-text); background: var(--button-bg); box-shadow: 0 10px 24px rgba(36,33,29,.08); }
+        .button-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(36,33,29,.12); }
+        .button-secondary { background: var(--color-surface); border-color: var(--color-border); }
+        .button-secondary:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); }
+
+        .demo-card {
+            position: relative; overflow: hidden; border: 1px solid var(--color-border);
+            border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-soft);
+        }
+        .demo-card::before, .accent::before {
+            content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--color-primary);
+        }
+        .demo-media { aspect-ratio: 16 / 10; background: #ece8df; }
+        .demo-media img, .demo-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .section-heading { max-width: 760px; margin: 0 auto 3rem; text-align: center; }
+        .section-heading h2 { margin: 0 0 .9rem; font-family: var(--font-serif); font-weight: 500; letter-spacing: -.035em; font-size: clamp(2.25rem, 4vw, 3.6rem); line-height: 1.05; }
+        .section-heading p { margin: 0 auto; color: var(--color-muted); font-size: 1.05rem; line-height: 1.75; }
+
+        .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; }
+        .step { padding: 2rem; list-style-type: none; border-top: 1px solid var(--color-border); }
+        .step-num { font-size: .72rem; font-weight: 850; letter-spacing: .15em; color: var(--color-primary); }
+        .step h3 { margin: .85rem 0 .65rem; font-family: var(--font-serif); font-size: 1.55rem; line-height: 1.15; }
+        .step p { margin: 0; color: var(--color-muted); line-height: 1.7; }
+
+        .faq { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            border: 1px solid var(--color-border); 
+            border-radius: var(--radius); 
+            overflow: hidden; 
+            background: var(--color-surface); 
+            box-shadow: var(--shadow-soft); 
+        }
+
+        details + details { 
+            border-top: 1px solid var(--color-border); 
+        }
+
+        summary {
+            list-style: none; 
+            cursor: pointer; 
+            padding: 1.35rem 1.5rem; 
+            font-weight: 700;
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 1rem;
+            transition: background-color 0.25s ease;
+        }
+
+        summary::-webkit-details-marker { 
+            display: none; 
+        }
+
+        summary:hover { 
+            background: color-mix(in srgb, var(--color-bg) 55%, transparent); 
+        }
+
+        summary::after {
+            content: ""; 
+            flex: 0 0 auto; 
+            width: 10px; 
+            height: 10px;
+            border-right: 2px solid var(--color-muted);
+            border-bottom: 2px solid var(--color-muted);
+            transform: translateY(-25%) rotate(45deg);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
+        }
+
+        details[open] summary::after { 
+            transform: translateY(25%) rotate(225deg); 
+            border-color: var(--color-text);
+        }
+
+        details > p {
+            margin: 0; 
+            padding: 0 1.5rem; 
+            color: var(--color-muted); 
+            line-height: 1.75;
+            display: block; 
+            max-height: 0; 
+            opacity: 0; 
+            transform: translateY(-10px);
+            transition: max-height 0.3s ease, opacity 0.2s ease, transform 0.2s ease, padding-bottom 0.3s ease;
+        }
+
+        details[open] > p {
+            padding-bottom: 1.35rem;
+            max-height: 20rem;
+            opacity: 1; 
+            transform: translateY(0); 
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                        opacity 0.35s ease 0.05s, 
+                        transform 0.35s ease 0.05s, 
+                        padding-bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cta { padding-top: 1rem; }
+        .cta-box { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2rem; align-items: center; padding: clamp(2rem, 5vw, 4.5rem); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 24px; box-shadow: var(--shadow-soft); }
+        .cta-box h2 { margin: 0; font-family: var(--font-serif); font-size: clamp(2.4rem, 4.6vw, 4.3rem); line-height: 1; letter-spacing: -.045em; font-weight: 500; }
+        .cta-box h2 em { color: var(--color-primary); font-style: italic; }
+        .cta-box p { margin: 1rem 0 0; color: var(--color-muted); max-width: 760px; line-height: 1.75; }
+
+        footer { margin-top: 4rem; padding: 4rem 0 2rem; border-top: 1px solid var(--color-border); background: var(--color-surface); }
+
+        /* --- Visual refresh --- */
+        :root {
+            --ease-smooth: cubic-bezier(.22, 1, .36, 1);
+            --ease-snappy: cubic-bezier(.2, .8, .2, 1);
+        }
+
+        body { overflow-x: hidden; }
+        ::selection { background: rgba(224, 163, 46, .18); color: var(--color-text); }
+
+        .demo-card {
+            transform: translateZ(0);
+            transition: transform .7s var(--ease-smooth), box-shadow .7s var(--ease-smooth);
+            will-change: transform;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .step {
+            position: relative;
+            min-height: 210px;
+            transition: transform .55s var(--ease-smooth), box-shadow .55s var(--ease-smooth), border-color .35s ease;
+        }
+
+        .step::after {
+            content: "";
+            position: absolute;
+            left: 2rem;
+            bottom: 0;
+            width: 38px;
+            height: 1px;
+            background: var(--color-primary);
+            transform: scaleX(.35);
+            transform-origin: left;
+            transition: transform .45s var(--ease-smooth);
+        }
+
+        .step:hover::after {
+            transform: scaleX(1);
+        }
+
+        .step-num {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        .step-num::after {
+            content: "";
+            width: 42px;
+            height: 1px;
+            background: currentColor;
+            opacity: .35;
+        }
+
+        summary { position: relative; }
+        summary::before {
+            content: "";
+            position: absolute;
+            left: 1.5rem;
+            bottom: 0;
+            width: 0;
+            height: 1px;
+            background: var(--color-primary);
+            transition: width .45s var(--ease-smooth);
+        }
+        details[open] summary::before { width: calc(100% - 3rem); }
+
+        .cta-box { position: relative; overflow: hidden; transition: transform .55s var(--ease-smooth), box-shadow .55s var(--ease-smooth), border-color .35s ease; }
+        .cta-box::before {
+            content: "";
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            right: -70px;
+            bottom: -150px;
+            border-radius: 50%;
+            border: 1px solid rgba(224, 163, 46, .13);
+            box-shadow: 0 0 0 40px rgba(224, 163, 46, .035);
+            pointer-events: none;
+        }
+
+        /* Scroll reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity .8s var(--ease-smooth), transform .8s var(--ease-smooth);
+            will-change: opacity, transform;
+        }
+        .reveal.reveal-left { transform: translateX(-30px); }
+        .reveal.reveal-right { transform: translateX(30px); }
+        .reveal.is-visible {
+            opacity: 1 !important;
+            transform: none !important;
+        }
+
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            z-index: 200;
+            transform-origin: left;
+            transform: scaleX(0);
+            background: var(--color-primary);
+            pointer-events: none;
+            opacity: .9;
+        }
+
+        .legal-page { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+        .legal-header { max-width: 900px; margin: 0 auto 4.5rem; }
+        .legal-title { font-size: clamp(3rem, 6vw, 5rem); line-height: .98; text-wrap: balance; }
+        .legal-intro { margin: 1.5rem 0 0; max-width: 760px; color: var(--color-muted); font-size: 1.05rem; }
+        .legal-content { max-width: 900px; margin: 0 auto;}
+        .legal-content p {
+            text-align: justify;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
+        }
+        .legal-section { position: relative; padding: 2.8rem 0; border-top: 1px solid var(--color-border); }
+        .legal-section:first-child { padding-top: 0; border-top: 0; }
+        .legal-section h2 { font-size: clamp(1.55rem, 2.5vw, 2rem); font-weight: 600; line-height: 1.15; letter-spacing: -.025em; }
+        .legal-section p { max-width: 780px; margin: 0 0 1rem; }
+
+        .cookie-type-box {
+            padding: 1.5rem;
+            background-color: color-mix(in srgb, var(--color-bg) 50%, transparent);
+            border-left: 3px solid var(--color-primary);
+            border-radius: 12px;
+            border: 1px solid var(--color-border);
+            border-left-width: 4px;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .cookie-type-box h3 { margin: 0 0 0.5rem 0; color: var(--color-primary); font-family: var(--font-sans); font-size: 1.1rem; }
+
+        /* Note e Bibliografia */
+        sup a {
+            color: var(--color-primary);
+            text-decoration: none;
+            font-weight: 700;
+            padding: 0 0.15rem;
+            transition: color 0.2s ease;
+        }
+        sup a:hover {
+            color: var(--color-primary-hover);
+            text-decoration: underline;
+        }
+        .legal-list { max-width: 780px; margin: 1.2rem 0 0; padding-left: 1.5rem; }
+        .legal-list li { margin-bottom: .65rem; padding-left: .25rem; }
+        .legal-list li::marker { color: var(--color-primary); }
+        .legal-list a {
+            color: var(--color-primary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .legal-list a:hover {
+            text-decoration: underline;
+            color: var(--color-primary-hover);
+        }
+
+        /* Utility per link riservati (Paywall) */
+        .locked-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            color: var(--color-primary);
+            font-weight: 600;
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 4px;
+            transition: color .18s ease;
+        }
+        .locked-link:hover { color: var(--color-primary-hover); }
+        .locked-link svg { width: 14px; height: 14px; fill: currentColor; }
+
+        @media (max-width: 720px) {
+            .container { width: min(100% - 28px, var(--container)); }
+            .legal-page { padding: 3.5rem 0; }
+            .legal-header { margin-bottom: 2.5rem; }
+            .legal-title { font-size: clamp(2.7rem, 13vw, 3.7rem); }
+            .legal-section { padding: 2rem 0; }
+            .steps { grid-template-columns: 1fr; gap: 0; }
+            .step { min-height: 0; padding: 1.5rem 0 1.7rem; border-top: 1px solid var(--color-border); }
+            .step:first-child { border-top: 0; padding-top: 0; }
+            .cta-box { grid-template-columns: 1fr; gap: 1.5rem; padding: 1.7rem 1.35rem; border-radius: 18px; }
+            .cta-box h2 { font-size: clamp(2.2rem, 10vw, 3.2rem); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+            .scroll-progress { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Barra di lettura superiore -->
+<div class="scroll-progress" id="scrollProgress"></div>
+<div id="header"></div>
+<main class="container legal-page">
+   
+    <!-- HEADER ARTICOLO -->
+    <header class="legal-header">
+        <span class="eyebrow">Diritto del Lavoro e Corte Costituzionale</span>
+        <h1 class="legal-title">Incapacità naturale e decadenza dall'impugnazione del licenziamento</h1>
+        <p class="legal-intro serif" style="font-style: italic;">Il dialogo fra Cassazione a Sezioni Unite e Corte costituzionale sull'art. 6 della l. n. 604/1966. Come si bilancia la presunzione di conoscenza dell'atto recettizio con la tutela del lavoratore fragile (sent. n. 23486/2026).</p>
+        
+        <div style="margin-top: 1.5rem; display: flex; gap: 1rem; align-items: center; font-size: 0.85rem; color: var(--color-muted); font-weight: 600;">
+            <time datetime="2026-07-18">18 Lug. 2026</time>
+            <span>•</span>
+            <span>Cass., Sez. Un. civ., 18 luglio 2026, n. 23486</span>
+        </div>
+    </header>
+
+    <!-- IMMAGINE PRINCIPALE -->
+    <div class="demo-card" style="margin-bottom: 4.5rem; max-width: 900px; margin-inline: auto;">
+        <div class="demo-media" style="aspect-ratio: 21/9;">
+            <img src="https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=1200&q=80" alt="Rigore giurisprudenziale e interpretazione normativa" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+    </div>
+
+    <!-- CORPO DELL'ARTICOLO -->
+    <article class="legal-content">
+        
+        <!-- SEZIONE 1 -->
+        <section class="legal-section">
+            <h2>Il problema: la crisi dell'atto recettizio</h2>
+            <p>Il rapporto fra lo stato soggettivo del destinatario di un atto ricettizio e la certezza degli effetti giuridici che quell'atto produce è uno dei nodi classici del diritto civile. Ma quando l'atto è un licenziamento, e il destinatario versa in una condizione di incapacità naturale processualmente accertata, il nodo si complica drasticamente.</p>
+            <p>In questo scenario entrano in gioco non solo l'art. 1335 c.c. e la sua rigida presunzione di conoscenza, ma anche il rigoroso termine di decadenza dettato dall'art. 6 della l. 15 luglio 1966, n. 604, e — sullo sfondo — il diritto al lavoro e il diritto di difesa presidiati dagli artt. 4, 24 e 35 della Costituzione.</p>
+            <p>Su questo intreccio si è pronunciata la Corte di cassazione, a Sezioni Unite, con la sentenza n. 23486/2026, punto di arrivo di un percorso avviato nel 2023 dalla Sezione Lavoro e passato per una dirimente pronuncia additiva della Consulta nel 2025.</p>
+        </section>
+
+        <!-- SEZIONE 2 -->
+        <section class="legal-section">
+            <h2>Il quadro normativo e i limiti codicistici</h2>
+            <p>L'art. 6 della l. n. 604/1966 impone che il licenziamento sia impugnato, a pena di decadenza, entro <strong>sessanta giorni</strong> dalla ricezione della comunicazione scritta, cui deve seguire, entro i successivi centottanta giorni, il deposito del ricorso giudiziale.</p>
+            <p>A ostacolare la tutela del lavoratore colpito da grave infermità psichica vi sono tre ostacoli codicistici granitici. In primo luogo, l'<strong>art. 1335 c.c.</strong> fonda la presunzione di conoscenza su basi oggettive: l'atto si reputa conosciuto giungendo all'indirizzo, salvo prova di impossibilità "senza colpa" dovuta a fattori esterni, non soggettivi<sup><a href="#note-1" id="ref-1">1</a></sup>. In secondo luogo, l'<strong>art. 428 c.c.</strong> consente l'annullamento degli <em>atti compiuti</em> dall'incapace, ma non ne sana i comportamenti omissivi (l'inerzia)<sup><a href="#note-2" id="ref-2">2</a></sup>. Infine, l'<strong>art. 2964 c.c.</strong> impedisce l'estensione delle cause di sospensione della prescrizione ai regimi di decadenza.</p>
+        </section>
+
+        <!-- HIGHLIGHT -->
+        <aside class="cookie-type-box reveal">
+            <h3>I fatti di causa: l'ordinanza di rimessione</h3>
+            <p style="margin:0; font-size: 0.95rem;">Nel 2015, una lavoratrice licenziata per assenza ingiustificata impugnava il provvedimento oltre un anno dopo la ricezione, dimostrando tuttavia di essersi trovata — al momento della comunicazione e nei mesi successivi — in una grave condizione di dissociazione dalla realtà (sfociata in un TSO). I giudici di merito dichiaravano tardiva l'impugnazione applicando la presunzione di conoscenza. La Sezione Lavoro, con l'ordinanza n. 27483/2023, chiamava le Sezioni Unite a chiarire se tale accertato stato di incapacità naturale potesse disinnescare l'art. 1335 c.c.</p>
+        </aside>
+
+        <!-- SEZIONE TIMELINE -->
+        <section class="legal-section">
+            <h2>L'evoluzione del dibattito in 4 tappe</h2>
+            <p>L'iter procedurale ha visto un dialogo cooperativo e senza precedenti fra i massimi vertici giurisdizionali, volto a isolare l'intervento correttivo senza minare le fondamenta del diritto contrattuale generale.</p>
+            
+            <div class="steps" style="grid-template-columns: 1fr; gap: 1.5rem; margin-top: 2.5rem;">
+                
+                <div class="step reveal">
+                    <span class="step-num">Settembre 2024</span>
+                    <h3>L'incidente di costituzionalità (S.U. 23874/2024)</h3>
+                    <p>Le Sezioni Unite escludono la via civilistica (art. 1335 e 428 c.c.) per evitare un pericoloso "effetto di trascinamento" sulla validità di tutti gli atti recettizi. Isolano il problema nella disciplina speciale e sollevano questione di legittimità costituzionale sull'art. 6 della l. 604/1966.</p>
+                </div>
+
+                <div class="step reveal">
+                    <span class="step-num">Luglio 2025</span>
+                    <h3>La Consulta riscrive il termine</h3>
+                    <p>Con la 
+                        <a href="/giurisprudenza/106512b1-10ad-4bba-8a71-004471c7c19a" class="locked-link" title="Riservato agli utenti Jurio">
+                            <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>
+                            sentenza n. 111/2025
+                        </a> 
+                    la Corte Costituzionale accoglie la questione, attuando un rammendo parziale: per il lavoratore incapace cade l'onere dei 60 giorni, aprendosi una finestra complessiva di 240 giorni per l'impugnazione giudiziale.</p>
+                </div>
+
+                <div class="step reveal">
+                    <span class="step-num">Luglio 2026</span>
+                    <h3>L'epilogo delle Sezioni Unite</h3>
+                    <p>Con la decisione finale n. 23486/2026, la Suprema Corte recepisce il principio additivo costituzionale e lo applica ai fatti di causa, rigettando il ricorso in quanto la ricorrente aveva superato abbondantemente anche la nuova soglia dei 240 giorni complessivi.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEZIONE 3 -->
+        <section class="legal-section">
+            <h2>La decisione: il bilanciamento costituzionale di 240 giorni</h2>
+            <p>La soluzione partorita dalla Corte costituzionale, e infine codificata dalle Sezioni Unite nel diritto vivente, costituisce un modello di equilibrata <em>reductio ad legitimitatem</em>. Accogliere l'idea di posticipare il decorso della decadenza al momento dell'effettiva guarigione del lavoratore avrebbe innescato un'aleatorietà indefinita, paralizzando la stabilizzazione organizzativa datoriale.</p>
+            <p>La Corte ha dunque agito esclusivamente sull'eliminazione del sotto-termine iniziale. Se al momento della ricezione della missiva o durante i primi sessanta giorni il lavoratore versa in una provata incapacità d'intendere e di volere, egli è <strong>esonerato dall'impugnazione stragiudiziale</strong>. Potrà invece attivarsi (tramite ricorso ex art. 414 c.p.c., azione cautelare, o tentativo di conciliazione) entro un termine ultimo di <strong>240 giorni complessivi</strong> (60 + 180) dalla ricezione dell'atto. Si tratta di un periodo giudicato congruo affinché le istituzioni di cura o i presìdi legali (come l'amministratore di sostegno) possano subentrare a tutela dell'incapace.</p>
+        </section>
+
+        <!-- SEZIONE 4 -->
+        <section class="legal-section">
+            <h2>Il quadro attuale e i riflessi futuri</h2>
+            <p>L'impatto della pronuncia resta al momento chirurgicamente limitato all'impugnazione del licenziamento, ma apre scenari affascinanti e complessi.</p>
+            <p>Un primo interrogativo riguarda la possibile estensione di questa logica di salvataggio ad altre ipotesi di decadenza governate dal "collegato lavoro" (come l'art. 32 della l. n. 183/2010 per i contratti a termine). Il secondo grande tema afferisce al gravoso <strong>onere probatorio</strong>. Non sarà sufficiente invocare una generica patologia psichiatrica: servirà un supporto medico-legale robusto che attesti lo stato di incapacità esattamente al momento della ricezione della comunicazione datoriale o nel corso della finestra di 60 giorni, rendendo dirimente l'indagine peritale retrospettiva.</p>
+        </section>
+
+        <!-- FAQ -->
+        <section class="legal-section">
+            <h2>Domande Frequenti (FAQ)</h2>
+            <div class="faq reveal">
+                <details>
+                    <summary>Cosa succede se il lavoratore è in stato di incapacità naturale al momento del licenziamento?</summary>
+                    <p>A seguito dell'intervento della Corte costituzionale n. 111/2025, il lavoratore in comprovato stato di incapacità naturale non è soggetto al termine di 60 giorni per l'impugnazione stragiudiziale. Beneficia invece di un termine complessivo di 240 giorni dalla ricezione dell'atto per proporre direttamente il ricorso giudiziale, cautelare, o la richiesta di conciliazione/arbitrato.</p>
+                </details>
+                <details>
+                    <summary>L'incapacità naturale supera la presunzione di conoscenza dell'art. 1335 c.c.?</summary>
+                    <p>No. Le Sezioni Unite (sent. n. 23486/2026) hanno confermato che l'art. 1335 c.c. fonda una presunzione oggettiva, superabile solo da impedimenti esterni. La tutela del lavoratore incapace si realizza intervenendo in via eccezionale sull'art. 6 della l. 604/1966, non scardinando la regola generale sugli atti recettizi.</p>
+                </details>
+            </div>
+        </section>
+
+        <!-- NOTE E BIBLIOGRAFIA -->
+        <section class="legal-section" id="bibliografia">
+            <h2>Note e Bibliografia</h2>
+            <ol class="legal-list" style="font-size: 0.85rem; color: var(--color-muted);">
+                <li id="note-1">La solidità dell'approccio oggettivo trova conferme fuori dal diritto del lavoro. Il Consiglio di Stato, ad esempio, ha escluso che una transitoria incapacità di intendere possa giustificare la disapplicazione di un termine decadenziale di ricorso. Cfr. 
+                    <a href="https://jurio.it/giurisprudenza/0ce417ef-d643-4d9d-968d-b32d5b6efa89" class="locked-link" title="Riservato agli utenti Jurio" target="_blank" rel="noopener">
+                        <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>Cons. Stato, sez. II, sent. n. 1274/2023
+                    </a>. <a href="#ref-1" aria-label="Torna al testo">↩</a>
+                </li>
+                <li id="note-2">L'inapplicabilità dell'art. 428 c.c. ai comportamenti omissivi riflette la cautela sistemica. Analoga prudenza la Consulta l'ha tenuta nell'escludere l'interruzione obbligatoria del processo civile per sospetta incapacità della parte. Cfr. 
+                    <a href="https://jurio.it/giurisprudenza/106512b1-10ad-4bba-8a71-004471c7c19a" class="locked-link" title="Riservato agli utenti Jurio" target="_blank" rel="noopener">
+                        <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>Corte Cost., sent. n. 168/2023
+                    </a>. <a href="#ref-2" aria-label="Torna al testo">↩</a>
+                </li>
+                <li id="note-3">Sull'esclusione dell'ignoranza incolpevole (o transitoria difficoltà) come forza maggiore idonea a fermare i termini ex art. 6 l. 604/1966. Cfr. 
+                    <a href="https://jurio.it/giurisprudenza/438a8391-743f-42b6-9755-1726a7b368a1" class="locked-link" title="Riservato agli utenti Jurio" target="_blank" rel="noopener">
+                        <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>Cass., sez. lav., ord. n. 12006/2026
+                    </a>.
+                </li>
+            </ol>
+        </section>
+
+    </article>
+    
+    <!-- CTA JURIO FINALE -->
+    <div class="cta-box reveal" style="margin-top: 4rem; max-width: 900px; margin-inline: auto;">
+        <div>
+            <h2>Cerca. <em>Analizza.</em> Scegli.</h2>
+            <p>Ricerca e confronta l'evoluzione giurisprudenziale delle Sezioni Unite direttamente sulle fonti con l'IA di Jurio. Sblocca l'accesso illimitato a tutto il database giurisprudenziale integrato.</p>
+            <div class="hero-actions">
+                <a href="/prezzi" class="button button-primary">Scopri i piani</a>
+                <a href="/login" class="button button-secondary">Accedi</a>
+            </div>
+        </div>
+    </div>
+</main>
+<div id="footer"></div>
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        const components = [
+            {
+                selector: "#header",
+                file: "/header.html",
+            },
+            {
+                selector: "#footer",
+                file: "/footer.html",
+            },
+        ];
+
+        await Promise.all(
+            components.map(async ({ selector, file }) => {
+                const element = document.querySelector(selector);
+
+                if (!element) return;
+
+                try {
+                    const response = await fetch(file);
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    element.innerHTML = await response.text();
+                } catch (error) {
+                    console.error(`Errore nel caricamento di ${file}:`, error);
+                }
+            })
+        );
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const observerOptions = {
+            root: null,
+            rootMargin: "0px",
+            threshold: 0.1,
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("is-visible");
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
+
+        const header = document.querySelector(".site-header");
+
+        window.addEventListener(
+            "scroll",
+            () => {
+                if (!header) return;
+
+                if (window.scrollY > 20) {
+                    header.classList.add("is-scrolled");
+                } else {
+                    header.classList.remove("is-scrolled");
+                }
+            },
+            { passive: true }
+        );
+    });
+</script>
+<!-- SCRIPT PER REVEAL & SCROLL PROGRESS -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Intersection Observer per attivare gli elementi .reveal allo scroll
+        const reveals = document.querySelectorAll('.reveal');
+        
+        if ('IntersectionObserver' in window) {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('is-visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -40px 0px'
+            });
+
+            reveals.forEach(el => observer.observe(el));
+        } else {
+            // Fallback per browser datati
+            reveals.forEach(el => el.classList.add('is-visible'));
+        }
+
+        // Barra di avanzamento scroll superiore
+        const progressBar = document.getElementById('scrollProgress');
+        if (progressBar) {
+            window.addEventListener('scroll', () => {
+                const total = document.documentElement.scrollHeight - window.innerHeight;
+                if (total > 0) {
+                    const progress = window.scrollY / total;
+                    progressBar.style.transform = `scaleX(${progress})`;
+                }
+            }, { passive: true });
+        }
+    });
+</script>
+
+<!-- DATI STRUTTURATI SEO -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Incapacità naturale e decadenza dall'impugnazione del licenziamento",
+  "image": "https://jurio.it/blog/incapacita-naturale-licenziamento-240-giorni.webp",
+  "author": {
+    "@type": "Organization",
+    "name": "Redazione Jurio"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Jurio",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://jurio.it/logo.webp"
+    }
+  },
+  "datePublished": "2026-09-26T15:24:30+02:00",
+  "dateModified": "2026-09-26T15:24:30+02:00",
+  "description": "L'evoluzione giurisprudenziale sull'art. 6 della l. n. 604/1966 e l'impatto dell'incapacità naturale sul termine di decadenza per impugnare il licenziamento (Cass. 23486/2026 e Corte Cost. 111/2025).",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://jurio.it/blog/incapacita-naturale-licenziamento-240-giorni"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [{
+    "@type": "Question",
+    "name": "Cosa succede se il lavoratore è in stato di incapacità naturale al momento del licenziamento?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "A seguito della sentenza della Corte costituzionale n. 111/2025, il lavoratore in comprovato stato di incapacità naturale non è soggetto al termine di 60 giorni per l'impugnazione stragiudiziale. Beneficia invece di un termine complessivo di 240 giorni dalla ricezione dell'atto per proporre direttamente il ricorso giudiziale, cautelare, o la richiesta di conciliazione/arbitrato."
+    }
+  }, {
+    "@type": "Question",
+    "name": "L'incapacità naturale supera la presunzione di conoscenza dell'art. 1335 c.c.?",
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": "No. Le Sezioni Unite (sent. n. 23486/2026) hanno confermato che l'art. 1335 c.c. fonda una presunzione oggettiva, superabile solo da impedimenti esterni. La tutela del lavoratore incapace si realizza intervenendo in via eccezionale sull'art. 6 della l. 604/1966, non scardinando la regola generale sugli atti recettizi."
+    }
+  }]
+}
+</script>
+
+</body>
+</html>

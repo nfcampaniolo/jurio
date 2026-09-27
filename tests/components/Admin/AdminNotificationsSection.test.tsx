@@ -68,7 +68,7 @@ describe("AdminNotificationsSection Component Suite", () => {
     expect(singleRadio).toBeChecked();
     expect(screen.queryByText("Filtra per Consensi (Users DB)")).not.toBeInTheDocument();
 
-    const uidInput = screen.getByPlaceholderText("es. TTHcCNy5WeOTarQep4jVItbByKg1");
+    const uidInput = screen.getByPlaceholderText("Inserisci uid");
     expect(uidInput).toBeInTheDocument();
 
     fireEvent.change(uidInput, { target: { name: "uid", value: "usr_mock_123" } });

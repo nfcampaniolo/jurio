@@ -1,13 +1,18 @@
 import { genkit, z } from 'genkit';
-import { googleAI } from '@genkit-ai/google-genai'
+import { vertexAI } from '@genkit-ai/google-genai';
 
 // ─────────────────────────────────────────────
-// GENKIT INIT
+// GENKIT INIT (Vertex AI Enterprise - Conforme UE)
 // ─────────────────────────────────────────────
 
 export const ai = genkit({
-  plugins: [googleAI()],
-  model: 'googleai/gemini-2.5-flash', 
+  plugins: [
+    vertexAI({
+      projectId: process.env.GCLOUD_PROJECT,
+      location: 'europe-west1',
+    }),
+  ],
+  model: 'vertexai/gemini-2.5-flash',
 });
 
 // ─────────────────────────────────────────────
