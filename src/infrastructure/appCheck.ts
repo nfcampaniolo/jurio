@@ -1,6 +1,6 @@
 import {
   initializeAppCheck,
-  ReCaptchaV3Provider,
+  ReCaptchaEnterpriseProvider,
   type AppCheck,
 } from 'firebase/app-check';
 
@@ -27,6 +27,7 @@ export function initializeFirebaseAppCheck(): AppCheck | undefined {
     return undefined;
   }
 
+  // Blocco Debug per l'ambiente locale
   if (import.meta.env.DEV) {
     const debugToken =
       import.meta.env.VITE_APPCHECK_DEBUG_TOKEN;
@@ -57,14 +58,14 @@ export function initializeFirebaseAppCheck(): AppCheck | undefined {
   appCheckInstance = initializeAppCheck(
     firebaseApp,
     {
-      provider: new ReCaptchaV3Provider(
+      provider: new ReCaptchaEnterpriseProvider(
         recaptchaKey
       ),
       isTokenAutoRefreshEnabled: true,
     }
   );
 
-  console.info('🛡️ Firebase App Check inizializzato.');
+  console.info('🛡️ Firebase App Check (Enterprise) inizializzato.');
 
   return appCheckInstance;
 }

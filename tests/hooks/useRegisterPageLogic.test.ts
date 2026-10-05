@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { act, renderHook } from "@testing-library/react";
 
 /* =========================
@@ -71,23 +71,31 @@ function makeResponse(ok: boolean, status: number, body: string): Response {
 
 async function importFreshHook() {
   vi.resetModules();
-  return import("@/features/auth/hooks/useRegisterPageLogic"); 
+  return import("@/features/auth/hooks/useRegisterPageLogic");
 }
 
 /* =========================
-   TESTS
+   LIFECYCLE & SETUP
 ========================= */
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.stubEnv("VITE_GET_REGISTER_URL", "https://example.test/registrati");
-  
-  // Resettiamo window.recaptchaVerifier
+
+  // Reset del recaptchaVerifier globale
   (window as unknown as { recaptchaVerifier: unknown }).recaptchaVerifier = undefined;
 
   useAuthMock.mockReturnValue({ user: null });
   navigateMock.mockReset();
 });
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+/* =========================
+   TESTS
+========================= */
 
 describe("useRegisterPageLogic", () => {
   it("initializes name/surname and phone from user context", async () => {
@@ -95,7 +103,7 @@ describe("useRegisterPageLogic", () => {
       uid: "u1",
       email: "a@b.com",
       displayName: "Mario Rossi",
-      phoneNumber: "+393331234567"
+      phoneNumber: "+393331234567",
     };
     useAuthMock.mockReturnValue({ user });
 
@@ -105,7 +113,7 @@ describe("useRegisterPageLogic", () => {
     expect(result.current.name).toBe("Mario");
     expect(result.current.surname).toBe("Rossi");
     expect(result.current.phoneNumber).toBe("3331234567");
-    expect(result.current.isPhoneVerified).toBe(true); // User has phone -> true
+    expect(result.current.isPhoneVerified).toBe(true);
   });
 
   it("handlePhoneChange strips non-digits and resets verification states", async () => {
@@ -113,8 +121,7 @@ describe("useRegisterPageLogic", () => {
     const { result } = renderHook(() => useRegisterPageLogic());
 
     act(() => {
-      // Simuliamo uno stato precedentemente verificato
-      result.current.handlePhoneChange("abc333-123"); 
+      result.current.handlePhoneChange("abc333-123");
     });
 
     expect(result.current.phoneNumber).toBe("333123");
@@ -143,7 +150,11 @@ describe("useRegisterPageLogic", () => {
       await result.current.sendOtp();
     });
 
-    expect(sendPhoneVerificationMock).toHaveBeenCalledWith(user, "+393331234567", {});
+    // Rimosso `user`: sendPhoneVerification riceve solo (phoneNumber, recaptchaVerifier)
+    expect(sendPhoneVerificationMock).toHaveBeenCalledWith(
+      "+393331234567",
+      (window as unknown as { recaptchaVerifier: unknown }).recaptchaVerifier
+    );
     expect(result.current.isOtpSent).toBe(true);
     expect(result.current.countdown).toBe(60);
     expect(toastSuccess).toHaveBeenCalledWith(expect.stringContaining("inviato un codice via SMS"));
@@ -162,11 +173,15 @@ describe("useRegisterPageLogic", () => {
 
     act(() => result.current.handlePhoneChange("3331234567"));
 
-    await act(async () => { await result.current.sendOtp(); });
-    
+    await act(async () => {
+      await result.current.sendOtp();
+    });
+
     act(() => result.current.setOtpCode("123456"));
-    
-    await act(async () => { await result.current.verifyOtp(); });
+
+    await act(async () => {
+      await result.current.verifyOtp();
+    });
 
     expect(confirmPhoneVerificationMock).toHaveBeenCalledWith("mock-confirmation", "123456");
     expect(result.current.isPhoneVerified).toBe(true);
@@ -177,45 +192,70 @@ describe("useRegisterPageLogic", () => {
   it("verifyOtp: handles auth/credential-already-in-use error", async () => {
     const user: UserLike = { uid: "u1", email: "a@b.com" };
     useAuthMock.mockReturnValue({ user });
-    
+
     (window as unknown as { recaptchaVerifier: unknown }).recaptchaVerifier = {};
     sendPhoneVerificationMock.mockResolvedValueOnce("mock-confirmation");
-    
-    // Simuliamo l'errore Firebase
-    confirmPhoneVerificationMock.mockRejectedValueOnce({ code: 'auth/credential-already-in-use' });
+    confirmPhoneVerificationMock.mockRejectedValueOnce({ code: "auth/credential-already-in-use" });
 
     const { useRegisterPageLogic } = await importFreshHook();
     const { result } = renderHook(() => useRegisterPageLogic());
 
     act(() => result.current.handlePhoneChange("3331234567"));
-    await act(async () => { await result.current.sendOtp(); });
+    await act(async () => {
+      await result.current.sendOtp();
+    });
     act(() => result.current.setOtpCode("123456"));
-    
-    await act(async () => { await result.current.verifyOtp(); });
+
+    await act(async () => {
+      await result.current.verifyOtp();
+    });
 
     expect(toastError).toHaveBeenCalledWith(
       expect.stringContaining("già associato a un altro account"),
       expect.any(Object)
     );
     expect(result.current.isPhoneVerified).toBe(false);
-    expect(result.current.isOtpSent).toBe(false); // lo script resetta gli stati su questo errore
+    expect(result.current.isOtpSent).toBe(false);
   });
 
   it("saveToDb: validates name, phone verification, and required consents", async () => {
+    // 1. Fallimento: Nome mancante
     const { useRegisterPageLogic } = await importFreshHook();
     const { result } = renderHook(() => useRegisterPageLogic());
 
-    await act(async () => { await result.current.saveToDb(); });
+    await act(async () => {
+      await result.current.saveToDb();
+    });
     expect(toastError).toHaveBeenCalledWith("Inserisci il tuo nome per procedere.");
 
+    // 2. Fallimento: Nome presente ma telefono non verificato
     act(() => result.current.setName("Mario"));
-    await act(async () => { await result.current.saveToDb(); });
+    await act(async () => {
+      await result.current.saveToDb();
+    });
     expect(toastError).toHaveBeenCalledWith("Devi verificare il tuo numero di telefono prima di proseguire.");
 
-    // Aggiriamo momentaneamente la UI per simulare il telefono verificato
-    act(() => result.current.handlePhoneChange("3331234567"));
-    // (Nel test usiamo un approccio di mocking o forziamo lo state se necessario. Per semplicità
-    // usiamo l'AuthMock per far partire lo hook già verificato)
+    // 3. Fallimento: Telefono verificato ma consensi mancanti
+    useAuthMock.mockReturnValue({
+      user: {
+        uid: "u1",
+        email: "a@b.com",
+        displayName: "Mario Rossi",
+        phoneNumber: "+393331234567", // Fa inizializzare isPhoneVerified a true
+      },
+    });
+
+    const { result: verifiedResult } = renderHook(() => useRegisterPageLogic());
+
+    // Nome e telefono verificato sono pronti; manca il consenso a Termini e Privacy
+    await act(async () => {
+      await verifiedResult.current.saveToDb();
+    });
+
+    expect(toastError).toHaveBeenCalledWith(
+      expect.stringMatching(/termini|privacy/i)
+    );
+    expect(saveUserDataMock).not.toHaveBeenCalled();
   });
 
   it("saveToDb: success flow calls saveUserData, fetchWithSecurity, tracking, toast, navigate", async () => {
@@ -223,7 +263,7 @@ describe("useRegisterPageLogic", () => {
       uid: "u1",
       email: "a@b.com",
       displayName: "Mario Rossi",
-      phoneNumber: "+393331234567", // Fa scattare isPhoneVerified a true
+      phoneNumber: "+393331234567",
     };
     useAuthMock.mockReturnValue({ user });
 
@@ -252,7 +292,7 @@ describe("useRegisterPageLogic", () => {
       surname: "Rossi",
       email: "a@b.com",
       role: "Praticante",
-      phoneNumber: "+393331234567"
+      phoneNumber: "+393331234567",
     });
 
     expect(fetchWithSecurityMock).toHaveBeenCalledTimes(1);

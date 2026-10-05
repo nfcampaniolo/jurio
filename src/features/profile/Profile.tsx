@@ -65,73 +65,49 @@ export const Profile: React.FC = () => {
       id: "search",
       label: "Ricerca Giurisprudenza",
       icon: <FiSearch />,
-      onClick: () =>
-        navigateItem(
-          { type: "route", target: "/ricerca" },
-          navigate
-        ),
+      onClick: () => navigateItem({ type: "route", target: "/ricerca" }, navigate),
     },
     {
       id: "chat",
       label: "Consulente Legale",
       icon: <FiBriefcase />,
-      onClick: () =>
-        navigateItem(
-          { type: "route", target: "/chat" },
-          navigate
-        ),
+      onClick: () => navigateItem({ type: "route", target: "/chat" }, navigate),
     },
     {
       id: "analisi",
       label: "Approfondimento Giurisprudenziale",
       icon: <FiBookOpen />,
-      onClick: () =>
-        navigateItem(
-          { type: "route", target: "/analisi" },
-          navigate
-        ),
+      onClick: () => navigateItem({ type: "route", target: "/analisi" }, navigate),
     },
     {
       id: "prompting",
       label: "Prompting Personalizzato",
       icon: <FiSliders />,
-      onClick: () =>
-        navigateItem(
-          { type: "route", target: "/profilo/prompt-builder" },
-          navigate
-        ),
+      onClick: () => navigateItem({ type: "route", target: "/profilo/prompt-builder" }, navigate),
     },
     {
       id: "pricing",
       label: "Piani",
       icon: <FiDollarSign />,
-      onClick: () => {
-        navigate("/profilo/piani");
-      },
+      onClick: () => navigate("/profilo/piani"),
     },
     {
       id: "edit",
       label: "Modifica Profilo",
       icon: <FiUser />,
-      onClick: () => {
-        navigate("/profilo/modifica");
-      },
+      onClick: () => navigate("/profilo/modifica"),
     },
     {
       id: "utilizzi",
       label: "Utilizzi",
       icon: <FiActivity />,
-      onClick: () => {
-        navigate("/profilo/utilizzi");
-      },
+      onClick: () => navigate("/profilo/utilizzi"),
     },
     {
       id: "team",
       label: "Workspace",
       icon: <FiLayout />,
-      onClick: () => {
-        navigate("/profilo/team");
-      },
+      onClick: () => navigate("/profilo/team"),
     },
     {
       id: "logout",
@@ -164,9 +140,8 @@ export const Profile: React.FC = () => {
         avatar={avatar}
         actions={actions}
       />
+      
       <main className="py-10 max-w-5xl mx-auto px-4 sm:px-6 flex flex-col gap-8">
-
-        {/* Profilo compatto */}
         <motion.section
           id="section1"
           className="flex flex-col items-center text-center gap-4"
@@ -196,15 +171,14 @@ export const Profile: React.FC = () => {
           confirmationPhrase="ELIMINA-ACCOUNT"
           onExport={() => {
             exportAccount();
-            console.log("Esportazione dati in corso...");
             toast("Preparazione esportazione dati...");
           }}
           onCancel={() => setConfirmOpen(false)}
           onConfirm={() => {
+            setConfirmOpen(false); // Chiudi subito la modale nello stato
             deleteAccount();
             toast.success("Profilo eliminato con successo");
-            navigate("/login", { replace: true });
-            setConfirmOpen(false);
+            navigate("/login", { replace: true }); // La navigazione raderà al suolo il componente
           }}
         />
 
@@ -214,7 +188,6 @@ export const Profile: React.FC = () => {
           <a href="/termini" className="hover:text-(--color-text) transition-colors underline underline-offset-2">Termini</a>
           <a href="/gdpr" className="hover:text-(--color-text) transition-colors underline underline-offset-2">Trattamento dati</a>
         </div>
-
       </main>
     </div>
   );

@@ -14,15 +14,17 @@ export const usePromptGenerator = () => {
   const [generatedPrompt, setGeneratedPrompt] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAccessDenied, setIsAccessDenied] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const generatePrompt = async (data: PromptBuilderForm) => {
     setIsGenerating(true);
     setGeneratedPrompt(null);
     setIsAccessDenied(false);
+    setError(null);
     
     try {
       if (!PROMPT_ENDPOINT) {
-        throw new Error("PROMPT_ENDPOINT is not defined");
+        throw new Error("L'endpoint di generazione non è configurato.");
       }
       const response = await fetchWithSecurity(PROMPT_ENDPOINT, {
         title: data.title,
@@ -31,13 +33,12 @@ export const usePromptGenerator = () => {
         fields: data.fields
       });
 
-      // Intercetta l'errore 403 Forbidden
       if (response.status === 403) {
         setIsAccessDenied(true);
         return;
       }
 
-      if (!response.ok) throw new Error("Errore dal server");
+      if (!response.ok) throw new Error("Errore di comunicazione con i server.");
       if (!response.body) throw new Error("Risposta vuota dal server.");
 
       const reader = response.body.getReader();
@@ -61,7 +62,7 @@ export const usePromptGenerator = () => {
                 const parsed = JSON.parse(dataStr);
                 if (parsed.result) {
                   setGeneratedPrompt(parsed.result);
-                  toast.success("Prompt generato con successo!");
+                  toast.success("Modello creato con successo!");
                 }
                 if (parsed.error) throw new Error(parsed.error.message);
               } catch (parseError) {
@@ -71,38 +72,37 @@ export const usePromptGenerator = () => {
           }
         }
       }
-    } catch (error: unknown) {
-      console.error(error);
-      toast.error("Errore durante la generazione del prompt.");
+    } catch (err: unknown) {
+      console.error(err);
+      const errorMessage = err instanceof Error ? err.message : "Si è verificato un errore imprevisto.";
+      setError(errorMessage);
+      toast.error("Elaborazione interrotta.");
     } finally {
       setIsGenerating(false);
     }
   };
 
   const clearPrompt = () => setGeneratedPrompt(null);
+  const clearError = () => setError(null);
 
-  return { generatedPrompt, isGenerating, isAccessDenied, generatePrompt, clearPrompt };
+  return { generatedPrompt, isGenerating, isAccessDenied, error, generatePrompt, clearPrompt, clearError };
 };
 
 export const usePromptDashboard = () => {
-  // Stato Navigazione
   const navigate = useNavigate();
   const location = useLocation();
   const view = location.hash.includes("crea") ? "create" : "list";
   const [selectedTemplate, setSelectedTemplate] = useState<SavedPrompt | undefined>(undefined);
 
-  // Stato Dati
   const [prompts, setPrompts] = useState<SavedPrompt[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Stato Modale di Conferma Eliminazione
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [promptToDeleteId, setPromptIdToDelete] = useState<string | null>(null);
 
   const auth = getAuth();
   const db = getFirestore();
 
-  // 1. LETTURA DA FIRESTORE IN TEMPO REALE
   useEffect(() => {
     const user = auth.currentUser;
     if (!user) return;
@@ -120,14 +120,13 @@ export const usePromptDashboard = () => {
       setIsLoading(false);
     }, (error) => {
       console.error("Errore fetch prompts:", error);
-      toast.error("Impossibile caricare i prompt.");
+      toast.error("Impossibile caricare l'archivio prompt.");
       setIsLoading(false);
     });
 
     return () => unsubscribe();
   }, [auth.currentUser, db]);
 
-  // 2. GESTIONE MODALE ELIMINAZIONE
   const requestDelete = (id: string) => {
     setPromptIdToDelete(id);
     setIsDeleteModalOpen(true);
@@ -149,13 +148,11 @@ export const usePromptDashboard = () => {
       console.error("Errore cancellazione:", error);
       toast.error("Errore durante l'eliminazione.");
     } finally {
-      // Chiudi la modale e resetta l'ID in ogni caso
       setIsDeleteModalOpen(false);
       setPromptIdToDelete(null);
     }
   };
 
-  // 3. NAVIGAZIONE
   const handleOpenCreator = (template?: SavedPrompt) => {
       if (template) {
         setSelectedTemplate({
@@ -165,13 +162,11 @@ export const usePromptDashboard = () => {
       } else {
         setSelectedTemplate(undefined);
       }
-      // Sostituiamo semplicemente l'URL, React farà il resto
       navigate("#crea");
     };
 
   const handleBackToList = () => {
     setSelectedTemplate(undefined);
-    
     if (location.hash.includes("crea")) {
       navigate(location.pathname);
     }

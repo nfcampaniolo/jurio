@@ -1,20 +1,24 @@
 import React from "react";
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import type { PromptBuilderForm } from "@/interfaces/interfaces";
 import { PromptCreator } from "@/features/prompt/components/PromptCreator";
 
 /* ---------- hoisted mocks ---------- */
 const {
   mockGeneratePrompt,
+  mockClearError,
   mockHookState,
 } = vi.hoisted(() => ({
   mockGeneratePrompt: vi.fn(),
+  mockClearError: vi.fn(),
   mockHookState: {
     generatedPrompt: null as string | null,
     isGenerating: false,
     generatePrompt: vi.fn(),
     isAccessDenied: false,
+    error: null as string | null,
+    clearError: vi.fn(),
   },
 }));
 
@@ -24,6 +28,7 @@ vi.mock("@/features/prompt/hooks/usePromptGenerator", () => ({
   usePromptGenerator: () => ({
     ...mockHookState,
     generatePrompt: mockGeneratePrompt,
+    clearError: mockClearError,
   }),
 }));
 
@@ -51,6 +56,8 @@ describe("PromptCreator Component Suite", () => {
     mockHookState.generatedPrompt = null;
     mockHookState.isGenerating = false;
     mockHookState.isAccessDenied = false;
+    mockHookState.error = null;
+    mockClearError.mockClear();
     window.location.hash = "";
   });
 
@@ -85,13 +92,31 @@ describe("PromptCreator Component Suite", () => {
 
       expect(screen.getByTestId("access-denied-component")).toBeInTheDocument();
     });
+
+    test("mostra il badge 'NUOVO MODELLO' in assenza di template e 'DUPLICA MODELLO' con template", () => {
+      const { rerender } = render(<PromptCreator onBack={mockOnBack} />);
+      expect(screen.getByText("NUOVO MODELLO")).toBeInTheDocument();
+
+      rerender(
+        <PromptCreator
+          onBack={mockOnBack}
+          template={{
+            title: "Template Test",
+            objective: "Obiettivo Test",
+            notes: "",
+            fields: [],
+          }}
+        />
+      );
+      expect(screen.getByText("DUPLICA MODELLO")).toBeInTheDocument();
+    });
   });
 
   /* -------------------------------------------------------------------------- */
   /* TEMPLATE PRE-POPOLATO                                                      */
   /* -------------------------------------------------------------------------- */
   describe("Inizializzazione con Template", () => {
-    test("popola il form con i dati passati come template", () => {
+    test("popola il form con i dati passati come template", async () => {
       const sampleTemplate: PromptBuilderForm = {
         title: "Estrattore Contratti Locazione",
         objective: "Individuare parti, canone e clausola risolutiva espressa",
@@ -108,13 +133,15 @@ describe("PromptCreator Component Suite", () => {
 
       render(<PromptCreator onBack={mockOnBack} template={sampleTemplate} />);
 
-      expect(screen.getByDisplayValue("Estrattore Contratti Locazione")).toBeInTheDocument();
-      expect(
-        screen.getByDisplayValue("Individuare parti, canone e clausola risolutiva espressa")
-      ).toBeInTheDocument();
-      expect(screen.getByDisplayValue("Usa formato valuta EUR")).toBeInTheDocument();
-      expect(screen.getByDisplayValue("canone_mensile")).toBeInTheDocument();
-      expect(screen.getByDisplayValue("Importo canone mensile pattuito")).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByDisplayValue("Estrattore Contratti Locazione")).toBeInTheDocument();
+        expect(
+          screen.getByDisplayValue("Individuare parti, canone e clausola risolutiva espressa")
+        ).toBeInTheDocument();
+        expect(screen.getByDisplayValue("Usa formato valuta EUR")).toBeInTheDocument();
+        expect(screen.getByDisplayValue("canone_mensile")).toBeInTheDocument();
+        expect(screen.getByDisplayValue("Importo canone mensile pattuito")).toBeInTheDocument();
+      });
     });
   });
 
@@ -241,30 +268,52 @@ describe("PromptCreator Component Suite", () => {
   });
 
   /* -------------------------------------------------------------------------- */
-  /* OVERLAY STATO GENERAZIONE & AUTO-REDIRECT                                  */
+  /* OVERLAY STATI: CARICAMENTO, ERRORE E SUCCESSO                              */
   /* -------------------------------------------------------------------------- */
-  describe("Stato di Generazione e Redirect Automatico", () => {
-    test("mostra overlay di caricamento e disabilita il submit quando isGenerating è true", () => {
+  describe("Stati di Generazione, Errori e Redirect", () => {
+    test("mostra overlay di caricamento professionale e disabilita il submit quando isGenerating è true", () => {
       mockHookState.isGenerating = true;
 
       render(<PromptCreator onBack={mockOnBack} />);
 
-      expect(screen.getByText("Stiamo creando il modello")).toBeInTheDocument();
+      expect(screen.getByText(/elaborazione regole in corso/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/i nostri sistemi stanno strutturando e validando le istruzioni/i)
+      ).toBeInTheDocument();
+
       const submitBtn = screen.getByRole("button", { name: /crea il modello/i });
       expect(submitBtn).toBeDisabled();
     });
 
-    test("mostra messaggio di completamento ed esegue onBack dopo timeout quando generatedPrompt è presente", () => {
+    test("mostra overlay di errore e richiama clearError al click su 'Torna all\\'Editor'", () => {
+      mockHookState.error = "Errore di connessione con il servizio di generazione regole";
+
+      render(<PromptCreator onBack={mockOnBack} />);
+
+      expect(screen.getByText(/impossibile generare il modello/i)).toBeInTheDocument();
+      expect(
+        screen.getByText("Errore di connessione con il servizio di generazione regole")
+      ).toBeInTheDocument();
+
+      const backToEditorBtn = screen.getByRole("button", { name: /torna all'editor/i });
+      fireEvent.click(backToEditorBtn);
+
+      expect(mockClearError).toHaveBeenCalledTimes(1);
+    });
+
+    test("mostra messaggio di completamento ed esegue onBack dopo 1800ms quando generatedPrompt è presente", () => {
       vi.useFakeTimers();
       mockHookState.generatedPrompt = "Prompt generato con successo";
       mockHookState.isGenerating = false;
 
       render(<PromptCreator onBack={mockOnBack} />);
 
-      expect(screen.getByText("Modello creato")).toBeInTheDocument();
+      expect(screen.getByText(/modello creato e verificato/i)).toBeInTheDocument();
       expect(mockOnBack).not.toHaveBeenCalled();
 
-      vi.advanceTimersByTime(1800);
+      act(() => {
+        vi.advanceTimersByTime(1800);
+      });
 
       expect(mockOnBack).toHaveBeenCalledTimes(1);
     });

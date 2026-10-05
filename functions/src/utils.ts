@@ -2,21 +2,39 @@ import cors from "cors";
 import { getAppCheck } from "firebase-admin/app-check";
 import {Timestamp, FieldValue, QueryDocumentSnapshot, DocumentReference, WriteBatch } from "firebase-admin/firestore";
 import { getDb, getAdminAuth} from "./deps";
+import { defineSecret } from "firebase-functions/params";
+import { FirestoreEvent, Change, DocumentSnapshot } from "firebase-functions/v2/firestore";
+import Stripe from "stripe";
+import OpenAI from "openai";
 
 const db = getDb();
 const auth = getAdminAuth();
 
+// ============================================================================
+// CORS E APP CHECK
+// ============================================================================
+
 const ALLOWED_ORIGINS = [
+
   "https://jurio.it",
+  "https://www.jurio.it",
   "https://jurio-it.web.app",
   "https://jurio-it.firebaseapp.com",
+  "https://jurio-it-dev.web.app",
+  "https://jurio-it-dev.firebaseapp.com",
+
 ];
 
 export const corsHandlerDomain = cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, false);
-    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
-    return callback(new Error("Not allowed by CORS"));
+    
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    console.error(`[CORS] Bloccato origin non autorizzato: ${origin}`);
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   methods: ["POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Firebase-AppCheck"], 
@@ -45,6 +63,10 @@ export async function requireUidFromAuthHeader(req: any): Promise<string> {
   const decoded = await auth.verifyIdToken(token);
   return decoded.uid;
 }
+
+// ============================================================================
+// UTILS
+// ============================================================================
 
 export function fmtRome(ts: Timestamp): string {
   return ts.toDate().toLocaleString("it-IT", {
@@ -90,7 +112,28 @@ export function dayKeyRome(d = new Date()): string {
   return `${y}-${m}-${day}`;
 }
 
-export async function consumePerMinuteFeature(uid: string, feature: "semantic" | "web", limit: number): Promise<void> {
+// ============================================================================
+// USAGE TRAKING
+// ============================================================================
+
+export type JurioFeatureType = 
+  | "semantic" 
+  | "research" 
+  | "web" 
+  | "speech_to_text"
+  | "reasoning"
+  | "support_public"
+  | "prompting"
+  | "prompt_enhancer"
+  | "admin"
+  | "feedback"
+  | "admin_notif"
+  | "embedding"
+  | "register"
+  | "stripe_checkout"
+  ;
+
+export async function consumePerMinuteFeature(uid: string, feature: JurioFeatureType, limit: number): Promise<void> {
   // Isoliamo il contatore dei minuti unendo la chiave temporale alla feature
   const key = `${minuteKeyRome()}_${feature}`;
   const ref = db.collection("rate").doc(uid).collection("minutes").doc(key);
@@ -108,7 +151,7 @@ export async function consumePerMinuteFeature(uid: string, feature: "semantic" |
   });
 }
 
-export async function consumeDailyFeature(uid: string, feature: "semantic" | "web", limit: number): Promise<{ remaining: number }> {
+export async function consumeDailyFeature(uid: string, feature: JurioFeatureType, limit: number): Promise<{ remaining: number }> {
   // Isoliamo il contatore giornaliero unendo la chiave temporale alla feature
   const key = `${dayKeyRome()}_${feature}`;
   const ref = db.collection("usage").doc(uid).collection("days").doc(key);
@@ -247,6 +290,7 @@ export const calculateMatchScore = (targetText: string, kwObjects: any[], docDat
 
   return { textMatchScore: uniqueMatchesCount + proximityBonus, authorityBonus, recencyBonus };
 };
+
 export function applyHighlight(text: string, keywords: string[], stems: string[] = []): string {
   if (!text) return "";
   
@@ -480,7 +524,6 @@ export function makeRiferimentiNormativiKeys(input: unknown): string[] {
   }
   return uniqStable(keys);
 }
-
 
 // ============================================================================
 // SUPPORT ADMIN (URN/ECLI E TASK BATCH)
@@ -971,7 +1014,10 @@ export async function processFascicoloDocs(
   }
 }
 
+// ============================================================================
 // GESTIONE TEAM
+// ============================================================================
+
 
 function generateVoucherCode(): string {
   return 'VCH-' + Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -1167,14 +1213,22 @@ export async function processCouponInTx(
   return false;
 }
 
-// --- HELPER: Schedulazione Task ---
+// ============================================================================
+// TASK SCHEDULING
+// ============================================================================
+
+
 export async function tryScheduleDowngradeTask(uid: string, expireSec: number) {
+  const currentProjectId = process.env.PROJECT_ID || "jurio-it";
+  const taskServiceAccount = process.env.TASK_SERVICE_ACCOUNT || "130993418358-compute@developer.gserviceaccount.com";
+  const dynamicTargetUrl = `https://europe-west1-${currentProjectId}.cloudfunctions.net/tasksDowngrade`;
+
   await scheduleDowngradeTask({
-    projectId: "jurio-it",
+    projectId: currentProjectId,
     location: "europe-west1",
     queue: "subscription-expire",
-    targetUrl: "https://europe-west1-jurio-it.cloudfunctions.net/tasksDowngrade",
-    serviceAccountEmail: "130993418358-compute@developer.gserviceaccount.com",
+    targetUrl: dynamicTargetUrl,
+    serviceAccountEmail: taskServiceAccount,
     uid,
     expireSec,
   });
@@ -1260,10 +1314,10 @@ export async function updateUserDocuments(uidDelete: string, uidOwner: string) {
   }
 }
 
-/**
- * Incrementa il contatore 'rag' di +1 per un array di ID documento.
- * Utilizza un Firestore Batch per ottimizzare le performance.
- */
+// ============================================================================
+// VECTOR EMBEDDING
+// ============================================================================
+
 export async function incrementRagCounter(collectionName: string, documentIds: string[]): Promise<void> {
   if (!documentIds || documentIds.length === 0) return;
 
@@ -1281,4 +1335,328 @@ export async function incrementRagCounter(collectionName: string, documentIds: s
   } catch (error) {
     console.error(`[JURIO-RAG-UPDATE] Errore durante l'incremento del campo rag:`, error);
   }
+}
+
+export async function handleEmbeddingCreation(
+  event: FirestoreEvent<QueryDocumentSnapshot | undefined, { docId: string }>
+) {
+  const snap = event.data;
+  if (!snap || !snap.exists) return;
+
+  const data = snap.data();
+  if (!data || data.isEmbeddingFinished || data.isEmbeddingFailed) return;
+
+  const docId = event.params.docId;
+
+  // Selezione del testo
+  let textToEmbed = data.summary || data.massima;
+  if (!textToEmbed) {
+    textToEmbed = data.tipo_documento === "documento_giurisprudenza_generico" 
+      ? (data.nucleo || data.sintesi) 
+      : data.fattispecie_rilevante;
+  }
+
+  if (!textToEmbed || typeof textToEmbed !== "string" || textToEmbed.trim() === "") {
+    await snap.ref.update({ isEmbeddingFinished: true });
+    return;
+  }
+
+  try {
+    const oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const response = await oaClient.embeddings.create({
+      model: "text-embedding-3-small", 
+      input: textToEmbed.trim(),
+      dimensions: 1536
+    });
+    
+    const embedding = response.data[0].embedding;
+
+    await snap.ref.update({
+      isEmbeddingFinished: true,
+      embedding: FieldValue.vector(embedding),
+      lastVectorizedAt: FieldValue.serverTimestamp(),
+      // Pulizia eventuale array se presente
+      ...(Array.isArray(data.testo_integrale) ? { testo_integrale: FieldValue.delete() } : {})
+    });
+
+    console.log(`✅ Embedding creato per sentence: ${docId}`);
+  } catch (error) {
+    console.error(`❌ Error embedding sentence ${docId}:`, error);
+    await snap.ref.update({ isEmbeddingFailed: true });
+  }
+}
+
+export async function handleEmbeddingManualCreation(
+  event: FirestoreEvent<QueryDocumentSnapshot | undefined, { docId: string }>
+) {
+  const snap = event.data;
+  if (!snap || !snap.exists) return;
+
+  const data = snap.data();
+  if (!data || data.isEmbeddingFinished || data.isEmbeddingFailed) return;
+
+  const docId = event.params.docId;
+
+  // Selezione del testo
+  let textToEmbed = data.text;
+
+  if (!textToEmbed || typeof textToEmbed !== "string" || textToEmbed.trim() === "") {
+    await snap.ref.update({ isEmbeddingFinished: true });
+    return;
+  }
+
+  try {
+    const oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const response = await oaClient.embeddings.create({
+      model: "text-embedding-3-small", 
+      input: textToEmbed.trim(),
+      dimensions: 1536
+    });
+    
+    const embedding = response.data[0].embedding;
+
+    await snap.ref.update({
+      isEmbeddingFinished: true,
+      embedding: FieldValue.vector(embedding),
+      lastVectorizedAt: FieldValue.serverTimestamp(),
+    });
+    console.log(`✅ Embedding creato per sentence: ${docId}`);
+  } catch (error) {
+    console.error(`❌ Error embedding sentence ${docId}:`, error);
+    await snap.ref.update({ isEmbeddingFailed: true });
+  }
+}
+
+export async function handleEmbeddingDocumentCreation(
+  event: FirestoreEvent<QueryDocumentSnapshot | undefined, { docId: string }>
+) {
+  const snap = event.data;
+  if (!snap || !snap.exists) return;
+
+  const data = snap.data();
+  if (!data || data.isEmbeddingFinished || data.isEmbeddingFailed) return;
+
+  const parentId = event.params.docId;
+  
+  // Prepariamo gli input per OpenAI
+  const inputsToEmbed: string[] = [];
+  const metadataMapping: string[] = []; 
+  const chunksToEmbed: string[] = Array.isArray(data.testo_integrale) ? data.testo_integrale : [];
+
+  // Gestione testo principale (Metadata)
+  let mainText = data.summary || data.massima || data.text || data.contenuto;
+  if (!mainText && typeof data.testo_integrale === "string") {
+    mainText = data.testo_integrale;
+  }
+
+  if (mainText && typeof mainText === "string" && mainText.trim() !== "") {
+    inputsToEmbed.push(mainText.trim());
+    metadataMapping.push("embedding"); // Il campo nel doc padre dove salvare il vettore principale
+  }
+
+  // Se non c'è nulla da processare
+  if (inputsToEmbed.length === 0 && chunksToEmbed.length === 0) {
+    await snap.ref.update({ isEmbeddingFinished: true });
+    return;
+  }
+
+  // Uniamo tutto in un'unica chiamata batch per risparmiare tempo e costi
+  const fullInputArray = [...inputsToEmbed, ...chunksToEmbed];
+
+  try {
+    const oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const response = await oaClient.embeddings.create({
+      model: "text-embedding-3-small", 
+      input: fullInputArray,
+      dimensions: 1536
+    });
+    const embeddingsResult = response.data.map(d => d.embedding);
+
+    const batch = db.batch();
+    
+    // A. Update Padre
+    const parentUpdate: any = {
+      isEmbeddingFinished: true,
+      testo_integrale: FieldValue.delete(),
+      lastVectorizedAt: FieldValue.serverTimestamp()
+    };
+
+    metadataMapping.forEach((fieldName, index) => {
+      parentUpdate[fieldName] = FieldValue.vector(embeddingsResult[index]);
+    });
+    batch.update(snap.ref, parentUpdate);
+
+    // B. Creazione Chunks
+    const metadataCount = metadataMapping.length;
+    chunksToEmbed.forEach((chunkText, i) => {
+      const vectorIndex = metadataCount + i;
+      const chunkDocRef = db.collection("document_chunks").doc(`${parentId}_chunk_${i}`);
+      
+      batch.set(chunkDocRef, {
+        parentId: parentId,
+        text: chunkText,
+        index: i,
+        embedding: FieldValue.vector(embeddingsResult[vectorIndex]),
+        urn: data.urn || null,
+        organo_giudicante: data.organo_giudicante || null,
+        sezione: data.sezione || null,
+        dataSentenza: data.dataSentenza || null,
+        tipo_documento: data.tipo_documento || null,
+        tipo_ordinanza: data.tipo_ordinanza || null,
+        tipo_massima: data.tipo_massima || null,
+        fascicoloId: data.fascicoloId || null,
+        user: data.user || null,
+        nome_file: data.nome_file || null,
+        createdAt: FieldValue.serverTimestamp()
+      });
+    });
+
+    await batch.commit();
+    console.log(`✅ Documento ${parentId} completato con ${chunksToEmbed.length} chunk.`);
+    await applyTeamVisibility(snap.ref, snap.data(), "user")
+
+  } catch (error) {
+    console.error(`❌ Critical error embedding document ${parentId}:`, error);
+    await snap.ref.update({ isEmbeddingFailed: true });
+  }
+}
+
+export async function handleChunkEmbedding(
+  event: FirestoreEvent<Change<DocumentSnapshot> | undefined, { docId: string }>
+) {
+  const snap = event.data?.after;
+  if (!snap || !snap.exists) return; // Documento eliminato
+
+  const data = snap.data();
+  if (!data) return;
+
+  // 1. GUARDIA: Evitiamo loop infiniti
+  // Se l'embedding esiste già o abbiamo segnato un fallimento, usciamo.
+  if (data.embedding || data.isEmbeddingFailed) return;
+
+  // 2. Controllo presenza testo
+  const textToEmbed = data.text;
+  if (!textToEmbed || typeof textToEmbed !== "string") {
+    console.warn(`Chunk ${event.params.docId} non contiene testo valido.`);
+    return;
+  }
+
+  try {
+    const oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    // 3. Generazione Embedding (Singolo input)
+    const response = await oaClient.embeddings.create({
+      model: "text-embedding-3-small",
+      input: textToEmbed,
+      dimensions: 1536
+    });
+
+    const vector = response.data[0].embedding;
+
+    // 4. Salvataggio del vettore nel documento del chunk
+    await snap.ref.update({
+      embedding: FieldValue.vector(vector),
+      processedAt: FieldValue.serverTimestamp(),
+      isEmbeddingFailed: FieldValue.delete() // Rimuoviamo eventuali flag di errore precedenti
+    });
+
+    console.log(`✅ Embedding creato con successo per il chunk: ${event.params.docId}`);
+    await applyTeamVisibility(snap.ref, snap.data(), "user")
+  } catch (error) {
+    console.error(`❌ Errore embedding per chunk ${event.params.docId}:`, error);
+    
+    // Segnamo il fallimento per evitare loop infiniti e per monitoraggio
+    await snap.ref.update({ 
+      isEmbeddingFailed: true,
+      errorDetails: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+}
+
+export async function handleFascicoloCreation(
+  event: FirestoreEvent<QueryDocumentSnapshot | undefined, Record<string, string>>
+) {
+  const snap = event.data;
+  if (!snap) return;
+  await applyTeamVisibility(snap.ref, snap.data(), "ownerId");
+}
+
+export async function applyTeamVisibility(
+  docRef: DocumentReference, 
+  data: any, 
+  userIdField: string
+): Promise<void> {
+  
+  // 1. Recuperiamo l'ID dell'utente dal documento appena creato
+  const userId = data[userIdField];
+  if (!userId) {
+    console.warn(`Campo utente '${userIdField}' non trovato nel doc ${docRef.id}`);
+    return;
+  }
+
+  const db = getDb();
+  
+  try {
+    // 2. Cerchiamo se esiste un team di cui questo utente fa parte
+    const teamsQuery = await db.collection("teams")
+      .where("member_ids", "array-contains", userId)
+      .limit(1)
+      .get();
+
+    if (!teamsQuery.empty) {
+      const teamDoc = teamsQuery.docs[0];
+      const teamData = teamDoc.data();
+
+      // 3. ORA facciamo il controllo sul campo del TEAM
+      if (teamData.visibility_default === "team") {
+        const teamMembers = teamData.member_ids || [];
+
+        if (teamMembers.length > 0) {
+          // 4. Il team è configurato per condividere: aggiungiamo i membri al documento
+          await docRef.update({
+            visibleTo: FieldValue.arrayUnion(...teamMembers)
+          });
+          console.log(`Aggiunti ${teamMembers.length} membri a visibleTo per ${docRef.path}`);
+        }
+      } else {
+        // L'utente ha un team, ma il team non ha come default la condivisione.
+        console.log(`Il team ${teamDoc.id} ha visibility_default = "${teamData.visibility_default}". Nessuna condivisione applicata.`);
+      }
+    } else {
+      console.log(`Nessun team trovato per l'utente ${userId}`);
+    }
+  } catch (error) {
+    console.error(`Errore in applyTeamVisibility per ${docRef.path}:`, error);
+  }
+}
+
+// ============================================================================
+// PAYMENT / STRIPE
+// ============================================================================
+
+
+export const STRIPE_SECRET_KEY = defineSecret("STRIPE_SECRET_KEY");
+export const STRIPE_WEBHOOK_SECRET = defineSecret("STRIPE_WEBHOOK_SECRET");
+
+export type PlanDoc = { price: number; currency?: string; durationDays?: number; stripePriceId?: string };
+
+export function getStripe(): Stripe {
+  const sk = STRIPE_SECRET_KEY.value();
+  if (!sk) throw new Error("Missing STRIPE_SECRET_KEY");
+  return new Stripe(sk);
+}
+
+export function getWebhookSecret(): string {
+  const whsec = STRIPE_WEBHOOK_SECRET.value();
+  if (!whsec) throw new Error("Missing STRIPE_WEBHOOK_SECRET");
+  return whsec;
+}
+
+export function normalizePlanId(id: unknown):
+  | "personale" | "business" | "personale_m" | "business_m"
+  | null {
+  if (typeof id !== "string") return null;
+  const v = id.toLowerCase().trim();
+  if (v === "personale" || v === "business" || v === "personale_m" || v === "business_m") return v;
+  return null;
 }

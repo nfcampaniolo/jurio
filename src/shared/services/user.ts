@@ -15,7 +15,13 @@ export async function userExists(uid: string): Promise<boolean> {
   const { doc, getDoc } = await import("firebase/firestore");
   const ref = doc(db, "users", uid);
   const snap = await getDoc(ref);
-  return snap.exists();
+
+  if (!snap.exists()) {
+    return false;
+  }
+
+  const data = snap.data();
+  return Boolean(data && data.email && data.name && data.surname); 
 }
 
 export async function getUser(uid: string): Promise<UserData> {

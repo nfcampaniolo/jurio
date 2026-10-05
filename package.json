@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/generate-sitemap.js && node scripts/generate-llms.js",
+    "build:dev": "tsc -b && vite build --mode development && node scripts/generate-sitemap.js && node scripts/generate-llms.js",
+    "build:prod": "tsc -b && vite build --mode production && node scripts/generate-sitemap.js && node scripts/generate-llms.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "git-push": "node scripts/git-push.js",
     "test": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "emulators": "firebase emulators:start --project dev"
   },
   "dependencies": {
     "@azure/msal-browser": "^5.18.0",

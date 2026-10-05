@@ -1,6 +1,8 @@
 {
   "projects": {
-    "default": "jurio-it"
+    "default": "jurio-it",
+    "prod": "jurio-it",
+    "dev": "jurio-it-dev"
   },
   "targets": {},
   "etags": {}

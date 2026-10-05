@@ -1,9 +1,6 @@
 export const getStripePublishableKey = (): string | undefined => {
   return import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 };
-export const getClientId = (): string | undefined => {
-  return import.meta.env.VITE_PAYPAL_CLIENT_ID;
-};
 
 export function getStripe() {
   const env = import.meta.env as Record<string, unknown>;

@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <!-- Consent Mode + Cookiebot -->
+    <script type="text/javascript" src="https://embeds.iubenda.com/widgets/7f06adba-d6ba-41a7-9758-69f5297af96e.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Meta SEO -->
+    <title>Scomputo Oneri di Urbanizzazione per Cessione Aree: Novità Consiglio di Stato | Jurio</title>
+    <meta name="description" content="È nulla la clausola che scomputa gli oneri di urbanizzazione secondaria a fronte della cessione di aree? L'analisi della sentenza del Consiglio di Stato n. 5826/2026.">
+    <link rel="canonical" href="https://jurio.it/blog/scomputo-oneri-urbanizzazione-cessione-aree-consiglio-stato">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Scomputo Oneri di Urbanizzazione per Cessione Aree: La Decisione del Consiglio di Stato">
+    <meta property="og:description" content="Il Consiglio di Stato ribalta la lettura del T.A.R. e salva lo scomputo degli oneri convenzionali a fronte della cessione gratuita di aree.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://jurio.it/blog/scomputo-oneri-urbanizzazione-cessione-aree-consiglio-stato">
+    <meta property="og:image" content="https://jurio.it/blog/assets/scomputo-oneri-urbanizzazione.webp">
+    <style>
+        :root {
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+            --font-serif: "Lora", "Merriweather", Georgia, "Times New Roman", serif;
+            /* Background & testo */
+            --color-bg: #f5f6f7;
+            --color-surface: #ffffff;
+            --color-text: #1a1d21;
+            /* Grigio istituzionale */
+            --color-primary: #e0a32e;
+            --color-primary-hover: #f0b541;
+            /* Neutri */
+            --color-border: #d6d9de;
+            --color-muted: #5f6672;
+            --shadow-soft: 0 6px 14px rgba(0, 0, 0, 0.08);
+            /* Tipografia */
+            --text-base-size: 16px;
+
+            --shadow-soft: 0 14px 45px rgba(42, 34, 24, .07);
+            --shadow-hover: 0 22px 60px rgba(42, 34, 24, .11);
+            --container: 1180px;
+            --radius: 18px;
+            --button-bg: var(--color-text);
+            --button-text: var(--color-bg);
+            --button-bg-hover: var(--color-primary);
+            --text-base-size: 16px;
+        }
+
+        * { box-sizing: border-box; }
+
+        /* Tema chiaro/scuro */
+        @media (prefers-color-scheme: dark) {
+            :root {
+            --color-bg: #111111;
+            --color-surface: #1a1a1a;
+            --color-text: #e6e7ea;
+
+            --color-primary: #e0a32e;
+            --color-primary-hover: #f0b541;
+
+            --color-border: #2e2e2e;
+            --color-muted: #a1a7b0;
+
+            --shadow-soft: 0 8px 18px rgba(0, 0, 0, 0.45);
+            }
+
+            .skip-link { background: var(--color-text); color: var(--color-bg); }
+            .header-cta, .button-primary { color: var(--color-bg); background: var(--color-text); }
+            .header-cta:hover { background: #ffffff; }
+            .demo-media { background: #25221f; }
+            ::selection { background: rgba(213, 168, 95, .24); }
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            min-width: 320px;
+            background: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--font-sans);
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            line-height: 1.75;
+        }
+        body, button, a { font-family: var(--font-sans); }
+        h1, h2, h3 { font-family: var(--font-serif); }
+        a { color: inherit; }
+        img, video { max-width: 100%; }
+        img { display: block; }
+        button, a { -webkit-tap-highlight-color: transparent; }
+        :focus-visible { outline: 3px solid rgba(154, 107, 37, .55); outline-offset: 4px; }
+        ::selection { background: rgba(154, 107, 37, .18); }
+
+        .container { width: min(var(--container), calc(100% - 40px)); margin-inline: auto; }
+        .serif { font-family: var(--font-serif); }
+
+        .site-header {
+            position: sticky; top: 0; z-index: 50;
+            background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+            border-bottom: 1px solid var(--color-border);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        main { overflow: clip; }
+        .eyebrow {
+            display: inline-flex; margin-bottom: 1.2rem; color: var(--color-primary);
+            font-size: .72rem; font-weight: 850; text-transform: uppercase; letter-spacing: .18em;
+        }
+        .hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }
+        .button {
+            display: inline-flex; align-items: center; justify-content: center; gap: .6rem;
+            min-height: 48px; padding: 0 1.15rem; border-radius: 10px; text-decoration: none;
+            font-weight: 750; border: 1px solid transparent; transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+        .button-primary { color: var(--button-text); background: var(--button-bg); box-shadow: 0 10px 24px rgba(36,33,29,.08); }
+        .button-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(36,33,29,.12); }
+        .button-secondary { background: var(--color-surface); border-color: var(--color-border); }
+        .button-secondary:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); }
+
+        .demo-card {
+            position: relative; overflow: hidden; border: 1px solid var(--color-border);
+            border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-soft);
+        }
+        .demo-media { aspect-ratio: 16 / 10; background: #ece8df; }
+        .demo-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; }
+        .step { padding: 2rem; list-style-type: none; border-top: 1px solid var(--color-border); }
+        .step-num { font-size: .72rem; font-weight: 850; letter-spacing: .15em; color: var(--color-primary); }
+        .step h3 { margin: .85rem 0 .65rem; font-family: var(--font-serif); font-size: 1.55rem; line-height: 1.15; }
+        .step p { margin: 0; color: var(--color-muted); line-height: 1.7; }
+
+        .faq { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            border: 1px solid var(--color-border); 
+            border-radius: var(--radius); 
+            overflow: hidden; 
+            background: var(--color-surface); 
+            box-shadow: var(--shadow-soft); 
+        }
+
+        details + details { border-top: 1px solid var(--color-border); }
+
+        summary {
+            list-style: none; cursor: pointer; padding: 1.35rem 1.5rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+            transition: background-color 0.25s ease;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary:hover { background: color-mix(in srgb, var(--color-bg) 55%, transparent); }
+        summary::after {
+            content: ""; flex: 0 0 auto; width: 10px; height: 10px;
+            border-right: 2px solid var(--color-muted); border-bottom: 2px solid var(--color-muted);
+            transform: translateY(-25%) rotate(45deg);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
+        }
+        details[open] summary::after { 
+            transform: translateY(25%) rotate(225deg); 
+            border-color: var(--color-text);
+        }
+        details > p {
+            margin: 0; padding: 0 1.5rem; color: var(--color-muted); line-height: 1.75;
+            display: block; max-height: 0; opacity: 0; transform: translateY(-10px);
+            transition: max-height 0.3s ease, opacity 0.2s ease, transform 0.2s ease, padding-bottom 0.3s ease;
+        }
+        details[open] > p {
+            padding-bottom: 1.35rem; max-height: 20rem; opacity: 1; transform: translateY(0); 
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease 0.05s, transform 0.35s ease 0.05s, padding-bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cta-box { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2rem; align-items: center; padding: clamp(2rem, 5vw, 4.5rem); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 24px; box-shadow: var(--shadow-soft); }
+        .cta-box h2 { margin: 0; font-family: var(--font-serif); font-size: clamp(2.4rem, 4.6vw, 4.3rem); line-height: 1; letter-spacing: -.045em; font-weight: 500; }
+        .cta-box h2 em { color: var(--color-primary); font-style: italic; }
+        .cta-box p { margin: 1rem 0 0; color: var(--color-muted); max-width: 760px; line-height: 1.75; }
+
+        footer { margin-top: 4rem; padding: 4rem 0 2rem; border-top: 1px solid var(--color-border); background: var(--color-surface); }
+
+        /* --- Visual refresh --- */
+        :root { --ease-smooth: cubic-bezier(.22, 1, .36, 1); }
+        body { overflow-x: hidden; }
+        ::selection { background: rgba(224, 163, 46, .18); color: var(--color-text); }
+
+        .demo-card { transform: translateZ(0); transition: transform .7s var(--ease-smooth), box-shadow .7s var(--ease-smooth); }
+        .demo-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-hover); }
+
+        .step { position: relative; min-height: 210px; transition: transform .55s var(--ease-smooth), box-shadow .55s var(--ease-smooth), border-color .35s ease; }
+        .step::after {
+            content: ""; position: absolute; left: 2rem; bottom: 0; width: 38px; height: 1px;
+            background: var(--color-primary); transform: scaleX(.35); transform-origin: left; transition: transform .45s var(--ease-smooth);
+        }
+        .step:hover::after { transform: scaleX(1); }
+        .step-num { display: inline-flex; align-items: center; gap: .5rem; }
+        .step-num::after { content: ""; width: 42px; height: 1px; background: currentColor; opacity: .35; }
+
+        summary { position: relative; }
+        summary::before {
+            content: ""; position: absolute; left: 1.5rem; bottom: 0; width: 0; height: 1px;
+            background: var(--color-primary); transition: width .45s var(--ease-smooth);
+        }
+        details[open] summary::before { width: calc(100% - 3rem); }
+
+        .cta-box { position: relative; overflow: hidden; transition: transform .55s var(--ease-smooth), box-shadow .55s var(--ease-smooth), border-color .35s ease; }
+        .cta-box::before {
+            content: ""; position: absolute; width: 240px; height: 240px; right: -70px; bottom: -150px;
+            border-radius: 50%; border: 1px solid rgba(224, 163, 46, .13); box-shadow: 0 0 0 40px rgba(224, 163, 46, .035); pointer-events: none;
+        }
+
+        .reveal { opacity: 0; transform: translateY(28px); transition: opacity .8s var(--ease-smooth), transform .8s var(--ease-smooth); will-change: opacity, transform; }
+        .reveal.is-visible { opacity: 1 !important; transform: none !important; }
+
+        .scroll-progress {
+            position: fixed; top: 0; left: 0; width: 100%; height: 2px; z-index: 200;
+            transform-origin: left; transform: scaleX(0); background: var(--color-primary); pointer-events: none; opacity: .9;
+        }
+
+        .legal-page { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+        .legal-header { max-width: 900px; margin: 0 auto 4.5rem; }
+        .legal-title { font-size: clamp(3rem, 6vw, 5rem); line-height: .98; text-wrap: balance; }
+        .legal-intro { margin: 1.5rem 0 0; max-width: 760px; color: var(--color-muted); font-size: 1.05rem; }
+        .legal-content { max-width: 900px; margin: 0 auto;}
+        .legal-content p { text-align: justify; hyphens: auto; -webkit-hyphens: auto; -ms-hyphens: auto; }
+        .legal-section { position: relative; padding: 2.8rem 0; border-top: 1px solid var(--color-border); }
+        .legal-section:first-child { padding-top: 0; border-top: 0; }
+        .legal-section h2 { font-size: clamp(1.55rem, 2.5vw, 2rem); font-weight: 600; line-height: 1.15; letter-spacing: -.025em; }
+        .legal-section p { max-width: 780px; margin: 0 0 1rem; }
+
+        .cookie-type-box {
+            padding: 1.5rem; background-color: color-mix(in srgb, var(--color-bg) 50%, transparent);
+            border-left: 3px solid var(--color-primary); border-radius: 12px;
+            border: 1px solid var(--color-border); border-left-width: 4px; margin-top: 1.5rem; margin-bottom: 1.5rem;
+        }
+        .cookie-type-box h3 { margin: 0 0 0.5rem 0; color: var(--color-primary); font-family: var(--font-sans); font-size: 1.1rem; }
+
+        sup a { color: var(--color-primary); text-decoration: none; font-weight: 700; padding: 0 0.15rem; transition: color 0.2s ease; }
+        sup a:hover { color: var(--color-primary-hover); text-decoration: underline; }
+        .legal-list { max-width: 780px; margin: 1.2rem 0 0; padding-left: 1.5rem; }
+        .legal-list li { margin-bottom: .65rem; padding-left: .25rem; }
+        .legal-list li::marker { color: var(--color-primary); }
+        .legal-list a { color: var(--color-primary); text-decoration: none; transition: color 0.2s ease; }
+        .legal-list a:hover { text-decoration: underline; color: var(--color-primary-hover); }
+
+        .locked-link {
+            display: inline-flex; align-items: center; gap: 0.35rem; color: var(--color-primary);
+            font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px;
+            text-underline-offset: 4px; transition: color .18s ease;
+        }
+        .locked-link:hover { color: var(--color-primary-hover); }
+        .locked-link svg { width: 14px; height: 14px; fill: currentColor; }
+
+        @media (max-width: 720px) {
+            .container { width: min(100% - 28px, var(--container)); }
+            .legal-page { padding: 3.5rem 0; }
+            .legal-header { margin-bottom: 2.5rem; }
+            .legal-title { font-size: clamp(2.7rem, 13vw, 3.7rem); }
+            .legal-section { padding: 2rem 0; }
+            .steps { grid-template-columns: 1fr; gap: 0; }
+            .step { min-height: 0; padding: 1.5rem 0 1.7rem; border-top: 1px solid var(--color-border); }
+            .step:first-child { border-top: 0; padding-top: 0; }
+            .cta-box { grid-template-columns: 1fr; gap: 1.5rem; padding: 1.7rem 1.35rem; border-radius: 18px; }
+            .cta-box h2 { font-size: clamp(2.2rem, 10vw, 3.2rem); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+            .scroll-progress { display: none; }
+        }
+    </style>
+    <!-- JSON-LD Dati Strutturati -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://jurio.it/blog/scomputo-oneri-urbanizzazione-cessione-aree-consiglio-stato"
+      },
+      "headline": "Scomputo degli oneri di urbanizzazione per cessione di aree: l'equilibrio globale in convenzione",
+      "description": "L'analisi della sentenza del Consiglio di Stato n. 5826/2026 sulla validità della clausola di scomputo degli oneri secondari a fronte della cessione di aree primarie.",
+      "author": {
+        "@type": "Organization",
+        "name": "Jurio",
+        "url": "https://jurio.it"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Jurio",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://jurio.it/logo.png"
+        }
+      },
+      "datePublished": "2026-10-01",
+      "dateModified": "2026-10-01"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "Si possono scomputare gli oneri di urbanizzazione cedendo aree invece di realizzare opere?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sì, secondo il Consiglio di Stato (sentenza n. 5826/2026), non esiste un divieto assoluto per l'amministrazione di modulare le poste economiche all'interno di una convenzione urbanistica, purché l'operazione persegua l'interesse pubblico al miglior assetto del territorio nel quadro dell'equilibrio globale dell'accordo."
+        }
+      }, {
+        "@type": "Question",
+        "name": "Cosa succede se una singola clausola economica della convenzione viene dichiarata nulla?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "In applicazione del principio di conservazione e buona fede, se la clausola regolava un aspetto economico essenziale all'equilibrio sinallagmatico dell'intera operazione, la sua nullità rischierebbe di travolgere l'intera convenzione urbanistica."
+        }
+      }]
+    }
+    </script>
+
+    <link rel="stylesheet" href="https://jurio.it/styles.css">
+</head>
+<body>
+
+    <!-- Header di navigazione Jurio -->
+    <div id="header"></div>
+
+    <div class="scroll-progress" id="scrollProgress"></div>
+
+    <main class="legal-page">
+        <article class="container">
+            
+            <header class="legal-header">
+                <span class="eyebrow">Diritto Amministrativo • Edilizia e Urbanistica</span>
+                <h1 class="legal-title">Scomputo oneri di urbanizzazione e cessione aree: l'equilibrio globale in convenzione</h1>
+                <p class="legal-intro">È legittima la convenzione di lottizzazione che compensa una quota degli oneri secondari con la cessione gratuita di aree destinate all'urbanizzazione primaria? La pronuncia del Consiglio di Stato (n. 5826/2026) ribalta l'approccio restrittivo della giurisprudenza di merito, valorizzando l'autonomia negoziale e la complessità sinallagmatica degli accordi urbanistici.</p>
+                <div class="article-meta">
+                    <span>&mdash; Consiglio di Stato, Sez. IV</span>
+                </div>
+            </header>
+
+            <figure class="demo-card">
+                <div class="demo-media">
+                    <img src="https://www.niiprogetti.it/wp-content/uploads/2026/04/bologna3-768x506.jpg" alt="Cantiere edile per lo sviluppo di infrastrutture di urbanizzazione residenziale" title="Cantiere per urbanizzazione">
+                </div>
+                <figcaption style="padding: 1rem; text-align: center; font-size: 0.85rem; color: var(--color-muted); border-top: 1px solid var(--color-border);">
+                    Pianificazione e infrastrutture primarie nei cantieri di urbanizzazione residenziale.
+                </figcaption>
+            </figure>
+
+            <div class="legal-content">
+                
+                <nav class="article-index">
+                    <h3>Indice dei contenuti</h3>
+                    <ul class="legal-list">
+                        <li><a href="#problema-normativo">1. Il problema: cessione di aree e modulazione economica</a></li>
+                        <li><a href="#tesi-nullita">2. La rigidità del dato normativo: la tesi della nullità</a></li>
+                        <li><a href="#ribaltamento-consiglio">3. Il ribaltamento: l'equilibrio globale della convenzione</a></li>
+                        <li><a href="#precedenti">4. I precedenti e l'autonomia negoziale</a></li>
+                        <li><a href="#evoluzione-contrasto">5. L'evoluzione giurisprudenziale</a></li>
+                        <li><a href="#note-approfondimenti">6. Approfondimenti e note tecniche</a></li>
+                    </ul>
+                </nav>
+
+                <section id="problema-normativo" class="legal-section">
+                    <h2>1. Il problema: cessione di aree e modulazione economica</h2>
+                    <p>In sede di lottizzazione, il rapporto tra l'amministrazione comunale e il soggetto privato è regolato da delicati pesi economici e territoriali. Il legislatore disciplina con precisione gli obblighi del privato: da un lato, l'<a href="https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:legge:1942-08-17;1150!vig=" target="_blank" rel="noopener noreferrer">art. 28, comma 5, della Legge Urbanistica (l. 1150/1942)</a> subordina l'autorizzazione alla convenzione all'impegno di cedere gratuitamente le aree per l'urbanizzazione primaria (e secondaria entro certi limiti) e di sostenere i relativi oneri; dall'altro, l'<a href="https://www.normattiva.it/uri-res/N2Ls?urn:nir:stato:decreto.presidente.repubblica:2001-06-06;380!vig=" target="_blank" rel="noopener noreferrer">art. 16, comma 2, del d.P.R. 380/2001 (Testo Unico Edilizia)</a> concede al titolare del permesso di costruire la facoltà di realizzare direttamente le opere "a scomputo totale o parziale" della quota dovuta.</p>
+                    <p>La controversia nasce in una specifica zona grigia: <strong>cosa accade se l'amministrazione pattuisce uno scomputo degli oneri (nella fattispecie, la restituzione del 50% di quelli secondari) non come contropartita per opere materialmente realizzate dal privato, ma a fronte della cessione gratuita di aree?</strong> È ammissibile utilizzare lo strumento dello scomputo al di fuori di un rigido schema <em>"opera contro denaro"</em>?</p>
+                </section>
+
+                <section id="tesi-nullita" class="legal-section">
+                    <h2>2. La rigidità del dato normativo: la tesi della nullità</h2>
+                    <p>In primo grado, il T.A.R. Toscana (Sez. III, sent. n. 838/2024) aveva fornito una lettura strettamente formale e restrittiva. Incrociando il disposto dell'art. 28 della l. 1150/1942 e dell'art. 16 del T.U. Edilizia, i giudici di merito avevano dedotto un principio di inderogabilità tecnica: lo scomputo è concepito dalla legge unicamente in funzione del valore delle opere edilizie direttamente realizzate.</p>
+                    <p>Concedere uno sgravio sugli oneri pecuniari a compensazione della mera <em>cessione di aree</em> rappresenterebbe, in questa prospettiva, un'operazione estranea allo schema legale tipico. Conseguentemente, il T.A.R. aveva dichiarato la <strong>nullità della clausola convenzionale per contrasto con norme imperative</strong> (art. 1418 c.c.), colpendo duramente l'assetto economico su cui le parti avevano fondato l'accordo originario nel lontano 1993.</p>
+                </section>
+
+                <section id="ribaltamento-consiglio" class="legal-section">
+                    <h2>3. Il ribaltamento: l'equilibrio globale della convenzione</h2>
+                    <p>Investito della questione in grado d'appello, il <strong>Consiglio di Stato, con la sentenza n. 5826 del 17 luglio 2026</strong>, ha radicalmente mutato prospettiva, spostando il focus dalla rigida anatomia della singola disposizione all'ecologia complessiva dell'accordo stipulato tra Comune e lottizzante.</p>
+                    <p>Il Collegio analizza il perimetro fattuale: le aree per l'urbanizzazione primaria sono state effettivamente cedute a titolo gratuito, le opere primarie sono state realizzate direttamente dal privato e lo scomputo richiesto gravita esclusivamente sugli oneri secondari, peraltro esigibili solo successivamente alla cessione stessa.</p>
+                    <blockquote>
+                        <p>Il sindacato sulla validità degli impegni economici non può arrestarsi alla frammentazione della singola clausola, ma deve abbracciare il principio della "globalità" dell'accordo, rifuggendo da un'esasperata logica della corrispettività.</p>
+                    </blockquote>
+                    <p>Secondo il Supremo Consesso, <strong>non esiste un divieto assoluto per l'amministrazione pubblica di modulare le poste economiche</strong> in sede convenzionale, a patto che l'operazione nel suo complesso persegua l'interesse pubblico alla migliore e più celere urbanizzazione del territorio. In base ai principi di buona fede e conservazione degli atti, recidere una clausola fondamentale su cui le parti hanno edificato il loro affidamento negoziale rischierebbe di travolgere e paralizzare l'intera convenzione.</p>
+                </section>
+
+                <section id="precedenti" class="legal-section">
+                    <h2>4. I precedenti e l'autonomia negoziale</h2>
+                    <p>Per sostenere la legittimità della modulazione economica, il Consiglio di Stato poggia le proprie basi su una specifica evoluzione pretoria legata all'<strong>autonomia negoziale negli accordi amministrativi</strong> (art. 11 l. 241/1990 in combinato disposto con l'art. 1372 c.c.).</p>
+                    <p>Nelle pronunce <em>Cons. Stato, Sez. IV, n. 2996/2023</em> e <em>n. 9220/2024</em>, era stato ampiamente sdoganato il principio secondo cui il privato può validamente accollarsi <strong>oneri maggiori</strong> rispetto al minimo imposto dalla legge (ad esempio per finalità di <em>social housing</em> o per garantire la remuneratività complessiva dell'operazione, come evidenziato anche in <em>Cons. Stato n. 3116/2023</em>). Se la giurisprudenza tollera una flessibilità "in aumento" a carico del privato in virtù della causa concreta del negozio, la sentenza del 2026 applica il medesimo canone sistematico all'ipotesi speculare: è altrettanto legittimo che l'amministrazione accetti <strong>introiti minori (scomputo) a fronte di un sacrificio reale e alternativo del privato</strong>, come l'immediata cessione di aree strategiche.</p>
+                </section>
+
+                <section id="evoluzione-contrasto" class="legal-section">
+                    <h2>5. L'evoluzione giurisprudenziale</h2>
+                    <p>La questione dello scomputo diretto per cessione aree costituisce un punto di emersione recente e delicato nel quadro della contrattualistica pubblica immobiliare.</p>
+                    
+                    <div class="steps">
+                        <div class="step">
+                            <div class="step-num">2021-2023</div>
+                            <h3>L'apertura all'autonomia negoziale</h3>
+                            <p>La giurisprudenza amministrativa ammette che le parti possano pattuire obblighi e contribuzioni differenti rispetto ai parametri normativi base, considerati alla stregua di un "minimo legale", valutando l'equilibrio economico e la causa concreta della convenzione (<em>Cons. Stato n. 4633/2021; n. 2996/2023</em>).</p>
+                        </div>
+                        
+                        <div class="step restrictive">
+                            <div class="step-num">2024</div>
+                            <h3>La lettura formalista di primo grado</h3>
+                            <p>Il T.A.R. Toscana (sent. 838/2024) decreta l'impossibilità di scomputare oneri a compensazione della cessione di terreni. L'istituto dello scomputo viene confinato normativamente alla sola valorizzazione pecuniaria delle opere realizzate in via diretta.</p>
+                        </div>
+                        
+                        <div class="step final">
+                            <div class="step-num">LUGLIO 2026</div>
+                            <h3>La convergenza: globalità e buona fede</h3>
+                            <p>Con la decisione n. 5826/2026, il Consiglio di Stato salva la clausola pattizia. Afferma l'inesistenza di divieti assoluti nella modulazione delle poste e, richiamando la buona fede contrattuale, tutela l'affidamento delle parti sulla tenuta organica della convenzione stipulata.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="note-approfondimenti" class="legal-section">
+                    <h2>6. Approfondimenti e note tecniche</h2>
+                    <div class="cookie-type-box">
+                        <h3>Datio in solutum (Art. 51 L. 342/2000)</h3>
+                        <p>Nel corso del giudizio, la parte appellante aveva tentato di giustificare l'operazione di scomputo inquadrandola dogmaticamente all'interno dell'art. 51 della Legge 342/2000, che disciplina la <em>datio in solutum</em> (pagamento mediante cessione di beni). La Sezione Quarta ha preferito risolvere il contenzioso a monte, assorbendo il profilo civilistico all'interno dell'interpretazione unitaria e sistematica della convenzione urbanistica, fondando la propria ratio sull'inesistenza del vizio di nullità ex art. 1418 c.c.</p>
+                    </div>
+                    <p>Sulla tenuta delle convenzioni urbanistiche, si segnala la propensione giurisprudenziale parallela (cfr. <em>Cons. Stato n. 1952/2024</em>) a considerare gli obblighi di realizzazione opere come vincoli <em>propter rem</em>, limitando l'emersione dei vizi della convenzione al solo profilo risarcitorio e patrimoniale (<em>quoad pecuniam</em>).</p>
+                </section>
+
+                <section class="legal-section" style="border-top: none;">
+                    <h2>Domande Frequenti (FAQ)</h2>
+                    <div class="faq">
+                        <details>
+                            <summary>Si possono scomputare gli oneri cedendo terreni invece di realizzare opere?</summary>
+                            <p>Sì, alla luce della pronuncia 5826/2026 del Consiglio di Stato, non vige un divieto legislativo assoluto. L'amministrazione può validamente modulare l'architettura economica della convenzione scomputando una percentuale degli oneri secondari a fronte di una rapida e utile cessione di aree destinate all'urbanizzazione primaria.</p>
+                        </details>
+                        <details>
+                            <summary>Cosa si intende per principio della "globalità" della convenzione?</summary>
+                            <p>Indica che l'equilibrio di un accordo urbanistico non va misurato isolando e sezionando ogni singola obbligazione alla ricerca di un rigido do-ut-des, ma valutando la complessiva ripartizione di oneri e vantaggi concordata tra PA e privato nel perseguimento dell'interesse pubblico.</p>
+                        </details>
+                    </div>
+                </section>
+
+                <section class="legal-section">
+                    <h2>Fonti e giurisprudenza citata</h2>
+                    <ul class="legal-list">
+                        <li>
+                            <strong>
+                                <a href="https://jurio.it/giurisprudenza/fa759ed2-91fe-45e8-94f7-cc18da58abe2" class="locked-link" title="Riservato agli utenti Jurio" target="_blank" rel="noopener">
+                                    <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>Cons. Stato, Sez. IV, 17 luglio 2026, n. 5826
+                                </a>
+                            </strong> (sentenza di riferimento).
+                        </li>
+                        <li>
+                            T.A.R. Toscana, Sez. III, n. 838/2024 (riformata in appello).
+                        </li>
+                        <li>
+                            <a href="https://jurio.it/giurisprudenza/298411a7-e147-40fe-b1af-9fbab25a3881" class="locked-link" title="Riservato agli utenti Jurio" target="_blank" rel="noopener">
+                                <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>Cons. Stato, Sez. IV, 21 maggio 2024, n. 9220
+                            </a>.
+                        </li>
+                        <li>
+                            <a href="https://jurio.it/giurisprudenza/3149131b-a88f-48b3-a6cd-24ac327a2129" class="locked-link" title="Riservato agli utenti Jurio" target="_blank" rel="noopener">
+                                <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>Cons. Stato, Sez. IV, 24 marzo 2023, n. 2996
+                            </a>.
+                        </li>
+                        <li>
+                            <a href="https://jurio.it/giurisprudenza/1d77307f-79d9-4e79-a316-204bbd9361d6" class="locked-link" title="Riservato agli utenti Jurio" target="_blank" rel="noopener">
+                                <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>Cons. Stato, Sez. IV, n. 3116/2023
+                            </a>.
+                        </li>
+                        <li>
+                            <a href="https://jurio.it/giurisprudenza/0d0cba28-f276-4386-963f-24317849b328" class="locked-link" title="Riservato agli utenti Jurio" target="_blank" rel="noopener">
+                                <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>Cons. Stato, Sez. IV, n. 4633/2021
+                            </a>.
+                        </li>
+                        <li>
+                            <a href="https://jurio.it/giurisprudenza/5a3771a5-a878-4a51-93fc-cdfaddd02772" class="locked-link" title="Riservato agli utenti Jurio" target="_blank" rel="noopener">
+                                <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>Cons. Stato, Sez. IV, n. 1952/2024
+                            </a>.
+                        </li>
+                    </ul>
+                </section>
+
+                <div class="cta-box reveal" style="margin-top: 4rem; max-width: 900px; margin-inline: auto;">
+                    <div>
+                        <h2>Cerca. <em>Analizza.</em> Scegli.</h2>
+                        <p>Ricerca e confronta l'evoluzione giurisprudenziale direttamente sulle fonti con l'IA di Jurio. Sblocca l'accesso illimitato a tutto il database giurisprudenziale integrato per trovare i precedenti giusti per il tuo caso.</p>
+                        <div class="hero-actions">
+                            <a href="/prezzi" class="button button-primary">Scopri i piani</a>
+                            <a href="/login" class="button button-secondary">Accedi</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <div id="footer"></div>
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const components = [
+                {
+                    selector: "#header",
+                    file: "/header.html",
+                },
+                {
+                    selector: "#footer",
+                    file: "/footer.html",
+                },
+            ];
+
+            await Promise.all(
+                components.map(async ({ selector, file }) => {
+                    const element = document.querySelector(selector);
+
+                    if (!element) return;
+
+                    try {
+                        const response = await fetch(file);
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+
+                        element.innerHTML = await response.text();
+                    } catch (error) {
+                        console.error(`Errore nel caricamento di ${file}:`, error);
+                    }
+                })
+            );
+        });
+    </script>
+    <script>
+        // Scroll progress bar
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height);
+            document.getElementById('scrollProgress').style.transform = `scaleX(${scrolled})`;
+        });
+    </script>
+</body>
+</html>

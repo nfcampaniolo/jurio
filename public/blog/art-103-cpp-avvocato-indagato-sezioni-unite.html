@@ -2,43 +2,20 @@
 <html lang="it">
 <head>
     <!-- Consent Mode + Cookiebot -->
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-
-        gtag('consent', 'default', {
-            'analytics_storage': 'denied',
-            'ad_storage': 'denied',
-            'ad_user_data': 'denied',
-            'ad_personalization': 'denied',
-            'wait_for_update': 500
-        });
-    </script>
-
-    <script
-        id="Cookiebot"
-        src="https://consent.cookiebot.com/uc.js"
-        data-cbid="869d54bc-6b13-4281-a6ab-489dc313a855"
-        type="text/javascript">
-    </script>
-
+    <script type="text/javascript" src="https://embeds.iubenda.com/widgets/7f06adba-d6ba-41a7-9758-69f5297af96e.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>
         Art. 103 c.p.p. e avvocato indagato: la Cassazione rimette alle Sezioni Unite | Jurio
     </title>
-
     <meta
         name="description"
         content="Perquisizione nello studio del difensore indagato: l'ordinanza n. 22178/2026 della Cassazione ricostruisce il contrasto sull'art. 103 c.p.p. e rimette la questione alle Sezioni Unite."
     >
-
     <link
         rel="canonical"
         href="https://jurio.it/blog/art-103-cpp-avvocato-indagato-sezioni-unite"
     >
-
     <!-- Open Graph -->
     <meta property="og:title"
           content="Art. 103 c.p.p. e avvocato indagato: la Cassazione rimette alle Sezioni Unite">
@@ -51,107 +28,68 @@
     <meta property="og:url"
           content="https://jurio.it/blog/art-103-cpp-avvocato-indagato-sezioni-unite">
     <meta property="og:image" content="https://jurio.it/blog/art-103-cpp-avvocato-indagato-sezioni-unite.webp">
-    
     <link rel="stylesheet" href="https://jurio.it/styles.css">
-
     <style>
         :root {
-            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-                Roboto, system-ui, sans-serif;
-
-            --font-serif: "Lora", "Merriweather", Georgia,
-                "Times New Roman", serif;
-
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+            --font-serif: "Lora", "Merriweather", Georgia, "Times New Roman", serif;
+            /* Background & testo */
             --color-bg: #f5f6f7;
             --color-surface: #ffffff;
             --color-text: #1a1d21;
+            /* Grigio istituzionale */
+            --color-primary: #e0a32e;
+            --color-primary-hover: #f0b541;
+            /* Neutri */
+            --color-border: #d6d9de;
+            --color-muted: #5f6672;
+            --shadow-soft: 0 6px 14px rgba(0, 0, 0, 0.08);
+            /* Tipografia */
+            --text-base-size: 16px;
+
+            --shadow-soft: 0 14px 45px rgba(42, 34, 24, .07);
+            --shadow-hover: 0 22px 60px rgba(42, 34, 24, .11);
+            --container: 1180px;
+            --radius: 18px;
+            --button-bg: var(--color-text);
+            --button-text: var(--color-bg);
+            --button-bg-hover: var(--color-primary);
+            --container: 1180px;
+            --text-base-size: 16px;
+        }
+
+        * { box-sizing: border-box; }
+
+        /* Tema chiaro/scuro: segue automaticamente la preferenza del sistema. */
+        @media (prefers-color-scheme: dark) {
+            :root {
+            --color-bg: #111111;
+            --color-surface: #1a1a1a;
+            --color-text: #e6e7ea;
 
             --color-primary: #e0a32e;
             --color-primary-hover: #f0b541;
 
-            --color-border: #d6d9de;
-            --color-muted: #5f6672;
+            --color-border: #2e2e2e;
+            --color-muted: #a1a7b0;
 
-            --shadow-soft: 0 14px 45px rgba(42, 34, 24, .07);
-            --shadow-hover: 0 22px 60px rgba(42, 34, 24, .11);
-
-            --container: 1180px;
-            --radius: 18px;
-
-            --button-bg: var(--color-text);
-            --button-text: var(--color-bg);
-            --button-bg-hover: var(--color-primary);
-
-            --text-base-size: 16px;
-
-            --ease-smooth: cubic-bezier(.22, 1, .36, 1);
-            --ease-snappy: cubic-bezier(.2, .8, .2, 1);
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --color-bg: #111111;
-                --color-surface: #1a1a1a;
-                --color-text: #e6e7ea;
-
-                --color-primary: #e0a32e;
-                --color-primary-hover: #f0b541;
-
-                --color-border: #2e2e2e;
-                --color-muted: #a1a7b0;
-
-                --shadow-soft: 0 8px 18px rgba(0, 0, 0, .45);
-                --shadow-hover: 0 14px 30px rgba(0, 0, 0, .65);
+            --shadow-soft: 0 8px 18px rgba(0, 0, 0, 0.45);
             }
 
-            .skip-link {
-                background: var(--color-text);
-                color: var(--color-bg);
-            }
-
-            .header-cta,
-            .button-primary {
-                color: var(--color-bg);
-                background: var(--color-text);
-            }
-
-            .header-cta:hover {
-                background: #ffffff;
-            }
-
-            .demo-media {
-                background: #25221f;
-            }
-
+            .skip-link { background: var(--color-text); color: var(--color-bg); }
+            .header-cta, .button-primary { color: var(--color-bg); background: var(--color-text); }
+            .header-cta:hover { background: #ffffff; }
+            .demo-media { background: #25221f; }
             .pricing-banner {
-                background: #0f0e0d;
-                box-shadow: 0 20px 60px rgba(0, 0, 0, .32);
+            background: #0f0e0d;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .32);
             }
-
-            .pricing-banner p,
-            .pricing-points {
-                color: #d1c8bc;
-            }
-
-            .pricing-cta .button-primary {
-                color: #181613;
-                background: #f7f1e8;
-            }
-
-            ::selection {
-                background: rgba(213, 168, 95, .24);
-                color: var(--color-text);
-            }
+            .pricing-banner p, .pricing-points { color: #d1c8bc; }
+            .pricing-cta .button-primary { color: #181613; background: #f7f1e8; }
+            ::selection { background: rgba(213, 168, 95, .24); }
         }
 
-        html {
-            scroll-behavior: smooth;
-        }
-
+        html { scroll-behavior: smooth; }
         body {
             margin: 0;
             min-width: 320px;
@@ -161,247 +99,206 @@
             -webkit-font-smoothing: antialiased;
             text-rendering: optimizeLegibility;
             line-height: 1.75;
-            overflow-x: hidden;
         }
-
-        body,
-        button,
-        a {
-            font-family: var(--font-sans);
+        body, button, a { font-family: var(--font-sans); }
+        h1, h2, h3 {
+        font-family: var(--font-serif);
         }
-
-        h1,
-        h2,
-        h3 {
-            font-family: var(--font-serif);
-        }
-
-        a {
-            color: inherit;
-        }
-
-        img,
-        video {
-            max-width: 100%;
-        }
-
-        img {
-            display: block;
-        }
-
-        button,
-        a {
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        :focus-visible {
-            outline: 3px solid rgba(224, 163, 46, .55);
-            outline-offset: 4px;
-        }
-
-        ::selection {
-            background: rgba(224, 163, 46, .18);
-            color: var(--color-text);
-        }
+        a { color: inherit; }
+        img, video { max-width: 100%; }
+        img { display: block; }
+        button, a { -webkit-tap-highlight-color: transparent; }
+        :focus-visible { outline: 3px solid rgba(154, 107, 37, .55); outline-offset: 4px; }
+        ::selection { background: rgba(154, 107, 37, .18); }
 
         .skip-link {
-            position: fixed;
-            left: 1rem;
-            top: 1rem;
-            z-index: 1000;
-            transform: translateY(-160%);
-            transition: transform .18s ease;
-            background: var(--color-text);
-            color: #fff;
-            padding: .7rem 1rem;
-            border-radius: 10px;
-            font-weight: 700;
-            text-decoration: none;
+            position: fixed; left: 1rem; top: 1rem; z-index: 1000;
+            transform: translateY(-160%); transition: transform .18s ease;
+            background: var(--color-text); color: #fff; padding: .7rem 1rem;
+            border-radius: 10px; font-weight: 700; text-decoration: none;
         }
+        .skip-link:focus { transform: translateY(0); }
 
-        .skip-link:focus {
-            transform: translateY(0);
-        }
+        .container { width: min(var(--container), calc(100% - 40px)); margin-inline: auto; }
+        .serif { font-family: var(--font-serif); }
 
-        .container {
-            width: min(var(--container), calc(100% - 40px));
-            margin-inline: auto;
-        }
-
-        .serif {
-            font-family: var(--font-serif);
-        }
-
-        /* Header */
         .site-header {
-            position: sticky;
-            top: 0;
-            z-index: 50;
-            background: color-mix(
-                in srgb,
-                var(--color-surface) 88%,
-                transparent
-            );
+            position: sticky; top: 0; z-index: 50;
+            background: color-mix(in srgb, var(--color-surface) 88%, transparent);
             border-bottom: 1px solid var(--color-border);
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
         }
-
         .header-inner {
-            min-height: 78px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 2rem;
+            min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 2rem;
         }
-
         .brand {
-            font-family: var(--font-serif);
-            font-size: clamp(1.75rem, 3vw, 2.25rem);
-            font-weight: 700;
-            text-decoration: none;
-            letter-spacing: -.03em;
+            font-family: var(--font-serif); font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 700;
+            text-decoration: none; letter-spacing: -.03em;
         }
-
-        .nav {
-            display: flex;
-            align-items: center;
-            gap: 1.7rem;
-        }
-
+        .nav { display: flex; align-items: center; gap: 1.7rem; }
         .nav a {
-            text-decoration: none;
-            color: var(--color-muted);
-            font-size: .72rem;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: .14em;
-            transition: color .18s ease;
+            text-decoration: none; color: var(--color-muted); font-size: .72rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: .14em; transition: color .18s ease;
         }
-
-        .nav a:hover {
-            color: var(--color-text);
-        }
-
+        .nav a:hover { color: var(--color-text); }
         .header-cta {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 44px;
-            padding: 0 1.1rem;
-            border-radius: 10px;
-            background: var(--button-bg);
-            color: var(--button-text);
-            text-decoration: none;
-            font-size: .9rem;
-            font-weight: 750;
-            transition:
-                transform .18s ease,
-                background .18s ease;
+            display: inline-flex; align-items: center; justify-content: center;
+            min-height: 44px; padding: 0 1.1rem; border-radius: 10px;
+            background: var(--button-bg); color: var(--button-text); text-decoration: none; font-size: .9rem; font-weight: 750;
+            transition: transform .18s ease, background .18s ease;
         }
+        .header-cta:hover { background: var(--button-bg-hover); transform: translateY(-1px); }
 
-        .header-cta:hover {
-            background: var(--button-bg-hover);
-            transform: translateY(-1px);
+        main { overflow: clip; }
+        .section { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+        .hero { padding: clamp(3.2rem, 6vw, 5.5rem) 0 3.8rem; }
+        .hero-grid {
+            display: grid; grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+            gap: clamp(2.5rem, 6vw, 5.5rem); align-items: start;
         }
-
-        main {
-            overflow: clip;
-        }
-
-        /* Scroll progress */
-        .scroll-progress {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            z-index: 200;
-            transform-origin: left;
-            transform: scaleX(0);
-            background: var(--color-primary);
-            pointer-events: none;
-            opacity: .9;
-        }
-
-        /* Editorial article */
-        .legal-page {
-            padding: clamp(4.5rem, 8vw, 7rem) 0;
-        }
-
-        .legal-header {
-            max-width: 900px;
-            margin: 0 auto 4.5rem;
-        }
-
         .eyebrow {
-            display: inline-flex;
-            margin-bottom: 1.2rem;
-            color: var(--color-primary);
-            font-size: .72rem;
-            font-weight: 850;
-            text-transform: uppercase;
-            letter-spacing: .18em;
+            display: inline-flex; margin-bottom: 1.2rem; color: var(--color-primary);
+            font-size: .72rem; font-weight: 850; text-transform: uppercase; letter-spacing: .18em;
         }
-
-        .legal-title {
-            margin: 0;
-            font-size: clamp(3rem, 6vw, 5rem);
-            line-height: .98;
-            letter-spacing: -.045em;
+        .hero h1 {
+            margin: 0; font-family: var(--font-serif); font-weight: 500; letter-spacing: -.045em;
+            font-size: clamp(3rem, 6vw, 5.4rem); line-height: .98;
             text-wrap: balance;
-            font-weight: 500;
         }
-
-        .legal-title em {
-            color: var(--color-primary);
-            font-style: italic;
+        .hero h1 em { color: var(--color-primary); font-style: italic; }
+        .hero-lead {
+            margin: 1.5rem 0 0; max-width: 660px; font-size: clamp(1.05rem, 1.5vw, 1.24rem);
+            line-height: 1.75; color: var(--color-text);
         }
-
-        .legal-intro {
-            margin: 1.5rem 0 0;
-            max-width: 800px;
-            color: var(--color-muted);
-            font-size: 1.05rem;
-            line-height: 1.8;
+        .hero-support {
+            margin: 1rem 0 0; max-width: 560px; color: var(--color-muted); font-size: 1rem; line-height: 1.75;
         }
-
-        .article-meta {
-            margin-top: 1.5rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: .8rem 1rem;
-            align-items: center;
-            font-size: .85rem;
-            color: var(--color-muted);
-            font-weight: 600;
+        .hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }
+        .button {
+            display: inline-flex; align-items: center; justify-content: center; gap: .6rem;
+            min-height: 48px; padding: 0 1.15rem; border-radius: 10px; text-decoration: none;
+            font-weight: 750; border: 1px solid transparent; transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
         }
+        .button-primary { color: var(--button-text); background: var(--button-bg); box-shadow: 0 10px 24px rgba(36,33,29,.08); }
+        .button-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(36,33,29,.12); }
+        .button-secondary { background: var(--color-surface); border-color: var(--color-border); }
+        .button-secondary:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); }
 
-        /* Hero visual */
         .demo-card {
-            position: relative;
-            overflow: hidden;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius);
-            background: var(--color-surface);
-            box-shadow: var(--shadow-soft);
-            transform: translateZ(0);
-            transition:
-                transform .7s var(--ease-smooth),
-                box-shadow .7s var(--ease-smooth);
-            will-change: transform;
-            margin-bottom: 4.5rem;
-            max-width: 900px;
-            margin-inline: auto;
+            position: relative; overflow: hidden; border: 1px solid var(--color-border);
+            border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-soft);
+        }
+        .demo-card::before, .accent::before {
+            content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--color-primary);
+        }
+        .demo-media { aspect-ratio: 16 / 10; background: #ece8df; }
+        .demo-media img, .demo-video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .section-heading { max-width: 760px; margin: 0 auto 3rem; text-align: center; }
+        .section-heading h2 { margin: 0 0 .9rem; font-family: var(--font-serif); font-weight: 500; letter-spacing: -.035em; font-size: clamp(2.25rem, 4vw, 3.6rem); line-height: 1.05; }
+        .section-heading p { margin: 0 auto; color: var(--color-muted); font-size: 1.05rem; line-height: 1.75; }
+
+        .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; }
+        .step { padding: 2rem; list-style-type: none; border-top: 1px solid var(--color-border); }
+        .step-num { font-size: .72rem; font-weight: 850; letter-spacing: .15em; color: var(--color-primary); }
+        .step h3 { margin: .85rem 0 .65rem; font-family: var(--font-serif); font-size: 1.55rem; line-height: 1.15; }
+        .step p { margin: 0; color: var(--color-muted); line-height: 1.7; }
+
+        .faq { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            border: 1px solid var(--color-border); 
+            border-radius: var(--radius); 
+            overflow: hidden; 
+            background: var(--color-surface); 
+            box-shadow: var(--shadow-soft); 
         }
 
-        .demo-card::before {
-            content: "";
-            position: absolute;
-            inset: 0 0 auto;
-            height: 3px;
-            background: var(--color-primary);
-            z-index: 2;
+        details + details { 
+            border-top: 1px solid var(--color-border); 
+        }
+
+        summary {
+            list-style: none; 
+            cursor: pointer; 
+            padding: 1.35rem 1.5rem; 
+            font-weight: 700;
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 1rem;
+            transition: background-color 0.25s ease;
+        }
+
+        summary::-webkit-details-marker { 
+            display: none; 
+        }
+
+        summary:hover { 
+            background: color-mix(in srgb, var(--color-bg) 55%, transparent); 
+        }
+
+        summary::after {
+            content: ""; 
+            flex: 0 0 auto; 
+            width: 10px; 
+            height: 10px;
+            border-right: 2px solid var(--color-muted);
+            border-bottom: 2px solid var(--color-muted);
+            transform: translateY(-25%) rotate(45deg);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
+        }
+
+        details[open] summary::after { 
+            transform: translateY(25%) rotate(225deg); 
+            border-color: var(--color-text);
+        }
+
+        details > p {
+            margin: 0; 
+            padding: 0 1.5rem; 
+            color: var(--color-muted); 
+            line-height: 1.75;
+            display: block; 
+            max-height: 0; 
+            opacity: 0; 
+            transform: translateY(-10px);
+            transition: max-height 0.3s ease, opacity 0.2s ease, transform 0.2s ease, padding-bottom 0.3s ease;
+        }
+
+        details[open] > p {
+            padding-bottom: 1.35rem;
+            max-height: 20rem;
+            opacity: 1; 
+            transform: translateY(0); 
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
+                        opacity 0.35s ease 0.05s, 
+                        transform 0.35s ease 0.05s, 
+                        padding-bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cta { padding-top: 1rem; }
+        .cta-box { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2rem; align-items: center; padding: clamp(2rem, 5vw, 4.5rem); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 24px; box-shadow: var(--shadow-soft); }
+        .cta-box h2 { margin: 0; font-family: var(--font-serif); font-size: clamp(2.4rem, 4.6vw, 4.3rem); line-height: 1; letter-spacing: -.045em; font-weight: 500; }
+        .cta-box h2 em { color: var(--color-primary); font-style: italic; }
+        .cta-box p { margin: 1rem 0 0; color: var(--color-muted); max-width: 760px; line-height: 1.75; }
+
+        footer { margin-top: 4rem; padding: 4rem 0 2rem; border-top: 1px solid var(--color-border); background: var(--color-surface); }
+
+        /* --- Visual refresh --- */
+        :root {
+            --ease-smooth: cubic-bezier(.22, 1, .36, 1);
+            --ease-snappy: cubic-bezier(.2, .8, .2, 1);
+        }
+
+        body { overflow-x: hidden; }
+        ::selection { background: rgba(224, 163, 46, .18); color: var(--color-text); }
+
+        .demo-card {
+            transform: translateZ(0);
+            transition: transform .7s var(--ease-smooth), box-shadow .7s var(--ease-smooth);
+            will-change: transform;
         }
 
         .demo-card:hover {
@@ -409,148 +306,10 @@
             box-shadow: var(--shadow-hover);
         }
 
-        .demo-media {
-            aspect-ratio: 21 / 9;
-            background: #ece8df;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-
-        .demo-media svg {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        /* Article body */
-        .legal-content {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .legal-content p {
-            max-width: 780px;
-            margin: 0 0 1rem;
-            text-align: justify;
-            hyphens: auto;
-            -webkit-hyphens: auto;
-            -ms-hyphens: auto;
-        }
-
-        .legal-section {
-            position: relative;
-            padding: 2.8rem 0;
-            border-top: 1px solid var(--color-border);
-        }
-
-        .legal-section:first-child {
-            padding-top: 0;
-            border-top: 0;
-        }
-
-        .legal-section h2 {
-            font-size: clamp(1.55rem, 2.5vw, 2rem);
-            font-weight: 600;
-            line-height: 1.15;
-            letter-spacing: -.025em;
-            margin: 0 0 1.5rem;
-        }
-
-        .legal-section h3 {
-            font-size: 1.2rem;
-            margin: 1.5rem 0 .7rem;
-        }
-
-        /* Indice */
-        .article-index {
-            margin: 0 0 2.8rem;
-            max-width: 820px;
-        }
-
-        .article-index h3 {
-            margin: 0 0 .6rem;
-            color: var(--color-primary);
-            font-family: var(--font-sans);
-            font-size: 1.1rem;
-        }
-
-        .legal-list {
-            max-width: 780px;
-            margin: 1.2rem 0 0;
-            padding-left: 1.5rem;
-        }
-
-        .legal-list li {
-            margin-bottom: .65rem;
-            padding-left: .25rem;
-        }
-
-        .legal-list li::marker {
-            color: var(--color-primary);
-        }
-
-        .legal-list a {
-            color: var(--color-primary);
-            text-decoration: none;
-            transition: color .2s ease;
-        }
-
-        .legal-list a:hover {
-            text-decoration: underline;
-            color: var(--color-primary-hover);
-        }
-
-        /* Highlight */
-        .cookie-type-box {
-            padding: 1.5rem;
-            background-color: color-mix(
-                in srgb,
-                var(--color-bg) 50%,
-                transparent
-            );
-            border-left: 3px solid var(--color-primary);
-            border-radius: 12px;
-            border: 1px solid var(--color-border);
-            border-left-width: 4px;
-            margin-top: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .cookie-type-box h3 {
-            margin: 0 0 .5rem;
-            color: var(--color-primary);
-            font-family: var(--font-sans);
-            font-size: 1.1rem;
-        }
-
-        .cookie-type-box p:last-child {
-            margin-bottom: 0;
-        }
-
-        /* Timeline / evoluzione del contrasto */
-        .steps {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
-            margin-top: 2.5rem;
-        }
-
         .step {
             position: relative;
-            padding: 2rem;
-            list-style-type: none;
-            border-top: 1px solid var(--color-border);
-            min-height: 0;
-            transition:
-                transform .55s var(--ease-smooth),
-                box-shadow .55s var(--ease-smooth),
-                border-color .35s ease;
-        }
-
-        .step:first-child {
-            border-top: 0;
+            min-height: 210px;
+            transition: transform .55s var(--ease-smooth), box-shadow .55s var(--ease-smooth), border-color .35s ease;
         }
 
         .step::after {
@@ -574,10 +333,6 @@
             display: inline-flex;
             align-items: center;
             gap: .5rem;
-            font-size: .72rem;
-            font-weight: 850;
-            letter-spacing: .15em;
-            color: var(--color-primary);
         }
 
         .step-num::after {
@@ -588,146 +343,7 @@
             opacity: .35;
         }
 
-        .step h3 {
-            margin: .85rem 0 .65rem;
-            font-family: var(--font-serif);
-            font-size: 1.55rem;
-            line-height: 1.15;
-        }
-
-        .step p {
-            margin: 0;
-            color: var(--color-muted);
-            line-height: 1.7;
-        }
-
-        .step.restrictive .step-num {
-            color: var(--color-muted);
-        }
-
-        .step.final {
-            background: color-mix(
-                in srgb,
-                var(--color-primary) 6%,
-                var(--color-surface)
-            );
-            border: 1px solid var(--color-border);
-            border-radius: 16px;
-            padding: 2rem;
-        }
-
-        /* Quote */
-        blockquote {
-            margin: 2rem 0;
-            padding: 1.5rem 2rem;
-            background: var(--color-surface);
-            border-left: 4px solid var(--color-primary);
-            border-radius: 0 12px 12px 0;
-            box-shadow: var(--shadow-soft);
-            font-style: italic;
-            color: var(--color-muted);
-        }
-
-        blockquote p {
-            margin: 0 !important;
-            max-width: none !important;
-        }
-
-        /* Notes / links */
-        sup a {
-            color: var(--color-primary);
-            text-decoration: none;
-            font-weight: 700;
-            padding: 0 .15rem;
-            transition: color .2s ease;
-        }
-
-        sup a:hover {
-            color: var(--color-primary-hover);
-            text-decoration: underline;
-        }
-
-        .locked-link {
-            display: inline-flex;
-            align-items: center;
-            gap: .35rem;
-            color: var(--color-primary);
-            font-weight: 600;
-            text-decoration: underline;
-            text-decoration-thickness: 1px;
-            text-underline-offset: 4px;
-            transition: color .18s ease;
-        }
-
-        .locked-link:hover {
-            color: var(--color-primary-hover);
-        }
-
-        .locked-link svg {
-            width: 14px;
-            height: 14px;
-            fill: currentColor;
-            flex: 0 0 auto;
-        }
-
-        /* FAQ */
-        .faq {
-            max-width: 900px;
-            margin: 0 auto;
-            border: 1px solid var(--color-border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            background: var(--color-surface);
-            box-shadow: var(--shadow-soft);
-        }
-
-        details + details {
-            border-top: 1px solid var(--color-border);
-        }
-
-        summary {
-            list-style: none;
-            cursor: pointer;
-            padding: 1.35rem 1.5rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            transition: background-color .25s ease;
-            position: relative;
-        }
-
-        summary::-webkit-details-marker {
-            display: none;
-        }
-
-        summary:hover {
-            background: color-mix(
-                in srgb,
-                var(--color-bg) 55%,
-                transparent
-            );
-        }
-
-        summary::after {
-            content: "";
-            flex: 0 0 auto;
-            width: 10px;
-            height: 10px;
-            border-right: 2px solid var(--color-muted);
-            border-bottom: 2px solid var(--color-muted);
-            transform: translateY(-25%) rotate(45deg);
-            transition:
-                transform .3s var(--ease-smooth),
-                border-color .3s ease;
-        }
-
-        details[open] summary::after {
-            transform: translateY(25%) rotate(225deg);
-            border-color: var(--color-text);
-        }
-
+        summary { position: relative; }
         summary::before {
             content: "";
             position: absolute;
@@ -738,84 +354,9 @@
             background: var(--color-primary);
             transition: width .45s var(--ease-smooth);
         }
+        details[open] summary::before { width: calc(100% - 3rem); }
 
-        details[open] summary::before {
-            width: calc(100% - 3rem);
-        }
-
-        details > p {
-            margin: 0;
-            padding: 0 1.5rem;
-            color: var(--color-muted);
-            line-height: 1.75;
-            display: block;
-            max-height: 0;
-            opacity: 0;
-            transform: translateY(-10px);
-            overflow: hidden;
-            transition:
-                max-height .3s ease,
-                opacity .2s ease,
-                transform .2s ease,
-                padding-bottom .3s ease;
-        }
-
-        details[open] > p {
-            padding-bottom: 1.35rem;
-            max-height: 30rem;
-            opacity: 1;
-            transform: translateY(0);
-            transition:
-                max-height .4s var(--ease-smooth),
-                opacity .35s ease .05s,
-                transform .35s ease .05s,
-                padding-bottom .4s var(--ease-smooth);
-        }
-
-        /* Reveal */
-        .reveal {
-            opacity: 0;
-            transform: translateY(28px);
-            transition:
-                opacity .8s var(--ease-smooth),
-                transform .8s var(--ease-smooth);
-            will-change: opacity, transform;
-        }
-
-        .reveal.reveal-left {
-            transform: translateX(-30px);
-        }
-
-        .reveal.reveal-right {
-            transform: translateX(30px);
-        }
-
-        .reveal.is-visible {
-            opacity: 1 !important;
-            transform: none !important;
-        }
-
-        /* CTA */
-        .cta-box {
-            position: relative;
-            overflow: hidden;
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            gap: 2rem;
-            align-items: center;
-            padding: clamp(2rem, 5vw, 4.5rem);
-            background: var(--color-surface);
-            border: 1px solid var(--color-border);
-            border-radius: 24px;
-            box-shadow: var(--shadow-soft);
-            transition:
-                transform .55s var(--ease-smooth),
-                box-shadow .55s var(--ease-smooth),
-                border-color .35s ease;
-            max-width: 900px;
-            margin: 4rem auto 0;
-        }
-
+        .cta-box { position: relative; overflow: hidden; transition: transform .55s var(--ease-smooth), box-shadow .55s var(--ease-smooth), border-color .35s ease; }
         .cta-box::before {
             content: "";
             position: absolute;
@@ -829,200 +370,129 @@
             pointer-events: none;
         }
 
-        .cta-box h2 {
-            margin: 0;
-            font-family: var(--font-serif);
-            font-size: clamp(2.4rem, 4.6vw, 4.3rem);
-            line-height: 1;
-            letter-spacing: -.045em;
-            font-weight: 500;
+        /* Scroll reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity .8s var(--ease-smooth), transform .8s var(--ease-smooth);
+            will-change: opacity, transform;
+        }
+        .reveal.reveal-left { transform: translateX(-30px); }
+        .reveal.reveal-right { transform: translateX(30px); }
+        .reveal.is-visible {
+            opacity: 1 !important;
+            transform: none !important;
         }
 
-        .cta-box h2 em {
+        .scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            z-index: 200;
+            transform-origin: left;
+            transform: scaleX(0);
+            background: var(--color-primary);
+            pointer-events: none;
+            opacity: .9;
+        }
+
+        .legal-page { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+        .legal-header { max-width: 900px; margin: 0 auto 4.5rem; }
+        .legal-title { font-size: clamp(3rem, 6vw, 5rem); line-height: .98; text-wrap: balance; }
+        .legal-intro { margin: 1.5rem 0 0; max-width: 760px; color: var(--color-muted); font-size: 1.05rem; }
+        .legal-content { max-width: 900px; margin: 0 auto;}
+        .legal-content p {
+            text-align: justify;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
+        }
+        .legal-section { position: relative; padding: 2.8rem 0; border-top: 1px solid var(--color-border); }
+        .legal-section:first-child { padding-top: 0; border-top: 0; }
+        .legal-section h2 { font-size: clamp(1.55rem, 2.5vw, 2rem); font-weight: 600; line-height: 1.15; letter-spacing: -.025em; }
+        .legal-section p { max-width: 780px; margin: 0 0 1rem; }
+
+        .cookie-type-box {
+            padding: 1.5rem;
+            background-color: color-mix(in srgb, var(--color-bg) 50%, transparent);
+            border-left: 3px solid var(--color-primary);
+            border-radius: 12px;
+            border: 1px solid var(--color-border);
+            border-left-width: 4px;
+            margin-top: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .cookie-type-box h3 { margin: 0 0 0.5rem 0; color: var(--color-primary); font-family: var(--font-sans); font-size: 1.1rem; }
+
+        /* Note e Bibliografia */
+        sup a {
             color: var(--color-primary);
-            font-style: italic;
+            text-decoration: none;
+            font-weight: 700;
+            padding: 0 0.15rem;
+            transition: color 0.2s ease;
+        }
+        sup a:hover {
+            color: var(--color-primary-hover);
+            text-decoration: underline;
+        }
+        .legal-list { max-width: 780px; margin: 1.2rem 0 0; padding-left: 1.5rem; }
+        .legal-list li { margin-bottom: .65rem; padding-left: .25rem; }
+        .legal-list li::marker { color: var(--color-primary); }
+        .legal-list a {
+            color: var(--color-primary);
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .legal-list a:hover {
+            text-decoration: underline;
+            color: var(--color-primary-hover);
         }
 
-        .cta-box p {
-            margin: 1rem 0 0;
-            color: var(--color-muted);
-            max-width: 760px;
-            line-height: 1.75;
-        }
-
-        .hero-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: .8rem;
-            margin-top: 2rem;
-        }
-
-        .button {
+        /* Utility per link riservati (Paywall) */
+        .locked-link {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            gap: .6rem;
-            min-height: 48px;
-            padding: 0 1.15rem;
-            border-radius: 10px;
-            text-decoration: none;
-            font-weight: 750;
-            border: 1px solid transparent;
-            transition:
-                transform .18s ease,
-                box-shadow .18s ease,
-                background .18s ease;
+            gap: 0.35rem;
+            color: var(--color-primary);
+            font-weight: 600;
+            text-decoration: underline;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 4px;
+            transition: color .18s ease;
         }
+        .locked-link:hover { color: var(--color-primary-hover); }
+        .locked-link svg { width: 14px; height: 14px; fill: currentColor; }
 
-        .button-primary {
-            color: var(--button-text);
-            background: var(--button-bg);
-            box-shadow: 0 10px 24px rgba(36, 33, 29, .08);
-        }
-
-        .button-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 16px 34px rgba(36, 33, 29, .12);
-        }
-
-        .button-secondary {
-            background: var(--color-surface);
-            border-color: var(--color-border);
-        }
-
-        .button-secondary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-soft);
-        }
-
-        /* Footer */
-        footer {
-            margin-top: 4rem;
-            padding: 4rem 0 2rem;
-            border-top: 1px solid var(--color-border);
-            background: var(--color-surface);
-        }
-
-        /* Mobile */
         @media (max-width: 720px) {
-            .container {
-                width: min(100% - 28px, var(--container));
-            }
-
-            .legal-page {
-                padding: 3.5rem 0;
-            }
-
-            .legal-header {
-                margin-bottom: 2.5rem;
-            }
-
-            .legal-title {
-                font-size: clamp(2.7rem, 13vw, 3.7rem);
-            }
-
-            .legal-intro {
-                font-size: 1rem;
-            }
-
-            .article-meta {
-                align-items: flex-start;
-                flex-direction: column;
-                gap: .35rem;
-            }
-
-            .demo-card {
-                margin-bottom: 3rem;
-            }
-
-            .demo-media {
-                aspect-ratio: 16 / 10;
-            }
-
-            .legal-section {
-                padding: 2rem 0;
-            }
-
-            .legal-content p {
-                text-align: left;
-            }
-
-            .step {
-                padding: 1.5rem 0 1.7rem;
-            }
-
-            .step:first-child {
-                padding-top: 0;
-            }
-
-            .step.final {
-                padding: 1.5rem;
-            }
-
-            .cta-box {
-                grid-template-columns: 1fr;
-                gap: 1.5rem;
-                padding: 1.7rem 1.35rem;
-                border-radius: 18px;
-            }
-
-            .cta-box h2 {
-                font-size: clamp(2.2rem, 10vw, 3.2rem);
-            }
-
-            blockquote {
-                padding: 1.2rem 1.2rem;
-            }
-
-            .faq summary {
-                padding: 1.15rem 1.2rem;
-            }
-
-            details > p {
-                padding-left: 1.2rem;
-                padding-right: 1.2rem;
-            }
-
-            summary::before {
-                left: 1.2rem;
-            }
-
-            details[open] summary::before {
-                width: calc(100% - 2.4rem);
-            }
+            .container { width: min(100% - 28px, var(--container)); }
+            .legal-page { padding: 3.5rem 0; }
+            .legal-header { margin-bottom: 2.5rem; }
+            .legal-title { font-size: clamp(2.7rem, 13vw, 3.7rem); }
+            .legal-section { padding: 2rem 0; }
+            .steps { grid-template-columns: 1fr; gap: 0; }
+            .step { min-height: 0; padding: 1.5rem 0 1.7rem; border-top: 1px solid var(--color-border); }
+            .step:first-child { border-top: 0; padding-top: 0; }
+            .cta-box { grid-template-columns: 1fr; gap: 1.5rem; padding: 1.7rem 1.35rem; border-radius: 18px; }
+            .cta-box h2 { font-size: clamp(2.2rem, 10vw, 3.2rem); }
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .reveal {
-                opacity: 1 !important;
-                transform: none !important;
-                transition: none !important;
-            }
-
-            .scroll-progress {
-                display: none;
-            }
-
-            .demo-card,
-            .cta-box {
-                transition: none;
-            }
+            .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+            .scroll-progress { display: none; }
         }
     </style>
 </head>
-
 <body>
-
     <a href="#main-content" class="skip-link">
         Vai al contenuto principale
     </a>
-
     <!-- Elementi dinamici -->
     <div id="scrollProgress" class="scroll-progress"></div>
     <div id="header"></div>
-
     <main id="main-content" class="legal-page container">
-
         <!-- HEADER ARTICOLO -->
         <header class="legal-header">
 
@@ -1037,11 +507,7 @@
             </h1>
 
             <p class="legal-intro serif" style="font-style: italic;">
-                Con l'ordinanza n. 22178 del 2026, la Sesta sezione penale
-                ricostruisce un risalente contrasto giurisprudenziale sulle
-                garanzie di libertà del difensore quando è il legale stesso
-                a trovarsi sotto indagine. L'analisi degli orientamenti e il
-                quesito di diritto.
+                Con l'ordinanza n. 22178 del 2026, la Cassazione interviene per chiarire un dubbio che divide i giudici da anni: se la polizia perquisisce lo studio di un avvocato che è a sua volta indagato per un reato, valgono ancora le tutele speciali previste per gli studi legali?
             </p>
 
             <div class="article-meta">
@@ -1074,39 +540,37 @@
             <ol class="legal-list">
                 <li>
                     <a href="#il-caso">
-                        Il problema concreto: il caso Schiano
+                        Cos'è successo: il caso di Bari
                     </a>
                 </li>
 
                 <li>
                     <a href="#la-norma">
-                        Il perimetro normativo dell'art. 103 c.p.p.
+                        Perché lo studio di un avvocato è "speciale"?
                     </a>
                 </li>
 
                 <li>
                     <a href="#orientamento-estensivo">
-                        Il primo orientamento: le garanzie seguono
-                        la qualifica professionale
+                        Prima tesi: lo scudo vale sempre
                     </a>
                 </li>
 
                 <li>
                     <a href="#orientamento-restrittivo">
-                        Il secondo orientamento: nessuno scudo
-                        per il difensore indagato
+                        Seconda tesi: nessuno sconto per l'avvocato indagato
                     </a>
                 </li>
 
                 <li>
                     <a href="#la-rimessione">
-                        Il contrasto e la rimessione alle Sezioni Unite
+                        La parola passa alle Sezioni Unite
                     </a>
                 </li>
 
                 <li>
                     <a href="#timeline">
-                        Evoluzione del contrasto giurisprudenziale
+                        Come si è divisa la giurisprudenza
                     </a>
                 </li>
 
@@ -1131,53 +595,19 @@
             <section id="il-caso" class="legal-section reveal">
 
                 <h2>
-                    Il problema concreto: il caso Schiano
+                    Cos'è successo: il caso di Bari
                 </h2>
 
                 <p>
-                    La questione processuale al centro dell'ordinanza
-                    n. 22178/2026 trae origine dall'esecuzione di un decreto
-                    di perquisizione e sequestro presso lo studio di un
-                    avvocato del foro di Bari, indagato in concorso con
-                    altri soggetti per frode nell'esecuzione di un contratto
-                    di locazione immobiliare stipulato tra una società
-                    privata (la AMEC Immobiliare s.r.l.) e il Comune di Bari.
+                    Partiamo da un caso pratico per capire il problema. A Bari, le forze dell'ordine perquisiscono lo studio di un avvocato. L'accusa è grave: l'avvocato, insieme ad altre persone, è indagato per una truffa su un contratto d'affitto tra una società privata e il Comune.
                 </p>
 
                 <p>
-                    Secondo l'ipotesi accusatoria, gli imputati avrebbero
-                    occultato dolosamente il progressivo deterioramento
-                    dell'immobile locato. Il professionista oggetto della
-                    perquisizione, tuttavia, non rivestiva unicamente la
-                    qualifica di indagato (e, stando alla prospettazione
-                    dell'accusa, di amministratore di fatto della società),
-                    ma figurava formalmente anche come
-                    <strong>legale della medesima società</strong>.
-                    Inoltre, l'immobile perquisito era strutturato come uno
-                    studio associato o comunque condiviso, di fatto utilizzato
-                    da più professionisti.
+                    C'è però una complicazione. Questo professionista non è solo un "sospettato" (e, secondo l'accusa, il vero amministratore ombra della società); è anche l'<strong>avvocato ufficiale della società stessa</strong>. Inoltre, lavora in uno studio condiviso con altri colleghi.
                 </p>
 
                 <p>
-                    Il Tribunale del riesame di Bari ha confermato la
-                    legittimità del decreto di perquisizione e sequestro,
-                    respingendo l'istanza difensiva che lamentava la violazione
-                    dell'art. 103 cod. proc. pen. (in particolare, per l'omesso
-                    avviso al Consiglio dell'ordine forense e per la mancanza
-                    di autorizzazione del giudice).
-                    Il Tribunale, aderendo a un preciso filone interpretativo,
-                    ha ritenuto che le garanzie difensive non potessero
-                    paralizzare la ricerca della prova nei confronti
-                    dell'avvocato qualora egli stesso risultasse sottoposto
-                    a indagine
-                    <sup><a href="#nota1">1</a></sup>.
-                </p>
-
-                <p>
-                    Il ricorso per cassazione avverso tale provvedimento
-                    ha imposto alla Suprema Corte di sciogliere un nodo
-                    dogmatico e applicativo risalente: fino a che punto
-                    si estende lo "scudo" dell'art. 103 c.p.p.?
+                    L'avvocato fa ricorso dicendo: "La perquisizione è nulla, perché la polizia è entrata nel mio studio senza l'autorizzazione di un giudice e senza avvisare il Presidente dell'Ordine degli Avvocati". Il Tribunale di Bari gli risponde di no, sostenendo che, essendo lui stesso indagato, queste garanzie speciali saltano<sup><a href="#nota1">1</a></sup>. Il caso finisce così in Cassazione.
                 </p>
 
             </section>
@@ -1186,62 +616,26 @@
             <section id="la-norma" class="legal-section reveal">
 
                 <h2>
-                    Il perimetro normativo dell'art. 103 c.p.p.
+                    Perché lo studio di un avvocato è "speciale"?
                 </h2>
 
                 <p>
-                    L'
+                    La legge italiana (
                     <a
                         href="https://brocardi.it/codice-di-procedura-penale/libro-primo/titolo-vii/art103.html"
                         target="_blank"
                         rel="noopener"
                     >
                         art. 103 del codice di procedura penale
-                    </a>
-                    ("Garanzie di libertà del difensore") traccia una linea
-                    di confine rigorosa ai poteri investigativi dell'autorità
-                    giudiziaria quando questi si dirigono verso gli uffici legali.
+                    </a>) dice chiaramente che la polizia non può entrare nello studio di un avvocato per cercare prove come farebbe in una casa qualsiasi. 
                 </p>
 
                 <p>
-                    La norma impone vincoli sia di carattere
-                    <em>oggettivo</em> (limitando le ispezioni e le
-                    perquisizioni ai soli casi in cui il difensore, o altra
-                    persona che svolge stabilmente attività nello studio,
-                    sia imputato, oppure unicamente per rilevare tracce
-                    o effetti materiali del reato o ricercare cose
-                    specificamente predeterminate), sia di carattere
-                    <em>procedurale</em>.
+                    Servono regole severe: serve il permesso scritto di un giudice e bisogna chiamare un rappresentante dell'Ordine degli Avvocati per assistere alla perquisizione. Perché? Non per regalare un privilegio agli avvocati, ma <strong>per proteggere i segreti dei loro clienti</strong>. Immagina se la polizia potesse curiosare liberamente tra i fascicoli di persone innocenti o leggere le strategie di difesa.
                 </p>
 
                 <p>
-                    In particolare, è previsto a pena di nullità l'avviso
-                    al Consiglio dell'ordine forense affinché il presidente
-                    o un suo delegato possa assistere alle operazioni,
-                    e si richiede l'autorizzazione motivata del giudice
-                    per procedere.
-                </p>
-
-                <p>
-                    Come ribadito costantemente dalla giurisprudenza,
-                    la <em>ratio</em> di questa disposizione non risiede
-                    nella concessione di un inquadramento di privilegio
-                    personale o cetuale a favore del professionista,
-                    ma nella necessità costituzionale (art. 24 Cost.) di
-                    <strong>
-                        tutelare il libero esercizio della funzione difensiva
-                    </strong>
-                    e il segreto professionale, garantendo l'intangibilità
-                    del rapporto fiduciario con l'assistito.
-                </p>
-
-                <p>
-                    L'insorgere del contrasto giurisprudenziale nasce proprio
-                    dalla corretta individuazione dei limiti di tale
-                    <em>ratio</em>: le garanzie formali previste per proteggere
-                    i fascicoli e le informazioni degli assistiti devono
-                    applicarsi anche qualora il legale assuma la veste di
-                    indagato per un reato che lo coinvolge personalmente?
+                    Ma la domanda che divide i giudici è proprio questa: cosa succede se a commettere un reato è proprio l'avvocato? Questo "scudo" lo protegge ancora?
                 </p>
 
             </section>
@@ -1250,59 +644,25 @@
             <section id="orientamento-estensivo" class="legal-section reveal">
 
                 <h2>
-                    Il primo orientamento: le garanzie seguono
-                    la qualifica professionale
+                    Prima tesi: lo scudo vale sempre
                 </h2>
 
                 <p>
-                    Un primo e radicato indirizzo giurisprudenziale risponde
-                    affermativamente al quesito, ancorando le garanzie
-                    dell'art. 103 c.p.p. alla
-                    <strong>
-                        qualità professionale del difensore
-                    </strong>
-                    in quanto tale, indipendentemente dal fatto che l'atto
-                    di ricerca della prova avvenga nello specifico
-                    procedimento in cui egli svolge l'incarico difensivo.
+                    Un primo gruppo di giudici dice di <strong>sì, lo scudo vale sempre</strong>. Secondo loro, la qualifica di avvocato è sufficiente per attivare le regole speciali, a prescindere dal fatto che il professionista sia indagato.
                 </p>
 
                 <div class="cookie-type-box">
 
                     <h3>
-                        L'estensione oggettiva della garanzia
+                        Proteggere i fascicoli degli altri
                     </h3>
 
                     <p>
-                        Questo filone, le cui radici logiche affondano
-                        nelle sentenze gemelle delle Sezioni Unite
-                        <em>De Gasperini</em> (n. 24/1994) e
-                        <em>Grollino</em> (n. 25/1994), sostiene che
-                        l'ingresso dell'autorità inquirente nello studio
-                        di un legale espone intrinsecamente al rischio
-                        di compromissione il materiale relativo ad altri
-                        assistiti, del tutto estranei all'indagine in corso.
+                        Il ragionamento è pratico: se la polizia entra nello studio di un avvocato, anche se lui è colpevole di qualcosa, in quello studio ci sono i fascicoli, i documenti e i segreti di decine di altri clienti completamente estranei ai fatti.
                     </p>
 
                     <p>
-                        Pertanto, come precisato da sentenze successive quali
-                        <strong>
-                            Cass. pen., Sez. VI, n. 20295/2001 (De Mari)
-                        </strong>
-                        e confermato da pronunce più recenti
-                        (<strong>
-                            Cass. pen., Sez. II, n. 44892/2022,
-                            Morgantini
-                        </strong>
-                        e
-                        <strong>
-                            Sez. II, n. 33617/2023
-                        </strong>),
-                        la qualifica di indagato assunta dal difensore
-                        non determina la caducazione automatica delle
-                        forme di garanzia procedurale, soprattutto quando
-                        sussista un legame professionale tra l'avvocato
-                        e altri soggetti coinvolti nel medesimo procedimento
-                        o in procedimenti connessi.
+                        Per questo motivo, giudici molto autorevoli (come nella sentenza <em>Morgantini</em> del 2022 o nella n. 33617/2023) dicono che le cautele (come avvisare l'Ordine e avere il permesso del giudice) non possono svanire in automatico. Anzi, servono proprio a evitare che, per indagare l'avvocato, si violi la privacy dei suoi assistiti.
                     </p>
 
                 </div>
@@ -1313,15 +673,11 @@
             <section id="orientamento-restrittivo" class="legal-section reveal">
 
                 <h2>
-                    Il secondo orientamento: nessuno scudo
-                    per il difensore indagato
+                    Seconda tesi: nessuno sconto per l'avvocato indagato
                 </h2>
 
                 <p>
-                    Sul fronte opposto si pone un filone interpretativo,
-                    altrettanto consolidato, che giunge a conclusioni
-                    specularmente opposte, muovendo dalla medesima premessa
-                    teleologica (la tutela del diritto di difesa dell'assistito).
+                    C'è però un altro gruppo di giudici che la pensa in modo diametralmente opposto. Secondo loro, se l'avvocato è sospettato di un reato, va trattato come qualsiasi altro cittadino.
                 </p>
 
                 <div
@@ -1330,45 +686,15 @@
                 >
 
                     <h3 style="color: var(--color-muted);">
-                        La limitazione teleologica
+                        La legge protegge la difesa, non l'avvocato
                     </h3>
 
                     <p>
-                        Secondo questo orientamento, se la norma serve a
-                        proteggere la funzione difensiva esercitata in favore
-                        di un terzo, essa non può essere piegata a operare
-                        come immunità personale quando l'attività investigativa
-                        è rivolta contro l'avvocato
-                        <em>in quanto autore di un ipotizzato reato</em>.
+                        Questa tesi sostiene che l'articolo 103 serve a proteggere l'avvocato <em>mentre fa l'avvocato</em>, cioè mentre difende qualcuno. Non può trasformarsi in un mantello dell'invisibilità per permettergli di nascondere le prove dei propri crimini.
                     </p>
 
                     <p>
-                        Decisioni come
-                        <strong>
-                            Cass. pen., Sez. II, n. 6766/1998 (Benini)
-                        </strong>,
-                        e più di recente
-                        <strong>
-                            Cass. pen., Sez. VI, n. 8295/2018 (Santimone)
-                        </strong>
-                        e
-                        <strong>
-                            Sez. II, n. 44941/2024 (Addeo)
-                        </strong>,
-                        stabiliscono chiaramente che l'obbligo di avviso
-                        al Consiglio dell'ordine e la necessità di
-                        autorizzazione del giudice presuppongono che l'atto
-                        di ricerca riguardi l'avvocato nella sua esclusiva
-                        veste di difensore.
-                    </p>
-
-                    <p>
-                        Equiparare la posizione del legale indagato a quella
-                        del professionista estraneo ai fatti significherebbe
-                        tradire la collocazione sistematica della norma,
-                        trasformandola in un privilegio di categoria
-                        ingiustificato
-                        <sup><a href="#nota2">2</a></sup>.
+                        Diverse sentenze recenti (come la <em>Addeo</em> del 2024) stabiliscono che, quando l'attività investigativa è rivolta contro l'avvocato in quanto autore di un reato, non c'è bisogno di permessi speciali o di avvisare l'Ordine degli Avvocati<sup><a href="#nota2">2</a></sup>. Usare questa legge come immunità personale sarebbe un privilegio ingiustificato.
                     </p>
 
                 </div>
@@ -1379,48 +705,25 @@
             <section id="la-rimessione" class="legal-section reveal">
 
                 <h2>
-                    Il contrasto e la rimessione alle Sezioni Unite
+                    La parola passa alle Sezioni Unite
                 </h2>
 
                 <p>
-                    Prendendo atto dell'esistenza di un conflitto ermeneutico
-                    non più sanabile in via interpretativa ordinaria —
-                    definito dalla stessa Corte un contrasto
-                    "sia orizzontale" (tra diverse Sezioni semplici)
-                    "che verticale" (rispetto ai principi generali
-                    enucleati storicamente dalle Sezioni Unite) —
-                    la Sesta sezione penale ha ritenuto indispensabile
-                    l'intervento del Supremo Consesso.
+                    Visto che nei tribunali c'è una confusione totale e le sentenze si contraddicono tra loro, la Sesta sezione penale della Cassazione ha deciso di alzare bandiera bianca.
                 </p>
 
                 <p>
-                    L'
-                    <strong>
-                        ordinanza n. 22178 del 2026
-                    </strong>
-                    ha quindi devoluto alle Sezioni Unite il seguente
-                    quesito di diritto:
+                    Con l'<strong>ordinanza n. 22178 del 2026</strong>, ha inviato il problema al gradino più alto della giustizia italiana: le <strong>Sezioni Unite</strong>. 
                 </p>
 
                 <blockquote>
                     <p>
-                        «Se le garanzie previste dall'art. 103 cod. proc. pen.
-                        per le ispezioni, le perquisizioni e i sequestri
-                        negli uffici dei difensori si applicano anche nel
-                        caso in cui il difensore sia sottoposto ad indagine
-                        o sono limitate al solo difensore dell'indagato o
-                        dell'imputato nel procedimento in cui sorge la
-                        necessità di procedere all'atto di ricerca della prova.»
+                        Il quesito è semplice: le garanzie per le perquisizioni negli studi legali si applicano anche quando l'avvocato è indagato personalmente, o valgono solo quando la polizia cerca prove riguardanti i suoi clienti?
                     </p>
                 </blockquote>
 
                 <p>
-                    La pronuncia delle Sezioni Unite, attesa nei prossimi
-                    mesi, sarà chiamata a delineare un punto di equilibrio
-                    definitivo tra il diritto dell'autorità giudiziaria
-                    di perseguire gli illeciti (ancorché commessi da
-                    esercenti la professione legale) e l'inviolabilità
-                    del mandato difensivo spettante ai cittadini assistiti.
+                    La decisione finale arriverà nei prossimi mesi e dovrà trovare il giusto equilibrio tra due diritti fondamentali: il potere dello Stato di indagare sui reati e il sacrosanto diritto dei cittadini a potersi confidare al sicuro con il proprio avvocato.
                 </p>
 
             </section>
@@ -1429,13 +732,11 @@
             <section id="timeline" class="legal-section reveal">
 
                 <h2>
-                    Evoluzione del contrasto giurisprudenziale
+                    Come si è divisa la giurisprudenza
                 </h2>
 
                 <p>
-                    Il dibattito che ha condotto all'ordinanza di rimessione
-                    si è sviluppato nell'arco di tre decenni, strutturandosi
-                    lungo due direttrici parallele e contrapposte.
+                    Il dibattito che ha portato a questa situazione va avanti da trent'anni. Ecco come si sono mossi i giudici nel tempo.
                 </p>
 
                 <div class="steps">
@@ -1446,15 +747,11 @@
                         </span>
 
                         <h3>
-                            Le Sezioni Unite: De Gasperini e Grollino
+                            Le Sezioni Unite fissano le prime regole
                         </h3>
 
                         <p>
-                            Le sentenze gemelle delle Sezioni Unite
-                            n. 24 e n. 25 del 1994 costituiscono il punto
-                            di riferimento storico per la ricostruzione
-                            delle garanzie di libertà del difensore e
-                            dell'estensione della tutela allo studio legale.
+                            Le sentenze gemelle <em>De Gasperini</em> e <em>Grollino</em> <strong>hanno stabilito</strong> i principi storici su come proteggere la libertà del difensore e l'inviolabilità del suo studio.
                         </p>
                     </div>
 
@@ -1464,16 +761,11 @@
                         </span>
 
                         <h3>
-                            Sinapolice e De Mari
+                            Lo scudo si amplia
                         </h3>
 
                         <p>
-                            La giurisprudenza successiva sviluppa il principio
-                            secondo cui la presenza di documentazione
-                            appartenente ad altri assistiti impone particolare
-                            cautela nell'accesso investigativo allo studio
-                            professionale, valorizzando la funzione oggettiva
-                            delle garanzie.
+                            Una parte dei giudici <strong>ha esteso</strong> il principio: poiché in uno studio ci sono carte di clienti innocenti, le garanzie devono valere sempre, in senso oggettivo.
                         </p>
                     </div>
 
@@ -1483,16 +775,11 @@
                         </span>
 
                         <h3>
-                            La linea restrittiva: Benini e Santimone
+                            La linea dura: nessuna immunità
                         </h3>
 
                         <p>
-                            Un diverso indirizzo collega l'operatività
-                            dell'art. 103 alla funzione difensiva svolta
-                            a favore di un assistito e ne esclude l'impiego
-                            quale immunità personale quando l'avvocato
-                            costituisce egli stesso il destinatario
-                            dell'indagine.
+                            Un'altra forte corrente di giudici <strong>ha negato</strong> questa visione: se l'avvocato commette un reato, non può usare le regole processuali per proteggersi dalle indagini.
                         </p>
                     </div>
 
@@ -1502,17 +789,11 @@
                         </span>
 
                         <h3>
-                            Morgantini, n. 33617/2023 e Addeo
+                            Il contrasto si riaccende
                         </h3>
 
                         <p>
-                            Le pronunce più recenti confermano la persistenza
-                            del contrasto. Da un lato vengono valorizzati
-                            la qualifica professionale e il rischio di
-                            apprensione di materiale di terzi; dall'altro
-                            viene ribadita la distinzione tra la tutela del
-                            difensore e la posizione dell'avvocato
-                            personalmente sottoposto a indagine.
+                            Negli ultimi anni la spaccatura <strong>è continuata</strong>. Alcune sentenze hanno salvato le garanzie per proteggere i terzi, altre le hanno eliminate concentrandosi sulle colpe del professionista.
                         </p>
                     </div>
 
@@ -1522,15 +803,11 @@
                         </span>
 
                         <h3>
-                            Ordinanza n. 22178: rimessione alle Sezioni Unite
+                            La richiesta di una decisione definitiva
                         </h3>
 
                         <p>
-                            La Sesta sezione penale prende atto di un contrasto
-                            ormai consolidato e rimette alle Sezioni Unite
-                            il quesito sulla persistente applicabilità delle
-                            garanzie dell'art. 103 c.p.p. quando il difensore
-                            sia personalmente sottoposto ad indagine.
+                            Prendendo atto del caos, la Cassazione <strong>ha chiesto</strong> l'intervento definitivo delle Sezioni Unite per chiudere una volta per tutte la questione.
                         </p>
                     </div>
 
@@ -1549,61 +826,31 @@
 
                     <details>
                         <summary>
-                            Le garanzie dell'art. 103 c.p.p. si applicano
-                            sempre quando si perquisisce lo studio di un
-                            avvocato?
+                            La polizia può perquisire lo studio del mio avvocato?
                         </summary>
 
                         <p>
-                            Non in modo automatico. La giurisprudenza è
-                            concorde nel ritenerle pienamente operative
-                            quando l'avvocato non è indagato, fungendo da
-                            scudo per il segreto professionale e l'attività
-                            difensiva. Qualora invece il legale sia
-                            personalmente sottoposto a indagine, sussiste
-                            il contrasto interpretativo rimesso alle
-                            Sezioni Unite dalla Sesta Sezione penale.
+                            Sì, ma con regole rigide. Se l'avvocato sta solo facendo il suo lavoro e difendendo un cliente, la polizia ha bisogno del permesso speciale di un giudice e deve avvisare l'Ordine degli Avvocati. Questo serve per proteggere i tuoi segreti e la tua difesa.
                         </p>
                     </details>
 
                     <details>
                         <summary>
-                            Cosa accade se l'avvocato indagato difende
-                            coindagati nello stesso procedimento?
+                            Cosa succede se l'avvocato è complice del suo cliente?
                         </summary>
 
                         <p>
-                            Si tratta dell'aspetto più delicato della vicenda.
-                            Per l'orientamento estensivo, il legame
-                            professionale con altri soggetti coinvolti
-                            nel medesimo procedimento giustifica la piena
-                            riespansione delle garanzie procedurali
-                            (avviso al Consiglio dell'Ordine,
-                            autorizzazione del giudice). Per l'orientamento
-                            restrittivo, invece, l'assunzione di difese non
-                            può fungere da elemento preclusivo alla ricerca
-                            del corpo del reato riferibile alle condotte
-                            ascritte all'avvocato.
+                            È esattamente il problema su cui i giudici stanno litigando. Alcuni dicono che l'avvocato perde ogni protezione speciale e può essere perquisito come tutti. Altri dicono che le protezioni rimangono, per evitare che la polizia frughi nei documenti di altri clienti estranei ai fatti.
                         </p>
                     </details>
 
                     <details>
                         <summary>
-                            Cosa resta sequestrabile anche secondo
-                            l'orientamento più restrittivo?
+                            La polizia può portare via tutto dallo studio legale?
                         </summary>
 
                         <p>
-                            Indipendentemente dalla tesi a cui si aderisce
-                            in merito alle garanzie formali e procedurali,
-                            costituisce principio pacifico, affermato anche
-                            dalle pronunce più restrittive come la recente
-                            <em>Addeo</em> del 2024, che presso lo studio
-                            del difensore indagato è consentito procedere
-                            esclusivamente al sequestro di ciò che costituisce
-                            <em>corpo del reato</em>, permanendo il divieto
-                            di apprensione indiscriminata di documenti
-                            relativi all'attività professionale.
+                            Assolutamente no. Anche i giudici più severi concordano su una cosa: durante la perquisizione si può sequestrare *solo* quello che costituisce direttamente il corpo del reato. È severamente vietato portare via fascicoli interi o fare "pesca a strascico" tra i documenti professionali.
                         </p>
                     </details>
 
@@ -1628,15 +875,7 @@
                         <strong>
                             La posizione della Procura Generale:
                         </strong>
-                        In vista dell'udienza davanti alla Sezione rimettente,
-                        il Procuratore Generale ha concluso per il rigetto
-                        del ricorso. Ha evidenziato che l'indagato,
-                        rivestendo (secondo l'accusa) la qualifica di
-                        amministratore di fatto della società coinvolta,
-                        non poteva invocare la scriminante dell'art. 103
-                        c.p.p., salvo l'ipotesi di dover tutelare specifici
-                        mandati difensivi ritualmente conferiti da eventuali
-                        coindagati.
+                        Il Procuratore Generale voleva respingere il ricorso. Sosteneva che l'indagato, comportandosi (secondo l'accusa) da amministratore occulto della società, non potesse nascondersi dietro al tesserino da avvocato invocando l'art. 103 c.p.p.
                         <a href="#orientamento-restrittivo"
                            aria-label="Torna al testo">
                             ↩
@@ -1645,15 +884,9 @@
 
                     <li id="nota2">
                         <strong>
-                            Corpo del reato:
+                            Il limite del corpo del reato:
                         </strong>
-                        Anche la giurisprudenza più rigorosa nell'escludere
-                        le garanzie formali chiarisce che il sequestro,
-                        in queste ipotesi, deve sottostare a un limite
-                        sostanziale insuperabile: è ammissibile unicamente
-                        il sequestro delle cose che costituiscono
-                        <em>corpo del reato</em>
-                        (Cass. pen., Sez. II, n. 44941/2024, Addeo).
+                        Anche i giudici che negano le garanzie speciali precisano che la polizia non ha carta bianca: è ammissibile unicamente il sequestro delle cose che costituiscono specificamente il <em>corpo del reato</em> (Cass. pen., Sez. II, n. 44941/2024, Addeo).
                         <a href="#orientamento-restrittivo"
                            aria-label="Torna al testo">
                             ↩
@@ -1680,11 +913,21 @@
                     </li>
 
                     <li>
-                        Cassazione penale, Sez. VI,
-                        ordinanza n. 22178/2026
-                        (ordinanza di rimessione)
+                        <a
+                            href="https://jurio.it/giurisprudenza/1fbf27b6-face-4d2d-9159-6456656ae750"
+                            class="locked-link"
+                            target="_blank"
+                            rel="noopener"
+                            title="Riservato agli utenti Jurio"
+                        >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/>
+                            </svg>
+                            Cassazione penale, Sez. VI,
+                            ordinanza n. 22178/2026
+                            (ordinanza di rimessione)
+                        </a>
                     </li>
-
                     <li>
                         Cassazione penale, Sez. Unite,
                         n. 24 del 14/01/1994
@@ -1941,26 +1184,26 @@
         "mainEntity": [
             {
                 "@type": "Question",
-                "name": "Le garanzie dell'art. 103 c.p.p. si applicano sempre quando si perquisisce lo studio di un avvocato?",
+                "name": "La polizia può perquisire lo studio del mio avvocato?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Non in modo automatico. La giurisprudenza è concorde nel ritenerle pienamente operative quando l'avvocato non è indagato, fungendo da scudo per il segreto professionale e l'attività difensiva. Qualora invece il legale sia personalmente sottoposto a indagine, sussiste un contrasto interpretativo rimesso alle Sezioni Unite."
+                    "text": "Sì, ma con regole rigide. Se l'avvocato sta solo facendo il suo lavoro e difendendo un cliente, la polizia ha bisogno del permesso speciale di un giudice e deve avvisare l'Ordine degli Avvocati. Questo serve per proteggere i tuoi segreti e la tua difesa."
                 }
             },
             {
                 "@type": "Question",
-                "name": "Cosa accade se l'avvocato indagato difende coindagati nello stesso procedimento?",
+                "name": "Cosa succede se l'avvocato è complice del suo cliente?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Per l'orientamento estensivo, il legame professionale con altri soggetti coinvolti nel medesimo procedimento giustifica la piena riespansione delle garanzie procedurali. Per l'orientamento restrittivo, invece, l'assunzione di difese non può precludere la ricerca della prova a carico dell'avvocato indagato."
+                    "text": "È il problema su cui i giudici stanno discutendo. Alcuni dicono che l'avvocato perde ogni protezione speciale e può essere perquisito come tutti. Altri dicono che le protezioni rimangono, per evitare che la polizia legga i documenti di altri clienti estranei ai fatti."
                 }
             },
             {
                 "@type": "Question",
-                "name": "Cosa resta sequestrabile anche secondo l'orientamento più restrittivo?",
+                "name": "La polizia può portare via tutto dallo studio legale?",
                 "acceptedAnswer": {
                     "@type": "Answer",
-                    "text": "Secondo l'impostazione richiamata nell'articolo, presso lo studio del difensore indagato il sequestro deve comunque rispettare il limite relativo al corpo del reato, senza tradursi in un'apprensione indiscriminata della documentazione professionale."
+                    "text": "Assolutamente no. Anche i giudici più severi concordano su una cosa: durante la perquisizione si può sequestrare solo quello che costituisce direttamente il corpo del reato. È severamente vietato portare via fascicoli interi o fare 'pesca a strascico' tra i documenti professionali."
                 }
             }
         ]

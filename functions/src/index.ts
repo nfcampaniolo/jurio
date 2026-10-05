@@ -2,10 +2,11 @@ import { onRequest } from "firebase-functions/v2/https";
 import { setGlobalOptions } from "firebase-functions/v2/options";
 import { Timestamp, FieldValue, Query, WriteBatch } from "firebase-admin/firestore";
 import { getAdmin, getDb, getAdminAuth, getAdminStorage, sanitize } from "./deps";
-import { MAX_INPUT_CHARS, PROMPT_MASSIMAZIONE, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, PlanDoc, getStripe, getWebhookSecret,normalizePlanId, handleEmbeddingCreation, handleEmbeddingDocumentCreation, handleFascicoloCreation, handleEmbeddingManualCreation, DeepAnalysisRequestBody, DeepAnalysisConfig, DEFAULT_CONFIG } from "./params";
-import { enqueueWelcomeEmail, enqueueTrialEmail, queuePurchaseEmailOnceStripe, enqueueDowngradeEmail, enqueueContactEmail, enqueueVoucherEmail, enqueueWelcomeTeamEmail, enqueueRemoveTeamEmail, enqueueCloseTeamEmail, dispatchMailAndNotification } from "./email";
-import { corsHandlerDomain, requireAppCheck, requireUidFromAuthHeader, consumePerMinuteFeature, consumeDailyFeature, getKeywordStems, calculateMatchScore, applyHighlightWithRegex, generateHighlightRegex, runUpdateFonte, runUpdateMetadata, runCleanupDuplicates, processFascicoloDocs, processSubscriptionInTx, tryScheduleDowngradeTask, updateUserDocuments, removeUserVisibilityFromDocuments, incrementRagCounter} from "./utils";
+import { MAX_INPUT_CHARS, PROMPT_MASSIMAZIONE } from "./params";
+import { enqueueWelcomeEmail, enqueueTrialEmail, queuePurchaseEmailOnceStripe, enqueueDowngradeEmail, enqueueContactEmail, enqueueVoucherEmail, enqueueWelcomeTeamEmail, enqueueRemoveTeamEmail, enqueueCloseTeamEmail, dispatchMailAndNotification, NotificationType } from "./email";
+import { corsHandlerDomain, requireAppCheck, requireUidFromAuthHeader, consumePerMinuteFeature, consumeDailyFeature, getKeywordStems, calculateMatchScore, applyHighlightWithRegex, generateHighlightRegex, runUpdateFonte, runUpdateMetadata, runCleanupDuplicates, processFascicoloDocs, processSubscriptionInTx, tryScheduleDowngradeTask, updateUserDocuments, removeUserVisibilityFromDocuments, incrementRagCounter, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, PlanDoc, getStripe, getWebhookSecret,normalizePlanId, handleEmbeddingCreation, handleEmbeddingDocumentCreation, handleFascicoloCreation, handleEmbeddingManualCreation} from "./utils";
 import { scheduleDowngradeTask, DowngradeTxResult, computeAndSaveWeeklyStats, computeAndSaveMonthlyUsage } from "./tasks";
+import {FilterInput, SearchRequestBody, ScoredJurioItem, JurioSentenceDoc, MessageDoc, FascicoloDoc, ExtractedMetadataItem, EstraiMetadatiResult, SupportRequestBody, ReasoningRequestBody, ReasoningFlowOutput, PromptFieldInput, PromptAgentRequestBody, EnhancePromptMessage, EnhancePromptRequestBody, MaintenanceTaskBody, ProgressCallback, MergeCategoryRequestBody, ReasoningAdminResponse, ReasoningAdminRequestBody, ManualContentRequestBody, SubmitFeedbackRequestBody, DeepAnalysisRequestBody, DeepAnalysisConfig, DEFAULT_CONFIG, AdminNotificationRequestBody, GenerateEmbeddingRequestBody, GenerateEmbeddingResponse, ExtractDocumentRequestBody, GetRegisterResponse, GetPriceRequestBody, GetPriceResponse, CheckoutSessionRequestBody, SyncUserSessionResponse, ForceTakeoverSessionResponse, AssignTeamSeatRequestBody, AssignTeamSeatResponse, SendTeamInviteEmailResponse, SendTeamInviteEmailRequestBody, ShareAllTeamDocumentsResponse, ShareAllTeamDocumentsRequestBody, VerifyVoucherRequestBody, VerifyVoucherResponse, RemoveTeamMemberRequestBody, RemoveTeamMemberResponse, ApplyCouponRequestBody, ApplyCouponResponse, DeleteTeamResponse, DeleteTeamRequestBody, CloudFileDownloadRequestBody, CloudFilesListRequestBody} from "./interfaces";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import OpenAI from "openai";
 import Stripe from "stripe";
@@ -18,7 +19,7 @@ import * as busboyModule from "busboy";
 import { google } from "googleapis";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpServer } from "./mcpServer";
-import { randomBytes } from "crypto";
+import { createHash, randomBytes, randomUUID } from "crypto";
 
 import express from "express";
 import cors from "cors";
@@ -27,7 +28,9 @@ const Busboy = busboyModule.default || busboyModule;
 const db = getDb();
 const admin = getAdmin();
 const MAX_NOTES_CHARS = 2000;
+
 let oaClient: OpenAI;
+let speechClientInstance: SpeechClient | null = null;
 
 setGlobalOptions({
   region: "europe-west1",
@@ -36,10 +39,10 @@ setGlobalOptions({
   invoker: "public"
 });
 
-
 // ============================================================================
 // MCP SERVER (EXPRESS)
 // ============================================================================
+
 const app = express();
 app.use(cors({ origin: true }));
 app.use(express.json());
@@ -225,17 +228,22 @@ export const vectorSearchJurio = onRequest(
       if (req.method === "OPTIONS") return res.status(204).end();
       if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
-      if (!oaClient) {
+      // Istanziazione Lazy e Sicura del client
+      if (!oaClient && process.env.OPENAI_API_KEY) {
         oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      } else if (!oaClient) {
+        console.error("[JURIO-SEARCH] OPENAI_API_KEY mancante nel Secret Manager.");
+        return res.status(500).json({ error: "Internal Server Error" });
       }
 
       try {
-        // 1) INPUT SANITIZATION
-        const body = req.body ?? {};
+        // 2) INPUT SANITIZATION & DATA MINIMIZATION
+        const body = (req.body ?? {}) as SearchRequestBody;
         const queryText = typeof body.query === "string" ? body.query.trim() : "";
 
-        if (!queryText) {
-          return res.status(400).json({ error: "Invalid 'query'" });
+        // Prevenzione attacchi di saturazione token (es. payload enormi mandati a OpenAI)
+        if (!queryText || queryText.length > 1500) {
+          return res.status(400).json({ error: "Bad Request: Invalid or excessively long 'query'" });
         }
 
         const requestedLimit = Number(body.limit);
@@ -243,55 +251,58 @@ export const vectorSearchJurio = onRequest(
           ? Math.min(Math.max(Math.floor(requestedLimit), 1), 100)
           : 50;
 
-        const filters = Array.isArray(body.filters) ? body.filters : [];
-        const collectionName =
-          typeof body.collection === "string" && body.collection.trim()
-            ? body.collection.trim()
-            : "sentences";
+        const filters: FilterInput[] = Array.isArray(body.filters) ? body.filters : [];
+        
+        // FORZATURA COLLECTION 
+        const collectionName = "sentences";
 
-        // 2) PREPARAZIONE NLP INIZIALE
+        // 3) PREPARAZIONE NLP INIZIALE
         let kwObjects = getKeywordStems(queryText);
-        let originalKws = kwObjects.map((k) => k.original);
-        let stemsList = kwObjects.map((k) => k.stem);
+        let originalKws = kwObjects.map((k: { original: string }) => k.original);
+        let stemsList = kwObjects.map((k: { stem: string }) => k.stem);
 
         const totalKeywords = kwObjects.length;
         let minRequiredKeywords = Math.max(1, Math.ceil(totalKeywords * 0.8));
 
-        // 3) AUTH BASE - OTTIMIZZATA IN PARALLELO
+        // 4) AUTH BASE CON SEGREGAZIONE ERRORI
         let uid: string = "";
         const authHeader = req.headers.authorization || "";
         const token = authHeader.replace("Bearer ", "").trim();
         let isOAuthRequest = false;
 
         if (token) {
-          // 🌟 OTTIMIZZAZIONE 3: Fetch parallelo per ridurre il tempo di fallback OAuth->Register
           const [tokenSnap, directUserSnap] = await Promise.all([
             db.collection("oauth_tokens").doc(token).get(),
             db.collection("register").doc(token).get()
           ]);
 
           if (tokenSnap.exists) {
-            uid = tokenSnap.data()?.uid;
+            uid = String(tokenSnap.data()?.uid || "");
             isOAuthRequest = true;
-            console.log(`[JURIO-SEARCH] Autenticazione OAuth riuscita per UID: ${uid}`);
           } else if (directUserSnap.exists) {
             uid = token;
             isOAuthRequest = true;
-            console.log(`[JURIO-SEARCH] Autenticazione diretta via UID riuscita per: ${uid}`);
           }
         }
 
+        // Se non è OAuth (B2B), esigiamo App Check (Anti-Fraud) e Auth Header Standard
         if (!isOAuthRequest || !uid) {
-          await requireAppCheck(req);
-          uid = await requireUidFromAuthHeader(req);
+          try {
+            await requireAppCheck(req);
+            uid = await requireUidFromAuthHeader(req);
+          } catch (authError) {
+            console.warn(`[JURIO-SEARCH] Fallimento AppCheck/Auth per IP: ${req.ip}`);
+            return res.status(401).json({ error: "Unauthorized" });
+          }
         }
 
         if (!uid) {
-          return res.status(401).json({ error: "Unauthorized: Access denied" });
+          return res.status(401).json({ error: "Unauthorized" });
         }
         
         const limits = { perMinute: 20, perDay: 200 };
          
+        // 5) ESECUZIONE PARALLELA SICURA (OpenAI + Firebase Auth/Rate Limits)
         const [embeddingPromiseResult, userSnap] = await Promise.all([
           oaClient.embeddings.create({
             model: "text-embedding-3-small",
@@ -299,14 +310,15 @@ export const vectorSearchJurio = onRequest(
             dimensions: 1536,
           }),
           db.collection("register").doc(uid).get(),
-          consumePerMinuteFeature(uid, "research" as any, limits.perMinute),
-          consumeDailyFeature(uid, "research" as any, limits.perDay)
+          consumePerMinuteFeature(uid, "research", limits.perMinute),
+          consumeDailyFeature(uid, "research", limits.perDay)
         ]);
 
-        // 5) VERIFICA PIANO UTENTE
+        // VERIFICA PIANO UTENTE
         if (!userSnap.exists) {
-          return res.status(404).json({ error: "User not found" });
+          return res.status(404).json({ error: "Not Found" }); // Non riveliamo dettagli sull'assenza dell'utente
         }
+        
         const planId = String(userSnap.data()?.planId ?? "");
         const allowedPlans = new Set([
           "prova", "admin", "business", "personale", "business_m", "personale_m",
@@ -314,15 +326,15 @@ export const vectorSearchJurio = onRequest(
 
         if (!allowedPlans.has(planId)) {
           return res.status(403).json({ 
-            error: "Access denied", 
-            message: "È richiesto un piano attivo per utilizzare la ricerca." 
+            error: "Forbidden", 
+            message: "Piano non abilitato alla ricerca." 
           });
         }
         
         const queryVector = embeddingPromiseResult.data[0].embedding;
 
-        // SELEZIONE CAMPI
-        const baseCollection = db.collection(collectionName).select(
+        // 6) COSTRUZIONE QUERY TYPE-SAFE
+        let baseQuery: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = db.collection(collectionName).select(
           "tipo_documento", "fonte", "logo_fonte", "organo_giudicante", "sezione", 
           "numero_sentenza", "dataSentenza", "data_sentenza", "ecli", "urn",
           "tipo_ordinanza", "efficacia_temporale", "misura_disposta", "fumus_boni_iuris", "periculum_in_mora",
@@ -331,47 +343,61 @@ export const vectorSearchJurio = onRequest(
         );
 
         // PREPARAZIONE FILTRI
-        const appliedFilters = filters.reduce((q: any, f: any) => {
-          if (f && typeof f.field === "string" && typeof f.operator === "string" && "value" in f) {
+        const appliedFilters = filters.reduce((q: FirebaseFirestore.Query, f: FilterInput) => {
+          if (f && typeof f.field === "string" && typeof f.operator === "string" && f.value !== undefined) {
             let queryValue = f.value;
+            
+            // Gestione sicura dei Timestamp serializzati dal client
             if (
               f.value && 
               typeof f.value === "object" && 
-              (f.value.type === "firestore/timestamp/1.0" || "seconds" in f.value)
+              f.value !== null &&
+              (("type" in f.value && f.value.type === "firestore/timestamp/1.0") || "seconds" in f.value)
             ) {
-              const seconds = f.value.seconds;
-              const nanoseconds = f.value.nanoseconds || 0;
-              if (typeof seconds === "number") {
-                queryValue = new Timestamp(seconds, nanoseconds);
+              const valAsObj = f.value as { seconds?: number, nanoseconds?: number };
+              if (typeof valAsObj.seconds === "number") {
+                queryValue = new Timestamp(valAsObj.seconds, valAsObj.nanoseconds || 0);
               }
             }
             return q.where(f.field, f.operator, queryValue);
           }
           return q;
-        }, baseCollection as any);
+        }, baseQuery);
 
-        // HELPER DI RICERCA
-        const performSearchAndScoring = async (vector: any, currentKwObjects: any[]) => {
+        // HELPER DI RICERCA INTERNO
+        const performSearchAndScoring = async (vector: number[], currentKwObjects: any[]): Promise<ScoredJurioItem[]> => {
           const candidateLimit = Math.min(Math.max(limit * 2, 50), 100);
+        
+          // FIRMA AGGIORNATA findNearest
           const sSnap = await appliedFilters
-            .findNearest("embedding", FieldValue.vector(vector), {
+            .findNearest({
+              vectorField: "embedding",
+              queryVector: FieldValue.vector(vector),
               limit: candidateLimit,
               distanceMeasure: "COSINE",
+              distanceResultField: "distance"
             })
             .get();
 
           const maxScoringCandidates = Math.min(limit * 2, 40); 
           const candidateDocs = sSnap.docs.slice(0, maxScoringCandidates);
 
+          const MAX_CHARS = 10000;
+          const safeTruncate = (text: unknown): string | null => 
+            typeof text === "string" && text.length > 0 ? text.substring(0, MAX_CHARS) : null;
+
           return candidateDocs
-            .map((doc: any) => {
-              const data = doc.data() ?? {};
+            .map((doc: FirebaseFirestore.QueryDocumentSnapshot) => {
+              const data = doc.data() as JurioSentenceDoc;
               const content = [data.summary, data.massima, data.fattispecie_rilevante]
                 .filter(Boolean)
                 .join(" ");
 
               const scores = calculateMatchScore(content, currentKwObjects, data);
-              const baseDistance = typeof doc.distance === "number" ? doc.distance : 0.8;
+              
+              // Lettura sicura del campo distance generato da distanceResultField
+              const distanceData = doc.data() as { distance?: number };
+              const baseDistance = typeof distanceData.distance === "number" ? distanceData.distance : 0.8;
 
               let rankingDistance = scores.textMatchScore === 0
                   ? baseDistance * 1.25
@@ -379,9 +405,6 @@ export const vectorSearchJurio = onRequest(
 
               rankingDistance -= (scores.authorityBonus ?? 0) + (scores.recencyBonus ?? 0);
               rankingDistance = Math.max(0.001, rankingDistance);
-
-              const MAX_CHARS = 10000;
-              const safeTruncate = (text: unknown) => text ? text.toString().substring(0, MAX_CHARS) : null;
 
               return {
                 id: doc.id,
@@ -392,7 +415,11 @@ export const vectorSearchJurio = onRequest(
                 organo_giudicante: data.organo_giudicante || null,
                 sezione: data.sezione || null,
                 numero_sentenza: data.numero_sentenza || null,
+                
+                // Mappa entrambi i campi per soddisfare l'interfaccia
                 dataSentenza: data.dataSentenza || data.data_sentenza || null,
+                data_sentenza: data.data_sentenza || data.dataSentenza || null,
+                
                 ecli: data.ecli || null,
                 urn: data.urn || null,
                 tipo_ordinanza: data.tipo_ordinanza || null,
@@ -401,35 +428,36 @@ export const vectorSearchJurio = onRequest(
                 fumus_boni_iuris: data.fumus_boni_iuris || null,
                 periculum_in_mora: data.periculum_in_mora || null,
                 tipo_decreto: data.tipo_decreto || null,
-                contraddittorio: data.contraddittorio !== undefined ? data.contraddittorio : null,
-                autorita_monocratica: data.autorita_monocratica !== undefined ? data.autorita_monocratica : null,
+                contraddittorio: data.contraddittorio !== undefined && data.contraddittorio !== null ? data.contraddittorio : null,
+                autorita_monocratica: data.autorita_monocratica !== undefined && data.autorita_monocratica !== null ? data.autorita_monocratica : null,
                 contenuto_precettivo: data.contenuto_precettivo || null,
                 massima: safeTruncate(data.massima),
                 summary: safeTruncate(data.summary),
                 fattispecie_rilevante: safeTruncate(data.fattispecie_rilevante),
                 _matchCount: Math.floor(scores.textMatchScore ?? 0),
-                _distance: doc.distance ?? baseDistance,
+                _distance: baseDistance,
                 _rankingDistance: rankingDistance,
-                _source: "direct",
+                _source: "direct" as const,
               };
             })
-            .filter((item: any) => item._matchCount > 0 || item._distance <= 0.75)
-            .sort((a: any, b: any) => a._rankingDistance - b._rankingDistance);
+            .filter((item) => item._matchCount > 0 || item._distance <= 0.75)
+            .sort((a, b) => a._rankingDistance - b._rankingDistance);
         };
 
-        // 6) PRIMA RICERCA VETTORIALE
+        // 7) PRIMA RICERCA VETTORIALE
         let scoredItems = await performSearchAndScoring(queryVector, kwObjects);
 
-        // 7) FALLBACK GEMINI TRAMITE GENKIT FLOW
-        let geminiResponsePayload: any = null;
+        // 8) FALLBACK GEMINI TRAMITE GENKIT FLOW
+        let geminiResponsePayload: { sintesi: string, queryAlternativa: string } | null = null;
         const FALLBACK_THRESHOLD = 0.7; 
         const needsFallback = scoredItems.length === 0 || scoredItems[0]._rankingDistance > FALLBACK_THRESHOLD;
 
+        // Eseguiamo fallback solo se non è richiesta B2B (OAuth) per evitare latenza API esterne
         if (needsFallback && !isOAuthRequest) {
           try {
             const fallbackResult = await legalGeminiFallbackFlow({ query: queryText });
             
-            if (fallbackResult) {
+            if (fallbackResult && typeof fallbackResult.sintesi === "string" && typeof fallbackResult.queryAlternativa === "string") {
               geminiResponsePayload = {
                 sintesi: fallbackResult.sintesi,
                 queryAlternativa: fallbackResult.queryAlternativa,
@@ -437,8 +465,8 @@ export const vectorSearchJurio = onRequest(
 
               const altQueryText = fallbackResult.queryAlternativa;
               kwObjects = getKeywordStems(altQueryText); 
-              originalKws = kwObjects.map((k) => k.original);
-              stemsList = kwObjects.map((k) => k.stem);
+              originalKws = kwObjects.map((k: { original: string }) => k.original);
+              stemsList = kwObjects.map((k: { stem: string }) => k.stem);
               minRequiredKeywords = Math.max(1, Math.ceil(kwObjects.length * 0.8));
 
               const altEmbeddingRes = await oaClient.embeddings.create({
@@ -450,22 +478,23 @@ export const vectorSearchJurio = onRequest(
               const altScoredItems = await performSearchAndScoring(altEmbeddingRes.data[0].embedding, kwObjects);
 
               if (altScoredItems.length > 0) {
-                scoredItems = altScoredItems.map((item: any) => ({
+                scoredItems = altScoredItems.map((item) => ({
                   ...item,
                   _source: "gemini_fallback",
                 }));
               }
             }
           } catch (geminiErr) {
-            console.error(`[JURIO-SEARCH] ERRORE GRAVE nel fallback Genkit:`, geminiErr);
+            console.error(`[JURIO-SEARCH] Errore fallback Genkit per UID ${uid}:`, geminiErr);
+            // Non blocchiamo il flusso in caso di errore Gemini, ritorniamo i risultati base (se ci sono)
           }
         }
 
-        // 8) OUTPUT & LAZY HIGHLIGHTING
+        // 9) OUTPUT & LAZY HIGHLIGHTING
         const highlightRegex = generateHighlightRegex(originalKws, stemsList);
         const limitedItems = scoredItems.slice(0, limit);
 
-        const finalItems = limitedItems.map((item: any) => ({
+        const finalItems = limitedItems.map((item) => ({
           ...item,
           highlighted_massima: item.massima
             ? applyHighlightWithRegex(item.massima, highlightRegex)
@@ -478,13 +507,19 @@ export const vectorSearchJurio = onRequest(
             : null,
         }));
 
-        const topMatches = finalItems.filter((item: any) => item._matchCount >= minRequiredKeywords);
-        const regularMatches = finalItems.filter((item: any) => item._matchCount < minRequiredKeywords);
-        const extractedIds = finalItems.map((d: any) => d.id);
-        await incrementRagCounter(collectionName, extractedIds);
+        const topMatches = finalItems.filter((item) => item._matchCount >= minRequiredKeywords);
+        const regularMatches = finalItems.filter((item) => item._matchCount < minRequiredKeywords);
+        const extractedIds = finalItems.map((d) => d.id);
+        
+        if (extractedIds.length > 0) {
+          // Fire & forget: non blocchiamo la risposta del client per contare le stat
+          incrementRagCounter(collectionName, extractedIds).catch(err => 
+            console.error("[JURIO-SEARCH] Errore incremento contatore RAG:", err)
+          );
+        }
 
         return res.status(200).json({
-          ids: finalItems.map((d: any) => d.id),
+          ids: extractedIds,
           topMatches,
           allMatches: regularMatches,
           status: geminiResponsePayload ? "GEMINI_FALLBACK" : "SUCCESS",
@@ -496,9 +531,11 @@ export const vectorSearchJurio = onRequest(
             bestDistance: scoredItems.length > 0 ? scoredItems[0]._rankingDistance : null,
           },
         });
-      } catch (err: any) {
-        console.error("Search Error:", err);
-        return res.status(500).json({ error: "Internal Error", details: err.message });
+
+      } catch (err) {
+        // 10) ANTI INFORMATION DISCLOSURE
+        console.error("[JURIO-SEARCH] Errore non gestito:", err);
+        return res.status(500).json({ error: "Internal Server Error" });
       }
     });
   }
@@ -616,7 +653,7 @@ export const legalAgent = onRequest(
         
         res.write(`data: ${JSON.stringify({ result: sanitizedResult })}\n\n`);
         res.write(`data: [DONE]\n\n`);
-        res.end(); // Libera la UI del client immediatamente
+        res.end();
 
         // PREPARAZIONE BATCH UPDATE
         const batch = db.batch();
@@ -646,7 +683,7 @@ export const legalAgent = onRequest(
 
       } catch (err: any) {
         const msg = err instanceof Error ? err.message : "Internal error";
-        console.error("🔥 ERRORE CRITICO LEGAL AGENT:", err);
+        console.error("ERRORE CRITICO LEGAL AGENT:", err);
 
         if (res.headersSent) {
           res.write(`data: ${JSON.stringify({ error: { message: msg } })}\n\n`);
@@ -831,7 +868,7 @@ export const deepAnalysisAgent = onRequest(
 
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Internal error";
-        console.error("🔥 ERRORE CRITICO DEEP ANALYSIS AGENT:", err);
+        console.error("ERRORE CRITICO DEEP ANALYSIS AGENT:", err);
         
         // CATTURA L'ERRORE DELLE QUOTE E RESTITUISCE 429
         if (msg.includes("quota_exceeded")) {
@@ -977,7 +1014,7 @@ export const wordAgent = onRequest(
 
       } catch (err: any) {
         const msg = err instanceof Error ? err.message : "Internal error";
-        console.error("🔥 ERRORE CRITICO WORD AGENT:", err);
+        console.error("ERRORE CRITICO WORD AGENT:", err);
 
         if (res.headersSent) {
           res.write(`data: ${JSON.stringify({ error: { message: msg } })}\n\n`);
@@ -995,12 +1032,16 @@ export const aggiornaMetadatiDaChat = onDocumentCreated(
     document: "fascicoli/{fascicoloId}/threads/{threadId}/messages/{messageId}",
     timeoutSeconds: 60,
     memory: "512MiB",
-    secrets: ["GOOGLE_GENAI_API_KEY"] 
+    secrets: ["GOOGLE_GENAI_API_KEY"],
   },
   async (event) => {
-    // ... tutto il resto del codice rimane esattamente com'è ...
     const snapshot = event.data;
     if (!snapshot) return;
+
+    const messageData = snapshot.data() as Partial<MessageDoc>;
+    
+    // Evita loop e risparmia token: analizziamo solo i messaggi dell'utente
+    if (messageData.role === "model") return; 
 
     const fascicoloId = event.params.fascicoloId;
     const threadId = event.params.threadId;
@@ -1017,47 +1058,71 @@ export const aggiornaMetadatiDaChat = onDocumentCreated(
 
       const chatContext = historySnap.docs
         .map(doc => {
-          const data = doc.data();
+          const data = doc.data() as MessageDoc;
+          const safeContent = typeof data.content === "string" ? data.content.trim() : "";
           const ruolo = data.role === "model" ? "IA" : "UTENTE";
-          return `${ruolo}: ${data.content}`;
+          return `${ruolo}: ${safeContent}`;
         })
         .reverse()
         .join("\n\n");
+
+      // Protezione da costi eccessivi: blocco contesto anomalo
+      if (!chatContext || chatContext.length > 5000) return;
 
       const fascicoloRef = db.collection("fascicoli").doc(fascicoloId);
       const fascicoloSnap = await fascicoloRef.get();
       if (!fascicoloSnap.exists) return;
       
-      const metadatiAttuali = fascicoloSnap.data()?.metadati || {};
+      const fascicoloData = fascicoloSnap.data() as FascicoloDoc;
+      const metadatiAttuali = fascicoloData.metadati || {};
 
-      const result = await estraiMetadatiFlow({
+      const result = (await estraiMetadatiFlow({
         chatContext,
         metadatiAttuali
-      });
+      })) as EstraiMetadatiResult;
 
       const estratti = result.dati_nuovi_o_aggiornati || [];
-      if (estratti.length === 0) return;
+      if (!Array.isArray(estratti) || estratti.length === 0) return;
 
-      const updatePayload: Record<string, any> = {};
-      estratti.forEach((item: any) => {
-        const safeKey = item.chiave.trim().replace(/[\.\/]/g, ''); 
-        updatePayload[`metadati.${safeKey}`] = item.valore.trim();
+      const updatePayload: Record<string, string> = {};
+      let hasUpdates = false;
+
+      // Sanitizzazione input IA prima della scrittura DB
+      estratti.forEach((item: ExtractedMetadataItem) => {
+        if (typeof item.chiave === "string" && typeof item.valore === "string") {
+          const safeKey = item.chiave.replace(/[^a-zA-Z0-9_]/g, '').trim().substring(0, 50);
+          const safeValue = item.valore.trim().substring(0, 500); 
+
+          if (safeKey && safeValue) {
+            updatePayload[`metadati.${safeKey}`] = safeValue;
+            hasUpdates = true;
+          }
+        }
       });
 
+      if (!hasUpdates) return;
+
       await fascicoloRef.update(updatePayload);
-      console.log(`Metadati aggiornati dal messaggio per fascicolo ${fascicoloId}:`, updatePayload);
+      
+      // Privacy-by-design: loggati solo conteggi, mai dati PII
+      console.log(`[JURIO-METADATA] Aggiornate ${Object.keys(updatePayload).length} chiavi per fascicolo ${fascicoloId}`);
 
     } catch (error) {
-      console.error("Errore durante l'aggiornamento silente dei metadati:", error);
+      console.error(`[JURIO-METADATA] Errore estrazione metadati per fascicolo ${fascicoloId}`);
     }
   }
 );
+
+const hashIpForRateLimiting = (ip: string): string => {
+  const dateSalt = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+  return createHash("sha256").update(`${ip}-${dateSalt}`).digest("hex");
+};
 
 export const support = onRequest(
   { 
     secrets: ["GOOGLE_GENAI_API_KEY"],
     timeoutSeconds: 300,
-    memory: "1GiB"
+    memory: "1GiB",
   }, 
   async (req, res) => {
     return corsHandlerDomain(req, res, async (): Promise<void> => {
@@ -1066,48 +1131,80 @@ export const support = onRequest(
         return;
       }
       if (req.method !== "POST") {
-        res.status(405).send("Method Not Allowed");
+        res.status(405).json({ error: "Method Not Allowed" });
         return;
       }
 
       try {
-        await requireAppCheck(req);
+        // 1. APP CHECK (Essenziale per endpoint pubblici senza Auth)
+        try {
+          await requireAppCheck(req);
+        } catch (appCheckError) {
+          console.warn(`[JURIO-SUPPORT] Tentativo di accesso fallito AppCheck: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
        
-        const clientIp = req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown_ip";
-        const ipIdentifier = `ip_${clientIp}`;
+        // 2. RATE LIMITING COMPLIANT (GDPR)
+        const clientIp = typeof req.headers["x-forwarded-for"] === "string" 
+          ? req.headers["x-forwarded-for"].split(",")[0].trim() 
+          : req.ip || req.socket.remoteAddress || "unknown_ip";
+
+        // Anonimizzazione obbligatoria IP
+        const hashedIp = hashIpForRateLimiting(clientIp);
+        const ipIdentifier = `ip_${hashedIp}`;
         const publicLimits = { perMinute: 5, perDay: 30 };
 
-        await Promise.all([
-          consumePerMinuteFeature(ipIdentifier, "support_public" as any, publicLimits.perMinute),
-          consumeDailyFeature(ipIdentifier, "support_public" as any, publicLimits.perDay)
-        ]);
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(ipIdentifier, "support_public", publicLimits.perMinute),
+            consumeDailyFeature(ipIdentifier, "support_public", publicLimits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError; // Rilancia per gestire nel catch generico
+        }
 
-        // --- 4. ADEGUAMENTO E VALIDAZIONE INPUT ---
-        const body = req.body ?? {};
+        // 3. ADEGUAMENTO E VALIDAZIONE INPUT (Prevenzione DoS)
+        const body = (req.body ?? {}) as SupportRequestBody;
         const messages = body.messages;
 
-        // Se il frontend manda { messages }, estraiamo l'ultimo per il prompt
         if (!Array.isArray(messages) || messages.length === 0) {
-          res.status(400).json({ error: "Missing messages array." });
+          res.status(400).json({ error: "Bad Request: Missing or empty messages array." });
           return;
         }
 
-        // 1. Estraiamo i dati
-        const lastMessage = messages[messages.length - 1];
-        const historyRaw = messages.slice(0, -1);
+        // Prevenzione saturazione token: Limite al numero di messaggi e alla lunghezza del contesto
+        if (messages.length > 20) {
+          res.status(400).json({ error: "Bad Request: Conversation history too long." });
+          return;
+        }
 
-        // 2. Mappatura con casting esplicito per soddisfare TypeScript
+        // 4. MAPPAZIONE RIGOROSA
+        const lastMessage = messages[messages.length - 1];
+        
+        if (typeof lastMessage?.content !== "string" || !lastMessage.content.trim()) {
+           res.status(400).json({ error: "Bad Request: Invalid prompt content." });
+           return;
+        }
+
+        const safePrompt = lastMessage.content.trim().substring(0, 1000); // Max 1000 chars per il prompt corrente
+
+        const historyRaw = messages.slice(0, -1);
+        const safeHistory = historyRaw
+          .filter(m => m && typeof m.content === "string")
+          .map(m => ({
+             role: (m.role === 'assistant' || m.role === 'model') ? 'model' as const : 'user' as const,
+             content: m.content.substring(0, 2000) // Tronca messaggi vecchi enormi
+          }));
+
         const flowInput = {
-          prompt: lastMessage.content as string,
-          history: historyRaw.map((m: any) => {
-            // Determiniamo il ruolo corretto
-            const role: "user" | "model" = m.role === 'assistant' ? 'model' : 'user';
-            
-            return {
-              role: role, // Ora TypeScript sa che è uno dei valori ammessi
-              content: m.content as string
-            };
-          })
+          prompt: safePrompt,
+          history: safeHistory
         };
 
         // 5. CONFIGURAZIONE HEADER SSE
@@ -1116,8 +1213,7 @@ export const support = onRequest(
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders(); 
 
-        // --- 6. ESECUZIONE DEL FLOW ---
-        // Usiamo flowInput invece di body!
+        // 6. ESECUZIONE DEL FLOW STREAMING
         const flowStream = legalAgentSupport.stream(flowInput);
 
         for await (const chunk of flowStream.stream) {
@@ -1131,16 +1227,19 @@ export const support = onRequest(
         res.end();
         return;
 
-      } catch (err: any) {
+      } catch (err: unknown) {
+        // ANTI INFORMATION DISCLOSURE IN SSE
         const msg = err instanceof Error ? err.message : "Internal error";
-        console.error("Errore Support Endpoint:", err);
+        console.error(`[JURIO-SUPPORT] Errore Streaming Endpoint: ${msg}`);
+
+        const clientErrorMessage = "Si è verificato un errore durante l'elaborazione della richiesta.";
 
         if (res.headersSent) {
-          res.write(`data: ${JSON.stringify({ error: msg })}\n\n`);
+          res.write(`data: ${JSON.stringify({ error: clientErrorMessage })}\n\n`);
+          res.write(`data: [DONE]\n\n`);
           res.end();
         } else {
-          const status = (msg === "rate_limited" || msg === "quota_exceeded") ? 429 : 500;
-          res.status(status).json({ error: msg });
+          res.status(500).json({ error: "Internal Server Error" });
         }
         return;
       }
@@ -1152,103 +1251,158 @@ export const reasoning = onRequest(
   { 
     secrets: ["GOOGLE_GENAI_API_KEY"],
     timeoutSeconds: 300, 
-    memory: "1GiB" 
+    memory: "1GiB",
   },
   async (req, res) => {
     return corsHandlerDomain(req, res, async () => {
       // 1. GESTIONE CORS E METODO
       if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        // 2. AUTH E CONTROLLO DATI INGRESSO
-        await requireAppCheck(req);
-        const uid = await requireUidFromAuthHeader(req);
-        const body: any = req.body ?? {};
-        
-        const question = typeof body?.question === "string" ? body.question.trim() : "";
-        // NUOVO: Estraiamo il promptId
-        const promptId = typeof body?.promptId === "string" ? body.promptId.trim() : null;
-
-        if (!question) { res.status(400).json({ error: "Invalid 'question'" }); return; }
-        if (question.length > MAX_INPUT_CHARS) { res.status(413).json({ error: "Question too large" }); return; }
-
-        // 3. CONTROLLO UTENTE E PIANI
-        const snap = await db.collection("register").doc(uid).get();
-        if (!snap.exists) { res.status(404).json({ error: "User not found" }); return; }
-
-        const planId = String(snap.data()?.planId ?? "");
-        if (!["prova", "admin", "business", "business_m"].includes(planId)) {
-          res.status(403).json({ error: "Access denied" }); 
-          return; 
-        }
-
-        // 4. CONTROLLO LIMITE DI 100 DOCUMENTI
-        const docsCountSnap = await db.collection("documents")
-          .where("userId", "==", uid)
-          .count()
-          .get();
-
-        if (docsCountSnap.data().count >= 100) {
-          res.status(403).json({ error: "document_limit_reached", details: "Hai già raggiunto il limite massimo di 100 documenti." });
+        // 2. AUTH E APP CHECK
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-REASONING] Fallimento AppCheck/Auth per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" }); 
           return;
         }
 
-        // 5. GESTIONE RATE LIMITS
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" }); 
+          return; 
+        }
+
+        // 3. SANITIZZAZIONE DATI INGRESSO
+        const body = (req.body ?? {}) as ReasoningRequestBody;
+        
+        const question = typeof body.question === "string" ? body.question.trim() : "";
+        const promptId = typeof body.promptId === "string" ? body.promptId.trim() : null;
+
+        if (!question) { 
+          res.status(400).json({ error: "Bad Request: Invalid or missing 'question'" }); 
+          return; 
+        }
+
+        if (question.length > MAX_INPUT_CHARS) { 
+          res.status(413).json({ error: "Payload Too Large: Question exceeds character limit" }); 
+          return; 
+        }
+
+        // 4. CONTROLLO UTENTE E PIANI
+        const snap = await db.collection("register").doc(uid).get();
+        if (!snap.exists) { 
+          res.status(404).json({ error: "Not Found" }); 
+          return; 
+        }
+
+        const planId = String(snap.data()?.planId ?? "");
+        const allowedPlans = new Set(["prova", "admin", "business", "business_m"]);
+
+        if (!allowedPlans.has(planId)) {
+          res.status(403).json({ 
+            error: "Forbidden", 
+            details: "Il tuo piano non consente questa operazione." 
+          }); 
+          return; 
+        }
+
+        // 5. CONTROLLO LIMITE DI 100 DOCUMENTI (Opzionale: wrappato in try/catch per non rompere il flow principale se c'è un timeout)
+        try {
+          const docsCountSnap = await db.collection("documents")
+            .where("userId", "==", uid)
+            .count()
+            .get();
+
+          if (docsCountSnap.data().count >= 100) {
+            res.status(403).json({ 
+              error: "document_limit_reached", 
+              details: "Hai già raggiunto il limite massimo di 100 documenti analizzati." 
+            });
+            return;
+          }
+        } catch (dbErr) {
+          console.error(`[JURIO-REASONING] Errore conteggio documenti per utente ${uid}`);
+          // Scegliamo di non bloccare il fallback reasoning se il count fallisce per timeout interno
+        }
+
+        // 6. GESTIONE RATE LIMITS TRAMITE FEATURE
         const limits = planId === "prova" ? { perMinute: 5, perDay: 20 }
-                     : planId === "business" ? { perMinute: 20, perDay: 200 }
+                     : allowedPlans.has(planId) && planId !== "admin" ? { perMinute: 20, perDay: 200 }
                      : { perMinute: 120, perDay: 10_000 };
 
-        await consumePerMinuteFeature(uid, "reasoning" as any, limits.perMinute);
-        await consumeDailyFeature(uid, "reasoning" as any, limits.perDay);
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "reasoning", limits.perMinute),
+            consumeDailyFeature(uid, "reasoning", limits.perDay)
+          ]);
+        } catch (rateError: unknown) {
+          const msg = rateError instanceof Error ? rateError.message : String(rateError);
+          if (msg === "rate_limited" || msg === "quota_exceeded") {
+            res.status(429).json({ error: "Too Many Requests" });
+            return;
+          }
+          throw rateError;
+        }
 
-        // ==========================================
-        // NUOVO: RECUPERO DEL PROMPT CUSTOM DA FIRESTORE
-        // ==========================================
+        // 7. RECUPERO DEL PROMPT CUSTOM DA FIRESTORE (Privacy Segregation)
         let customPromptText: string | undefined = undefined;
 
         if (promptId && promptId !== "default") {
-          // 1. Prima proviamo a cercarlo nei prompt personali dell'utente
-          const promptDoc = await db.collection("register").doc(uid).collection("prompts").doc(promptId).get();
-          
-          if (promptDoc.exists) {
-            customPromptText = promptDoc.data()?.content;
-          } else {
-            // 2. Se non è tra quelli personali, controlliamo nei modelli pubblici globali
-            const publicPromptDoc = await db.collection("prompt_list").doc(promptId).get();
+          // Sanitizzazione del promptId per evitare injection nei path Firestore
+          const safePromptId = promptId.replace(/[^a-zA-Z0-9_-]/g, "");
+
+          if (safePromptId) {
+            // 1. Priorità ai prompt personali (Segregazione Dati per Utente)
+            const promptDoc = await db.collection("register").doc(uid).collection("prompts").doc(safePromptId).get();
             
-            if (publicPromptDoc.exists) {
-              customPromptText = publicPromptDoc.data()?.content;
+            if (promptDoc.exists) {
+              const content = promptDoc.data()?.content;
+              customPromptText = typeof content === "string" ? content : undefined;
             } else {
-              console.warn(`[REASONING] Prompt non trovato (ID: ${promptId}) né tra i personali dell'utente ${uid} né nei modelli pubblici. Fallback al prompt standard.`);
+              // 2. Fallback ai prompt globali pubblici
+              const publicPromptDoc = await db.collection("prompt_list").doc(safePromptId).get();
+              
+              if (publicPromptDoc.exists) {
+                const content = publicPromptDoc.data()?.content;
+                customPromptText = typeof content === "string" ? content : undefined;
+              } else {
+                console.warn(`[JURIO-REASONING] Prompt ID ${safePromptId} non trovato per utente ${uid}. Fallback default.`);
+              }
             }
           }
         }
 
-        // 6. ESECUZIONE DEL FLOW GENKIT (Passiamo il customPrompt se esiste)
-        const parsedJson = await reasoningFlow({ 
+        // 8. ESECUZIONE DEL FLOW GENKIT
+        const parsedJson = (await reasoningFlow({ 
           question, 
           customPrompt: customPromptText 
-        });
+        })) as ReasoningFlowOutput;
 
-        // 7. RISPOSTA AL CLIENT
+        // 9. RISPOSTA AL CLIENT
         res.status(200).json({
           message: parsedJson,
           status: "SENT_BY_BOT",
-          model: "gemini-2.5-flash", 
+          model: "gemini-3.8-flash", // Assicurati che corrisponda alla realtà del flow
           provider: "google"
         });
         return;
 
-      } catch (err: any) {
-        console.error("Errore nell'endpoint reasoning:", err);
+      } catch (err: unknown) {
+        // 10. ANTI INFORMATION DISCLOSURE NEI CATCH
         const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-REASONING] Errore imprevisto per UID ${req.headers.authorization ? "AuthPresent" : "NoAuth"}:`, msg);
         
-        if (err?.code === "rate_limited" || msg === "rate_limited") { res.status(429).json({ error: "rate_limited" }); return; }
-        if (err?.code === "quota_exceeded" || msg === "quota_exceeded") { res.status(429).json({ error: "quota_exceeded" }); return; }
+        // Se l'errore arriva dal flow LLM per input non processabili
+        if (msg.includes("SAFETY_RATING") || msg.includes("BLOCKED")) {
+          res.status(400).json({ error: "Content blocked by safety filters." });
+          return;
+        }
         
-        const isAuth = msg.toLowerCase().includes("auth") || msg.toLowerCase().includes("bearer");
-        res.status(isAuth ? 401 : 500).json({ error: "Process failed", details: msg });
+        res.status(500).json({ error: "Internal Server Error" });
         return;
       }
     });
@@ -1260,7 +1414,8 @@ export const speechToTextAgent = onRequest(
     timeoutSeconds: 300,
     memory: "1GiB",
   },
-    async (req: any, res: any) => {
+  async (req, res) => {
+    // req è di tipo https.Request in v2.
     return corsHandlerDomain(req, res, async (): Promise<void> => {
       if (req.method === "OPTIONS") {
         res.status(204).end();
@@ -1273,72 +1428,68 @@ export const speechToTextAgent = onRequest(
       }
 
       try {
-        // 1. AUTH
-        await requireAppCheck(req);
-        const uid = await requireUidFromAuthHeader(req);
+        // 1. AUTH & APP CHECK 
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          const clientIp = req.ip || req.socket?.remoteAddress || "unknown";
+          console.warn(`[JURIO-STT] Fallimento AppCheck/Auth per IP: ${clientIp}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
 
         // 2. USER / PLAN
-        const userSnap = await admin
-          .firestore()
-          .collection("register")
-          .doc(uid)
-          .get();
+        const userSnap = await db.collection("register").doc(uid).get();
 
         if (!userSnap.exists) {
-          res.status(404).json({ error: "User not found" });
+          res.status(404).json({ error: "Not Found" }); 
           return;
         }
 
         const planId = String(userSnap.data()?.planId ?? "");
+        const allowedPlans = new Set(["prova", "admin", "business", "business_m"]);
 
-        if (!["prova", "admin", "business", "business_m"].includes(planId)) {
+        if (!allowedPlans.has(planId)) {
           res.status(403).json({
-            error: "Access denied",
-            details: "Il tuo piano non consente la trascrizione.",
+            error: "Forbidden",
+            details: "Piano non abilitato alla trascrizione.",
           });
           return;
         }
 
-        // 3. LIMITS
+        // 3. LIMITS 
         const limits =
           planId === "prova"
             ? { perMinute: 5, perDay: 20 }
-            : ["business", "business_m"].includes(planId)
+            : allowedPlans.has(planId) && planId !== "admin"
               ? { perMinute: 20, perDay: 200 }
-              : { perMinute: 60, perDay: 10_000 };
+              : { perMinute: 60, perDay: 10_000 }; 
 
         await Promise.all([
-          consumePerMinuteFeature(
-            uid,
-            "speech_to_text" as any,
-            limits.perMinute
-          ),
-          consumeDailyFeature(
-            uid,
-            "speech_to_text" as any,
-            limits.perDay
-          ),
+          consumePerMinuteFeature(uid, "speech_to_text", limits.perMinute),
+          consumeDailyFeature(uid, "speech_to_text", limits.perDay),
         ]);
 
-        // 4. MULTIPART
-        const contentType = String(
-          req.headers["content-type"] ?? ""
-        );
+        // 4. MULTIPART PARSING SICURO
+        const reqContentType = req.headers["content-type"] || req.header("content-type");
+        const contentType = String(reqContentType ?? "");
 
         if (!contentType.includes("multipart/form-data")) {
-          res.status(400).json({
-            error: "INVALID_CONTENT_TYPE",
-            details: "Invia il file come multipart/form-data nel campo 'file'.",
-          });
+          res.status(400).json({ error: "Bad Request", details: "Invalid content-type." });
           return;
         }
 
         const rawBody = (req as any).rawBody;
 
-        if (!Buffer.isBuffer(rawBody)) {
-          res.status(400).json({
-            error: "RAW_BODY_UNAVAILABLE",
-          });
+        if (!rawBody || !Buffer.isBuffer(rawBody)) {
+          res.status(400).json({ error: "Bad Request", details: "Manca il payload." });
           return;
         }
 
@@ -1347,21 +1498,25 @@ export const speechToTextAgent = onRequest(
         let mimeType = "";
 
         await new Promise<void>((resolve, reject) => {
+          const busboyHeaders = Object.fromEntries(
+            Object.entries(req.headers).map(([k, v]) => [k, Array.isArray(v) ? v.join(',') : v])
+          ) as Record<string, string>;
+
           const busboy = Busboy({
-            headers: req.headers,
+            headers: busboyHeaders,
             limits: {
-              fileSize: 25 * 1024 * 1024,
-              files: 1,
+              fileSize: 25 * 1024 * 1024, 
+              files: 1, 
             },
           });
 
           busboy.on("file", (fieldname, file, info) => {
             if (fieldname !== "file") {
-              file.resume();
+              file.resume(); 
               return;
             }
 
-            filename = info.filename;
+            filename = info.filename.replace(/[^a-zA-Z0-9.\-_]/g, '');
             mimeType = info.mimeType.toLowerCase();
 
             const chunks: Buffer[] = [];
@@ -1371,6 +1526,7 @@ export const speechToTextAgent = onRequest(
             });
 
             file.on("limit", () => {
+              file.resume(); 
               reject(new Error("FILE_TOO_LARGE"));
             });
 
@@ -1380,42 +1536,33 @@ export const speechToTextAgent = onRequest(
           });
 
           busboy.on("finish", resolve);
-          busboy.on("error", reject);
+          busboy.on("error", (err) => reject(err));
 
           busboy.end(rawBody);
         });
 
         // 5. VALIDAZIONE
         if (!fileBuffer || fileBuffer.length === 0) {
-          res.status(400).json({
-            error: "FILE_MISSING",
-            details: "Nessun file audio ricevuto.",
-          });
+          res.status(400).json({ error: "Bad Request", details: "Nessun file audio." });
           return;
         }
 
         if (fileBuffer.length > 25 * 1024 * 1024) {
-          res.status(413).json({
-            error: "FILE_TOO_LARGE",
-          });
+          res.status(413).json({ error: "Payload Too Large" });
           return;
         }
 
-        // 6. FORMATO
-        const extension =
-          filename.split(".").pop()?.toLowerCase() ?? "";
+        // 6. FORMATO 
+        const extension = filename.split(".").pop()?.toLowerCase() ?? "";
+        
+        type AudioEncoding = 'MP3' | 'LINEAR16' | 'OGG_OPUS' | 'WEBM_OPUS' | null;
 
-        const encoding =
-          mimeType === "audio/mpeg" ||
-          mimeType === "audio/mp3" ||
-          extension === "mp3"
+        const encoding: AudioEncoding =
+          mimeType === "audio/mpeg" || mimeType === "audio/mp3" || extension === "mp3"
             ? "MP3"
             : mimeType.includes("wav") || extension === "wav"
               ? "LINEAR16"
-              : mimeType === "audio/ogg" ||
-                  mimeType === "audio/opus" ||
-                  extension === "ogg" ||
-                  extension === "opus"
+              : mimeType === "audio/ogg" || mimeType === "audio/opus" || extension === "ogg" || extension === "opus"
                 ? "OGG_OPUS"
                 : mimeType === "audio/webm" || extension === "webm"
                   ? "WEBM_OPUS"
@@ -1423,21 +1570,24 @@ export const speechToTextAgent = onRequest(
 
         if (!encoding) {
           res.status(400).json({
-            error: "UNSUPPORTED_AUDIO_FORMAT",
-            details: "Formato audio non supportato.",
+            error: "Bad Request",
+            details: "Formato audio non supportato (Richiesti: mp3, wav, ogg, webm).",
           });
           return;
         }
 
         // 7. GOOGLE SPEECH
-        const speechClient = new SpeechClient();
+        if (!speechClientInstance) {
+          speechClientInstance = new SpeechClient();
+        }
 
-        const [response] = await speechClient.recognize({
+        // Risolve implicit any per result, tipizzando l'array restituito
+        const [response] = await speechClientInstance.recognize({
           audio: {
             content: fileBuffer.toString("base64"),
           },
           config: {
-            encoding,
+            encoding: encoding as any, 
             sampleRateHertz: 16000,
             languageCode: "it-IT",
             enableAutomaticPunctuation: true,
@@ -1447,33 +1597,32 @@ export const speechToTextAgent = onRequest(
         // 8. TESTO
         const text =
           response.results
-            ?.map((result) => result.alternatives?.[0]?.transcript ?? "")
+            ?.map((result: any) => result.alternatives?.[0]?.transcript ?? "")
             .filter(Boolean)
             .join(" ")
             .trim() ?? "";
+
+        console.log(`[JURIO-STT] Trascrizione completata per fascicoli UID: ${uid} (bytes: ${fileBuffer.length})`);
 
         res.status(200).json({
           success: true,
           text,
         });
-      } catch (err: unknown) {
-        const message =
-          err instanceof Error ? err.message : String(err);
 
-        console.error("SpeechToText error:", message);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Unknown error";
+        
+        console.error(`[JURIO-STT] SpeechToText error: ${message}`);
 
         if (message === "FILE_TOO_LARGE") {
           res.status(413).json({
-            error: "FILE_TOO_LARGE",
+            error: "Payload Too Large",
             details: "Il file supera il limite di 25 MB.",
           });
           return;
         }
 
-        res.status(500).json({
-          error: "PROCESS_FAILED",
-          details: "Errore durante la trascrizione.",
-        });
+        res.status(500).json({ error: "Internal Server Error" });
       }
     });
   }
@@ -1483,96 +1632,155 @@ export const promptAgent = onRequest(
   { 
     secrets: ["GOOGLE_GENAI_API_KEY", "OPENAI_API_KEY"],
     timeoutSeconds: 300,
-    memory: "1GiB"
+    memory: "1GiB",
   }, 
   async (req, res) => {
     return corsHandlerDomain(req, res, async (): Promise<void> => {
-      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+      // 1. CORS & Metodo
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        await requireAppCheck(req);
-        const uid = await requireUidFromAuthHeader(req);
-        const db = admin.firestore();
-        // Controllo limitazioni/piani se necessario qui...
-        const userSnap = await db.collection("register").doc(uid).get();
-        if (!userSnap.exists) { res.status(404).json({ error: "User not found" }); return; }
-
-        const planId = String(userSnap.data()?.planId ?? "");
-        if (!["prova", "admin", "business", "business_m"].includes(planId)) { 
-          res.status(403).json({ error: "Access denied" }); 
-          return; 
-        }
-
-        const limits = planId === "prova" ? { perMinute: 5, perDay: 20 }
-                     : planId === "business" ? { perMinute: 20, perDay: 200 }
-                     : planId === "business_m" ? { perMinute: 20, perDay: 200 }
-                     : { perMinute: 60, perDay: 10_000 };
-        
-        await Promise.all([
-          consumePerMinuteFeature(uid, "prompting" as any, limits.perMinute),
-          consumeDailyFeature(uid, "prompting" as any, limits.perDay)
-        ]);
-
-        // 1. Ora estraiamo anche il TITLE dal body
-        const { title, objective, notes, fields } = req.body;
-
-        // Validazione aggiornata
-        if (!title || !objective || !fields || !Array.isArray(fields)) {
-          res.status(400).json({ error: "Bad Request: Dati mancanti." });
+        // 2. AUTH E APP CHECK
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-PROMPT] Fallimento AppCheck/Auth per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" }); 
           return;
         }
 
-        // PREPARAZIONE STREAMING (SSE)
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" }); 
+          return; 
+        }
+
+        // 3. CONTROLLO UTENTE E PIANI
+        const userSnap = await db.collection("register").doc(uid).get();
+        if (!userSnap.exists) { 
+          res.status(404).json({ error: "Not Found" }); 
+          return; 
+        }
+
+        const planId = String(userSnap.data()?.planId ?? "");
+        const allowedPlans = new Set(["prova", "admin", "business", "business_m"]);
+
+        if (!allowedPlans.has(planId)) { 
+          res.status(403).json({ error: "Forbidden", details: "Piano non abilitato alla generazione di prompt." }); 
+          return; 
+        }
+
+        // 4. RATE LIMITING TRAMITE FEATURE
+        const limits = planId === "prova" ? { perMinute: 5, perDay: 20 }
+                     : allowedPlans.has(planId) && planId !== "admin" ? { perMinute: 20, perDay: 200 }
+                     : { perMinute: 60, perDay: 10_000 };
+        
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "prompting", limits.perMinute),
+            consumeDailyFeature(uid, "prompting", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 5. SANITIZZAZIONE INPUT (Prevenzione DoS e Storage Abuse)
+        const body = (req.body ?? {}) as PromptAgentRequestBody;
+        
+        // Estrazione sicura con limiti massimi di caratteri
+        const title = typeof body.title === "string" ? body.title.trim().substring(0, 150) : "";
+        const objective = typeof body.objective === "string" ? body.objective.trim().substring(0, 3000) : "";
+        const notes = typeof body.notes === "string" ? body.notes.trim().substring(0, 2000) : "";
+        const fieldsRaw = Array.isArray(body.fields) ? body.fields : [];
+
+        if (!title || !objective || fieldsRaw.length === 0) {
+          res.status(400).json({ error: "Bad Request: Dati mancanti (title, objective o fields)." });
+          return;
+        }
+
+        // Limite al numero di parametri richiesti (Prevenzione Token Exhaustion e DB bloat)
+        if (fieldsRaw.length > 30) {
+          res.status(400).json({ error: "Bad Request: Troppi campi definiti (Max 30)." });
+          return;
+        }
+
+        // Sanitizzazione array dei campi (Ora include il mapping esatto del tuo snapshot Firestore)
+        const safeFields: PromptFieldInput[] = fieldsRaw.map((f: any) => ({
+          name: typeof f?.name === "string" ? f.name.replace(/[^a-zA-Z0-9_ -]/g, '').trim().substring(0, 50) : "Campo_Sconosciuto",
+          type: typeof f?.type === "string" ? f.type.trim().substring(0, 20) : "string",
+          description: typeof f?.description === "string" ? f.description.trim().substring(0, 300) : "",
+          isRequired: typeof f?.isRequired === "boolean" ? f.isRequired : false // Estrazione boolean dal payload
+        }));
+
+        // 6. PREPARAZIONE STREAMING (SSE)
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders(); 
 
-        // Avvio del Flow in modalità stream
+        // 7. ESECUZIONE DEL FLOW IN STREAMING
         const flowStream = promptBuilderFlow.stream({
           objective,
           notes,
-          fields,
+          fields: safeFields,
           userId: uid
         });
 
-        // Inoltro dei Chunk (status) al Frontend in tempo reale
         for await (const chunk of flowStream.stream) {
           res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
         }
 
-        // Risoluzione finale del flow
         const finalOutput = await flowStream.output;
-        const generatedContent = finalOutput.result;
+        // Tipizzazione basata sull'output di promptBuilderFlow
+        const generatedContent = typeof finalOutput.result === "string" ? finalOutput.result : "";
         
-        // ==========================================
-        // 2. SALVATAGGIO IN FIRESTORE
-        // ==========================================
-   
-        const promptRef = await db.collection("register").doc(uid).collection("prompts").add({
-          title,
-          objective,
-          notes: notes || "",
-          fields,
-          content: generatedContent,
-          createdAt: admin.firestore.FieldValue.serverTimestamp()
-        });
-        
-        // 3. Invio risultato finale (aggiungiamo l'ID del doc se al frontend servisse)
-        res.write(`data: ${JSON.stringify({ 
-          result: generatedContent,
-          promptId: promptRef.id
-        })}\n\n`);
+        // 8. SALVATAGGIO IN FIRESTORE (con mapping allineato al tuo snapshot)
+        if (generatedContent.trim()) {
+           const safeContent = generatedContent.trim().substring(0, 20000); // Max 20k chars per Firestore field
+           
+           const promptRef = await db.collection("register").doc(uid).collection("prompts").add({
+             title,
+             objective,
+             notes,
+             fields: safeFields, // Ora questo array mapperà perfettamente lo snapshot che mi hai mostrato
+             content: safeContent,
+             createdAt: FieldValue.serverTimestamp() // Sfrutta il FieldValue per timestamp omogenei
+           });
+           
+           // Invio risultato finale e ID documento creato
+           res.write(`data: ${JSON.stringify({ 
+             result: safeContent,
+             promptId: promptRef.id
+           })}\n\n`);
+        } else {
+           res.write(`data: ${JSON.stringify({ error: { message: "Errore durante la generazione del prompt: output vuoto." } })}\n\n`);
+        }
         
         res.write(`data: [DONE]\n\n`);
         res.end();
 
-      } catch (err: any) {
-        console.error("🔥 ERRORE PROMPT AGENT:", err);
+      } catch (err: unknown) {
+        // 9. ANTI INFORMATION DISCLOSURE IN SSE
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-PROMPT] Errore Prompt Agent per UID ${req.headers.authorization ? "AuthPresent" : "NoAuth"}:`, msg);
+        
+        const clientErrorMessage = "Si è verificato un errore durante la stesura del prompt.";
+
         if (res.headersSent) {
-          res.write(`data: ${JSON.stringify({ error: { message: err.message } })}\n\n`);
+          // Stream aperto, chiudiamola notificando l'errore senza dump stacktrace
+          res.write(`data: ${JSON.stringify({ error: { message: clientErrorMessage } })}\n\n`);
+          res.write(`data: [DONE]\n\n`);
           res.end();
         } else {
-          res.status(500).json({ error: "Process failed", details: err.message });
+          // Stream chiuso, rispondiamo con codice HTTP pulito
+          res.status(500).json({ error: "Internal Server Error" });
         }
       }
     });
@@ -1583,70 +1791,115 @@ export const enhancePromptAgent = onRequest(
   { 
     secrets: ["GOOGLE_GENAI_API_KEY"],
     timeoutSeconds: 60,
-    memory: "512MiB"
+    memory: "512MiB",
   }, 
   async (req, res) => {
     return corsHandlerDomain(req, res, async (): Promise<void> => {
-      // Gestione preflight (OPTIONS) e metodo (POST)
+      // 1. Gestione preflight (OPTIONS) e metodo (POST)
       if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        await requireAppCheck(req);
-        const uid = await requireUidFromAuthHeader(req);
-        const db = admin.firestore();
+        // 2. AUTH E APP CHECK
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-ENHANCE] Fallimento AppCheck/Auth per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
         
-        // Controllo limitazioni/piani
+        // 3. CONTROLLO PIANI UTENTE
         const userSnap = await db.collection("register").doc(uid).get();
         if (!userSnap.exists) { 
-          res.status(404).json({ error: "User not found" }); 
+          res.status(404).json({ error: "Not Found" }); 
           return; 
         }
 
         const planId = String(userSnap.data()?.planId ?? "");
-        if (!["prova", "admin", "business", "business_m"].includes(planId)) { 
-          res.status(403).json({ error: "Access denied" }); 
+        const allowedPlans = new Set(["prova", "admin", "business", "business_m"]);
+
+        if (!allowedPlans.has(planId)) { 
+          res.status(403).json({ error: "Forbidden", details: "Piano non abilitato all'ottimizzazione prompt." }); 
           return; 
         }
 
+        // 4. RATE LIMITING
         const limits = { perMinute: 5, perDay: 20 };
-        // Consumiamo le API, chiamiamo la feature "prompt_enhancer" per distinguerla a DB
-        await Promise.all([
-          consumePerMinuteFeature(uid, "prompt_enhancer" as any, limits.perMinute),
-          consumeDailyFeature(uid, "prompt_enhancer" as any, limits.perDay)
-        ]);
+        
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "prompt_enhancer", limits.perMinute),
+            consumeDailyFeature(uid, "prompt_enhancer", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
 
-        const { prompt, type, history } = req.body;
+        // 5. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as EnhancePromptRequestBody;
+        
+        const promptRaw = typeof body.prompt === "string" ? body.prompt.trim() : "";
+        const typeRaw = typeof body.type === "string" ? body.type.trim() : "";
+        const historyRaw = Array.isArray(body.history) ? body.history : [];
 
-        // Validazione
-        if (!prompt || typeof prompt !== "string") {
+        // Validazione Prompt
+        if (!promptRaw) {
           res.status(400).json({ error: "Bad Request: Prompt mancante o invalido." });
           return;
         }
 
-        if (type !== "chat" && type !== "approfondimento") {
+        // Limite drastico: evitiamo che un utente incolli 100 pagine di PDF nell'enhancer 
+        // e mandi in esaurimento i token Gemini.
+        const safePrompt = promptRaw.substring(0, 3000); 
+
+        // Validazione Tipo
+        if (typeRaw !== "chat" && typeRaw !== "approfondimento") {
           res.status(400).json({ error: "Bad Request: Tipo di ottimizzazione non valido." });
           return;
         }
 
-        // Chiamata al Genkit Flow
+        // Sanitizzazione Cronologia (Prendiamo al max gli ultimi 10 scambi)
+        const safeHistory: EnhancePromptMessage[] = historyRaw
+          .filter((m: any) => m && typeof m.content === "string")
+          .slice(-10) 
+          .map((m: any) => ({
+            role: (m.role === "model" || m.role === "assistant") ? "model" : "user",
+            content: m.content.substring(0, 2000) // Troncamento sicureza per ogni messaggio
+          }));
+
+        // 6. CHIAMATA AL FLOW GENKIT
         const output = await enhancePromptFlow({
-          prompt,
-          type,
-          history
+          prompt: safePrompt,
+          type: typeRaw as "chat" | "approfondimento",
+          history: safeHistory
         });
         
-        // Risposta JSON diretta al Frontend
+        // 7. RISPOSTA JSON AL FRONTEND
         res.status(200).json({ 
-          enhancedPrompt: output.enhancedPrompt 
+          enhancedPrompt: typeof output?.enhancedPrompt === "string" ? output.enhancedPrompt : "" 
         });
 
-      } catch (err: any) {
-        console.error("🔥 ERRORE PROMPT ENHANCER AGENT:", err);
-        // Risposta di errore standard JSON
+      } catch (err: unknown) {
+        // 8. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-ENHANCE] Errore Prompt Enhancer per UID ${req.headers.authorization ? "AuthPresent" : "NoAuth"}:`, msg);
+        
+        // Risposta blindata senza stacktrace e dettagli
         res.status(500).json({ 
-          error: "Process failed", 
-          details: err.message || "Errore sconosciuto" 
+          error: "Internal Server Error"
         });
       }
     });
@@ -1657,67 +1910,101 @@ export const enhancePromptAgent = onRequest(
 // ADMIN TASKS
 // ============================================================================
 
-type ProgressCallback = (message: string, progressData: any) => void;
-
 export const adminMaintenanceTask = onRequest(
-  { timeoutSeconds: 540, memory: "1GiB" }, 
-  (req, res) => {
-    return corsHandlerDomain(req, res, async () => {
+  { 
+    timeoutSeconds: 540, // Max consentito per le funzioni HTTP standard Firebase (9 min)
+    memory: "1GiB",
+  }, 
+  async (req, res) => {
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. CORS e Metodi Permessi
       if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        // --- 1. SICUREZZA: APP CHECK E AUTH HEADER ---
-        await requireAppCheck(req);
-        const uid = await requireUidFromAuthHeader(req);
+        // 2. SICUREZZA: APP CHECK E AUTH HEADER
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-ADMIN] Fallimento Auth/AppCheck Maintenance per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
 
-        // --- 2. VERIFICA RUOLO NEL DATABASE (SOLO ADMIN) ---
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. VERIFICA RUOLO NEL DATABASE (SOLO ADMIN)
         const userSnap = await db.collection("register").doc(uid).get();
         if (!userSnap.exists) { 
-          res.status(404).json({ error: "User not found" }); 
+          res.status(404).json({ error: "Not Found" }); 
           return; 
         }
 
         const planId = String(userSnap.data()?.planId ?? "");
+        // Sicurezza critica: solo l'admin può avviare questo task massivo
         if (planId !== "admin") { 
-          res.status(403).json({ error: "Access denied: Admins only" }); 
+          console.warn(`[JURIO-ADMIN] Tentativo bloccato di avvio task da utente non admin: ${uid}`);
+          res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti." }); 
           return; 
         }
 
-        // --- 3. RATE LIMITING ---
+        // 4. RATE LIMITING PER ADMIN (Protezione Anti-Abuse)
         const limits = { perMinute: 60, perDay: 10_000 };
-        await Promise.all([
-          consumePerMinuteFeature(uid, "admin" as any, limits.perMinute),
-          consumeDailyFeature(uid, "admin" as any, limits.perDay)
-        ]);
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "admin", limits.perMinute),
+            consumeDailyFeature(uid, "admin", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
 
-        // --- 4. PREPARAZIONE SERVER-SENT EVENTS (SSE) ---
+        // 5. PREPARAZIONE SERVER-SENT EVENTS (SSE)
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders(); 
+        // Type assertion per la compatibilità con i framework HTTP nativi
+        if (typeof (res as any).flushHeaders === "function") {
+          (res as any).flushHeaders(); 
+        }
 
+        // Callback SSE Tipizzata e Sicura (Non passa MAI oggetti complessi non-serializzabili)
         const sendSseProgress: ProgressCallback = (msg, data) => {
-          res.write(`data: ${JSON.stringify({ message: msg, ...data })}\n\n`);
+          try {
+            res.write(`data: ${JSON.stringify({ message: msg, ...data })}\n\n`);
+          } catch (e) {
+            console.error(`[JURIO-ADMIN] Impossibile serializzare dati progresso:`, e);
+          }
         };
 
-        const body = req.body ?? {};
+        const body = (req.body ?? {}) as MaintenanceTaskBody;
         
         sendSseProgress("Avvio procedura di manutenzione generale", { status: "started" });
 
-        // --- 5. ESECUZIONE TASK (PRIMA FASE: AGGIORNAMENTO) ---
+        // 6. ESECUZIONE TASK (PRIMA FASE: AGGIORNAMENTO)
         sendSseProgress("Avvio aggiornamento fonti e metadati in corso...", { status: "updating" });
+        
         const [resultFonte, resultMetadata] = await Promise.all([
           runUpdateFonte(body, sendSseProgress),
           runUpdateMetadata(sendSseProgress)
         ]);
+        
         sendSseProgress("Aggiornamento completato. Avvio verifica duplicati...", { status: "updating_completed" });
 
-        // --- 6. RILEVAMENTO ED ELIMINAZIONE DUPLICATI DAL DB (SECONDA FASE: PULIZIA) ---
-        // Richiamiamo la nuova funzione dedicata che usa il BulkWriter
+        // 7. RILEVAMENTO ED ELIMINAZIONE DUPLICATI DAL DB (SECONDA FASE: PULIZIA)
         const resultCleanup = await runCleanupDuplicates(sendSseProgress);
 
-        // --- 7. CHIUSURA STREAM ---
+        // 8. CHIUSURA STREAM CON STATISTICHE
         sendSseProgress("Tutte le operazioni completate con successo", { 
           status: "completed", 
           finalStats: { 
@@ -1730,22 +2017,26 @@ export const adminMaintenanceTask = onRequest(
         res.write(`data: [DONE]\n\n`);
         res.end();
 
-      } catch (err: any) {
-        console.error("Errore Task Admin:", err);
-        
+      } catch (err: unknown) {
+        // 9. GESTIONE ERRORI E ANTI-LEAKAGE
         const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-ADMIN] Errore critico nel Task Maintenance (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+        
         const isRateLimitError = msg === "rate_limited" || msg === "quota_exceeded";
         
         if (res.headersSent) {
+          // SSE già aperto
           const errorMessage = isRateLimitError 
             ? "Limite di richieste superato." 
             : "Si è verificato un errore interno durante l'elaborazione.";
             
           res.write(`data: ${JSON.stringify({ error: errorMessage })}\n\n`);
+          res.write(`data: [DONE]\n\n`);
           res.end();
         } else {
+          // Header non ancora inviati
           const status = isRateLimitError ? 429 : 500;
-          res.status(status).json({ error: isRateLimitError ? msg : "Errore interno." });
+          res.status(status).json({ error: isRateLimitError ? "Too Many Requests" : "Internal Server Error" });
         }
       }
     });
@@ -1753,51 +2044,95 @@ export const adminMaintenanceTask = onRequest(
 );
 
 export const adminMergeCategoryTask = onRequest(
-  { timeoutSeconds: 300, memory: "2GiB" }, 
-  (req, res) => {
-    return corsHandlerDomain(req, res, async () => {
+  { 
+    timeoutSeconds: 300, 
+    memory: "2GiB",
+  }, 
+  async (req, res) => {
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
       if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        await requireAppCheck(req);
-        const uid = await requireUidFromAuthHeader(req);
-
-        const userSnap = await db.collection("register").doc(uid).get();
-        if (!userSnap.exists || String(userSnap.data()?.planId ?? "") !== "admin") { 
-          res.status(403).json({ error: "Access denied" }); return; 
-        }
-
-        const { vecchiaCategoria, nuovaCategoria } = req.body;
-        
-        // Validation: Ora solo vecchiaCategoria è strettamente obbligatoria
-        if (!vecchiaCategoria) {
-          res.status(400).json({ error: "Il parametro 'vecchiaCategoria' è obbligatorio." });
+        // 1. APP CHECK E AUTH
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-MERGE] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
           return;
         }
 
-        const vecchiaOriginale = vecchiaCategoria.trim();
-        const nuovaOriginale = (nuovaCategoria || "").trim();
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 2. VERIFICA PRIVILEGI ADMIN
+        const userSnap = await db.collection("register").doc(uid).get();
+        if (!userSnap.exists) { 
+          res.status(404).json({ error: "Not Found" }); 
+          return; 
+        }
+
+        if (String(userSnap.data()?.planId ?? "") !== "admin") { 
+          console.warn(`[JURIO-MERGE] Tentativo bloccato da utente non admin: ${uid}`);
+          res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti." }); 
+          return; 
+        }
+
+        // 3. RATE LIMITING (Anti-Abuse su operazioni di Bulk)
+        const limits = { perMinute: 30, perDay: 1000 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "admin", limits.perMinute),
+            consumeDailyFeature(uid, "admin", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as MergeCategoryRequestBody;
+        
+        // Assicuriamo che i parametri siano stringhe prima di trimmare
+        const inputVecchia = typeof body.vecchiaCategoria === "string" ? body.vecchiaCategoria : "";
+        const inputNuova = typeof body.nuovaCategoria === "string" ? body.nuovaCategoria : "";
+
+        if (!inputVecchia.trim()) {
+          res.status(400).json({ error: "Bad Request: 'vecchiaCategoria' obbligatoria." });
+          return;
+        }
+
+        // Prevenzione saturazione e iniezioni di stringhe kilometriche come categorie
+        const vecchiaOriginale = inputVecchia.trim().substring(0, 100);
+        const nuovaOriginale = inputNuova.trim().substring(0, 100);
         const isSostituzione = nuovaOriginale.length > 0;
         
         const bulkWriter = db.bulkWriter();
         let updatedCount = 0;
 
-        // 1. Troviamo SOLO le sentenze che contengono la vecchia categoria
+        // 5. QUERY BULK SENTENZE
         const sentenzeQuery = db.collection("sentences").where("sottocategoria", "array-contains", vecchiaOriginale);
         const snap = await sentenzeQuery.get();
 
         for (const d of snap.docs) {
           const data = d.data();
-          let arrayAttuale = Array.isArray(data.sottocategoria) ? data.sottocategoria : [];
+          const arrayAttuale = Array.isArray(data.sottocategoria) ? data.sottocategoria : [];
           
           // Rimuoviamo la vecchia categoria
-          let nuovoArray = arrayAttuale.filter(c => typeof c === 'string' && c.trim() !== vecchiaOriginale);
+          const nuovoArray = arrayAttuale.filter(c => typeof c === 'string' && c.trim() !== vecchiaOriginale);
           
-          // Se stiamo unificando, aggiungiamo la nuova categoria
+          // Se stiamo unificando, aggiungiamo la nuova categoria senza duplicare
           if (isSostituzione) {
-            // Controllo case-insensitive locale per non creare duplicati nello stesso array
-            const giaPresente = nuovoArray.some(c => c.trim() === nuovaOriginale);
+            const giaPresente = nuovoArray.some(c => typeof c === 'string' && c.trim() === nuovaOriginale);
             if (!giaPresente) {
               nuovoArray.push(nuovaOriginale);
             }
@@ -1807,44 +2142,44 @@ export const adminMergeCategoryTask = onRequest(
           updatedCount++;
         }
 
-        // 2. Aggiornamento Sottoraccolta Taxonomy
+        // 6. AGGIORNAMENTO TAXONOMY (Sottoraccolte)
         const taxSubcatsRef = db.collection('meta').doc('taxonomy').collection('sottocategorie');
         
-        // A) Eliminiamo SEMPRE la vecchia categoria
+        // A) Eliminiamo SEMPRE la vecchia categoria dalla taxonomy
         const checkVecchia = await taxSubcatsRef.where('nome', '==', vecchiaOriginale).limit(1).get();
         if (!checkVecchia.empty) {
           checkVecchia.docs.forEach(doc => bulkWriter.delete(doc.ref));
         }
 
-        // B) Gestiamo la nuova categoria (solo se c'è stata una sostituzione)
+        // B) Gestiamo la nuova categoria (solo se c'è stata una sostituzione E se abbiamo aggiornato sentenze)
         if (isSostituzione && updatedCount > 0) {
           const checkNuova = await taxSubcatsRef.where('nome', '==', nuovaOriginale).limit(1).get();
           if (checkNuova.empty) {
-            // Se non esiste ancora, la creiamo inserendo il numero di sentenze appena modificate
             bulkWriter.set(taxSubcatsRef.doc(), { nome: nuovaOriginale, sentences: updatedCount });
           } else {
-            // Se esiste già, incrementiamo il suo contatore storico
             bulkWriter.update(checkNuova.docs[0].ref, { sentences: FieldValue.increment(updatedCount) });
           }
         }
 
-        // 3. Pulizia UI: Rimuove la vecchia dall'array delle 'superflue' nel doc principale
+        // 7. PULIZIA UI E CLOSE WRITER
         bulkWriter.update(db.collection('meta').doc('taxonomy'), {
-          sottocategorie_superflue: FieldValue.arrayRemove(vecchiaCategoria)
+          sottocategorie_superflue: FieldValue.arrayRemove(vecchiaOriginale)
         });
 
         await bulkWriter.close();
         
-        // 4. Risposta dinamica
+        // 8. RISPOSTA SICURA
         const azioneMsg = isSostituzione ? "Sostituzione e unificazione" : "Eliminazione";
         res.status(200).json({ 
           success: true, 
           message: `${azioneMsg} completata. Modificate ${updatedCount} sentenze.` 
         });
 
-      } catch (err: any) {
-        console.error("Errore Merge/Delete Categoria:", err);
-        res.status(500).json({ error: err.message || "Internal error" });
+      } catch (err: unknown) {
+        // 9. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-MERGE] Errore critico nel task Merge (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+        res.status(500).json({ error: "Internal Server Error" });
       }
     });
   }
@@ -1853,55 +2188,103 @@ export const adminMergeCategoryTask = onRequest(
 export const reasoningAdmin = onRequest(
   { 
     secrets: ["DEEPSEEK_API_KEY", "OPENAI_API_KEY"],
-    timeoutSeconds: 300, // Ridotto, non fa più gli embedding
-    memory: "1GiB" 
+    timeoutSeconds: 300, 
+    memory: "1GiB",
   },
   async (req, res) => {
-    corsHandlerDomain(req, res, async () => {
-      if (req.method === "OPTIONS") return res.status(204).end();
-      if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+    // Nota: Ho aggiunto "return" esplicito per assicurare che la funzione risolva la promise
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        await requireAppCheck(req);
-        const uid = await requireUidFromAuthHeader(req);
-        const body: any = req.body ?? {};
-        const question = typeof body?.question === "string" ? body.question.trim() : "";
+        // 1. APP CHECK E AUTH
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-REASONING-ADMIN] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
 
-        if (!question) return res.status(400).json({ error: "Invalid 'question'" });
-        if (question.length > MAX_INPUT_CHARS) return res.status(413).json({ error: "Question too large" });
+        if (!uid) { 
+          res.status(401).json({ error: "Unauthorized" }); 
+          return; 
+        }
 
+        // 2. SANITIZZAZIONE INPUT
+        const body = (req.body ?? {}) as ReasoningAdminRequestBody;
+        const question = typeof body.question === "string" ? body.question.trim() : "";
+
+        if (!question) { 
+          res.status(400).json({ error: "Bad Request: Invalid 'question'" }); 
+          return; 
+        }
+        if (question.length > MAX_INPUT_CHARS) { 
+          res.status(413).json({ error: "Payload Too Large: Question exceeds character limit" }); 
+          return; 
+        }
+
+        // 3. VERIFICA PIANO E LOGICHE DI BUSINESS
         const snap = await db.collection("register").doc(uid).get();
-        if (!snap.exists) return res.status(404).json({ error: "User not found" });
+        if (!snap.exists) { 
+          res.status(404).json({ error: "Not Found" }); 
+          return; 
+        }
 
         const planId = String(snap.data()?.planId ?? "");
-        if (!["prova", "admin", "business", "business_m"].includes(planId)) return res.status(403).json({ error: "Access denied" });
+        const allowedPlans = new Set(["prova", "admin", "business", "business_m"]);
+
+        if (!allowedPlans.has(planId)) { 
+          res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti." }); 
+          return; 
+        }
         
+        // Logica di business: blocco preventivo oscuramento (solo se admin)
         const normalizedText = question.replace(/\s+/g, ' ').toLowerCase();
         if (
           planId === "admin" &&
           (normalizedText.includes("la sentenza richiesta è in fase di valutazione per oscuramento") ||
            normalizedText.includes("la sentenza richiesta è in fase di oscuramento"))
         ) {
-          // Restituisce un errore HTTP specifico invece di un 200 OK
-          return res.status(403).json({ 
+          res.status(403).json({ 
             error: "oscuramento_in_corso", 
             details: "La sentenza è in fase di valutazione per oscuramento e non può essere elaborata." 
           });
+          return;
         }
         
+        // 4. RATE LIMITING
         const limits = planId === "prova" ? { perMinute: 5, perDay: 20 }
-                     : planId === "business" ? { perMinute: 20, perDay: 200 }
+                     : allowedPlans.has(planId) && planId !== "admin" ? { perMinute: 20, perDay: 200 }
                      : { perMinute: 120, perDay: 10_000 };
 
-        await consumePerMinuteFeature(uid, "reasoning" as any, limits.perMinute);
-        await consumeDailyFeature(uid, "reasoning" as any, limits.perDay);
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "reasoning", limits.perMinute),
+            consumeDailyFeature(uid, "reasoning", limits.perDay)
+          ]);
+        } catch (rateError: unknown) {
+          const msg = rateError instanceof Error ? rateError.message : String(rateError);
+          if (msg === "rate_limited" || msg === "quota_exceeded") {
+            res.status(429).json({ error: "Too Many Requests" });
+            return;
+          }
+          throw rateError;
+        }
 
-        let parsedJson: any = null;
+        let parsedJson: Record<string, unknown> | null = null;
         let providerUsed = "";
         let modelUsed = "";
 
+        // 5. CHIAMATE LLM MULTI-PROVIDER
         // TENTATIVO 1: DEEPSEEK
         try {
+          // Prevenzione crash se la chiave manca a runtime
+          if (!process.env.DEEPSEEK_API_KEY) throw new Error("DEEPSEEK_API_KEY mancante");
+
           const dsClient = new OpenAI({
             apiKey: process.env.DEEPSEEK_API_KEY,
             baseURL: "https://api.deepseek.com",
@@ -1917,111 +2300,208 @@ export const reasoningAdmin = onRequest(
             temperature: 0.1,
           });
 
-          const cleanJson = (dsResponse.choices[0].message.content ?? "").replace(/```json/g, "").replace(/```/g, "").trim();
+          // Parsing sicuro del JSON
+          const rawContent = dsResponse.choices[0]?.message?.content ?? "";
+          const cleanJson = rawContent.replace(/```json/gi, "").replace(/```/g, "").trim();
+          
           parsedJson = JSON.parse(cleanJson);
           providerUsed = "deepseek";
           modelUsed = "deepseek-chat";
 
         } catch (dsError) {
-          console.warn("DeepSeek failed. Falling back to OpenAI.", dsError);
+          console.warn(`[JURIO-REASONING-ADMIN] DeepSeek fallito per UID ${uid}. Fallback su OpenAI. Errore log:`, dsError);
           
           // TENTATIVO 2: OPENAI FALLBACK
+          if (!process.env.OPENAI_API_KEY) {
+            console.error("[JURIO-REASONING-ADMIN] OPENAI_API_KEY mancante. Impossibile eseguire fallback.");
+            res.status(500).json({ error: "Internal Server Error" });
+            return;
+          }
+
           const oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-          const oaResponse = await oaClient.responses.create({
-            model: "gpt-4o-mini", // Aggiornato a un modello esistente (gpt-5-mini non esiste ancora!)
-            instructions: "Agisci come un esperto redattore giuridico. Restituisci esclusivamente JSON valido.",
-            input: `${PROMPT_MASSIMAZIONE}\n\nTESTO DA ANALIZZARE:\n${question}`,
+          
+          // Fix dell'SDK OpenAI v4 (chat.completions invece di responses.create)
+          const oaResponse = await oaClient.chat.completions.create({
+            model: "gpt-4o-mini", 
+            messages: [
+              { role: "system", content: "Agisci come un esperto redattore giuridico. Restituisci esclusivamente JSON valido." },
+              { role: "user", content: `${PROMPT_MASSIMAZIONE}\n\nTESTO DA ANALIZZARE:\n${question}` },
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.1,
           });
 
-          parsedJson = JSON.parse((oaResponse.output_text ?? "").trim());
+          const rawContent = oaResponse.choices[0]?.message?.content ?? "";
+          const cleanJson = rawContent.replace(/```json/gi, "").replace(/```/g, "").trim();
+
+          // Proviamo il parse, se fallisce anche questo l'errore sarà catturato dal catch esterno
+          parsedJson = JSON.parse(cleanJson);
           providerUsed = "openai_fallback";
           modelUsed = "gpt-4o-mini";
         }
 
-        // Risponde SUBITO al client. Niente più embedding qui.
-        return res.status(200).json({
+        // 6. RISPOSTA SICURA
+        if (!parsedJson) {
+           res.status(500).json({ error: "Failed to generate valid JSON structure." });
+           return;
+        }
+
+        const responsePayload: ReasoningAdminResponse = {
           message: parsedJson,
           status: "SENT_BY_BOT",
           model: modelUsed, 
           provider: providerUsed
-        });
+        };
 
-      } catch (err: any) {
+        res.status(200).json(responsePayload);
+
+      } catch (err: unknown) {
+        // 7. ANTI INFORMATION DISCLOSURE
         const msg = err instanceof Error ? err.message : "Internal error";
-        if (err?.code === "rate_limited" || msg === "rate_limited") return res.status(429).json({ error: "rate_limited" });
-        if (err?.code === "quota_exceeded" || msg === "quota_exceeded") return res.status(429).json({ error: "quota_exceeded" });
-        const isAuth = msg.toLowerCase().includes("auth") || msg.toLowerCase().includes("bearer");
-        return res.status(isAuth ? 401 : 500).json({ error: "Process failed", details: msg });
+        console.error(`[JURIO-REASONING-ADMIN] Errore imprevisto (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+        
+        // Se c'è stato un problema di parsing del JSON in entrambi gli LLM
+        if (msg.includes("Unexpected token") || msg.includes("JSON")) {
+           res.status(500).json({ error: "Generazione testo invalida. Riprova." });
+           return;
+        }
+        res.status(500).json({ error: "Internal Server Error" });
       }
     });
   }
 );
 
 export const adminUploadManualContentTask = onRequest(
-  { timeoutSeconds: 30, memory: "512MiB" }, 
-  (req, res) => {
-    return corsHandlerDomain(req, res, async () => {
-      // Gestione CORS e Metodo
+  { 
+    timeoutSeconds: 30, 
+    memory: "512MiB",
+  }, 
+  async (req, res) => {
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. GESTIONE PREFLIGHT E METODO
       if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        // 1. Sicurezza e Autenticazione
-        await requireAppCheck(req);
-        const uid = await requireUidFromAuthHeader(req);
+        // 2. SICUREZZA: APP CHECK E AUTHENTICAZIONE
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-MANUAL] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
 
-        // Controllo privilegi Admin
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. CONTROLLO PRIVILEGI (SOLO ADMIN)
         const userSnap = await db.collection("register").doc(uid).get();
-        if (!userSnap.exists || String(userSnap.data()?.planId ?? "") !== "admin") { 
-          res.status(403).json({ error: "Access denied" }); return; 
+        if (!userSnap.exists) { 
+          res.status(404).json({ error: "Not Found" }); 
+          return; 
         }
-
-        // 2. Estrazione e Validazione Payload
-        const { id, text, links, images } = req.body;
         
-        if (!id || typeof id !== "string" || !id.trim()) {
-          res.status(400).json({ error: "Il parametro 'id' è obbligatorio e deve essere una stringa." });
+        if (String(userSnap.data()?.planId ?? "") !== "admin") { 
+          console.warn(`[JURIO-MANUAL] Tentativo bloccato da utente non admin: ${uid}`);
+          res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti." }); 
+          return; 
+        }
+
+        // 4. RATE LIMITING (Anti-Abuse)
+        const limits = { perMinute: 30, perDay: 1000 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "admin", limits.perMinute),
+            consumeDailyFeature(uid, "admin", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 5. ESTRAZIONE E SANITIZZAZIONE PAYLOAD
+        const body = (req.body ?? {}) as ManualContentRequestBody;
+        
+        // Estrazione type-safe
+        const idRaw = typeof body.id === "string" ? body.id : "";
+        const textRaw = typeof body.text === "string" ? body.text : "";
+        const imagesRaw = typeof body.images === "string" ? body.images : "";
+        const linksRaw = Array.isArray(body.links) ? body.links : [];
+
+        // Validazione formale
+        if (!idRaw.trim()) {
+          res.status(400).json({ error: "Bad Request: Il parametro 'id' è obbligatorio." });
           return;
         }
-        if (!text || typeof text !== "string" || !text.trim()) {
-          res.status(400).json({ error: "Il parametro 'text' è obbligatorio." });
+        if (!textRaw.trim()) {
+          res.status(400).json({ error: "Bad Request: Il parametro 'text' è obbligatorio." });
           return;
         }
-        if (!Array.isArray(links) || links.length === 0) {
-          res.status(400).json({ error: "Il parametro 'links' deve essere un array con almeno un link." });
+        if (linksRaw.length === 0) {
+          res.status(400).json({ error: "Bad Request: Il parametro 'links' deve contenere almeno un link." });
           return;
         }
-        if (!images || typeof images !== "string" || !images.trim()) {
-          res.status(400).json({ error: "Il parametro 'images' è obbligatorio." });
+        if (!imagesRaw.trim()) {
+          res.status(400).json({ error: "Bad Request: Il parametro 'images' è obbligatorio." });
           return;
         }
 
-        const cleanId = id.trim();
+        // Troncamento di sicurezza (Data Minimization e prevenzione Storage Abuse)
+        const cleanId = idRaw.replace(/[^a-zA-Z0-9_-]/g, "").trim().substring(0, 100);
+        
+        // Limiti logici di grandezza
+        const cleanText = textRaw.trim().substring(0, 30000);
+        const cleanImages = imagesRaw.trim().substring(0, 1000); 
+        
+        // Mappatura e pulizia dei link (max 50 link per prevenire DB Bloat)
+        const cleanLinks = linksRaw
+          .filter(l => typeof l === "string" && l.trim().length > 0)
+          .slice(0, 50)
+          .map(l => (l as string).trim().substring(0, 500));
 
-        // 3. Scrittura su Firestore (Collection 'manual')
+        if (!cleanId) {
+          res.status(400).json({ error: "Bad Request: Formato 'id' non valido." });
+          return;
+        }
+
+        // 6. SCRITTURA SU FIRESTORE
         const docRef = db.collection("manual").doc(cleanId);
         
+        // Usiamo set con merge: true per mantenere (se lo si desidera) campi esistenti non sovrascritti
+        // oppure set() base se l'admin deve rimpiazzare sempre in blocco. 
+        // Lascio .set(...) normale come da tuo codice originale.
         await docRef.set({
-          text: text.trim(),
-          // Assicuriamoci che l'array contenga solo stringhe pulite (sicurezza aggiuntiva backend)
-          links: links.map(l => typeof l === 'string' ? l.trim() : String(l)),
-          images: images.trim(),
-          
-          // Metadati utili per l'amministrazione
+          text: cleanText,
+          links: cleanLinks,
+          images: cleanImages,
+          // Gestione Timestamp per audit log
           createdAt: FieldValue.serverTimestamp(),
           updatedAt: FieldValue.serverTimestamp(),
           authorId: uid 
         });
 
-        // 4. Risposta al Client
+        // 7. RISPOSTA AL CLIENT
         res.status(200).json({ 
           success: true, 
           message: `Documento '${cleanId}' salvato correttamente.` 
         });
 
-      } catch (err: any) {
-        console.error("Errore Upload Contenuto Manuale:", err);
-        res.status(500).json({ error: err.message || "Internal error" });
+      } catch (err: unknown) {
+        // 8. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-MANUAL] Errore Upload (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+        
+        // Risposta blindata al client
+        res.status(500).json({ error: "Internal Server Error" });
       }
     });
   }
@@ -2030,41 +2510,99 @@ export const adminUploadManualContentTask = onRequest(
 export const submitFeedback = onRequest(
   { 
     timeoutSeconds: 60,
-    memory: "512MiB" 
+    memory: "512MiB",
   },
   async (req, res) => {
-    corsHandlerDomain(req, res, async () => {
-      if (req.method === "OPTIONS") return res.status(204).end();
-      if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+    // Nota: Aggiunto return per assicurare la risoluzione della promise
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. CORS E METODO
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        await requireAppCheck(req);
-        const uid = await requireUidFromAuthHeader(req);
-        
-        const body: any = req.body ?? {};
-        const isThumbsUp = typeof body?.isThumbsUp === "boolean" ? body.isThumbsUp : null;
-        const notes = typeof body?.notes === "string" ? body.notes.trim() : "";
-        
-        // Qui facciamo solo una pulizia base degli ID arrivati
-        const rawIds: any[] = Array.isArray(body?.ids) ? body.ids : [];
-        const ids = rawIds.map(id => String(id || "").trim()).filter(id => id.length > 0);
+        // 2. AUTH E APP CHECK
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-FEEDBACK] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
 
-        if (isThumbsUp === null) return res.status(400).json({ error: "Missing or invalid 'isThumbsUp'" });
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. RATE LIMITING (Protezione da Spam Database)
+        const limits = { perMinute: 15, perDay: 100 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "feedback", limits.perMinute),
+            consumeDailyFeature(uid, "feedback", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
+        
+        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as SubmitFeedbackRequestBody;
+        
+        const isThumbsUp = typeof body.isThumbsUp === "boolean" ? body.isThumbsUp : null;
+        if (isThumbsUp === null) {
+           res.status(400).json({ error: "Bad Request: Missing or invalid 'isThumbsUp'" });
+           return;
+        }
+
+        // Troncamento delle note per evitare storage abuse nei reclami
+        const rawNotes = typeof body.notes === "string" ? body.notes.trim() : "";
+        const MAX_SAFE_NOTES = typeof MAX_NOTES_CHARS === "number" ? MAX_NOTES_CHARS : 2000;
+        
+        if (rawNotes.length > MAX_SAFE_NOTES) {
+           res.status(413).json({ error: "Payload Too Large: Notes length exceeds maximum limit" });
+           return;
+        }
+        // Evitiamo injection di codice base (pulizia molto light)
+        const notes = rawNotes.substring(0, MAX_SAFE_NOTES); 
+        
+        // Pulizia degli ID in arrivo
+        const rawIds = Array.isArray(body.ids) ? body.ids : [];
+        
+        // Protezione DB: max 30 ID processabili in una singola richiesta
+        if (rawIds.length > 30) {
+           res.status(400).json({ error: "Bad Request: Too many IDs provided in a single request (Max 30)." });
+           return;
+        }
+
+        // Sanitizziamo gli ID (max 300 caratteri in caso siano URL completi)
+        const ids = rawIds
+          .filter(id => typeof id === "string")
+          .map(id => (id as string).trim().substring(0, 300))
+          .filter(id => id.length > 0);
         
         if (ids.length === 0) {
-          return res.status(200).json({ success: true, message: "Nessun ID valido fornito." });
+          res.status(200).json({ success: true, message: "Nessun ID valido fornito." });
+          return;
         }
 
         // ==========================================
-        // 3. LOGICA FEEDBACK POSITIVO
+        // 5. LOGICA FEEDBACK POSITIVO
         // ==========================================
         if (isThumbsUp) {
-          // CRITICO: Qui scartiamo i link web! Firestore crasherebbe e non possiamo 
-          // aggiornare documenti che non risiedono nel nostro DB.
-          const validDbIds = ids.filter(id => !id.includes("/"));
+          // Scartiamo i link web esterni. Accettiamo solo ID alfanumerici standard di Firestore.
+          // Filtriamo via anche path traverse tipo "../" 
+          const validDbIds = ids.filter(id => !id.includes("/") && /^[a-zA-Z0-9_-]+$/.test(id));
           
           if (validDbIds.length === 0) {
-             return res.status(200).json({ success: true, message: "Feedback ignorato: erano solo link esterni." });
+             res.status(200).json({ success: true, message: "Feedback ignorato: IDs non validi o link esterni." });
+             return;
           }
 
           const refs = validDbIds.map(id => db.collection("sentences").doc(id));
@@ -2079,98 +2617,142 @@ export const submitFeedback = onRequest(
             }
           });
 
-          if (updatedCount > 0) await batch.commit();
+          if (updatedCount > 0) {
+             await batch.commit();
+          }
 
-          return res.status(200).json({ success: true, message: `Feedback positivo per ${updatedCount} doc.` });
+          res.status(200).json({ success: true, message: `Feedback positivo registrato per ${updatedCount} documenti.` });
+          return;
         } 
         
         // ==========================================
-        // 4. LOGICA FEEDBACK NEGATIVO
+        // 6. LOGICA FEEDBACK NEGATIVO (RECLAMO)
         // ==========================================
         else {
-          if (notes.length > MAX_NOTES_CHARS) {
-            return res.status(413).json({ error: "Notes length exceeds maximum limit" });
-          }
-
-          // Qui INCLUDIAMO anche i link web! Così nel pannello di amministrazione
-          // vedi esattamente quale URL ha fatto arrabbiare l'utente.
+          // Salviamo tutto, inclusi gli URL web lunghi passati nell'array ids
           await db.collection("complaints").add({
             uid: uid,
-            urls: ids, // Passiamo tutto, URL compresi
+            urls: ids, 
             reason: notes,    
             status: "pending",  
             createdAt: FieldValue.serverTimestamp()
           });
 
-          return res.status(200).json({ success: true, message: "Reclamo registrato con successo." });
+          res.status(200).json({ success: true, message: "Reclamo registrato con successo." });
+          return;
         }
 
-      } catch (err: any) {
+      } catch (err: unknown) {
+        // 7. ANTI INFORMATION DISCLOSURE
         const msg = err instanceof Error ? err.message : "Internal error";
-        console.error("Error in submitFeedback:", msg);
+        console.error(`[JURIO-FEEDBACK] Errore (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
         
-        const isAuth = msg.toLowerCase().includes("auth") || msg.toLowerCase().includes("bearer");
-        if (isAuth) {
-          return res.status(401).json({ error: "Unauthorized", details: msg });
-        }
-        
-        // Fallback silenzioso per non rompere la UI utente
-        return res.status(200).json({ success: false, message: "Feedback scartato per anomalia." });
+        // Fallback silenzioso per non rompere la UI utente, ma rimuoviamo `details: msg` per sicurezza
+        res.status(200).json({ success: false, message: "Impossibile registrare il feedback in questo momento." });
       }
     });
   }
 );
 
 export const sendAdminNotification = onRequest(
-  { timeoutSeconds: 300, memory: "1GiB" },
-  (req, res) => {
-    return corsHandlerDomain(req, res, async () => {
+  { 
+    timeoutSeconds: 300, 
+    memory: "1GiB",
+  },
+  async (req, res) => {
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. CORS E METODO
       if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        // --- 1. SICUREZZA: APP CHECK E AUTH HEADER ---
-        await requireAppCheck(req);
-        const adminUid = await requireUidFromAuthHeader(req);
+        // 2. SICUREZZA: APP CHECK E AUTH HEADER
+        let adminUid: string;
+        try {
+          await requireAppCheck(req);
+          adminUid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-NOTIF] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
 
-        // --- 2. VERIFICA RUOLO NEL DATABASE (SOLO ADMIN) ---
+        if (!adminUid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. VERIFICA RUOLO NEL DATABASE (SOLO ADMIN)
         const userSnap = await db.collection("register").doc(adminUid).get();
-        if (!userSnap.exists || String(userSnap.data()?.planId ?? "") !== "admin") { 
-          res.status(403).json({ error: "Access denied: Admins only" }); 
+        if (!userSnap.exists) { 
+          res.status(404).json({ error: "Not Found" }); 
           return; 
         }
 
-        // --- 3. RATE LIMITING ---
-        const limits = { perMinute: 20, perDay: 500 };
-        await Promise.all([
-          consumePerMinuteFeature(adminUid, "admin_notif" as any, limits.perMinute),
-          consumeDailyFeature(adminUid, "admin_notif" as any, limits.perDay)
-        ]);
+        if (String(userSnap.data()?.planId ?? "") !== "admin") { 
+          console.warn(`[JURIO-NOTIF] Tentativo bloccato da utente non admin: ${adminUid}`);
+          res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti" }); 
+          return; 
+        }
 
-        const {
-          targetMode,
-          consentFilter,
-          uid,
-          sendInApp,
-          sendEmail,
-          title,
-          message,
-          emailHtml,
-          link,
-          type
-        } = req.body;
+        // 4. RATE LIMITING (Anti-Abuse Admin)
+        const limits = { perMinute: 20, perDay: 500 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(adminUid, "admin_notif", limits.perMinute),
+            consumeDailyFeature(adminUid, "admin_notif", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 5. SANITIZZAZIONE E TYPE-SAFETY DEL PAYLOAD
+        const body = (req.body ?? {}) as AdminNotificationRequestBody;
+
+        const targetMode = typeof body.targetMode === "string" ? body.targetMode.trim() : "";
+        const consentFilter = typeof body.consentFilter === "string" ? body.consentFilter.trim() : "";
+        const targetUid = typeof body.uid === "string" ? body.uid.trim().substring(0, 100) : "";
+        
+        const sendInApp = typeof body.sendInApp === "boolean" ? body.sendInApp : false;
+        const sendEmail = typeof body.sendEmail === "boolean" ? body.sendEmail : false;
+
+        // Limiti rigidi sui contenuti per evitare Memory Exhaustion
+        const title = typeof body.title === "string" ? body.title.trim().substring(0, 150) : "";
+        const message = typeof body.message === "string" ? body.message.trim().substring(0, 2000) : "";
+        const emailHtml = typeof body.emailHtml === "string" ? body.emailHtml.trim().substring(0, 100000) : "";
+        const link = typeof body.link === "string" ? body.link.trim().substring(0, 500) : "";
+        const type = typeof body.type === "string" ? body.type.trim().substring(0, 50) : "info";
+
+        // Validazioni base
+        if (!targetMode || !title) {
+          res.status(400).json({ error: "Bad Request: Parametri 'targetMode' o 'title' mancanti." });
+          return;
+        }
+
+        if (!sendInApp && !sendEmail) {
+          res.status(400).json({ error: "Bad Request: Nessun canale di invio selezionato." });
+          return;
+        }
 
         let targetEmails: string[] = [];
         let targetUids: string[] = [];
         let useGlobalBroadcast = false;
 
-        // --- 4. IDENTIFICAZIONE DESTINATARI (COLLECTION "users") ---
+        // 6. IDENTIFICAZIONE DESTINATARI (COLLECTION "users")
         if (targetMode === "single") {
-          if (!uid) throw new Error("UID mancante per target singolo");
-          targetUids.push(uid);
+          if (!targetUid) {
+            res.status(400).json({ error: "Bad Request: UID mancante per target singolo." });
+            return;
+          }
+          targetUids.push(targetUid);
           
           if (sendEmail) {
-            const uDoc = await db.collection("users").doc(uid).get();
+            const uDoc = await db.collection("users").doc(targetUid).get();
             if (uDoc.exists && uDoc.data()?.email) {
               targetEmails.push(uDoc.data()!.email);
             }
@@ -2190,28 +2772,28 @@ export const sendAdminNotification = onRequest(
           usersSnap.forEach(doc => {
             const data = doc.data();
             targetUids.push(doc.id);
-            if (sendEmail && data.email) {
+            if (sendEmail && data.email && typeof data.email === "string") {
               targetEmails.push(data.email);
             }
           });
         }
 
-        // --- 5. ESECUZIONE SCRITTURE ---
+        // 7. ESECUZIONE SCRITTURE E INVIO CHUNK
         
         // CASO SPECIALE: Ottimizzazione Broadcast Globale per In-App
         if (sendInApp && useGlobalBroadcast && targetMode === "broadcast") {
           await db.collection("broadcast").add({
             title,
             message,
-            type: type || "info",
-            link: link || "",
+            type,
+            link,
             createdAt: FieldValue.serverTimestamp(),
           });
           // Svuotiamo gli UID per evitare di creare N documenti inutili in "notification"
           targetUids = []; 
         }
 
-        // Gestione a CHUNK (max 300 per non superare il limite di 500 batch ops in dispatchMailAndNotification)
+        // Gestione a CHUNK (max 300 per non superare il limite di 500 batch ops)
         const CHUNK_SIZE = 300; 
         const maxLen = Math.max(targetEmails.length, targetUids.length);
 
@@ -2219,41 +2801,41 @@ export const sendAdminNotification = onRequest(
           const chunkEmails = targetEmails.slice(i, i + CHUNK_SIZE);
           const chunkUids = targetUids.slice(i, i + CHUNK_SIZE);
 
-          // Prepariamo l'array di notifiche per il metodo custom
           const notifications = sendInApp && chunkUids.length > 0
             ? chunkUids.map(u => ({
                 uid: u,
                 title,
                 message,
-                type: type || "info",
-                link: link || "",
+                type: type as NotificationType,
+                link,
               }))
             : undefined;
 
-          // Se è una sola email la mettiamo in "to", altrimenti in "bcc"
           const toAddress = sendEmail && chunkEmails.length === 1 ? chunkEmails[0] : undefined;
           const bccAddresses = sendEmail && chunkEmails.length > 1 ? chunkEmails : undefined;
 
-          // Richiamiamo il tuo metodo
           await dispatchMailAndNotification({
             to: toAddress,
             bcc: bccAddresses,
             subject: title,
-            html: sendEmail ? emailHtml : undefined,
+            html: sendEmail ? emailHtml : "", 
             notifications: notifications,
           });
         }
 
+        // 8. RISPOSTA SICURA
         res.status(200).json({ 
           success: true, 
           message: `Elaborazione completata. Destinatari identificati: ${Math.max(targetEmails.length, targetUids.length)}.` 
         });
 
-      } catch (err: any) {
-        console.error("Errore Invio Notifiche Admin:", err);
+      } catch (err: unknown) {
+        // 9. ANTI INFORMATION DISCLOSURE
         const msg = err instanceof Error ? err.message : "Errore interno";
-        const status = (msg === "rate_limited" || msg === "quota_exceeded") ? 429 : 500;
-        res.status(status).json({ success: false, error: msg });
+        console.error(`[JURIO-NOTIF] Errore invio notifiche admin (AdminUID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+        
+        // Restituisce un 500 pulito senza svelare query fallite o limitazioni SMTP esterne
+        res.status(500).json({ success: false, error: "Internal Server Error" });
       }
     });
   }
@@ -2266,48 +2848,114 @@ export const sendAdminNotification = onRequest(
 export const generateEmbedding = onRequest(
   { 
     secrets: ["OPENAI_API_KEY"],
-    timeoutSeconds: 60, // Bastano 60 secondi, l'embedding è molto veloce
-    memory: "512MiB"    // Richiede pochissima memoria rispetto al LLM
+    timeoutSeconds: 60,
+    memory: "512MiB",
   },
   async (req, res) => {
-    corsHandlerDomain(req, res, async () => {
-      if (req.method === "OPTIONS") return res.status(204).end();
-      if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+    // Restituzione esplicita della Promise per evitare timeout anomali di Express
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. CORS E METODO
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        await requireAppCheck(req); 
-        const uid = await requireUidFromAuthHeader(req);
-        const snap = await db.collection("register").doc(uid).get();
-        if (!snap.exists) return res.status(404).json({ error: "User not found" });
-        // 2. Validazione Input
-        const body: any = req.body ?? {};
-        const textToEmbed = body?.text;
-        if (typeof textToEmbed !== "string" || !textToEmbed.trim()) {
-          return res.status(400).json({ error: "Invalid or missing 'text' field" });
+        // 2. SICUREZZA: APP CHECK E AUTH
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-EMBEDDING] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
         }
-        // 3. Chiamata a OpenAI per l'embedding
+
+        if (!uid) { 
+          res.status(401).json({ error: "Unauthorized" }); 
+          return; 
+        }
+
+        // 3. VERIFICA UTENTE NEL DB
+        const snap = await db.collection("register").doc(uid).get();
+        if (!snap.exists) { 
+          res.status(404).json({ error: "Not Found" }); 
+          return; 
+        }
+
+        const planId = String(snap.data()?.planId ?? "");
+        const allowedPlans = new Set(["prova", "admin", "business", "business_m"]);
+
+        if (!allowedPlans.has(planId)) {
+          res.status(403).json({ error: "Forbidden", details: "Piano non abilitato." });
+          return;
+        }
+
+        // 4. RATE LIMITING (Protezione da loop di generazione massiva vettori)
+        const limits = { perMinute: 30, perDay: 500 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "embedding", limits.perMinute),
+            consumeDailyFeature(uid, "embedding", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 5. VALIDAZIONE E SANITIZZAZIONE INPUT
+        const body = (req.body ?? {}) as GenerateEmbeddingRequestBody;
+        const textRaw = typeof body.text === "string" ? body.text : "";
+
+        if (!textRaw.trim()) {
+          res.status(400).json({ error: "Bad Request: Invalid or missing 'text' field" });
+          return;
+        }
+
+        // Troncamento di sicurezza per prevenire token exhaustion / DoS sull'API OpenAI
+        const textToEmbed = textRaw.trim().substring(0, 10000); // Max 10k caratteri per embedding
+
+        // 6. CHIAMATA A OPENAI PER L'EMBEDDING
         const oaApiKey = process.env.OPENAI_API_KEY;
-        if (!oaApiKey) throw new Error("Missing OPENAI_API_KEY");
+        if (!oaApiKey) {
+          console.error("[JURIO-EMBEDDING] OPENAI_API_KEY non configurata nei secrets.");
+          res.status(500).json({ error: "Internal Server Error" });
+          return;
+        }
+
         const oaClient = new OpenAI({ apiKey: oaApiKey });
         const embeddingResponse = await oaClient.embeddings.create({
           model: "text-embedding-3-small", 
-          input: textToEmbed.trim(),
-          dimensions: 1536 // Manteniamo la coerenza con i 1536 per Firestore
+          input: textToEmbed,
+          dimensions: 1536 // Manteniamo la coerenza con i 1536 attuali per Firestore
         });
-        const vectorArray = embeddingResponse.data[0].embedding;
-        // 4. Ritorno del risultato (JSON format)
-        return res.status(200).json({
+
+        const vectorArray = embeddingResponse.data[0]?.embedding;
+        
+        if (!Array.isArray(vectorArray) || vectorArray.length === 0) {
+           res.status(500).json({ error: "Failed to generate embedding vector." });
+           return;
+        }
+
+        // 7. RISPOSTA AL CLIENT
+        const responsePayload: GenerateEmbeddingResponse = {
           vector: vectorArray,
           status: "SUCCESS"
-        });
-      } catch (err: any) {
-        console.error("Admin Embedding Error:", err);
+        };
+
+        res.status(200).json(responsePayload);
+
+      } catch (err: unknown) {
+        // 8. ANTI INFORMATION DISCLOSURE
         const msg = err instanceof Error ? err.message : "Internal error";
-        const lower = msg.toLowerCase();
-        const isAuth = lower.includes("auth") || lower.includes("bearer") || lower.includes("token");
-        return res.status(isAuth ? 401 : 500).json({ 
-          error: "Process failed", 
-          details: msg 
+        console.error(`[JURIO-EMBEDDING] Errore critico (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+        
+        // Rimuoviamo `details: msg` per evitare di esporre chiavi scadute o errori di OpenAI al client
+        res.status(500).json({ 
+          error: "Internal Server Error" 
         });
       }
     });
@@ -2318,22 +2966,24 @@ export const extractDocumentText = onRequest(
   { 
     timeoutSeconds: 120,
     memory: "1GiB",
-    invoker: "public"
   }, 
   async (req, res) => {
     return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. CORS E METODO
       if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        const { storagePath } = req.body;
+        // 2. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as ExtractDocumentRequestBody;
+        const storagePathRaw = typeof body.storagePath === "string" ? body.storagePath.trim() : "";
         
-        if (!storagePath || typeof storagePath !== 'string') {
-          res.status(400).json({ error: "Percorso del file (storagePath) mancante o invalido." });
+        if (!storagePathRaw) {
+          res.status(400).json({ error: "Bad Request: Percorso del file (storagePath) mancante o invalido." });
           return;
         }
 
-        // --- 1. LOGICA AUTH CONDIVISA ---
+        // 3. LOGICA AUTH CONDIVISA (OAuth token o Bearer standard)
         let uid: string = "";
         const authHeader = req.headers.authorization || "";
         const token = authHeader.replace("Bearer ", "").trim();
@@ -2346,7 +2996,7 @@ export const extractDocumentText = onRequest(
           ]);
 
           if (tokenSnap.exists) {
-            uid = tokenSnap.data()?.uid;
+            uid = typeof tokenSnap.data()?.uid === "string" ? tokenSnap.data()!.uid : "";
             isOAuthRequest = true;
           } else if (directUserSnap.exists) {
             uid = token;
@@ -2355,8 +3005,14 @@ export const extractDocumentText = onRequest(
         }
 
         if (!isOAuthRequest || !uid) {
-          await requireAppCheck(req);
-          uid = await requireUidFromAuthHeader(req);
+          try {
+            await requireAppCheck(req);
+            uid = await requireUidFromAuthHeader(req);
+          } catch (authErr) {
+            console.warn(`[JURIO-EXTRACT] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+            res.status(401).json({ error: "Unauthorized" });
+            return;
+          }
         }
 
         if (!uid) {
@@ -2364,26 +3020,37 @@ export const extractDocumentText = onRequest(
           return;
         }
 
-        // --- 2. VERIFICA PIANO E LIMITI (Come vectorSearchJurio) ---
+        // 4. PATH TRAVERSAL PROTECTION (Sicurezza Storage)
+        const safeStoragePath = storagePathRaw.replace(/\.\./g, "");
+        
+        if (!safeStoragePath.includes(uid) && !safeStoragePath.startsWith("public/")) {
+           console.warn(`[JURIO-EXTRACT] Tentativo di accesso non autorizzato al file '${safeStoragePath}' da parte dell'utente ${uid}`);
+           res.status(403).json({ error: "Forbidden: Accesso al file non consentito." });
+           return;
+        }
+
+        // 5. VERIFICA PIANO E LIMITI
         const limits = { perMinute: 20, perDay: 200 };
         let userSnap;
         
         try {
-          // Scala le quote usando la stessa feature "research" e ottiene i dati utente
           const results = await Promise.all([
             db.collection("register").doc(uid).get(),
-            consumePerMinuteFeature(uid, "research" as any, limits.perMinute),
-            consumeDailyFeature(uid, "research" as any, limits.perDay)
+            consumePerMinuteFeature(uid, "research", limits.perMinute),
+            consumeDailyFeature(uid, "research", limits.perDay)
           ]);
           userSnap = results[0];
-        } catch (limitErr: any) {
-          console.warn(`[JURIO-EXTRACT] Limite raggiunto per UID: ${uid}`);
-          res.status(429).json({ error: "Hai raggiunto il limite massimo di richieste." });
-          return;
+        } catch (limitErr: unknown) {
+          const msg = limitErr instanceof Error ? limitErr.message : String(limitErr);
+          if (msg === "rate_limited" || msg === "quota_exceeded") {
+             res.status(429).json({ error: "Too Many Requests", details: "Hai raggiunto il limite massimo di richieste." });
+             return;
+          }
+          throw limitErr;
         }
 
         if (!userSnap.exists) {
-          res.status(404).json({ error: "User not found" });
+          res.status(404).json({ error: "Not Found" });
           return;
         }
 
@@ -2394,45 +3061,59 @@ export const extractDocumentText = onRequest(
 
         if (!allowedPlans.has(planId)) {
           res.status(403).json({ 
-            error: "Access denied", 
+            error: "Forbidden", 
             message: "È richiesto un piano attivo per utilizzare l'estrazione." 
           });
           return;
         }
-        // --- FINE VERIFICA PIANO E LIMITI ---
 
-        // --- 3. ESTRAZIONE DOCUMENTO ---
+        // 6. ESTRAZIONE DOCUMENTO DA STORAGE
         const admin = getAdmin();
         const bucket = admin.storage().bucket();
-        const file = bucket.file(storagePath);
+        const file = bucket.file(safeStoragePath);
 
         const [exists] = await file.exists();
         if (!exists) {
-          res.status(404).json({ error: "Il file non esiste nello storage." });
+          res.status(404).json({ error: "Not Found: Il file non esiste nello storage." });
           return;
         }
 
-        const [buffer] = await file.download();
-        const pdfData = await pdfExtract(buffer);
-        let cleanedText = pdfData.text || "";
+        // Limite di sicurezza sulla dimensione del file scaricabile (es. max 30MB)
+        const [metadata] = await file.getMetadata();
+        const fileSize = Number(metadata.size || 0);
+        
+        if (fileSize > 30 * 1024 * 1024) {
+           res.status(413).json({ error: "Payload Too Large: Il file supera la dimensione massima consentita di 30MB." });
+           return;
+        }
 
+        const [buffer] = await file.download();
+        
+        // Estrazione testo tramite pdf-extraction
+        const pdfData = await pdfExtract(buffer);
+        let cleanedText = typeof pdfData?.text === "string" ? pdfData.text : "";
+
+        // Pulizia testuale standardizzata
         cleanedText = cleanedText
           .replace(/([^\n])\n(?=[^\n])/g, "$1 ")
           .replace(/[ \t]+/g, " ")
           .replace(/\n\s*\n\s*\n/g, "\n\n")
           .trim();
 
+        // 7. RISPOSTA AL CLIENT
         res.status(200).json({ 
           success: true,
           text: cleanedText,
-          pages: pdfData.numpages 
+          pages: typeof pdfData?.numpages === "number" ? pdfData.numpages : 1
         });
 
-      } catch (error: any) {
-        console.error("🔥 ERRORE EXTRACT DOCUMENT TEXT:", error);
+      } catch (err: unknown) {
+        // 8. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-EXTRACT] Errore estrazione testo (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+        
         res.status(500).json({ 
-          error: "Si è verificato un errore durante l'estrazione del testo.",
-          details: error instanceof Error ? error.message : "Errore sconosciuto"
+          error: "Internal Server Error"
         });
       }
     });
@@ -2519,12 +3200,11 @@ export const generateStaticStatsJson = onDocumentCreated("metadocument/{docId}",
   // 4. Scriviamo il file su Firebase Cloud Storage
   try {
     const storage = getAdminStorage();
-    const bucket = storage.bucket(); // Usa il bucket predefinito (es. jurio-it.appspot.com)
+    const bucket = storage.bucket();
     const file = bucket.file("dataConfig.json");
     await file.save(JSON.stringify(configJson, null, 2), {
       contentType: "application/json",
       metadata: {
-        // Diciamo al browser di tenere in cache il file al massimo per un'ora
         cacheControl: "public, max-age=3600", 
       }
     });
@@ -2583,190 +3263,339 @@ export const monthlyUsageStatsCron = onSchedule(
 // SUBSCRIPTIONS AND PAYMENTS
 // ============================================================================
 
-export const getRegister = onRequest(async (req, res) => {
-  corsHandlerDomain(req, res, async () => {
-    if (req.method === "OPTIONS") return res.status(204).end();
-    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
-
-    try {
-      // 1) verifica utente loggato e AppCheck
-      await requireAppCheck(req);
-      const uid = await requireUidFromAuthHeader(req);
-
-      // --- INIZIO NUOVI CONTROLLI SICUREZZA TELEFONO ---
-      
-      // A. Ottieni i dati reali dell'utente da Firebase Auth
-      const userRecord = await getAdminAuth().getUser(uid);
-      
-      if (!userRecord.phoneNumber) {
-        return res.status(403).json({ 
-          error: "Operazione negata: Nessun numero di telefono verificato associato a questo account." 
-        });
-      }
-
-      // B. (Opzionale ma super consigliato) Verifica anti-farming
-      // Controlla se il numero è già presente nel DB per scongiurare che 
-      // qualcuno elimini l'account e lo ricrei per avere infinite prove gratuite.
-      const existingPhoneUsers = await db.collection("users")
-        .where("phoneNumber", "==", userRecord.phoneNumber)
-        .where("__name__", "!=", uid) // Cerca tutti tranne l'utente corrente
-        .limit(1)
-        .get();
-
-      if (!existingPhoneUsers.empty) {
-        return res.status(403).json({ 
-          error: "Questo numero di telefono ha già usufruito di una prova gratuita in passato." 
-        });
-      }
-      
-      // --- FINE NUOVI CONTROLLI ---
-
-      const ref = db.collection("register").doc(uid);
-      
-      // 2) crea/legge in modo atomico (NO side-effects qui dentro)
-      const out = await db.runTransaction(async (tx) => {
-        const snap = await tx.get(ref);
-        if (snap.exists) {
-          const data = snap.data() ?? {};
-          return {
-            created: false,
-            uid,
-            start: data.start ?? null,
-            expireSec: typeof data.expireSec === "number" ? data.expireSec : null,
-          };
-        }
-        
-        const start = Timestamp.now();
-        const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
-        const expire = Timestamp.fromMillis(start.toMillis() + SEVEN_DAYS_MS);
-        const expireSec = Math.floor(expire.toMillis() / 1000);
-        
-        // 1) crea register/{uid}
-        tx.set(
-          ref,
-          { uid, start, expire, expireSec, planId: "prova" },
-          { merge: true }
-        );
-
-        // 2) aggiorna users/{uid}.status = "prova"
-        const userRef = db.collection("users").doc(uid);
-        tx.set(userRef, { status: "prova" }, { merge: true });
-
-        return { created: true, uid, start, expireSec };
-      });
-
-      // Esegui i task asincroni solo se la prova è stata effettivamente creata ora
-      if (out.created) {
-        void enqueueWelcomeEmail({ uid });
-        void enqueueTrialEmail({ uid });
-      }
-
-      // Task downgrade: schedula solo quando appena creato
-      if (out.created && typeof out.expireSec === "number") {
-        await scheduleDowngradeTask({
-          projectId: "jurio-it",
-          location: "europe-west1",
-          queue: "subscription-expire",
-          targetUrl: "https://europe-west1-jurio-it.cloudfunctions.net/tasksDowngrade",
-          serviceAccountEmail: "130993418358-compute@developer.gserviceaccount.com",
-          uid,
-          expireSec: out.expireSec,
-        });
-      }
-
-      return res.status(200).json(out);
-      
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Unauthorized";
-      const isAuth =
-        String(msg).toLowerCase().includes("bearer") ||
-        String(msg).toLowerCase().includes("token");
-      return res.status(isAuth ? 401 : 500).json({ error: msg });
-    }
-  });
-});
-
-export const getPrice = onRequest(async (req, res) => {
-  corsHandlerDomain(req, res, async () => {
-    if (req.method === "OPTIONS") {
-      res.status(204).end();
-      return;
-    }
-
-    if (req.method !== "POST") {
-      res.status(405).send("Method Not Allowed");
-      return;
-    }
-
-    try {
-      await requireAppCheck(req);
-      const { id } = req.body;
-
-      if (!id || typeof id !== "string") {
-        res.status(400).json({ error: "Missing or invalid 'id'" });
-        return;
-      }
-
-      const planId = id.toLowerCase(); // sicurezza extra
-
-      const snap = await db.collection("plans").doc(planId).get();
-
-      if (!snap.exists) {
-        res.status(404).json({ error: "Plan not found" });
-        return;
-      }
-
-      const data = snap.data() as {
-        price: number;
-        currency?: string;
-      };
-
-      if (typeof data.price !== "number") {
-        res.status(500).json({ error: "Invalid price format in DB" });
-        return;
-      }
-
-      res.status(200).json({
-        id: planId,
-        price: data.price,
-        currency: data.currency ?? "EUR",
-      });
-    } catch (err) {
-      console.error("getPrice error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-});
-
-export const payWithStripeCreateCheckoutSession = onRequest(
-  { invoker: "public", secrets: [STRIPE_SECRET_KEY] },
+export const getRegister = onRequest(
+  { 
+    secrets: ["PROJECT_ID", "TASK_SERVICE_ACCOUNT"],
+    timeoutSeconds: 60,
+    memory: "512MiB",
+  },
   async (req, res) => {
-    corsHandlerDomain(req, res, async () => {
-      if (req.method === "OPTIONS") return res.status(204).end();
-      if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+    // Restituzione esplicita della Promise per evitare timeout anomali
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        await requireAppCheck(req);
-        const stripe = getStripe();
-        const uid = await requireUidFromAuthHeader(req);
+        // 1. SICUREZZA: APP CHECK E AUTH
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-REGISTER] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
 
-        const planId = normalizePlanId(req.body?.id);
-        if (!planId) return res.status(400).json({ error: "Missing/invalid 'id' (planId)" });
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
 
+        // 2. RATE LIMITING (Prevenzione DoS e abusi di registrazione)
+        const limits = { perMinute: 5, perDay: 20 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "register", limits.perMinute),
+            consumeDailyFeature(uid, "register", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 3. CONTROLLI DI SICUREZZA TELEFONO (Anti-Farming)
+        const userRecord = await getAdminAuth().getUser(uid);
+        
+        if (!userRecord.phoneNumber) {
+          res.status(403).json({ 
+            error: "Forbidden",
+            details: "Operazione negata: Nessun numero di telefono verificato associato a questo account." 
+          });
+          return;
+        }
+
+        // Verifica anti-farming cross-account sullo stesso numero di telefono
+        const existingPhoneUsers = await db.collection("users")
+          .where("phoneNumber", "==", userRecord.phoneNumber)
+          .where("__name__", "!=", uid) 
+          .limit(1)
+          .get();
+
+        if (!existingPhoneUsers.empty) {
+          res.status(403).json({ 
+            error: "Forbidden",
+            details: "Questo numero di telefono ha già usufruito di una prova gratuita in passato." 
+          });
+          return;
+        }
+
+        // 4. CREAZIONE / LETTURA ATOMICA (TRANSAZIONE)
+        const ref = db.collection("register").doc(uid);
+        
+        const out = await db.runTransaction(async (tx) => {
+          const snap = await tx.get(ref);
+          if (snap.exists) {
+            const data = snap.data() ?? {};
+            return {
+              created: false,
+              uid,
+              start: data.start ?? null,
+              expireSec: typeof data.expireSec === "number" ? data.expireSec : null,
+            };
+          }
+          
+          const start = Timestamp.now();
+          const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+          const expire = Timestamp.fromMillis(start.toMillis() + SEVEN_DAYS_MS);
+          const expireSec = Math.floor(expire.toMillis() / 1000);
+          
+          // A) Crea register/{uid}
+          tx.set(
+            ref,
+            { uid, start, expire, expireSec, planId: "prova" },
+            { merge: true }
+          );
+
+          // B) Aggiorna users/{uid}.status = "prova"
+          const userRef = db.collection("users").doc(uid);
+          tx.set(userRef, { status: "prova" }, { merge: true });
+
+          return { created: true, uid, start, expireSec };
+        }) as GetRegisterResponse;
+
+        // 5. TASK ASINCRONI POST-CREAZIONE (EMAIL)
+        if (out.created) {
+          // Esecuzione non bloccante con catch isolato per non fallire la risposta HTTP
+          Promise.allSettled([
+            enqueueWelcomeEmail({ uid }),
+            enqueueTrialEmail({ uid })
+          ]).catch(emailErr => {
+            console.error(`[JURIO-REGISTER] Errore nell'accodamento email per UID ${uid}:`, emailErr);
+          });
+        }
+
+        // 6. PIANIFICAZIONE TASK DOWNGRADE (Cloud Tasks)
+        if (out.created && typeof out.expireSec === "number") {
+          const currentProjectId = process.env.PROJECT_ID || "jurio-it";
+          const taskServiceAccount = process.env.TASK_SERVICE_ACCOUNT || "130993418358-compute@developer.gserviceaccount.com";
+          const dynamicTargetUrl = `https://europe-west1-${currentProjectId}.cloudfunctions.net/tasksDowngrade`;
+
+          try {
+            await scheduleDowngradeTask({
+              projectId: currentProjectId,
+              location: "europe-west1",
+              queue: "subscription-expire",
+              targetUrl: dynamicTargetUrl,
+              serviceAccountEmail: taskServiceAccount,
+              uid,
+              expireSec: out.expireSec,
+            });
+          } catch (taskErr) {
+            // Logghiamo l'errore del task ma non blocchiamo l'onboarding dell'utente
+            console.error(`[JURIO-REGISTER] Impossibile pianificare il task di downgrade per UID ${uid}:`, taskErr);
+          }
+        }
+
+        res.status(200).json(out);
+        return;
+        
+      } catch (err: unknown) {
+        // 7. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-REGISTER] Errore critico in getRegister (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+        
+        const lower = msg.toLowerCase();
+        const isAuth = lower.includes("bearer") || lower.includes("token") || lower.includes("auth");
+        
+        if (isAuth) {
+           res.status(401).json({ error: "Unauthorized" });
+           return;
+        }
+
+        // Risposta blindata senza svelare dettagli interni di Firebase Auth o Cloud Tasks
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
+      }
+    });
+  }
+);
+
+export const getPrice = onRequest(
+  {
+    timeoutSeconds: 30,
+    memory: "512MiB",
+  },
+  async (req, res) => {
+    // Restituzione esplicita della Promise per evitare timeout di Express
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. CORS E METODO
+      if (req.method === "OPTIONS") { 
+        res.status(204).end(); 
+        return; 
+      }
+      if (req.method !== "POST") { 
+        res.status(405).json({ error: "Method Not Allowed" }); 
+        return; 
+      }
+
+      try {
+        // 2. SICUREZZA: APP CHECK (Protezione da client non autorizzati / scraper esterni)
+        try {
+          await requireAppCheck(req);
+        } catch (appCheckError) {
+          console.warn(`[JURIO-PRICE] Fallimento AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as GetPriceRequestBody;
+        const rawId = typeof body.id === "string" ? body.id : "";
+
+        if (!rawId.trim()) {
+          res.status(400).json({ error: "Bad Request: Missing or invalid 'id'" });
+          return;
+        }
+
+        // Sanitizzazione rigorosa dell'ID del piano per prevenire injection nel path di Firestore
+        const planId = rawId.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "").substring(0, 50);
+
+        if (!planId) {
+          res.status(400).json({ error: "Bad Request: Invalid plan ID format" });
+          return;
+        }
+
+        // 4. LETTURA DA FIRESTORE (Collection 'plans')
         const snap = await db.collection("plans").doc(planId).get();
-        if (!snap.exists) return res.status(404).json({ error: "Plan not found" });
+
+        if (!snap.exists) {
+          res.status(404).json({ error: "Not Found: Plan not found" });
+          return;
+        }
+
+        const data = snap.data() as {
+          price?: unknown;
+          currency?: unknown;
+        };
+
+        const price = typeof data?.price === "number" ? data.price : null;
+        if (price === null) {
+          console.error(`[JURIO-PRICE] Formato prezzo non valido nel DB per il piano: ${planId}`);
+          res.status(500).json({ error: "Internal Server Error" });
+          return;
+        }
+
+        const currency = typeof data?.currency === "string" && data.currency.trim() 
+          ? data.currency.trim().toUpperCase().substring(0, 3) 
+          : "EUR";
+
+        // 5. RISPOSTA AL CLIENT
+        const responsePayload: GetPriceResponse = {
+          id: planId,
+          price,
+          currency,
+        };
+
+        res.status(200).json(responsePayload);
+        return;
+
+      } catch (err: unknown) {
+        // 6. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-PRICE] Errore critico nel recupero prezzo:`, msg);
+        
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
+      }
+    });
+  }
+);
+
+export const payWithStripeCreateCheckoutSession = onRequest(
+  { 
+    invoker: "public", 
+    secrets: [STRIPE_SECRET_KEY],
+    timeoutSeconds: 60,
+    memory: "512MiB",
+  },
+  async (req, res) => {
+    // Restituzione esplicita della Promise per evitare timeout anomali di Express
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
+
+      try {
+        // 1. SICUREZZA: APP CHECK E AUTH
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-STRIPE] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 2. RATE LIMITING (Prevenzione DoS / Generazione massiva sessioni Stripe)
+        const limits = { perMinute: 10, perDay: 50 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "stripe_checkout", limits.perMinute),
+            consumeDailyFeature(uid, "stripe_checkout", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 3. VALIDAZIONE INPUT E NORMALIZZAZIONE PLAN ID
+        const body = (req.body ?? {}) as CheckoutSessionRequestBody;
+        const rawId = typeof body.id === "string" ? body.id : "";
+        
+        const planId = normalizePlanId(rawId);
+        if (!planId) {
+          res.status(400).json({ error: "Bad Request: Missing/invalid 'id' (planId)" });
+          return;
+        }
+
+        // 4. RECUPERO PIANO DA FIRESTORE
+        const snap = await db.collection("plans").doc(planId).get();
+        if (!snap.exists) {
+          res.status(404).json({ error: "Not Found: Plan not found" });
+          return;
+        }
 
         const plan = snap.data() as PlanDoc;
         const currency = String(plan.currency ?? "EUR").toLowerCase();
 
         if (!plan.stripePriceId || typeof plan.stripePriceId !== "string") {
-          return res.status(500).json({ error: "Missing stripePriceId in plans/{planId}" });
+          console.error(`[JURIO-STRIPE] stripePriceId mancante nel documento piano: ${planId}`);
+          res.status(500).json({ error: "Internal Server Error" });
+          return;
         }
 
-        // Il tuo codice originale cercava stripeCustomerId in 'users'
+        const stripe = getStripe();
+
+        // 5. GESTIONE CUSTOMER STRIPE (Associato a users/{uid})
         const userRef = db.collection("users").doc(uid);
         const userSnap = await userRef.get();
-        let customerId = userSnap.get("stripeCustomerId") as string | undefined;
+        let customerId = typeof userSnap.get("stripeCustomerId") === "string" 
+          ? userSnap.get("stripeCustomerId") 
+          : undefined;
 
         if (!customerId) {
           const customer = await stripe.customers.create({ metadata: { uid } });
@@ -2776,7 +3605,8 @@ export const payWithStripeCreateCheckoutSession = onRequest(
 
         const appUrl = "https://jurio.it";
 
-        const sessionConfig: any = {
+        // Configurazione della sessione Stripe (Tipizzata in modo sicuro)
+        const sessionConfig: Record<string, unknown> = {
           mode: "payment",
           customer: customerId,
           line_items: [{ price: plan.stripePriceId, quantity: 1 }],
@@ -2786,7 +3616,7 @@ export const payWithStripeCreateCheckoutSession = onRequest(
         };
 
         // -------------------------------------------------------------
-        // LETTURA COUPON DA REGISTER PER STRIPE (USIAMO L'ID)
+        // LOGICA COUPON DA REGISTER
         // -------------------------------------------------------------
         const registerSnap = await db.collection("register").doc(uid).get();
         let appliedStripeCoupon = false;
@@ -2794,19 +3624,21 @@ export const payWithStripeCreateCheckoutSession = onRequest(
         if (registerSnap.exists) {
           const coupon = registerSnap.get("coupon");
           
-          if (coupon && coupon.id) {
+          if (coupon && typeof coupon === "object" && coupon.id) {
             let isValid = true;
             if (coupon.expire) {
-              const expireDate = typeof coupon.expire.toDate === 'function' ? coupon.expire.toDate() : new Date(coupon.expire);
+              const expireDate = typeof coupon.expire.toDate === 'function' 
+                ? coupon.expire.toDate() 
+                : new Date(coupon.expire);
               if (expireDate < new Date()) isValid = false;
             }
 
             if (isValid) {
-              // Stripe differenzia "coupon" (regola base) e "promotion_code" (codice riscattabile)
-              if (String(coupon.id).startsWith("promo_")) {
-                sessionConfig.discounts = [{ promotion_code: coupon.id }];
+              const couponIdStr = String(coupon.id);
+              if (couponIdStr.startsWith("promo_")) {
+                sessionConfig.discounts = [{ promotion_code: couponIdStr }];
               } else {
-                sessionConfig.discounts = [{ coupon: coupon.id }];
+                sessionConfig.discounts = [{ coupon: couponIdStr }];
               }
               appliedStripeCoupon = true;
             }
@@ -2814,12 +3646,14 @@ export const payWithStripeCreateCheckoutSession = onRequest(
         }
 
         if (!appliedStripeCoupon) {
-          sessionConfig.allow_promotion_codes = true; // Fallback se non ci sono sconti
+          sessionConfig.allow_promotion_codes = true;
         }
         // -------------------------------------------------------------
 
-        const session = await stripe.checkout.sessions.create(sessionConfig);
+        // 6. CREAZIONE CHECKOUT SESSION SU STRIPE
+        const session = await stripe.checkout.sessions.create(sessionConfig as any);
 
+        // 7. REGISTRAZIONE SESSIONE SU FIRESTORE
         await db.collection("stripeSessions").doc(session.id).set({
           uid,
           planId,
@@ -2830,90 +3664,180 @@ export const payWithStripeCreateCheckoutSession = onRequest(
           customerId,
         });
 
-        return res.status(200).json({ url: session.url, sessionId: session.id });
-      } catch (err) {
-        console.error("payWithStripeCreateCheckoutSession error:", err);
+        // 8. RISPOSTA AL CLIENT
+        res.status(200).json({ 
+          url: session.url, 
+          sessionId: session.id 
+        });
+        return;
+
+      } catch (err: unknown) {
+        // 9. ANTI INFORMATION DISCLOSURE
         const msg = err instanceof Error ? err.message : "Internal error";
-        return res.status(msg.toLowerCase().includes("unauthorized") ? 401 : 500).json({ error: msg });
+        console.error(`[JURIO-STRIPE] Errore in payWithStripeCreateCheckoutSession (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+        
+        const lowerMsg = msg.toLowerCase();
+        const isAuth = lowerMsg.includes("unauthorized") || lowerMsg.includes("bearer") || lowerMsg.includes("token");
+        
+        if (isAuth) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
       }
     });
   }
 );
 
 export const stripeWebhook = onRequest(
-  { invoker: "public", secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET] },
+  { 
+    invoker: "public", 
+    secrets: [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, "PROJECT_ID", "TASK_SERVICE_ACCOUNT"],
+    timeoutSeconds: 60,
+    memory: "512MiB",
+  },
   async (req, res): Promise<void> => {
-    if (req.method === "OPTIONS") { res.status(204).end(); return; }
+    // 1. GESTIONE PREFLIGHT
+    if (req.method === "OPTIONS") { 
+      res.status(204).end(); 
+      return; 
+    }
+
+    if (req.method !== "POST") {
+      res.status(405).json({ error: "Method Not Allowed" });
+      return;
+    }
 
     try {
       const stripe = getStripe();
       const webhookSecret = getWebhookSecret();
+      
+      // 2. VERIFICA FIRMA CRITTOGRAFICA STRIPE (Protezione da spoofing e replay attack)
       const sig = req.headers["stripe-signature"];
-      if (!sig || typeof sig !== "string") { res.status(400).send("Missing stripe-signature"); return; }
+      if (!sig || typeof sig !== "string") { 
+        res.status(400).json({ error: "Missing stripe-signature" }); 
+        return; 
+      }
+
+      const rawBody = (req as any).rawBody;
+      if (!rawBody) {
+        res.status(400).json({ error: "Missing rawBody for webhook verification" });
+        return;
+      }
 
       let event: Stripe.Event;
-      try { event = stripe.webhooks.constructEvent(req.rawBody, sig, webhookSecret); } 
-      catch (err) { res.status(400).send("Invalid signature"); return; }
+      try { 
+        event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret); 
+      } catch (err: unknown) {
+        const errMessage = err instanceof Error ? err.message : "Invalid signature";
+        console.warn(`[JURIO-WEBHOOK] Fallimento verifica firma Stripe: ${errMessage}`);
+        res.status(400).json({ error: "Invalid signature" }); 
+        return; 
+      }
 
+      // 3. IDEMPOTENZA (Prevenzione elaborazione duplicati di Stripe)
       const eventRef = db.collection("stripeEvents").doc(event.id);
       const already = await eventRef.get();
-      if (already.exists) { res.status(200).json({ received: true, already: true }); return; }
+      if (already.exists) { 
+        res.status(200).json({ received: true, already: true }); 
+        return; 
+      }
 
+      // Ignoriamo eventi diversi da checkout.session.completed ma tracciamo la ricezione
       if (event.type !== "checkout.session.completed") {
         await eventRef.set({ type: event.type, ignored: true, createdAt: Timestamp.now() }, { merge: true });
-        res.status(200).json({ received: true, ignored: event.type }); return;
+        res.status(200).json({ received: true, ignored: event.type }); 
+        return;
       }
 
       const session = event.data.object as Stripe.Checkout.Session;
       const uid = session.metadata?.uid;
-      const planId = String(session.metadata?.planId);
+      const planId = session.metadata?.planId ? String(session.metadata.planId) : "";
 
       if (!uid || !planId) {
+        console.warn(`[JURIO-WEBHOOK] Evento ${event.id} ricevuto senza metadata 'uid' o 'planId'.`);
         await eventRef.set({ type: event.type, missing: true, createdAt: Timestamp.now() }, { merge: true });
-        res.status(200).json({ received: true, skipped: "missing_metadata" }); return;
+        res.status(200).json({ received: true, skipped: "missing_metadata" }); 
+        return;
       }
 
-      // 5) Firestore transaction
+      // 4. TRANSAZIONE ATOMICA SU FIRESTORE
       const out = await db.runTransaction(async (tx) => {
-        
-        // ---> USO DELL'HELPER CONDIVISO <---
         const providerData = { 
           provider: "stripe", 
           stripeSessionId: session.id, 
           stripePaymentIntentId: session.payment_intent ?? null 
         };
-        const { expireSec, needsTask } = await processSubscriptionInTx(tx, db, uid, planId, providerData, session.amount_total);
+        
+        const { expireSec, needsTask } = await processSubscriptionInTx(
+          tx, 
+          db, 
+          uid, 
+          planId, 
+          providerData, 
+          session.amount_total
+        );
 
         tx.set(eventRef, { type: event.type, createdAt: Timestamp.now() }, { merge: true });
         tx.set(
           db.collection("stripeSessions").doc(session.id),
-          { status: "COMPLETED", completedAt: Timestamp.now(), paidCurrency: session.currency, paidAmountMinor: session.amount_total },
+          { 
+            status: "COMPLETED", 
+            completedAt: Timestamp.now(), 
+            paidCurrency: session.currency, 
+            paidAmountMinor: session.amount_total 
+          },
           { merge: true }
         );
 
         return { status: "COMPLETED", expireSec, needsTask };
       });
 
-      // 6) Side-effects
+      // 5. SIDE-EFFECTS: PIANIFICAZIONE TASK DI DOWNGRADE (Cloud Tasks)
       if (out.needsTask && typeof out.expireSec === "number") {
-        await tryScheduleDowngradeTask(uid, out.expireSec);
+        try {
+          await tryScheduleDowngradeTask(uid, out.expireSec);
+        } catch (taskErr) {
+          console.error(`[JURIO-WEBHOOK] Impossibile pianificare il task di downgrade per l'utente ${uid}:`, taskErr);
+        }
       }
 
-      const planSnap = await db.collection("plans").doc(planId).get();
-      const plan = planSnap.data() as PlanDoc;
-      const amountTotal = session.amount_total;
-      const expectedCurrency = String(plan.currency ?? "EUR").toUpperCase();
-      
-      const paidValue = typeof amountTotal === "number" ? amountTotal / 100 : (typeof plan.price === "number" ? plan.price : 0);
+      // 6. INVIO EMAIL DI CONFERMA ACQUISTO (Asincrono e non bloccante)
+      try {
+        const planSnap = await db.collection("plans").doc(planId).get();
+        const plan = (planSnap.exists ? planSnap.data() : {}) as PlanDoc;
+        const amountTotal = session.amount_total;
+        const expectedCurrency = String(plan.currency ?? "EUR").toUpperCase();
+        
+        const paidValue = typeof amountTotal === "number" 
+          ? amountTotal / 100 
+          : (typeof plan.price === "number" ? plan.price : 0);
 
-      void queuePurchaseEmailOnceStripe({
-        requestId: event.id.slice(0, 8), uid, sessionId: session.id, paidValue, paidCurrency: session.currency || expectedCurrency,
-      });
+        void queuePurchaseEmailOnceStripe({
+          requestId: event.id.slice(0, 8), 
+          uid, 
+          sessionId: session.id, 
+          paidValue, 
+          paidCurrency: session.currency || expectedCurrency,
+        });
+      } catch (emailErr) {
+        console.error(`[JURIO-WEBHOOK] Errore nell'accodamento email di acquisto per event ${event.id}:`, emailErr);
+      }
 
+      // 7. RISPOSTA DI SUCCESSO A STRIPE
       res.status(200).json({ received: true, out: { status: out.status } });
-    } catch (err) {
-      console.error("stripeWebhook handler error:", err);
-      res.status(500).send("Webhook handler failed");
+      return;
+
+    } catch (err: unknown) {
+      // 8. ANTI INFORMATION DISCLOSURE
+      const msg = err instanceof Error ? err.message : "Internal error";
+      console.error(`[JURIO-WEBHOOK] Errore critico nell'elaborazione del webhook Stripe:`, msg);
+      
+      // Risposta blindata verso Stripe (Stripe riproverà l'invio in caso di 500)
+      res.status(500).json({ error: "Webhook handler failed" });
+      return;
     }
   }
 );
@@ -2921,790 +3845,1388 @@ export const stripeWebhook = onRequest(
 export const applyDiscountCoupon = onRequest(
   {
     timeoutSeconds: 30, 
-    memory: "512MiB"
+    memory: "512MiB",
   },
   async (req, res) => {
-    corsHandlerDomain(req, res, async () => {
-      if (req.method === "OPTIONS") return res.status(204).end();
-      if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+    // Restituzione esplicita della Promise per evitare timeout anomali di Express
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. GESTIONE PREFLIGHT E METODO
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        await requireAppCheck(req);
-        const uid = await requireUidFromAuthHeader(req);
-        
-        // 1. Validazione Input
-        const body: any = req.body ?? {};
-        const couponCode = body?.couponCode;
-        if (typeof couponCode !== "string" || !couponCode.trim()) {
-          return res.status(400).json({ error: "Codice coupon mancante o non valido" });
+        // 2. SICUREZZA: APP CHECK E AUTH
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-COUPON] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
         }
-        
-        const normalizedCode = couponCode.trim().toUpperCase();
-        const db = admin.firestore();
 
-        // 2. Controllo Utente
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. RATE LIMITING (Fondamentale: protegge da attacchi di brute-force / enumerazione codici coupon)
+        const limits = { perMinute: 10, perDay: 30 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "apply_coupon" as any, limits.perMinute),
+            consumeDailyFeature(uid, "apply_coupon" as any, limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests", details: "Troppi tentativi. Riprova più tardi." });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 4. VALIDAZIONE E SANITIZZAZIONE INPUT
+        const body = (req.body ?? {}) as ApplyCouponRequestBody;
+        const couponCodeRaw = typeof body.couponCode === "string" ? body.couponCode : "";
+
+        if (!couponCodeRaw.trim()) {
+          res.status(400).json({ error: "Bad Request: Codice coupon mancante o non valido" });
+          return;
+        }
+
+        // Normalizzazione e sanitizzazione rigorosa per prevenire injection nel path di Firestore
+        const normalizedCode = couponCodeRaw.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").substring(0, 50);
+
+        if (!normalizedCode) {
+          res.status(400).json({ error: "Bad Request: Formato codice coupon non valido" });
+          return;
+        }
+
+        // 5. CONTROLLO UTENTE (Collection 'register')
         const userRef = db.collection("register").doc(uid);
         const userSnap = await userRef.get();
         
         if (!userSnap.exists) {
-          return res.status(404).json({ error: "Utente non trovato" });
+          res.status(404).json({ error: "Not Found: Utente non trovato" });
+          return;
         }
 
-        // Verifica se l'utente ha già un coupon leggendo direttamente il campo mappa "coupon"
+        // Verifica se l'utente ha già un coupon attivo sul proprio account
         const existingCoupon = userSnap.get("coupon");
-       
         if (existingCoupon) {
-          return res.status(400).json({ error: "Hai già un coupon attivo sul tuo account." });
+          res.status(400).json({ error: "Conflict: Hai già un coupon attivo sul tuo account." });
+          return;
         }
 
-        // 3. Controllo Esistenza Coupon
+        // 6. CONTROLLO ESISTENZA COUPON (Collection 'discount')
         const couponRef = db.collection("discount").doc(normalizedCode);
         const couponSnap = await couponRef.get();
 
         if (!couponSnap.exists) {
-          return res.status(404).json({ error: "Codice promozionale non valido." });
+          res.status(404).json({ error: "Not Found: Codice promozionale non valido." });
+          return;
         }
 
-        const couponData = couponSnap.data();
+        const couponData = couponSnap.data() ?? {};
 
-        // 4. Controllo Scadenza
-        const expireField = couponData?.expire;
+        // 7. CONTROLLO SCADENZA
+        const expireField = couponData.expire;
         if (expireField) {
           const expireDate = typeof expireField.toDate === 'function' 
             ? expireField.toDate() 
             : new Date(expireField);
             
           if (expireDate < new Date()) {
-            return res.status(400).json({ error: "Questo coupon è scaduto." });
+            res.status(400).json({ error: "Bad Request: Questo coupon è scaduto." });
+            return;
           }
         }
 
-        // 5. Creazione della mappa coupon
-        // Assicurati che nel documento del coupon su Firestore ci sia il campo con l'id di Stripe (es. 'id' o 'stripeId')
-        const couponMapToSave: any = {
-          id: couponData?.stripeCustomerId,
+        // 8. PREPARAZIONE MAPPA COUPON DA SALVARE
+        const stripeCouponId = typeof couponData.stripeCustomerId === "string" ? couponData.stripeCustomerId : "";
+        const discountPercentage = typeof couponData.discount === "number" ? couponData.discount : 0;
+        const durationLabel = typeof couponData.durationLabel === "string" ? couponData.durationLabel : "Applicato con successo";
+
+        const couponMapToSave: Record<string, unknown> = {
+          id: stripeCouponId,
           name: normalizedCode,
-          discount: couponData?.discount || 0,
+          discount: discountPercentage,
         };
         
         if (expireField) {
           couponMapToSave.expire = expireField;
         }
 
-        // 6. Salvataggio della mappa sull'utente (singola operazione di update)
+        // 9. SALVATAGGIO SU FIRESTORE
         await userRef.update({
           coupon: couponMapToSave
         });
 
-        // 7. Risposta di Successo
-        return res.status(200).json({
+        // 10. RISPOSTA DI SUCCESSO
+        const responsePayload: ApplyCouponResponse = {
           status: "SUCCESS",
           coupon: {
             code: normalizedCode,
-            percentage: couponData?.discount || 0,
-            durationLabel: couponData?.durationLabel || "Applicato con successo"
+            percentage: discountPercentage,
+            durationLabel: durationLabel
           }
-        });
+        };
 
-      } catch (err) {
-        console.error("Apply Coupon Error:", err);
+        res.status(200).json(responsePayload);
+        return;
+
+      } catch (err: unknown) {
+        // 11. ANTI INFORMATION DISCLOSURE
         const msg = err instanceof Error ? err.message : "Internal error";
-        const lower = msg.toLowerCase();
-        const isAuth = lower.includes("auth") || lower.includes("bearer") || lower.includes("token");
+        console.error(`[JURIO-COUPON] Errore applicazione coupon (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
         
-        return res.status(isAuth ? 401 : 500).json({ 
-          error: "Process failed", 
-          details: msg 
-        });
+        const lower = msg.toLowerCase();
+        const isAuth = lower.includes("bearer") || lower.includes("token") || lower.includes("auth");
+        
+        if (isAuth) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // Risposta blindata senza svelare dettagli interni di Firestore o stacktrace
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
       }
     });
   }
 );
 
-export const syncUserSession = onRequest(async (req, res) => {
-  corsHandlerDomain(req, res, async () => {
-    if (req.method === "OPTIONS") {
-      res.status(204).end();
-      return;
-    }
-    if (req.method !== "POST") {
-      res.status(405).send("Method Not Allowed");
-      return;
-    }
-
-    try {
-      // 1. Sicurezza: Blocca richieste senza AppCheck
-      await requireAppCheck(req);
-
-      // 2. Auth Obbligatoria
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        res.status(401).json({ error: "Unauthorized: Missing authentication token" });
-        return;
+export const syncUserSession = onRequest(
+  {
+    timeoutSeconds: 30,
+    memory: "512MiB",
+  },
+  async (req, res) => {
+    // Restituzione esplicita della Promise per evitare timeout di Express
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. GESTIONE PREFLIGHT E METODO
+      if (req.method === "OPTIONS") { 
+        res.status(204).end(); 
+        return; 
+      }
+      if (req.method !== "POST") { 
+        res.status(405).json({ error: "Method Not Allowed" }); 
+        return; 
       }
 
-      const idToken = authHeader.split("Bearer ")[1];
-      let uid: string;
       try {
-        const decodedToken = await admin.auth().verifyIdToken(idToken);
-        uid = decodedToken.uid;
-      } catch (authErr) {
-        console.warn("Token invalido in syncUserSession", authErr);
-        res.status(401).json({ error: "Unauthorized: Invalid token" });
+        // 2. SICUREZZA: APP CHECK E AUTH
+        try {
+          await requireAppCheck(req);
+        } catch (appCheckError) {
+          console.warn(`[JURIO-SYNC] Fallimento AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          res.status(401).json({ error: "Unauthorized: Missing authentication token" });
+          return;
+        }
+
+        const idToken = authHeader.split("Bearer ")[1].trim();
+        let uid: string;
+        
+        try {
+          // Usiamo getAdminAuth() in linea con le tue utility centralizzate
+          const decodedToken = await getAdminAuth().verifyIdToken(idToken);
+          uid = decodedToken.uid;
+        } catch (authErr: unknown) {
+          console.warn("[JURIO-SYNC] Token invalido in syncUserSession", authErr);
+          res.status(401).json({ error: "Unauthorized: Invalid token" });
+          return;
+        }
+
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. RATE LIMITING (Prevenzione DoS / Rigenerazione forzata continua di session ID)
+        const limits = { perMinute: 15, perDay: 200 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "sync_session" as any, limits.perMinute),
+            consumeDailyFeature(uid, "sync_session" as any, limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 4. GENERAZIONE E SALVATAGGIO ATOMICO DEL SESSION ID
+        const sessionId = randomUUID();
+
+        await db.collection("users").doc(uid).set({
+          currentSessionId: sessionId
+        }, { merge: true });
+
+        // 5. RISPOSTA AL CLIENT
+        const responsePayload: SyncUserSessionResponse = { 
+          success: true, 
+          sessionId 
+        };
+
+        res.status(200).json(responsePayload);
+        return;
+
+      } catch (err: unknown) {
+        // 6. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-SYNC] Errore critico in syncUserSession:`, msg);
+        
+        // Risposta blindata senza svelare dettagli interni di Firestore o di Firebase Auth
+        res.status(500).json({ error: "Internal Server Error" });
         return;
       }
+    });
+  }
+);
 
-      // 3. Generazione e Salvataggio Atomico
-      const sessionId = crypto.randomUUID();
-
-      await db.collection("users").doc(uid).set({
-        currentSessionId: sessionId
-      }, { merge: true });
-
-      res.status(200).json({ success: true, sessionId });
-    } catch (err) {
-      console.error("syncUserSession error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-});
-
-export const forceTakeoverSession = onRequest(async (req, res) => {
-  corsHandlerDomain(req, res, async () => {
-    if (req.method === "OPTIONS") {
-      res.status(204).end();
-      return;
-    }
-    if (req.method !== "POST") {
-      res.status(405).send("Method Not Allowed");
-      return;
-    }
-
-    try {
-      await requireAppCheck(req);
-
-      const authHeader = req.headers.authorization;
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        res.status(401).json({ error: "Unauthorized: Missing authentication token" });
-        return;
+export const forceTakeoverSession = onRequest(
+  {
+    timeoutSeconds: 30,
+    memory: "512MiB",
+    region: "europe-west1" // Data Residency UE obbligatoria
+  },
+  async (req, res) => {
+    // Restituzione esplicita della Promise per evitare timeout di Express
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. GESTIONE PREFLIGHT E METODO
+      if (req.method === "OPTIONS") { 
+        res.status(204).end(); 
+        return; 
+      }
+      if (req.method !== "POST") { 
+        res.status(405).json({ error: "Method Not Allowed" }); 
+        return; 
       }
 
-      const idToken = authHeader.split("Bearer ")[1];
-      let uid: string;
       try {
-        const decodedToken = await admin.auth().verifyIdToken(idToken);
-        uid = decodedToken.uid;
-      } catch (authErr) {
-        res.status(401).json({ error: "Unauthorized: Invalid token" });
+        // 2. SICUREZZA: APP CHECK E AUTH
+        try {
+          await requireAppCheck(req);
+        } catch (appCheckError) {
+          console.warn(`[JURIO-TAKEOVER] Fallimento AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          res.status(401).json({ error: "Unauthorized: Missing authentication token" });
+          return;
+        }
+
+        const idToken = authHeader.split("Bearer ")[1].trim();
+        let uid: string;
+        
+        try {
+          // Utilizziamo l'utility centralizzata getAdminAuth()
+          const decodedToken = await getAdminAuth().verifyIdToken(idToken);
+          uid = decodedToken.uid;
+        } catch (authErr: unknown) {
+          console.warn("[JURIO-TAKEOVER] Token invalido in forceTakeoverSession", authErr);
+          res.status(401).json({ error: "Unauthorized: Invalid token" });
+          return;
+        }
+
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. RATE LIMITING
+        const limits = { perMinute: 5, perDay: 20 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "force_takeover" as any, limits.perMinute),
+            consumeDailyFeature(uid, "force_takeover" as any, limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 4. ESECUZIONE TAKEOVER
+        const newSessionId = randomUUID();
+
+        // A) Revoca dei token di refresh (il vero kick-out di sicurezza su Firebase Auth)
+        await getAdminAuth().revokeRefreshTokens(uid);
+
+        // B) Aggiornamento database
+        await db.collection("users").doc(uid).set({
+          currentSessionId: newSessionId
+        }, { merge: true });
+
+        // 5. RISPOSTA AL CLIENT
+        const responsePayload: ForceTakeoverSessionResponse = { 
+          success: true, 
+          newSessionId 
+        };
+
+        res.status(200).json(responsePayload);
+        return;
+
+      } catch (err: unknown) {
+        // 6. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-TAKEOVER] Errore critico in forceTakeoverSession:`, msg);
+        
+        // Risposta blindata senza svelare dettagli interni di Firebase Auth o Firestore
+        res.status(500).json({ error: "Internal Server Error" });
         return;
       }
-
-      const newSessionId = crypto.randomUUID();
-
-      // REVOCA DEI TOKEN (il vero kick-out di sicurezza)
-      await admin.auth().revokeRefreshTokens(uid);
-
-      // Aggiornamento database
-      await db.collection("users").doc(uid).set({
-        currentSessionId: newSessionId
-      }, { merge: true });
-
-      res.status(200).json({ success: true, newSessionId });
-    } catch (err) {
-      console.error("forceTakeoverSession error:", err);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-});
+    });
+  }
+);
 
 // ============================================================================
 // TEAM FUNCTIONS
 // ============================================================================
 
-export const assignTeamSeat = onRequest(async (req, res) => {
-  corsHandlerDomain(req, res, async () => {
-    if (req.method === "OPTIONS") return res.status(204).end();
-    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+export const assignTeamSeat = onRequest(
+  {
+    timeoutSeconds: 60,
+    memory: "512MiB"
+  },
+  async (req, res) => {
+    // Restituzione esplicita della Promise per evitare timeout di Express
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. GESTIONE PREFLIGHT E METODO
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
-    try {
-      await requireAppCheck(req);
-      const callerUid = await requireUidFromAuthHeader(req);
-
-      const { teamId, email, voucher } = req.body;
-      
-      if (!teamId || typeof teamId !== "string") {
-        return res.status(400).json({ error: "Missing or invalid 'teamId'" });
-      }
-
-      if (!email && !voucher) {
-        return res.status(400).json({ error: "Devi fornire 'email' o 'voucher'" });
-      }
-
-      // Normalizzazione sicura del voucher
-      const cleanVoucher = voucher ? voucher.trim().toUpperCase() : "";
-      const isInviteFlow = !!email;
-      let targetUid: string;
-      let targetEmail: string;
-
-      // 1) Determina UID ed Email
-      if (isInviteFlow) {
-        targetEmail = email.trim().toLowerCase();
+      try {
+        // 2. SICUREZZA: APP CHECK E AUTH
+        let callerUid: string;
         try {
-          const userRecord = await getAdminAuth().getUserByEmail(targetEmail);
-          targetUid = userRecord.uid;
-        } catch (err: any) {
-          if (err.code === 'auth/user-not-found') {
-            return res.status(404).json({ errorCode: "user-not-found", error: "L'utente non è ancora registrato." });
-          }
-          throw err;
-        }
-      } else {
-        targetUid = callerUid;
-        const userRecord = await getAdminAuth().getUser(callerUid);
-        targetEmail = userRecord.email || ""; 
-      }
-
-      // 2) TRANSAZIONE
-      const out = await db.runTransaction(async (tx) => {
-        const teamRef = db.collection("teams").doc(teamId);
-        const registerRef = db.collection("register").doc(targetUid);
-
-        const teamSnap = await tx.get(teamRef);
-        const registerSnap = await tx.get(registerRef);
-
-        if (!teamSnap.exists) throw new Error("NOT_FOUND: Team non trovato");
-        const teamData = teamSnap.data() as any;
-        const registerData = registerSnap.exists ? registerSnap.data() : {};
-
-        if (isInviteFlow) {
-          const isOwner = teamData.owners?.includes(callerUid);
-          const isCoOwner = teamData.co_owners?.includes(callerUid);
-          if (!isOwner && !isCoOwner) {
-            throw new Error("FORBIDDEN: Solo i proprietari o co-proprietari possono assegnare i posti");
-          }
+          await requireAppCheck(req);
+          callerUid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-SEAT] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
         }
 
-        if (teamData.member_ids?.includes(targetUid)) {
-          throw new Error("CONFLICT: L'utente fa già parte del Workspace");
+        if (!callerUid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
         }
 
-        const isAlreadyBusiness = registerData?.planId === "business";
-        let vouchers = teamData.vouchers || [];
-        let updatedVouchers = [...vouchers];
+        // 3. RATE LIMITING (Prevenzione DoS / Tentativi massivi di assegnazione o bruteforce voucher)
+        const limits = { perMinute: 10, perDay: 50 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(callerUid, "assign_seat" as any, limits.perMinute),
+            consumeDailyFeature(callerUid, "assign_seat" as any, limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as AssignTeamSeatRequestBody;
         
-        let grantBusiness = false;
-        let expireTimestamp: any;
-        const now = admin.firestore.Timestamp.now();
+        const teamIdRaw = typeof body.teamId === "string" ? body.teamId : "";
+        const emailRaw = typeof body.email === "string" ? body.email : "";
+        const voucherRaw = typeof body.voucher === "string" ? body.voucher : "";
 
-        if (isAlreadyBusiness) {
-          expireTimestamp = registerData?.expire ?? admin.firestore.Timestamp.fromMillis(now.toMillis() + (365 * 24 * 60 * 60 * 1000));
-          if (!isInviteFlow) {
-            const vIndex = vouchers.findIndex((v: any) => v.id === cleanVoucher);
-            if (vIndex === -1) throw new Error("EXHAUSTED: Il voucher fornito non è valido o non appartiene a questo team");
+        // Sanitizzazione rigorosa dell'ID del team (alfanumerico, trattini, underscore)
+        const teamId = teamIdRaw.trim().replace(/[^a-zA-Z0-9_-]/g, "").substring(0, 100);
+
+        if (!teamId) {
+          res.status(400).json({ error: "Bad Request: Missing or invalid 'teamId'" });
+          return;
+        }
+
+        if (!emailRaw && !voucherRaw) {
+          res.status(400).json({ error: "Bad Request: Devi fornire 'email' o 'voucher'" });
+          return;
+        }
+
+        // Normalizzazione sicura del voucher e dell'email
+        const cleanVoucher = voucherRaw ? voucherRaw.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").substring(0, 50) : "";
+        const isInviteFlow = !!emailRaw.trim();
+        let targetUid: string;
+        let targetEmail: string;
+
+        // 5. DETERMINAZIONE UID ED EMAIL (Con controllo preventivo su Firebase Auth)
+        if (isInviteFlow) {
+          targetEmail = emailRaw.trim().toLowerCase().substring(0, 254);
+          try {
+            const userRecord = await getAdminAuth().getUserByEmail(targetEmail);
+            targetUid = userRecord.uid;
+          } catch (err: any) {
+            if (err?.code === 'auth/user-not-found') {
+              res.status(404).json({ errorCode: "user-not-found", error: "L'utente non è ancora registrato." });
+              return;
+            }
+            throw err;
           }
         } else {
-          let voucherIndex = -1;
-          if (isInviteFlow) {
-            voucherIndex = vouchers.findIndex((v: any) => v.used === false);
-          } else {
-            voucherIndex = vouchers.findIndex((v: any) => v.id === cleanVoucher && v.used === false); 
-          }
-
-          if (voucherIndex === -1) {
-            if (isInviteFlow) throw new Error("EXHAUSTED: Nessun posto disponibile nel team");
-            else throw new Error("EXHAUSTED: Il voucher fornito è già stato utilizzato o non è valido");
-          }
-
-          const usedVoucher = vouchers[voucherIndex];
-          updatedVouchers[voucherIndex] = {
-            ...usedVoucher,
-            used: true,
-            assignedTo: targetUid,
-            assignedAt: now
-          };
-          grantBusiness = true;
-          expireTimestamp = admin.firestore.Timestamp.fromMillis(now.toMillis() + (usedVoucher.duration * 24 * 60 * 60 * 1000));
+          targetUid = callerUid;
+          const userRecord = await getAdminAuth().getUser(callerUid);
+          targetEmail = typeof userRecord.email === "string" ? userRecord.email : ""; 
         }
 
-        // SCRITTURE
-        tx.update(teamRef, {
-          vouchers: updatedVouchers,
-          member_ids: admin.firestore.FieldValue.arrayUnion(targetUid) 
+        // 6. TRANSAZIONE ATOMICA SU FIRESTORE
+        const out = await db.runTransaction(async (tx) => {
+          const teamRef = db.collection("teams").doc(teamId);
+          const registerRef = db.collection("register").doc(targetUid);
+
+          const [teamSnap, registerSnap] = await Promise.all([
+            tx.get(teamRef),
+            tx.get(registerRef)
+          ]);
+
+          if (!teamSnap.exists) {
+            throw new Error("NOT_FOUND: Team non trovato");
+          }
+          
+          const teamData = teamSnap.data() as Record<string, any>;
+          const registerData = registerSnap.exists ? registerSnap.data() : {};
+
+          // Controllo permessi se è un flusso di invito
+          if (isInviteFlow) {
+            const owners = Array.isArray(teamData.owners) ? teamData.owners : [];
+            const coOwners = Array.isArray(teamData.co_owners) ? teamData.co_owners : [];
+            
+            const isOwner = owners.includes(callerUid);
+            const isCoOwner = coOwners.includes(callerUid);
+            
+            if (!isOwner && !isCoOwner) {
+              throw new Error("FORBIDDEN: Solo i proprietari o co-proprietari possono assegnare i posti");
+            }
+          }
+
+          const memberIds = Array.isArray(teamData.member_ids) ? teamData.member_ids : [];
+          if (memberIds.includes(targetUid)) {
+            throw new Error("CONFLICT: L'utente fa già parte del Workspace");
+          }
+
+          const isAlreadyBusiness = registerData?.planId === "business";
+          const vouchers = Array.isArray(teamData.vouchers) ? teamData.vouchers : [];
+          const updatedVouchers = [...vouchers];
+          
+          let grantBusiness = false;
+          let expireTimestamp: any;
+          const now = admin.firestore.Timestamp.now();
+
+          if (isAlreadyBusiness) {
+            expireTimestamp = registerData?.expire ?? admin.firestore.Timestamp.fromMillis(now.toMillis() + (365 * 24 * 60 * 60 * 1000));
+            if (!isInviteFlow) {
+              const vIndex = vouchers.findIndex((v: any) => v && v.id === cleanVoucher);
+              if (vIndex === -1) {
+                throw new Error("EXHAUSTED: Il voucher fornito non è valido o non appartiene a questo team");
+              }
+            }
+          } else {
+            let voucherIndex = -1;
+            if (isInviteFlow) {
+              voucherIndex = vouchers.findIndex((v: any) => v && v.used === false);
+            } else {
+              voucherIndex = vouchers.findIndex((v: any) => v && v.id === cleanVoucher && v.used === false); 
+            }
+
+            if (voucherIndex === -1) {
+              if (isInviteFlow) {
+                throw new Error("EXHAUSTED: Nessun posto disponibile nel team");
+              } else {
+                throw new Error("EXHAUSTED: Il voucher fornito è già stato utilizzato o non è valido");
+              }
+            }
+
+            const usedVoucher = vouchers[voucherIndex];
+            const durationDays = typeof usedVoucher.duration === "number" ? usedVoucher.duration : 365;
+
+            updatedVouchers[voucherIndex] = {
+              ...usedVoucher,
+              used: true,
+              assignedTo: targetUid,
+              assignedAt: now
+            };
+            
+            grantBusiness = true;
+            expireTimestamp = admin.firestore.Timestamp.fromMillis(now.toMillis() + (durationDays * 24 * 60 * 60 * 1000));
+          }
+
+          // SCRITTURE ATOMICHE NEL BATCH DELLA TRANSAZIONE
+          tx.update(teamRef, {
+            vouchers: updatedVouchers,
+            member_ids: admin.firestore.FieldValue.arrayUnion(targetUid) 
+          });
+
+          tx.set(teamRef.collection("members").doc(targetUid), {
+            role: "editor",
+            date_start: now,
+            expire: expireTimestamp,
+            email: targetEmail
+          });
+
+          const expireSec = Math.floor(expireTimestamp.toMillis() / 1000);
+          
+          tx.set(db.collection("users").doc(targetUid), { 
+            status: "business",
+            assignedTeamId: teamId 
+          }, { merge: true });
+          
+          tx.set(registerRef, { 
+            planId: "business",
+            status: "active",
+            provider: "team_invite",
+            assignedTeamId: teamId,
+            start: now,
+            expire: expireTimestamp,
+            expireSec,
+            update: now
+          }, { merge: true });
+
+          const teamNameStr = typeof teamData.name === "string" ? teamData.name : "Workspace";
+
+          return { 
+            success: true, 
+            targetUid, 
+            targetEmail,
+            teamName: teamNameStr,
+            voucherUsed: grantBusiness 
+          } as AssignTeamSeatResponse;
         });
 
-        tx.set(teamRef.collection("members").doc(targetUid), {
-          role: isInviteFlow ? "editor" : "editor",
-          date_start: now,
-          expire: expireTimestamp,
-          email: targetEmail
-        });
-
-        const expireSec = Math.floor(expireTimestamp.toMillis() / 1000);
-        
-        tx.set(db.collection("users").doc(targetUid), { 
-          status: "business",
-          assignedTeamId: teamId 
-        }, { merge: true });
-        
-        tx.set(registerRef, { 
-          planId: "business",
-          status: "active",
-          provider: "team_invite",
-          assignedTeamId: teamId,
-          start: now,
-          expire: expireTimestamp,
-          expireSec,
-          update: now
-        }, { merge: true });
-
-        // Passiamo i dati per l'email all'esterno della transazione
-        return { 
-          success: true, 
-          targetUid, 
-          targetEmail,
-          teamName: teamData.name || "Workspace",
-          voucherUsed: grantBusiness 
-        };
-      });
-
-      // 3) Effetti collaterali (Fuori dalla transazione)
-      await enqueueWelcomeTeamEmail({ 
-        email: out.targetEmail, 
-        teamName: out.teamName 
-      });
-
-      return res.status(200).json(out);
-
-    } catch (err: any) {
-      const msg = err instanceof Error ? err.message : "Internal Error";
-      if (msg.startsWith("NOT_FOUND:")) return res.status(404).json({ error: msg.split(":")[1] });
-      if (msg.startsWith("FORBIDDEN:")) return res.status(403).json({ error: msg.split(":")[1] });
-      if (msg.startsWith("CONFLICT:")) return res.status(409).json({ errorCode: "already-exists", error: msg.split(":")[1] });
-      if (msg.startsWith("EXHAUSTED:")) return res.status(409).json({ error: msg.split(":")[1] });
-      if (msg.startsWith("ALREADY_ASSIGNED:")) return res.status(409).json({ errorCode: "already-assigned", error: msg.split(":")[1] });
-
-      const isAuth = msg.toLowerCase().includes("bearer") || msg.toLowerCase().includes("token") || msg.toLowerCase().includes("unauthorized");
-      return res.status(isAuth ? 401 : 500).json({ error: msg });
-    }
-  });
-});
-
-export const sendTeamInviteEmail = onRequest(async (req, res) => {
-  corsHandlerDomain(req, res, async () => {
-    if (req.method === "OPTIONS") return res.status(204).end();
-    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
-
-    try {
-      await requireAppCheck(req);
-      const callerUid = await requireUidFromAuthHeader(req);
-
-      const { teamId, email, voucher } = req.body;
-      
-      // 1. Validazione input
-      if (!teamId || typeof teamId !== "string") {
-        return res.status(400).json({ error: "Missing or invalid 'teamId'" });
-      }
-      if (!email || typeof email !== "string") {
-        return res.status(400).json({ error: "Missing or invalid 'email'" });
-      }
-      if (!voucher || typeof voucher !== "string") {
-        return res.status(400).json({ error: "Missing or invalid 'voucher'" });
-      }
-
-      const targetEmail = email.trim().toLowerCase();
-
-      // 2. Lettura Team e Controlli
-      const teamRef = db.collection("teams").doc(teamId);
-      const teamSnap = await teamRef.get();
-
-      if (!teamSnap.exists) {
-        throw new Error("NOT_FOUND: Team non trovato");
-      }
-
-      const teamData = teamSnap.data() as any;
-
-      // A. Controlla che chi chiama sia owner o co-owner
-      const isOwner = teamData.owners?.includes(callerUid);
-      const isCoOwner = teamData.co_owners?.includes(callerUid);
-      
-      if (!isOwner && !isCoOwner) {
-        throw new Error("FORBIDDEN: Solo i proprietari o co-proprietari possono inviare inviti");
-      }
-
-      // B. Controlla che il voucher richiesto esista e sia libero
-      const vouchers = teamData.vouchers || [];
-      const voucherIndex = vouchers.findIndex((v: any) => v.id === voucher && v.used === false);
-
-      if (voucherIndex === -1) {
-        throw new Error("EXHAUSTED: Il codice invito fornito non è valido o è già stato utilizzato");
-      }
-
-      // 3. Accodamento Email
-      // Usa la funzione che abbiamo creato precedentemente per scrivere nella collection 'mail'
-      await enqueueVoucherEmail({
-        email: targetEmail,
-        voucherCode: voucher,
-        teamName: teamData.name || "un Workspace"
-      });
-
-      return res.status(200).json({ 
-        success: true, 
-        message: "Email di invito accodata con successo",
-        email: targetEmail
-      });
-
-    } catch (err: any) {
-      const msg = err instanceof Error ? err.message : "Internal Error";
-      
-      if (msg.startsWith("NOT_FOUND:")) return res.status(404).json({ error: msg.split(":")[1].trim() });
-      if (msg.startsWith("FORBIDDEN:")) return res.status(403).json({ error: msg.split(":")[1].trim() });
-      if (msg.startsWith("EXHAUSTED:")) return res.status(409).json({ error: msg.split(":")[1].trim() });
-
-      const isAuth = msg.toLowerCase().includes("bearer") || msg.toLowerCase().includes("token") || msg.toLowerCase().includes("unauthorized");
-      return res.status(isAuth ? 401 : 500).json({ error: msg });
-    }
-  });
-});
-
-export const shareAllTeamDocuments = onRequest(async (req, res) => {
-  corsHandlerDomain(req, res, async () => {
-    if (req.method === "OPTIONS") return res.status(204).end();
-    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
-
-    try {
-      await requireAppCheck(req);
-      const callerUid = await requireUidFromAuthHeader(req);
-
-      const { teamId } = req.body;
-      if (!teamId || typeof teamId !== "string") {
-        return res.status(400).json({ error: "Missing or invalid 'teamId'" });
-      }
-
-      const teamRef = db.collection("teams").doc(teamId);
-      const teamSnap = await teamRef.get();
-
-      if (!teamSnap.exists) {
-        throw new Error("NOT_FOUND: Team non trovato");
-      }
-
-      const teamData = teamSnap.data() as any;
-      const isOwner = teamData.owners?.includes(callerUid);
-      const isCoOwner = teamData.co_owners?.includes(callerUid);
-      
-      if (!isOwner && !isCoOwner) {
-        throw new Error("FORBIDDEN: Solo i manager possono forzare la condivisione dello storico");
-      }
-
-      const membersSnap = await teamRef.collection("members").get();
-      const memberIds = membersSnap.docs.map(doc => doc.id);
-
-      if (memberIds.length === 0) {
-        return res.status(200).json({ success: true, updatedCount: 0, message: "Nessun membro nel team" });
-      }
-
-      const bulkWriter = db.bulkWriter();
-      let updatedCount = 0;
-
-      // Usa FieldValue importato direttamente
-      const updateData = {
-        visibleTo: FieldValue.arrayUnion(...memberIds)
-      };
-
-      // Usa Query come tipo importato direttamente
-      const queueUpdates = async (query: Query) => {
-        const snap = await query.get();
-        snap.docs.forEach((doc) => {
-          bulkWriter.update(doc.ref, updateData);
-          updatedCount++;
-        });
-      };
-
-      for (const uid of memberIds) {
-        await queueUpdates(db.collection("documents").where("user", "==", uid));
-        await queueUpdates(db.collection("document_chunks").where("user", "==", uid));
-        await queueUpdates(db.collection("fascicoli").where("ownerId", "==", uid));
-      }
-
-      await bulkWriter.close();
-
-      return res.status(200).json({ 
-        success: true, 
-        updatedCount,
-        message: "Storico condiviso con successo" 
-      });
-
-    } catch (err: any) {
-      console.error("[shareAllTeamDocuments] Error:", err);
-      const msg = err instanceof Error ? err.message : "Internal Error";
-      
-      if (msg.startsWith("NOT_FOUND:")) return res.status(404).json({ error: msg.split(":")[1].trim() });
-      if (msg.startsWith("FORBIDDEN:")) return res.status(403).json({ error: msg.split(":")[1].trim() });
-
-      const isAuth = msg.toLowerCase().includes("bearer") || msg.toLowerCase().includes("token") || msg.toLowerCase().includes("unauthorized");
-      return res.status(isAuth ? 401 : 500).json({ error: msg });
-    }
-  });
-});
-
-export const verifyVoucher = onRequest(async (req, res) => {
-  corsHandlerDomain(req, res, async () => {
-    // 1. Gestione CORS e Metodo HTTP
-    if (req.method === "OPTIONS") return res.status(204).end();
-    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
-
-    try {
-      // 2. Controlli di sicurezza
-      await requireAppCheck(req);
-      await requireUidFromAuthHeader(req); // Assicuriamoci che l'utente sia loggato per prevenire abusi
-
-      const { voucher } = req.body;
-      
-      // 3. Validazione Input
-      if (!voucher || typeof voucher !== "string" || voucher.trim() === "") {
-        return res.status(400).json({ error: "Missing or invalid 'voucher'" });
-      }
-
-      const cleanVoucher = voucher.trim().toUpperCase(); // Normalizziamo il codice per sicurezza
-
-      // 4. Lettura della collection Teams
-      const teamsSnap = await db.collection("teams").get();
-      
-      const matchedTeams: { id: string, name: string }[] = [];
-
-      // 5. Ricerca del voucher libero
-      teamsSnap.forEach((doc) => {
-        const data = doc.data();
-        const teamVouchers = data.vouchers || [];
-        
-        // Verifica se il team possiede questo preciso voucher e se è NON usato
-        const hasFreeVoucher = teamVouchers.some(
-          (v: any) => v.id === cleanVoucher && v.used === false
-        );
-
-        if (hasFreeVoucher) {
-          matchedTeams.push({
-            id: doc.id,
-            name: data.name || "Workspace senza nome"
+        // 7. EFFETTI COLLATERALI FUORI TRANSAZIONE (Email di benvenuto team)
+        if (out && out.targetEmail) {
+          void enqueueWelcomeTeamEmail({ 
+            email: out.targetEmail, 
+            teamName: out.teamName 
+          }).catch(mailErr => {
+            console.error(`[JURIO-SEAT] Errore nell'invio dell'email di benvenuto team per ${out.targetEmail}:`, mailErr);
           });
         }
-      });
 
-      // 6. Risposta al client
-      return res.status(200).json({ 
-        success: true, 
-        teams: matchedTeams 
-      });
+        // 8. RISPOSTA AL CLIENT
+        res.status(200).json(out);
+        return;
 
-    } catch (err: any) {
-      console.error("[verifyVoucher] Error:", err);
-      const msg = err instanceof Error ? err.message : "Internal Error";
-      
-      const isAuth = msg.toLowerCase().includes("bearer") || 
-                     msg.toLowerCase().includes("token") || 
-                     msg.toLowerCase().includes("unauthorized");
-                     
-      return res.status(isAuth ? 401 : 500).json({ error: msg });
-    }
-  });
-});
+      } catch (err: unknown) {
+        // 9. ANTI INFORMATION DISCLOSURE E GESTIONE ERRORI CUSTOM
+        const msg = err instanceof Error ? err.message : "Internal Error";
+        console.error(`[JURIO-SEAT] Errore in assignTeamSeat (Caller: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
 
-export const removeTeamMember = onRequest(async (req, res) => {
-  corsHandlerDomain(req, res, async () => {
-    if (req.method === "OPTIONS") return res.status(204).end();
-    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
-    
-    try {
-      await requireAppCheck(req);
-      const requesterUid = await requireUidFromAuthHeader(req);
-      const { teamId, uidDelete, revokeDocumentAccess } = req.body;
-      
-      if (!teamId || typeof teamId !== "string" || !uidDelete || typeof uidDelete !== "string") {
-        return res.status(400).json({ error: "Missing or invalid 'teamId' or 'uidDelete'" });
+        if (msg.startsWith("NOT_FOUND:")) {
+          res.status(404).json({ error: msg.split(":")[1].trim() });
+          return;
+        }
+        if (msg.startsWith("FORBIDDEN:")) {
+          res.status(403).json({ error: msg.split(":")[1].trim() });
+          return;
+        }
+        if (msg.startsWith("CONFLICT:")) {
+          res.status(409).json({ errorCode: "already-exists", error: msg.split(":")[1].trim() });
+          return;
+        }
+        if (msg.startsWith("EXHAUSTED:")) {
+          res.status(409).json({ error: msg.split(":")[1].trim() });
+          return;
+        }
+        if (msg.startsWith("ALREADY_ASSIGNED:")) {
+          res.status(409).json({ errorCode: "already-assigned", error: msg.split(":")[1].trim() });
+          return;
+        }
+
+        const lowerMsg = msg.toLowerCase();
+        const isAuth = lowerMsg.includes("bearer") || lowerMsg.includes("token") || lowerMsg.includes("unauthorized");
+        
+        if (isAuth) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // Risposta blindata per qualsiasi altra eccezione imprevista
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
       }
-      
-      const teamRef = db.collection("teams").doc(teamId);
-      const teamSnap = await teamRef.get();
-      if (!teamSnap.exists) {
-        return res.status(404).json({ error: "Team not found" });
+    });
+  }
+);
+
+export const sendTeamInviteEmail = onRequest(
+  {
+    timeoutSeconds: 30,
+    memory: "512MiB",
+  },
+  async (req, res) => {
+    // Restituzione esplicita della Promise per evitare timeout di Express
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. GESTIONE PREFLIGHT E METODO
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
+
+      try {
+        // 2. SICUREZZA: APP CHECK E AUTH
+        let callerUid: string;
+        try {
+          await requireAppCheck(req);
+          callerUid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-INVITE] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        if (!callerUid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. RATE LIMITING (Prevenzione DoS / Invio massivo di inviti spam)
+        const limits = { perMinute: 15, perDay: 60 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(callerUid, "team_invite" as any, limits.perMinute),
+            consumeDailyFeature(callerUid, "team_invite" as any, limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as SendTeamInviteEmailRequestBody;
+        
+        const teamIdRaw = typeof body.teamId === "string" ? body.teamId : "";
+        const emailRaw = typeof body.email === "string" ? body.email : "";
+        const voucherRaw = typeof body.voucher === "string" ? body.voucher : "";
+
+        // Sanitizzazione rigorosa dell'ID team e del codice voucher
+        const teamId = teamIdRaw.trim().replace(/[^a-zA-Z0-9_-]/g, "").substring(0, 100);
+        const voucher = voucherRaw.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").substring(0, 50);
+
+        if (!teamId) {
+          res.status(400).json({ error: "Bad Request: Missing or invalid 'teamId'" });
+          return;
+        }
+        if (!emailRaw.trim()) {
+          res.status(400).json({ error: "Bad Request: Missing or invalid 'email'" });
+          return;
+        }
+        if (!voucher) {
+          res.status(400).json({ error: "Bad Request: Missing or invalid 'voucher'" });
+          return;
+        }
+
+        const targetEmail = emailRaw.trim().toLowerCase().substring(0, 254);
+
+        // 5. LETTURA TEAM E CONTROLLI DI ACCESSO
+        const teamRef = db.collection("teams").doc(teamId);
+        const teamSnap = await teamRef.get();
+
+        if (!teamSnap.exists) {
+          res.status(404).json({ error: "Not Found: Team non trovato" });
+          return;
+        }
+
+        const teamData = teamSnap.data() as Record<string, any>;
+
+        // A. Verifica permessi (Owner o Co-owner)
+        const owners = Array.isArray(teamData.owners) ? teamData.owners : [];
+        const coOwners = Array.isArray(teamData.co_owners) ? teamData.co_owners : [];
+        
+        const isOwner = owners.includes(callerUid);
+        const isCoOwner = coOwners.includes(callerUid);
+        
+        if (!isOwner && !isCoOwner) {
+          res.status(403).json({ error: "Forbidden: Solo i proprietari o co-proprietari possono inviare inviti" });
+          return;
+        }
+
+        // B. Controllo validità e disponibilità del voucher nel team
+        const vouchers = Array.isArray(teamData.vouchers) ? teamData.vouchers : [];
+        const voucherIndex = vouchers.findIndex((v: any) => v && v.id === voucher && v.used === false);
+
+        if (voucherIndex === -1) {
+          res.status(409).json({ error: "Conflict: Il codice invito fornito non è valido o è già stato utilizzato" });
+          return;
+        }
+
+        const teamNameStr = typeof teamData.name === "string" ? teamData.name : "un Workspace";
+
+        // 6. ACCODAMENTO EMAIL
+        await enqueueVoucherEmail({
+          email: targetEmail,
+          voucherCode: voucher,
+          teamName: teamNameStr
+        });
+
+        // 7. RISPOSTA AL CLIENT
+        const responsePayload: SendTeamInviteEmailResponse = { 
+          success: true, 
+          message: "Email di invito accodata con successo",
+          email: targetEmail
+        };
+
+        res.status(200).json(responsePayload);
+        return;
+
+      } catch (err: unknown) {
+        // 8. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal Error";
+        console.error(`[JURIO-INVITE-MAIL] Errore in sendTeamInviteEmail (Caller: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+
+        const lowerMsg = msg.toLowerCase();
+        const isAuth = lowerMsg.includes("bearer") || lowerMsg.includes("token") || lowerMsg.includes("unauthorized");
+        
+        if (isAuth) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // Risposta blindata senza svelare stacktrace o dettagli interni
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
       }
-      
-      const teamData = teamSnap.data();
-      const owners: string[] = teamData?.owners || [];
+    });
+  }
+);
 
-      const isOwner = owners.includes(requesterUid); 
-      const isSelfLeave = requesterUid === uidDelete;
+export const shareAllTeamDocuments = onRequest(
+  {
+    timeoutSeconds: 300,
+    memory: "1GiB", 
+  },
+  async (req, res) => {
+    // Restituzione esplicita della Promise per evitare timeout di Express
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. GESTIONE PREFLIGHT E METODO
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
-      if (!isOwner && !isSelfLeave) {
-        return res.status(403).json({ error: "Forbidden: You don't have permission to remove this member" });
+      try {
+        // 2. SICUREZZA: APP CHECK E AUTH
+        let callerUid: string;
+        try {
+          await requireAppCheck(req);
+          callerUid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-SHARE-DOCS] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        if (!callerUid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. RATE LIMITING (Fondamentale: previene abusi di esecuzione bulk massiva su Firestore)
+        const limits = { perMinute: 3, perDay: 10 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(callerUid, "share_docs" as any, limits.perMinute),
+            consumeDailyFeature(callerUid, "share_docs" as any, limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests", details: "Operazione eseguita troppo spesso. Riprova più tardi." });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as ShareAllTeamDocumentsRequestBody;
+        const teamIdRaw = typeof body.teamId === "string" ? body.teamId : "";
+        
+        // Sanitizzazione rigorosa dell'ID team
+        const teamId = teamIdRaw.trim().replace(/[^a-zA-Z0-9_-]/g, "").substring(0, 100);
+
+        if (!teamId) {
+          res.status(400).json({ error: "Bad Request: Missing or invalid 'teamId'" });
+          return;
+        }
+
+        // 5. LETTURA TEAM E CONTROLLI DI ACCESSO
+        const teamRef = db.collection("teams").doc(teamId);
+        const teamSnap = await teamRef.get();
+
+        if (!teamSnap.exists) {
+          res.status(404).json({ error: "Not Found: Team non trovato" });
+          return;
+        }
+
+        const teamData = teamSnap.data() as Record<string, any>;
+        const owners = Array.isArray(teamData.owners) ? teamData.owners : [];
+        const coOwners = Array.isArray(teamData.co_owners) ? teamData.co_owners : [];
+
+        const isOwner = owners.includes(callerUid);
+        const isCoOwner = coOwners.includes(callerUid);
+        
+        if (!isOwner && !isCoOwner) {
+          res.status(403).json({ error: "Forbidden: Solo i manager possono forzare la condivisione dello storico" });
+          return;
+        }
+
+        // 6. RECUPERO MEMBRI DEL TEAM
+        const membersSnap = await teamRef.collection("members").get();
+        const memberIds = membersSnap.docs
+          .map(doc => doc.id)
+          .filter(id => typeof id === "string" && id.trim().length > 0);
+
+        if (memberIds.length === 0) {
+          res.status(200).json({ 
+            success: true, 
+            updatedCount: 0, 
+            message: "Nessun membro nel team" 
+          } as ShareAllTeamDocumentsResponse);
+          return;
+        }
+
+        const bulkWriter = db.bulkWriter();
+        let updatedCount = 0;
+
+        const updateData = {
+          visibleTo: FieldValue.arrayUnion(...memberIds)
+        };
+
+        const queueUpdates = async (query: Query) => {
+          const snap = await query.get();
+          snap.docs.forEach((doc) => {
+            bulkWriter.update(doc.ref, updateData);
+            updatedCount++;
+          });
+        };
+
+        // 7. ESECUZIONE QUERY MULTIPLE E AGGIORNAMENTO BULK
+        for (const uid of memberIds) {
+          await Promise.all([
+            queueUpdates(db.collection("documents").where("user", "==", uid)),
+            queueUpdates(db.collection("document_chunks").where("user", "==", uid)),
+            queueUpdates(db.collection("fascicoli").where("ownerId", "==", uid))
+          ]);
+        }
+
+        await bulkWriter.close();
+
+        // 8. RISPOSTA AL CLIENT
+        const responsePayload: ShareAllTeamDocumentsResponse = { 
+          success: true, 
+          updatedCount,
+          message: "Storico condiviso con successo" 
+        };
+
+        res.status(200).json(responsePayload);
+        return;
+
+      } catch (err: unknown) {
+        // 9. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal Error";
+        console.error(`[JURIO-SHARE-DOCS] Errore in shareAllTeamDocuments (Caller: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+
+        const lowerMsg = msg.toLowerCase();
+        const isAuth = lowerMsg.includes("bearer") || lowerMsg.includes("token") || lowerMsg.includes("unauthorized");
+        
+        if (isAuth) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // Risposta blindata senza svelare dettagli interni di Firestore o BulkWriter
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
       }
+    });
+  }
+);
 
-      // Blocco di sicurezza fondamentale
-      if (isSelfLeave && owners.includes(uidDelete) && owners.length <= 1) {
-        return res.status(400).json({ error: "Action denied: You cannot leave the workspace because you are the only owner left." });
+export const verifyVoucher = onRequest(
+  {
+    timeoutSeconds: 30,
+    memory: "512MiB",
+  },
+  async (req, res) => {
+    // Restituzione esplicita della Promise per evitare timeout di Express
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. GESTIONE PREFLIGHT E METODO
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
+
+      try {
+        // 2. SICUREZZA: APP CHECK E AUTH
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-VERIFY-VOUCHER] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. RATE LIMITING (Fondamentale: previene attacchi di forza bruta / enumerazione dei codici voucher)
+        const limits = { perMinute: 10, perDay: 50 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "verify_voucher" as any, limits.perMinute),
+            consumeDailyFeature(uid, "verify_voucher" as any, limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests", details: "Troppi tentativi di verifica. Riprova più tardi." });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as VerifyVoucherRequestBody;
+        const voucherRaw = typeof body.voucher === "string" ? body.voucher : "";
+
+        // Normalizzazione e sanitizzazione rigorosa del voucher
+        const cleanVoucher = voucherRaw.trim().toUpperCase().replace(/[^A-Z0-9_-]/g, "").substring(0, 50);
+
+        if (!cleanVoucher) {
+          res.status(400).json({ error: "Bad Request: Missing or invalid 'voucher'" });
+          return;
+        }
+
+        // 5. RICERCA NELLA COLLECTION 'teams'
+        // Nota: Se la collection teams crescerà molto in futuro, valutare un indice o una collection dedicata di lookup voucher.
+        // Per ora manteniamo la logica originale leggendo i team attivi.
+        const teamsSnap = await db.collection("teams").get();
+        
+        const matchedTeams: Array<{ id: string; name: string }> = [];
+
+        teamsSnap.forEach((doc) => {
+          const data = doc.data() ?? {};
+          const teamVouchers = Array.isArray(data.vouchers) ? data.vouchers : [];
+          
+          const hasFreeVoucher = teamVouchers.some(
+            (v: any) => v && typeof v === "object" && v.id === cleanVoucher && v.used === false
+          );
+
+          if (hasFreeVoucher) {
+            const teamName = typeof data.name === "string" && data.name.trim() ? data.name.trim() : "Workspace senza nome";
+            matchedTeams.push({
+              id: doc.id,
+              name: teamName
+            });
+          }
+        });
+
+        // 6. RISPOSTA AL CLIENT
+        const responsePayload: VerifyVoucherResponse = { 
+          success: true, 
+          teams: matchedTeams 
+        };
+
+        res.status(200).json(responsePayload);
+        return;
+
+      } catch (err: unknown) {
+        // 7. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal Error";
+        console.error(`[JURIO-VERIFY-VOUCHER] Errore in verifyVoucher (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+
+        const lowerMsg = msg.toLowerCase();
+        const isAuth = lowerMsg.includes("bearer") || lowerMsg.includes("token") || lowerMsg.includes("unauthorized");
+        
+        if (isAuth) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // Risposta blindata senza svelare dettagli interni o stacktrace
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
       }
+    });
+  }
+);
 
-      // Recuperiamo l'email del target per notificargli la rimozione
-      const teamMemberRef = teamRef.collection("members").doc(uidDelete);
-      const memberSnap = await teamMemberRef.get();
-      const targetEmail = memberSnap.data()?.email;
+export const removeTeamMember = onRequest(
+  {
+    timeoutSeconds: 60,
+    memory: "512MiB",
+  },
+  async (req, res) => {
+    // Restituzione esplicita della Promise per evitare timeout di Express
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. GESTIONE PREFLIGHT E METODO
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
-      // Supporto: Adeguamento visibilità documenti
-      if (revokeDocumentAccess === true) {
-        const targetOwnerUid = isSelfLeave ? owners.find(id => id !== uidDelete) : requesterUid;
-        if (targetOwnerUid) await updateUserDocuments(uidDelete, targetOwnerUid);
-      }
-      await removeUserVisibilityFromDocuments(uidDelete);
-      
-      const batch = db.batch();
-      
-      const userRef = db.collection("users").doc(uidDelete);
-      batch.update(userRef, { 
-        assignedTeamId: admin.firestore.FieldValue.delete() 
-      });
-      
-      const regRef = db.collection("register").doc(uidDelete);
-      batch.update(regRef, { 
-        assignedTeamId: admin.firestore.FieldValue.delete(),
-        provider: admin.firestore.FieldValue.delete()
-      });
+      try {
+        // 2. SICUREZZA: APP CHECK E AUTH
+        let requesterUid: string;
+        try {
+          await requireAppCheck(req);
+          requesterUid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-REMOVE-MEMBER] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
 
-      batch.update(teamRef, {
-        member_ids: admin.firestore.FieldValue.arrayRemove(uidDelete),
-        owners: admin.firestore.FieldValue.arrayRemove(uidDelete)
-      });
-      
-      batch.delete(teamMemberRef);
-      await batch.commit();
+        if (!requesterUid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
 
-      // Invio notifica (Solo se rimuovo qualcun altro, l'auto-uscita la ignoro)
-      if (targetEmail && !isSelfLeave) {
-        await enqueueRemoveTeamEmail({ email: targetEmail, teamName: teamData?.name || "Workspace" });
-      }
+        // 3. RATE LIMITING (Prevenzione abusi di rimozione / spam richieste)
+        const limits = { perMinute: 15, perDay: 50 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(requesterUid, "remove_member" as any, limits.perMinute),
+            consumeDailyFeature(requesterUid, "remove_member" as any, limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
 
-      return res.status(200).json({ 
-        success: true, 
-        message: "Team member removed successfully" 
-      });
+        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as RemoveTeamMemberRequestBody;
+        
+        const teamIdRaw = typeof body.teamId === "string" ? body.teamId : "";
+        const uidDeleteRaw = typeof body.uidDelete === "string" ? body.uidDelete : "";
+        const revokeDocumentAccess = typeof body.revokeDocumentAccess === "boolean" ? body.revokeDocumentAccess : false;
 
-    } catch (err: any) {
-      console.error("[removeTeamMember] Error:", err);
-      const msg = err instanceof Error ? err.message : "Internal Error";
-      const isAuth = msg.toLowerCase().includes("bearer") || msg.toLowerCase().includes("token") || msg.toLowerCase().includes("unauthorized");          
-      return res.status(isAuth ? 401 : 500).json({ error: msg });
-    }
-  });
-});
+        // Sanitizzazione rigorosa degli ID
+        const teamId = teamIdRaw.trim().replace(/[^a-zA-Z0-9_-]/g, "").substring(0, 100);
+        const uidDelete = uidDeleteRaw.trim().replace(/[^a-zA-Z0-9_-]/g, "").substring(0, 100);
 
-export const deleteTeam = onRequest(async (req, res) => {
-  corsHandlerDomain(req, res, async () => {
-    if (req.method === "OPTIONS") return res.status(204).end();
-    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+        if (!teamId || !uidDelete) {
+          res.status(400).json({ error: "Bad Request: Missing or invalid 'teamId' or 'uidDelete'" });
+          return;
+        }
 
-    try {
-      await requireAppCheck(req);
-      const requesterUid = await requireUidFromAuthHeader(req);
+        // 5. VERIFICA TEAM E PERMESSI
+        const teamRef = db.collection("teams").doc(teamId);
+        const teamSnap = await teamRef.get();
+        if (!teamSnap.exists) {
+          res.status(404).json({ error: "Not Found: Team non trovato" });
+          return;
+        }
 
-      const { teamId, revokeDocumentAccess } = req.body;
-      
-      if (!teamId || typeof teamId !== "string") {
-        return res.status(400).json({ error: "Missing or invalid 'teamId'" });
-      }
+        const teamData = teamSnap.data() as Record<string, any>;
+        const owners = Array.isArray(teamData.owners) ? teamData.owners : [];
 
-      const teamRef = db.collection("teams").doc(teamId);
-      const teamSnap = await teamRef.get();
+        const isOwner = owners.includes(requesterUid); 
+        const isSelfLeave = requesterUid === uidDelete;
 
-      if (!teamSnap.exists) {
-        return res.status(404).json({ error: "Team not found" });
-      }
+        if (!isOwner && !isSelfLeave) {
+          res.status(403).json({ error: "Forbidden: You don't have permission to remove this member" });
+          return;
+        }
 
-      const teamData = teamSnap.data();
-      const owners: string[] = teamData?.owners || [];
+        // Blocco di sicurezza fondamentale contro orphaning dei workspace
+        if (isSelfLeave && owners.includes(uidDelete) && owners.length <= 1) {
+          res.status(400).json({ error: "Bad Request: You cannot leave the workspace because you are the only owner left." });
+          return;
+        }
 
-      if (!owners.includes(requesterUid)) {
-        return res.status(403).json({ error: "Forbidden: Only team owners can delete the team" });
-      }
+        // 6. RECUPERO DATI MEMBRO (EMAIL)
+        const teamMemberRef = teamRef.collection("members").doc(uidDelete);
+        const memberSnap = await teamMemberRef.get();
+        const targetEmail = memberSnap.exists && typeof memberSnap.data()?.email === "string" 
+          ? memberSnap.data()!.email 
+          : undefined;
 
-      // Recupero membri ed email per l'invio massivo
-      const membersSnap = await teamRef.collection("members").get();
-      const allMemberIds = membersSnap.docs.map(doc => doc.id);
-      const allMemberEmails = membersSnap.docs.map(doc => doc.data()?.email).filter(Boolean);
-
-      const membersToReassign = allMemberIds.filter(id => id !== requesterUid);
-      
-      const reassignPromises = membersToReassign.map(async (memberId) => {
+        // 7. GESTIONE ACCESSO DOCUMENTI
         if (revokeDocumentAccess === true) {
-           await updateUserDocuments(memberId, requesterUid);
+          const targetOwnerUid = isSelfLeave ? owners.find((id: string) => id !== uidDelete) : requesterUid;
+          if (targetOwnerUid) {
+            await updateUserDocuments(uidDelete, targetOwnerUid);
+          }
         }
-        await removeUserVisibilityFromDocuments(memberId); 
-      });
-      await Promise.all(reassignPromises);
+        await removeUserVisibilityFromDocuments(uidDelete);
 
-      const batches: WriteBatch[] = [];
-      let currentBatch = db.batch();
-      let operationCount = 0;
+        // 8. COMMIT DEL BATCH DI CANCELLAZIONE / AGGIORNAMENTO
+        const batch = db.batch();
+        
+        const userRef = db.collection("users").doc(uidDelete);
+        batch.update(userRef, { 
+          assignedTeamId: FieldValue.delete() 
+        });
+        
+        const regRef = db.collection("register").doc(uidDelete);
+        batch.update(regRef, { 
+          assignedTeamId: FieldValue.delete(),
+          provider: FieldValue.delete()
+        });
 
-      const incrementBatch = () => {
-        operationCount++;
-        if (operationCount === 500) {
+        batch.update(teamRef, {
+          member_ids: FieldValue.arrayRemove(uidDelete),
+          owners: FieldValue.arrayRemove(uidDelete),
+          co_owners: FieldValue.arrayRemove(uidDelete) // Aggiunto per sicurezza se era co-owner
+        });
+        
+        batch.delete(teamMemberRef);
+        await batch.commit();
+
+        // 9. EFFETTI COLLATERALI (INVIO EMAIL DI RIMOZIONE SE NON È AUTO-USCITA)
+        if (targetEmail && !isSelfLeave) {
+          const teamNameStr = typeof teamData.name === "string" ? teamData.name : "Workspace";
+          void enqueueRemoveTeamEmail({ 
+            email: targetEmail, 
+            teamName: teamNameStr 
+          }).catch(mailErr => {
+            console.error(`[JURIO-REMOVE-MEMBER] Errore nell'invio email di rimozione a ${targetEmail}:`, mailErr);
+          });
+        }
+
+        // 10. RISPOSTA AL CLIENT
+        const responsePayload: RemoveTeamMemberResponse = { 
+          success: true, 
+          message: "Team member removed successfully" 
+        };
+
+        res.status(200).json(responsePayload);
+        return;
+
+      } catch (err: unknown) {
+        // 11. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal Error";
+        console.error(`[JURIO-REMOVE-MEMBER] Errore critico (Requester: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+
+        const lowerMsg = msg.toLowerCase();
+        const isAuth = lowerMsg.includes("bearer") || lowerMsg.includes("token") || lowerMsg.includes("unauthorized");          
+        
+        if (isAuth) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
+      }
+    });
+  }
+);
+
+export const deleteTeam = onRequest(
+  {
+    timeoutSeconds: 300,
+    memory: "1GiB",
+  },
+  async (req, res) => {
+    // Restituzione esplicita della Promise per evitare timeout di Express
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. GESTIONE PREFLIGHT E METODO
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
+
+      try {
+        // 2. SICUREZZA: APP CHECK E AUTH
+        let requesterUid: string;
+        try {
+          await requireAppCheck(req);
+          requesterUid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-DELETE-TEAM] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        if (!requesterUid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. RATE LIMITING (Fondamentale: previene abusi di cancellazioni massive di team)
+        const limits = { perMinute: 3, perDay: 10 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(requesterUid, "delete_team" as any, limits.perMinute),
+            consumeDailyFeature(requesterUid, "delete_team" as any, limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests", details: "Operazione eseguita troppo spesso. Riprova più tardi." });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as DeleteTeamRequestBody;
+        
+        const teamIdRaw = typeof body.teamId === "string" ? body.teamId : "";
+        const revokeDocumentAccess = typeof body.revokeDocumentAccess === "boolean" ? body.revokeDocumentAccess : false;
+
+        // Sanitizzazione rigorosa dell'ID del team
+        const teamId = teamIdRaw.trim().replace(/[^a-zA-Z0-9_-]/g, "").substring(0, 100);
+
+        if (!teamId) {
+          res.status(400).json({ error: "Bad Request: Missing or invalid 'teamId'" });
+          return;
+        }
+
+        // 5. VERIFICA TEAM E PERMESSI (Solo gli owner possono cancellare il team)
+        const teamRef = db.collection("teams").doc(teamId);
+        const teamSnap = await teamRef.get();
+
+        if (!teamSnap.exists) {
+          res.status(404).json({ error: "Not Found: Team non trovato" });
+          return;
+        }
+
+        const teamData = teamSnap.data() as Record<string, any>;
+        const owners = Array.isArray(teamData.owners) ? teamData.owners : [];
+
+        if (!owners.includes(requesterUid)) {
+          res.status(403).json({ error: "Forbidden: Only team owners can delete the team" });
+          return;
+        }
+
+        // 6. RECUPERO MEMBRI ED EMAIL
+        const membersSnap = await teamRef.collection("members").get();
+        const allMemberIds = membersSnap.docs
+          .map(doc => doc.id)
+          .filter(id => typeof id === "string" && id.trim().length > 0);
+          
+        const allMemberEmails = membersSnap.docs
+          .map(doc => doc.data()?.email)
+          .filter((email): email is string => typeof email === "string" && email.trim().length > 0);
+
+        const membersToReassign = allMemberIds.filter(id => id !== requesterUid);
+        
+        // 7. RIASSEGNAZIONE O RIMOZIONE VISIBILITÀ DOCUMENTI
+        const reassignPromises = membersToReassign.map(async (memberId) => {
+          if (revokeDocumentAccess === true) {
+             await updateUserDocuments(memberId, requesterUid);
+          }
+          await removeUserVisibilityFromDocuments(memberId); 
+        });
+        await Promise.all(reassignPromises);
+
+        // 8. COSTRUZIONE BATCH MULTIPLI (Gestione limite 500 operazioni per batch di Firestore)
+        const batches: WriteBatch[] = [];
+        let currentBatch = db.batch();
+        let operationCount = 0;
+
+        const incrementBatch = () => {
+          operationCount++;
+          if (operationCount === 500) {
+            batches.push(currentBatch);
+            currentBatch = db.batch();
+            operationCount = 0;
+          }
+        };
+
+        // A) Pulizia profili utente e register dei membri
+        for (const memberId of allMemberIds) {
+          const userRef = db.collection("users").doc(memberId);
+          currentBatch.update(userRef, {
+            assignedTeamId: FieldValue.delete()
+          });
+          
+          const regRef = db.collection("register").doc(memberId);
+          currentBatch.update(regRef, { 
+            assignedTeamId: FieldValue.delete(),
+            provider: FieldValue.delete()
+          });
+          
+          incrementBatch();
+        }
+
+        // B) Cancellazione documenti sub-collection members
+        membersSnap.docs.forEach(docSnap => {
+          currentBatch.delete(docSnap.ref);
+          incrementBatch();
+        });
+
+        // C) Cancellazione documento principale del team
+        currentBatch.delete(teamRef);
+        incrementBatch();
+
+        if (operationCount > 0) {
           batches.push(currentBatch);
-          currentBatch = db.batch();
-          operationCount = 0;
         }
-      };
 
-      // Pulizia profili
-      for (const memberId of allMemberIds) {
-        const userRef = db.collection("users").doc(memberId);
-        currentBatch.update(userRef, {
-          assignedTeamId: admin.firestore.FieldValue.delete()
-        });
+        // Esecuzione parallela dei batch di Firestore
+        await Promise.all(batches.map(batch => batch.commit()));
+
+        // 9. NOTIFICA MASSIVA DI CHIUSURA TEAM
+        if (allMemberEmails.length > 0) {
+          const teamNameStr = typeof teamData.name === "string" ? teamData.name : "Workspace";
+          void enqueueCloseTeamEmail({ 
+            email: allMemberEmails, 
+            teamName: teamNameStr 
+          }).catch(mailErr => {
+            console.error(`[JURIO-DELETE-TEAM] Errore nell'invio delle email di chiusura team:`, mailErr);
+          });
+        }
+
+        // 10. RISPOSTA AL CLIENT
+        const responsePayload: DeleteTeamResponse = { 
+          success: true, 
+          message: "Team deleted successfully and documents reassigned" 
+        };
+
+        res.status(200).json(responsePayload);
+        return;
+
+      } catch (err: unknown) {
+        // 11. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal Error";
+        console.error(`[JURIO-DELETE-TEAM] Errore critico (Requester: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
         
-        const regRef = db.collection("register").doc(memberId);
-        currentBatch.update(regRef, { 
-          assignedTeamId: admin.firestore.FieldValue.delete(),
-          provider: admin.firestore.FieldValue.delete()
-        });
+        const lowerMsg = msg.toLowerCase();
+        const isAuth = lowerMsg.includes("bearer") || lowerMsg.includes("token") || lowerMsg.includes("unauthorized");
         
-        incrementBatch();
+        if (isAuth) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // Risposta blindata senza svelare dettagli interni di Firestore o BatchWriter
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
       }
-
-      membersSnap.docs.forEach(docSnap => {
-        currentBatch.delete(docSnap.ref);
-        incrementBatch();
-      });
-
-      currentBatch.delete(teamRef);
-      incrementBatch();
-
-      if (operationCount > 0) batches.push(currentBatch);
-      await Promise.all(batches.map(batch => batch.commit()));
-
-      // Notifica massiva di chiusura
-      if (allMemberEmails.length > 0) {
-        await enqueueCloseTeamEmail({ 
-          email: allMemberEmails, 
-          teamName: teamData?.name || "Workspace" 
-        });
-      }
-
-      return res.status(200).json({ 
-        success: true, 
-        message: "Team deleted successfully and documents reassigned" 
-      });
-
-    } catch (err: any) {
-      console.error("[deleteTeam] Error:", err);
-      const msg = err instanceof Error ? err.message : "Internal Error";
-      const isAuth = msg.toLowerCase().includes("bearer") || msg.toLowerCase().includes("token") || msg.toLowerCase().includes("unauthorized");
-      return res.status(isAuth ? 401 : 500).json({ error: msg });
-    }
-  });
-});
+    });
+  }
+);
 
 // ============================================================================
 // TASKS
 // ============================================================================
-
 
 export const tasksDowngrade = onRequest(async (req, res) => {
   if (req.method !== "POST") {
@@ -3863,126 +5385,249 @@ export const processContacts = onDocumentWritten(
 // INTEGRAZIONE CLOUD (GOOGLE DRIVE & MICROSOFT GRAPH)
 // ============================================================================
 
-
 export const listCloudFiles = onRequest(
-  { timeoutSeconds: 60, memory: "1GiB" },
+  { 
+    timeoutSeconds: 60, 
+    memory: "1GiB",
+  },
   async (req, res) => {
     return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. GESTIONE PREFLIGHT E METODO
       if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        await requireAppCheck(req);
-        await requireUidFromAuthHeader(req);
-
-        // providerToken è il token OAuth di Google o Microsoft (NON quello di Firebase)
-        const { provider, providerToken } = req.body; 
-        
-        if (!providerToken) {
-          res.status(400).json({ error: "Token del cloud provider mancante." });
+        // 2. SICUREZZA: APP CHECK E AUTH
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-CLOUD-LIST] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
           return;
         }
 
-        if (provider === "google") {
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. RATE LIMITING (Prevenzione DoS / Chiamate massive alle API dei Cloud Provider)
+        const limits = { perMinute: 15, perDay: 100 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "cloud_files" as any, limits.perMinute),
+            consumeDailyFeature(uid, "cloud_files" as any, limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests", details: "Troppe richieste. Riprova più tardi." });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as CloudFilesListRequestBody;
+        const providerRaw = typeof body.provider === "string" ? body.provider.trim().toLowerCase() : "";
+        const providerTokenRaw = typeof body.providerToken === "string" ? body.providerToken.trim() : "";
+
+        if (!providerTokenRaw) {
+          res.status(400).json({ error: "Bad Request: Token del cloud provider mancante o non valido." });
+          return;
+        }
+
+        if (providerRaw !== "google" && providerRaw !== "microsoft") {
+          res.status(400).json({ error: "Bad Request: Provider non supportato (usa 'google' o 'microsoft')." });
+          return;
+        }
+
+        // 5. INTEGRAZIONE GOOGLE DRIVE
+        if (providerRaw === "google") {
           const auth = new google.auth.OAuth2();
-          auth.setCredentials({ access_token: providerToken });
+          auth.setCredentials({ access_token: providerTokenRaw });
           const drive = google.drive({ version: 'v3', auth });
           
-          // Filtriamo per PDF e Word
           const driveRes = await drive.files.list({
             q: "mimeType='application/pdf' or mimeType='application/vnd.openxmlformats-officedocument.wordprocessingml.document'",
             pageSize: 50,
             fields: "files(id, name, mimeType, modifiedTime)",
           });
           
-          res.status(200).json({ files: driveRes.data.files });
+          res.status(200).json({ files: driveRes.data.files ?? [] });
           return;
         } 
         
-        else if (provider === "microsoft") {
-          // MS Graph: Cerca PDF e DOCX in OneDrive/SharePoint
+        // 6. INTEGRAZIONE MICROSOFT ONEDRIVE
+        else if (providerRaw === "microsoft") {
           const msRes = await fetch("https://graph.microsoft.com/v1.0/me/drive/root/search(q='.pdf')?select=id,name,file,lastModifiedDateTime,webUrl", {
-            headers: { Authorization: `Bearer ${providerToken}` }
+            headers: { Authorization: `Bearer ${providerTokenRaw}` }
           });
           
-          if (!msRes.ok) throw new Error("Errore API Microsoft");
+          if (!msRes.ok) {
+            console.warn(`[JURIO-CLOUD-LIST] Errore risposto da Microsoft Graph API: ${msRes.status}`);
+            res.status(502).json({ error: "Bad Gateway: Errore durante la comunicazione con il provider Microsoft." });
+            return;
+          }
           
-          const data = await msRes.json();
+          const data = (await msRes.json()) as { value?: Array<any> };
           const files = (data.value || []).map((f: any) => ({
-            id: f.id,
-            name: f.name,
-            mimeType: f.file?.mimeType,
-            modifiedTime: f.lastModifiedDateTime,
-            webUrl: f.webUrl // Utile da salvare nel DB per aprire il link originale
+            id: typeof f.id === "string" ? f.id : "",
+            name: typeof f.name === "string" ? f.name : "Senza nome",
+            mimeType: f.file?.mimeType ?? "application/octet-stream",
+            modifiedTime: f.lastModifiedDateTime ?? null,
+            webUrl: typeof f.webUrl === "string" ? f.webUrl : ""
           }));
           
           res.status(200).json({ files });
           return;
-        } 
+        }
+
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Internal Error";
+        const bodyProvider = req.body && typeof req.body === "object" ? (req.body as any).provider : "unknown";
+        console.error(`[JURIO-CLOUD-LIST] Errore critico per provider [${bodyProvider}]:`, msg);
         
-        else {
-          res.status(400).json({ error: "Provider non supportato (usa 'google' o 'microsoft')." });
+        const lowerMsg = msg.toLowerCase();
+        const isAuth = lowerMsg.includes("bearer") || lowerMsg.includes("token") || lowerMsg.includes("unauthorized") || lowerMsg.includes("invalid_grant");
+        
+        if (isAuth) {
+          res.status(401).json({ error: "Unauthorized: Token del cloud provider scaduto o non valido." });
           return;
         }
 
-      } catch (error: any) {
-        console.error(`Errore listCloudFiles [${req.body.provider}]:`, error);
-        res.status(500).json({ error: error.message || "Errore interno" });
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
       }
     });
   }
 );
 
+
 export const downloadCloudFile = onRequest(
-  { timeoutSeconds: 120, memory: "1GiB" },
+  { 
+    timeoutSeconds: 120, 
+    memory: "1GiB",
+  },
   async (req, res) => {
     return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. GESTIONE PREFLIGHT E METODO
       if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        await requireAppCheck(req);
-        await requireUidFromAuthHeader(req);
-
-        const { provider, providerToken, fileId } = req.body;
-
-        if (!providerToken || !fileId) {
-          res.status(400).json({ error: "Parametri mancanti." });
+        // 2. SICUREZZA: APP CHECK E AUTH
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-CLOUD-DOWNLOAD] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
           return;
         }
 
-        if (provider === "google") {
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. RATE LIMITING (Protezione download massivo di file binari pesanti)
+        const limits = { perMinute: 10, perDay: 50 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "cloud_files" as any, limits.perMinute),
+            consumeDailyFeature(uid, "cloud_files" as any, limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests", details: "Troppi download simultanei. Riprova più tardi." });
+              return;
+           }
+           throw rateLimitError;
+        }
+
+        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as CloudFileDownloadRequestBody;
+        const providerRaw = typeof body.provider === "string" ? body.provider.trim().toLowerCase() : "";
+        const providerTokenRaw = typeof body.providerToken === "string" ? body.providerToken.trim() : "";
+        const fileIdRaw = typeof body.fileId === "string" ? body.fileId.trim() : "";
+
+        if (!providerTokenRaw || !fileIdRaw) {
+          res.status(400).json({ error: "Bad Request: Parametri mancanti ('providerToken' o 'fileId')." });
+          return;
+        }
+
+        if (providerRaw !== "google" && providerRaw !== "microsoft") {
+          res.status(400).json({ error: "Bad Request: Provider non supportato (usa 'google' o 'microsoft')." });
+          return;
+        }
+
+        // Sanitizzazione rigorosa dell'ID file per prevenire path traversal o injection
+        const fileId = fileIdRaw.replace(/[^a-zA-Z0-9_.-]/g, "").substring(0, 250);
+        if (!fileId) {
+          res.status(400).json({ error: "Bad Request: Formato fileId non valido." });
+          return;
+        }
+
+        // 5. DOWNLOAD DA GOOGLE DRIVE
+        if (providerRaw === "google") {
           const auth = new google.auth.OAuth2();
-          auth.setCredentials({ access_token: providerToken });
+          auth.setCredentials({ access_token: providerTokenRaw });
           const drive = google.drive({ version: 'v3', auth });
           
-          // Scarica il file in formato buffer
           const driveRes = await drive.files.get(
             { fileId, alt: 'media' },
             { responseType: 'arraybuffer' }
           );
-          const contentType = driveRes.headers['content-type'] || 'application/pdf';
+          
+          const contentType = typeof driveRes.headers['content-type'] === "string" 
+            ? driveRes.headers['content-type'] 
+            : 'application/pdf';
+            
           res.setHeader('Content-Type', contentType);
           res.send(Buffer.from(driveRes.data as ArrayBuffer));
           return;
         } 
         
-        else if (provider === "microsoft") {
+        // 6. DOWNLOAD DA MICROSOFT ONEDRIVE
+        else if (providerRaw === "microsoft") {
           const msRes = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`, {
-            headers: { Authorization: `Bearer ${providerToken}` }
+            headers: { Authorization: `Bearer ${providerTokenRaw}` }
           });
           
-          if (!msRes.ok) throw new Error("Impossibile scaricare il file da Microsoft");
+          if (!msRes.ok) {
+            console.warn(`[JURIO-CLOUD-DOWNLOAD] Errore risposto da Microsoft Graph API per file ${fileId}: ${msRes.status}`);
+            res.status(502).json({ error: "Bad Gateway: Impossibile scaricare il file da Microsoft." });
+            return;
+          }
           
           const arrayBuffer = await msRes.arrayBuffer();
-          res.setHeader('Content-Type', msRes.headers.get('content-type') || 'application/pdf');
+          const contentType = msRes.headers.get('content-type') || 'application/pdf';
+          
+          res.setHeader('Content-Type', contentType);
           res.send(Buffer.from(arrayBuffer));
           return;
         }
 
-      } catch (error: any) {
-        console.error(`Errore downloadCloudFile [${req.body.provider}]:`, error);
-        res.status(500).json({ error: error.message || "Errore interno" });
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Internal Error";
+        const bodyProvider = req.body && typeof req.body === "object" ? (req.body as any).provider : "unknown";
+        console.error(`[JURIO-CLOUD-DOWNLOAD] Errore critico per provider [${bodyProvider}]:`, msg);
+        
+        const lowerMsg = msg.toLowerCase();
+        const isAuth = lowerMsg.includes("bearer") || lowerMsg.includes("token") || lowerMsg.includes("unauthorized") || lowerMsg.includes("invalid_grant");
+        
+        if (isAuth) {
+          res.status(401).json({ error: "Unauthorized: Token del cloud provider scaduto o non valido." });
+          return;
+        }
+
+        res.status(500).json({ error: "Internal Server Error" });
+        return;
       }
     });
   }

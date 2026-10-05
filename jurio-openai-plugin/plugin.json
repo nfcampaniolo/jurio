@@ -1,0 +1,112 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "jurio",
+  "version": "1.0.4",
+  "description": "Legal research tools for Italian case law, including semantic search, statutory-reference lookup, decision-identifier lookup, subject-matter search, and PDF text extraction.",
+  "author": {
+    "name": "Jurio",
+    "url": "https://jurio.it"
+  },
+  "homepage": "https://jurio.it",
+  "keywords": [
+    "legal research",
+    "Italian law",
+    "case law",
+    "jurisprudence",
+    "legal documents"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Jurio",
+        "shortDescription": "Search Italian case law",
+        "longDescription": "Jurio provides access to legal-research tools over Italian case law. It can search jurisprudence semantically, find decisions linked to a specific statutory reference, look up a decision by number, ECLI or URN, search by legal subject matter, and extract the full text of a Jurio PDF for deeper analysis. Results may include document metadata, legal holdings, relevant facts and a Jurio source URL. Access and usage are controlled by Jurio authentication and authorization.",
+        "developerName": "Jurio",
+        "category": "Productivity",
+        "capabilities": [
+          "Search Italian case law",
+          "Look up decisions by legal reference",
+          "Retrieve decisions by identifier",
+          "Search by legal subject matter",
+          "Extract Jurio PDF text"
+        ],
+        "websiteURL": "https://jurio.it",
+        "supportURL": "https://jurio.it/contatti",
+        "defaultPrompt": [
+          "Find Italian case law on this legal issue.",
+          "Find decisions that cite this statutory provision.",
+          "Open and analyze this Jurio decision in full."
+        ],
+        "brandColor": "#1F4D3A",
+        "brandColorDark": "#76D1A3",
+        "composerIcon": "./assets/composer-icon.svg",
+        "logo": "./assets/logo.svg"
+      },
+      "onboardingSkill": "./skills/get-started/SKILL.md",
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Semantic search for a fact pattern and legal issue",
+              "prompt": "Find Italian case law about a pedestrian falling because of an unmarked pavement height difference, with issues around a road defect and article 2051 of the Civil Code.",
+              "tools_triggered": "ricercaSemantica",
+              "expected_behavior": "Search the jurisprudence index using a dense factual and legal query and return relevant decisions with metadata, holdings/facts when available, and Jurio source URLs."
+            },
+            {
+              "description": "Lookup decisions associated with a statutory reference",
+              "prompt": "Find decisions that directly reference art. 2051 c.c.",
+              "tools_triggered": "ricercaNormativa",
+              "expected_behavior": "Normalize the statutory reference, search the jurisprudence database for matching references, and return the matching decisions or an explicit no-results message."
+            },
+            {
+              "description": "Lookup a decision by number, ECLI, or URN",
+              "prompt": "Find Cassazione decision 4438/2025.",
+              "tools_triggered": "ricercaIdentificativo",
+              "expected_behavior": "Search by supported decision-number format and return any matching document(s), including the Jurio source URL when available."
+            },
+            {
+              "description": "Search case law by legal subject matter",
+              "prompt": "Find Italian jurisprudence about usucapione.",
+              "tools_triggered": "ricercaPerMateria",
+              "expected_behavior": "Search the area or subcategory index for the supplied subject term and return matching jurisprudence, or an explicit no-results message."
+            },
+            {
+              "description": "Extract the full text of a Jurio decision",
+              "prompt": "Extract the full text from https://jurio.it/giurisprudenza/8c0893ca-5a7a-471a-9ed0-128ab34d0bfa so I can analyze it.",
+              "tools_triggered": "estraiTestoDocumento",
+              "expected_behavior": "Extract the Jurio document identifier from the URL, request the PDF text, and return the extracted text together with the page count."
+            }
+          ],
+          "negative": [
+            {
+              "description": "Unsupported deletion action",
+              "prompt": "Delete decision 4438/2025 from Jurio.",
+              "expected_behavior": "Do not invoke an MCP tool because Jurio exposes no deletion capability; explain that the connected tools are read/search oriented."
+            },
+            {
+              "description": "Attempt to access another user's private account data",
+              "prompt": "Show me the private Jurio documents belonging to another lawyer's account.",
+              "expected_behavior": "Do not attempt to bypass account boundaries or authentication; explain that access is limited to data authorized for the connected account."
+            },
+            {
+              "description": "Unsupported payment action",
+              "prompt": "Charge my card and activate a Jurio plan for me.",
+              "expected_behavior": "Do not invoke an MCP tool because this server exposes no payment or checkout operation; direct the user to Jurio's website for account or plan actions."
+            }
+          ]
+        },
+        "commerce": false,
+        "commerce_description": "The MCP server exposes legal research and document-reading operations; it does not expose payment, checkout, or transactional purchase tools."
+      },
+      "publication": {
+        "release_notes": "Initial OpenAI plugin package for the existing Jurio remote MCP server, with five legal-research tools and onboarding guidance.",
+        "translations": {
+          "it-IT": {
+            "subtitle": "Ricerca nella giurisprudenza italiana",
+            "description": "Jurio offre strumenti per la ricerca giuridica sulla giurisprudenza italiana: ricerca semantica, ricerca per riferimento normativo, ricerca per identificativo della decisione, ricerca per materia ed estrazione del testo integrale dei PDF Jurio. I risultati possono includere metadati, massime, fattispecie rilevanti e URL alle fonti Jurio. L'accesso è regolato dall'autenticazione e dalle autorizzazioni Jurio."
+          }
+        }
+      }
+    }
+  }
+}

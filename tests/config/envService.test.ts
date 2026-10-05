@@ -3,7 +3,6 @@ import { describe, test, expect, beforeEach, afterEach, vi } from "vitest";
 /* ---------- module under test ---------- */
 import {
   getStripePublishableKey,
-  getClientId,
   getStripe,
   getVectorSearchUrl,
   getSupportUrl,
@@ -21,7 +20,6 @@ describe("envService Suite", () => {
 
   beforeEach(() => {
     vi.stubEnv("VITE_STRIPE_PUBLISHABLE_KEY", "pk_test_12345");
-    vi.stubEnv("VITE_PAYPAL_CLIENT_ID", "paypal_client_999");
     vi.stubEnv("VITE_GET_PRICE_URL", "https://api.jurio.it/prices");
     vi.stubEnv("VITE_STRIPE_CREATE_SESSION_URL", "https://api.jurio.it/stripe/session");
     vi.stubEnv("VITE_VECTOR_SEARCH", "https://api.jurio.it/vector-search");
@@ -50,7 +48,6 @@ describe("envService Suite", () => {
 
   test("recupera le chiavi e gli identificatori client", () => {
     expect(getStripePublishableKey()).toBe("pk_test_12345");
-    expect(getClientId()).toBe("paypal_client_999");
   });
 
   test("recupera la configurazione degli endpoint Stripe", () => {

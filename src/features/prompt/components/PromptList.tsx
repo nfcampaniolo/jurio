@@ -16,26 +16,22 @@ interface PromptListProps {
 export const PromptList: React.FC<PromptListProps> = ({ prompts, isLoading, onCreateNew, onDelete }) => {
   const shouldReduceMotion = useReducedMotion();
 
-  // Azione: Copia il contenuto del prompt generato
   const handleCopy = (e: React.MouseEvent, content: string) => {
     e.stopPropagation();
     navigator.clipboard.writeText(content);
     toast.success("Prompt copiato negli appunti!");
   };
 
-  // Azione: Elimina (Delega la conferma alla Dashboard padre)
   const handleDelete = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     onDelete(id); 
   };
 
-  // Azione: Usa come Modello (Passa l'intero oggetto al form)
   const handleUseAsTemplate = (e: React.MouseEvent, prompt: SavedPrompt) => {
     e.stopPropagation();
     onCreateNew(prompt);
   };
 
-  // Funzione helper per formattare la data in modo Type-Safe
   const formatDate = (dateData: Timestamp | Date | string | number | null | undefined): string => {
     if (!dateData) return "Data sconosciuta";
 
@@ -81,12 +77,22 @@ export const PromptList: React.FC<PromptListProps> = ({ prompts, isLoading, onCr
         </button>
       </motion.div>
 
-      {/* STATO DI CARICAMENTO */}
+      {/* STATO DI CARICAMENTO PROFESSIONALE */}
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center p-12 text-(--color-muted) gap-2">
-          <Loader2 className="animate-spin text-(--color-text)" size={20} />
-          <span className="text-xs font-bold uppercase tracking-widest">Caricamento prompt...</span>
-        </div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex flex-col items-center justify-center py-20 px-4 rounded-xl border border-(--color-border) bg-(--color-surface)/50 shadow-xs mt-6"
+        >
+          <div className="w-14 h-14 rounded-2xl bg-(--color-bg) border border-(--color-border) flex items-center justify-center mb-5 relative overflow-hidden">
+            <div className="absolute inset-0 bg-linear-to-br from-transparent via-(--color-text)/5 to-transparent animate-pulse" />
+            <Loader2 className="animate-spin text-(--color-text) opacity-80" size={24} />
+          </div>
+          <h3 className="text-base font-medium text-(--color-text) tracking-tight mb-1" style={{ fontFamily: 'var(--font-serif)' }}>
+            Inizializzazione Archivio
+          </h3>
+          <p className="text-xs text-(--color-muted)">Sincronizzazione dei modelli di estrazione in corso...</p>
+        </motion.div>
       ) : prompts.length === 0 ? (
         
         /* STATO VUOTO COMMERCIALE */
@@ -135,10 +141,8 @@ export const PromptList: React.FC<PromptListProps> = ({ prompts, isLoading, onCr
               transition={shouldReduceMotion ? {} : { duration: 0.3, delay: index * 0.05, ease: "easeOut" }}
               className="relative flex flex-col bg-(--color-surface) border border-(--color-border) rounded-lg shadow-(--shadow-soft) transition-all overflow-hidden"
             >
-              {/* LA LINEA DI RIGORE SUPERIORE */}
               <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
 
-              {/* Corpo della Card */}
               <div className="p-6 sm:p-7 flex-1 mt-1">
                 <h3 className="text-base sm:text-lg font-medium mb-2 text-(--color-text) tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>
                   {prompt.title}
@@ -151,7 +155,6 @@ export const PromptList: React.FC<PromptListProps> = ({ prompts, isLoading, onCr
                 </p>
               </div>
 
-              {/* Footer delle Azioni */}
               <div className="grid grid-cols-3 border-t border-(--color-border) bg-(--color-bg) divide-x divide-(--color-border)">
                 <button 
                   type="button"
@@ -183,7 +186,6 @@ export const PromptList: React.FC<PromptListProps> = ({ prompts, isLoading, onCr
                   <span className="text-[10px] font-bold uppercase tracking-widest">Elimina</span>
                 </button>
               </div>
-
             </motion.div>
           ))}
         </div>

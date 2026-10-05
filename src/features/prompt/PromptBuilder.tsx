@@ -10,6 +10,9 @@ import { FaShieldAlt, FaArrowLeft, FaInfoCircle, FaFolderOpen, FaChevronRight } 
 export const PromptDashboard: React.FC = () => {
   const shouldReduceMotion = useReducedMotion();
   const [showGuideTooltip, setShowGuideTooltip] = useState(false);
+  
+  // Traccia se l'utente è arrivato saltando la lista
+  const [directEntry, setDirectEntry] = useState(false);
 
   const {
     view,
@@ -24,11 +27,31 @@ export const PromptDashboard: React.FC = () => {
     cancelDelete
   } = usePromptDashboard();
 
-useEffect(() => {
-  if (window.location.hash.includes("#crea")) {
-    handleOpenCreator();
-  }
-}); 
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash.includes("#crea")) {
+      setDirectEntry(true); // Memorizza che siamo entrati direttamente nel form
+      handleOpenCreator();
+      // Pulisce l'URL per evitare refresh accidentali
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); 
+
+  // Gestore super-intelligente della navigazione
+  const handleGoBack = () => {
+    if (view === "create") {
+      if (directEntry) {
+        // Se è entrato saltando la lista, chiudere il form lo riporta al profilo
+        window.location.href = "/profilo";
+      } else {
+        // Se ha aperto il form dalla lista interna, lo riporta alla lista
+        handleBackToList();
+      }
+    } else {
+      // Se è nella lista e clicca indietro, torna al profilo
+      window.location.href = "/profilo";
+    }
+  };
 
   const animationProps = {
     initial: shouldReduceMotion ? false : ({ opacity: 0, y: 10 } as TargetAndTransition),
@@ -37,7 +60,6 @@ useEffect(() => {
     transition: shouldReduceMotion ? {} : ({ duration: 0.22, ease: "easeOut" } as Transition),
   };
 
-  // Titolo contestuale alla vista attiva
   const pageTitle = view === "create"
     ? selectedTemplate
       ? "Modifica Prompt Personalizzato"
@@ -45,7 +67,7 @@ useEffect(() => {
     : "Prompting Personalizzato - Archivio";
 
   return (
-    <div className="w-full min-h-screen bg-(--color-bg) text-(--color-text) relative">
+    <div className="w-full min-h-screen bg-(--color-bg) text-(--color-text) relative overflow-hidden">
       <SEO
         title={pageTitle}
         description="Crea, personalizza e gestisci le regole di estrazione e i prompt per l'analisi documentale su Jurio."
@@ -57,39 +79,40 @@ useEffect(() => {
       <div className="border-b border-(--color-border) bg-(--color-surface)/70 backdrop-blur-md sticky top-0 z-30 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
           
-          {/* Navigazione contestuale e hover guidato */}
           <div className="flex items-center gap-2 text-xs text-(--color-muted)">
             <button 
               type="button"
-              onClick={handleBackToList}
+              onClick={handleGoBack}
               className={`group flex items-center gap-2 font-medium transition-all duration-200 cursor-pointer ${
                 view === "create" 
                   ? "text-(--color-text) hover:opacity-80" 
                   : "text-(--color-muted) hover:text-(--color-text)"
               }`}
-              title="Torna all'elenco generale dei prompt"
+              title={view === "create" && !directEntry ? "Torna all'archivio prompt" : "Torna al profilo principale"}
             >
               <span className="p-1 rounded-sm bg-(--color-bg) border border-(--color-border) group-hover:border-(--color-text) transition-colors">
-                {view === "create" ? (
-                  <FaArrowLeft className="w-2.5 h-2.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
-                ) : (
-                  <FaFolderOpen className="w-2.5 h-2.5 opacity-75" />
-                )}
+                <FaArrowLeft className="w-2.5 h-2.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
               </span>
-              <span className="tracking-wide">Archivio Prompt</span>
+              <span className="tracking-wide">
+                {/* Etichetta dinamica a seconda del percorso fatto */}
+                {view === "create" && !directEntry ? "Archivio Prompt" : "Torna al Profilo"}
+              </span>
             </button>
 
-            {view === "create" && (
-              <>
-                <FaChevronRight className="w-2 h-2 opacity-40" />
-                <span className="font-semibold text-(--color-text) tracking-wide">
-                  {selectedTemplate ? "Duplica / Modifica Modello" : "Nuova Regola di Estrazione"}
-                </span>
-              </>
+            <FaChevronRight className="w-2 h-2 opacity-40" />
+            
+            {view === "create" ? (
+              <span className="font-semibold text-(--color-text) tracking-wide">
+                {selectedTemplate ? "Duplica / Modifica Modello" : "Nuova Regola di Estrazione"}
+              </span>
+            ) : (
+              <span className="font-semibold text-(--color-text) tracking-wide flex items-center gap-1.5">
+                <FaFolderOpen className="w-3 h-3 opacity-75" />
+                Archivio Prompt
+              </span>
             )}
           </div>
 
-          {/* Indicatori di sicurezza e compliance con guida al passaggio del mouse */}
           <div className="flex items-center gap-3">
             <div 
               className="relative flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-(--color-bg) border border-(--color-border) text-[11px] font-medium text-(--color-muted) cursor-help transition-all duration-200 hover:border-(--color-text) hover:text-(--color-text)"
@@ -99,7 +122,6 @@ useEffect(() => {
               <FaShieldAlt className="w-3 h-3 text-(--color-primary) opacity-90" />
               <span className="hidden sm:inline tracking-wider uppercase text-[10px]">GDPR & E2E Encrypted</span>
 
-              {/* Tooltip guidato al hover */}
               <AnimatePresence>
                 {showGuideTooltip && (
                   <motion.div
@@ -122,7 +144,6 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* STRISCIA INFORMATIVA DI ORIENTAMENTO */}
       {view === "list" && prompts.length > 0 && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
           <div className="group relative flex items-start sm:items-center justify-between gap-3 px-4 py-3 bg-(--color-surface) border border-(--color-border) hover:border-(--color-text)/40 rounded-lg shadow-xs transition-all duration-200">
@@ -139,9 +160,9 @@ useEffect(() => {
         </div>
       )}
 
-      {/* AREA APPLICATIVA PRINCIPALE */}
       <main className="py-6 sm:py-8 px-4 sm:px-6">
-        <AnimatePresence mode="wait" initial={false}>
+        {/* Rimosso initial={false} da AnimatePresence per far triggerare l'animazione al primo ingresso */}
+        <AnimatePresence mode="wait">
           {view === "list" ? (
             <motion.div key="list" {...animationProps}>
               <PromptList 
@@ -154,7 +175,7 @@ useEffect(() => {
           ) : (
             <motion.div key="create" {...animationProps}>
               <PromptCreator 
-                onBack={handleBackToList} 
+                onBack={handleGoBack} 
                 template={selectedTemplate}
               />
             </motion.div>

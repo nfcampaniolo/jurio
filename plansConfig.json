@@ -1,0 +1,230 @@
+{
+  "monthly": [
+    {
+      "id": "personale_m",
+      "name": "Essential",
+      "price": 6.1,
+      "initial_price": 12.2,
+      "currency": "EUR",
+      "cta": "Registrati",
+      "highlighted": false,
+      "durationDays": 30,
+      "stripePriceId": "price_1Twjno2Z5ZVHjnRK9ltkSqYF",
+      "features": [
+        {
+          "name": "Accesso Illimitato alla Giurisprudenza",
+          "description": "Tutte le principali decisioni delle Corti Supreme italiane.",
+          "included": true
+        },
+        {
+          "name": "Ricerca Giuridica Intelligente",
+          "description": "Cerca per concetto e significato, non solo per parole chiave.",
+          "included": true
+        },
+        {
+          "name": "Add-in per Microsoft Word",
+          "description": "Usa ricerca e AI direttamente in Word mentre scrivi.",
+          "included": false
+        },
+        {
+          "name": "Integrazione con Vibe tramite MCP",
+          "description": "Scambio dati bidirezionale e sicuro con i canvas.",
+          "included": true
+        },
+        {
+          "name": "Confronto tra Atti e Giurisprudenza",
+          "description": "Confronta memorie e atti del tuo studio con la giurisprudenza.",
+          "included": false
+        },
+        {
+          "name": "Ricerca Unificata su Tutte le Fonti",
+          "description": "Cerca contemporaneamente in giurisprudenza e archivio.",
+          "included": false
+        },
+        {
+          "name": "Archivio Privato dello Studio",
+          "description": "Organizza documenti in un archivio cloud riservato.",
+          "included": false
+        },
+        {
+          "name": "AI per Fascicoli e Redazione",
+          "description": "L'AI analizza i tuoi fascicoli e suggerisce contenuti.",
+          "included": false
+        }
+      ]
+    },
+    {
+      "id": "business_m",
+      "name": "Business",
+      "price": 24.4,
+      "initial_price": 48.8,
+      "currency": "EUR",
+      "cta": "Registrati",
+      "highlighted": true,
+      "durationDays": 30,
+      "stripePriceId": "price_1TwjpA2Z5ZVHjnRK5Z6wwsO6",
+      "features": [
+        {
+          "name": "Tutte le funzioni Essential",
+          "description": "Include tutto ciò che è presente nel piano base.",
+          "included": true
+        },
+        {
+          "name": "Confronto tra Atti e Giurisprudenza",
+          "description": "Confronta memorie e atti del tuo studio con la giurisprudenza.",
+          "included": true
+        },
+        {
+          "name": "Ricerca Unificata su Tutte le Fonti",
+          "description": "Cerca contemporaneamente in giurisprudenza e archivio.",
+          "included": true
+        },
+        {
+          "name": "Archivio Privato dello Studio",
+          "description": "Organizza documenti in un archivio cloud riservato.",
+          "included": true
+        },
+        {
+          "name": "AI per Fascicoli e Redazione",
+          "description": "L'AI analizza i tuoi fascicoli e suggerisce contenuti.",
+          "included": true
+        },
+        {
+          "name": "Assistente e Supporto Prioritario",
+          "description": "Assistente AI e supporto tecnico dedicato.",
+          "included": true
+        }
+      ]
+    }
+  ],
+  "yearly": [
+    {
+      "id": "personale",
+      "name": "Essential",
+      "price": 61,
+      "initial_price": 146.4,
+      "currency": "EUR",
+      "cta": "Registrati",
+      "highlighted": false,
+      "durationDays": 365,
+      "stripePriceId": "price_1Twjfb2Z5ZVHjnRKl8E0ulgh",
+      "features": [
+        {
+          "name": "Accesso Illimitato alla Giurisprudenza",
+          "description": "Tutte le principali decisioni delle Corti Supreme italiane.",
+          "included": true
+        },
+        {
+          "name": "Ricerca Giuridica Intelligente",
+          "description": "Cerca per concetto e significato, non solo per parole chiave.",
+          "included": true
+        },
+        {
+          "name": "Add-in per Microsoft Word",
+          "description": "Usa ricerca e AI direttamente in Word mentre scrivi.",
+          "included": false
+        },
+        {
+          "name": "Integrazione con Vibe tramite MCP",
+          "description": "Scambio dati bidirezionale e sicuro con i canvas.",
+          "included": true
+        },
+        {
+          "name": "Confronto tra Atti e Giurisprudenza",
+          "description": "Confronta memorie e atti del tuo studio con la giurisprudenza.",
+          "included": false
+        },
+        {
+          "name": "Ricerca Unificata su Tutte le Fonti",
+          "description": "Cerca contemporaneamente in giurisprudenza e archivio.",
+          "included": false
+        },
+        {
+          "name": "Archivio Privato dello Studio",
+          "description": "Organizza documenti in un archivio cloud riservato.",
+          "included": false
+        },
+        {
+          "name": "AI per Fascicoli e Redazione",
+          "description": "L'AI analizza i tuoi fascicoli e suggerisce contenuti.",
+          "included": false
+        }
+      ]
+    },
+    {
+      "id": "business",
+      "name": "Business",
+      "price": 244,
+      "initial_price": 585.6,
+      "currency": "EUR",
+      "cta": "Registrati",
+      "highlighted": true,
+      "durationDays": 365,
+      "stripePriceId": "price_1TwjpA2Z5ZVHjnRK5Z6wwsO6",
+      "features": [
+        {
+          "name": "Tutte le funzioni Essential",
+          "description": "Include tutto ciò che è presente nel piano base.",
+          "included": true
+        },
+        {
+          "name": "Confronto tra Atti e Giurisprudenza",
+          "description": "Confronta memorie e atti del tuo studio con la giurisprudenza.",
+          "included": true
+        },
+        {
+          "name": "Ricerca Unificata su Tutte le Fonti",
+          "description": "Cerca contemporaneamente in giurisprudenza e archivio.",
+          "included": true
+        },
+        {
+          "name": "Archivio Privato dello Studio",
+          "description": "Organizza documenti in un archivio cloud riservato.",
+          "included": true
+        },
+        {
+          "name": "AI per Fascicoli e Redazione",
+          "description": "L'AI analizza i tuoi fascicoli e suggerisce contenuti.",
+          "included": true
+        },
+        {
+          "name": "Assistente e Supporto Prioritario",
+          "description": "Assistente AI e supporto tecnico dedicato.",
+          "included": true
+        }
+      ]
+    }
+  ],
+  "team": [
+    {
+      "id": "team3",
+      "name": "Team da 3",
+      "price": 650,
+      "initial_price": 1756.8,
+      "currency": "EUR",
+      "cta": "Ottieni",
+      "durationDays": 365,
+      "stripePriceId": "price_1Ty73L2Z5ZVHjnRKZTpqrYyE"
+    },
+    {
+      "id": "team5",
+      "name": "Team da 5",
+      "price": 1000,
+      "initial_price": 2928,
+      "currency": "EUR",
+      "cta": "Ottieni",
+      "durationDays": 365,
+      "stripePriceId": "price_1Ty74o2Z5ZVHjnRKjW4PSQfM"
+    },
+    {
+      "id": "team7",
+      "name": "Team da 7",
+      "price": 1300,
+      "initial_price": 4099.2,
+      "currency": "EUR",
+      "cta": "Ottieni",
+      "durationDays": 365,
+      "stripePriceId": "price_1Ty74o2Z5ZVHjnRKOCg8wAOx"
+    }
+  ]
+}

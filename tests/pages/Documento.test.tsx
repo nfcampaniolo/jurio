@@ -74,7 +74,7 @@ vi.mock("@/features/document/components/Massima", () => ({
 }));
 
 /* ---------- subject under test ---------- */
-import { Documento } from "@/features/document/Documento"; // adegua il path relativo se il test si trova in un'altra cartella
+import { Documento } from "@/features/document/Documento";
 
 describe("Documento Page Component Suite", () => {
   const dummyDoc = {
@@ -85,11 +85,10 @@ describe("Documento Page Component Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Setup di default
     mockUseParams.mockReturnValue({ id: "doc_test_123" });
     mockUseAuth.mockReturnValue({
       user: { uid: "usr_flv_2026" },
-      loading: false,
+      status: "authenticated",
     });
     mockUseDocumento.mockReturnValue({
       selectedDoc: dummyDoc,
@@ -100,23 +99,22 @@ describe("Documento Page Component Suite", () => {
     });
   });
 
-test("mostra lo spinner di caricamento se l'autenticazione è in corso (authLoading)", () => {
+  test("mostra lo scheletro di caricamento se l'autenticazione è in corso (authLoading)", () => {
     mockUseAuth.mockReturnValue({
       user: null,
-      loading: true,
-      status: "loading", // <-- Aggiunto per allinearsi al nuovo AuthContext
+      status: "loading",
     });
 
     const { container } = render(<Documento />);
 
     expect(screen.getByTestId("mock-header")).toBeInTheDocument();
     expect(screen.getByTestId("mock-footer")).toBeInTheDocument();
-    expect(container.querySelector(".animate-spin")).toBeInTheDocument();
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
     expect(screen.queryByTestId("mock-massima-card")).toBeNull();
     expect(screen.queryByTestId("mock-access-denied")).toBeNull();
   });
 
-  test("mostra lo spinner di caricamento se il recupero del documento è in corso (docLoading)", () => {
+  test("mostra lo scheletro di caricamento se il recupero del documento è in corso (docLoading)", () => {
     mockUseDocumento.mockReturnValue({
       selectedDoc: null,
       pdfUrl: null,
@@ -127,7 +125,7 @@ test("mostra lo spinner di caricamento se l'autenticazione è in corso (authLoad
 
     const { container } = render(<Documento />);
 
-    expect(container.querySelector(".animate-spin")).toBeInTheDocument();
+    expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
     expect(screen.queryByTestId("mock-massima-card")).toBeNull();
   });
 
@@ -176,7 +174,10 @@ test("mostra lo spinner di caricamento se l'autenticazione è in corso (authLoad
 
   test("gestisce il fallback a stringa vuota se l'ID da useParams non è definito", () => {
     mockUseParams.mockReturnValue({});
-    mockUseAuth.mockReturnValue({ user: null, loading: false });
+    mockUseAuth.mockReturnValue({
+      user: null,
+      status: "unauthenticated",
+    });
 
     render(<Documento />);
 

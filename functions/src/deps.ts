@@ -16,7 +16,7 @@ export function getDb(): Firestore {
   if (!db) {
     db = getFirestore();
     db.settings({ 
-      ignoreUndefinedProperties: true // 🛡️ Rende il DB immune agli 'undefined'
+      ignoreUndefinedProperties: true
     });
   }
   return db;

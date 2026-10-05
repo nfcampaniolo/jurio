@@ -40,8 +40,19 @@ vi.mock("react-router-dom", () => ({
   },
 }));
 
+/* ---------- mock ErrorScreen component ---------- */
+vi.mock("@/shared/components/ErrorScreen", () => ({
+  __esModule: true,
+  ErrorScreen: ({ message, details }: { message: string; details?: string }) => (
+    <div data-testid="error-screen">
+      <span>{message}</span>
+      {details && <span>{details}</span>}
+    </div>
+  ),
+}));
+
 /* ---------- component under test ---------- */
-import { ProtectedRoute } from "@/routes/ProtectedRoute"; 
+import { ProtectedRoute } from "@/routes/ProtectedRoute";
 
 describe("ProtectedRoute Route Guard Suite", () => {
   beforeEach(() => {
@@ -55,7 +66,6 @@ describe("ProtectedRoute Route Guard Suite", () => {
     });
   });
 
-  // Helper per soddisfare i requisiti della nuova interfaccia AuthContextType
   const baseContext: Partial<AuthContextType> = {
     errorMessage: null,
     resolveConflict: vi.fn(),
@@ -72,7 +82,7 @@ describe("ProtectedRoute Route Guard Suite", () => {
     );
   };
 
-  test("mostra il componente di caricamento quando lo status è 'loading'", () => {
+  test("mostra il componente di caricamento AuthLoader con brand 'Jurio' quando lo status è 'loading'", () => {
     renderWithAuth({
       user: null,
       status: "loading",
@@ -80,7 +90,24 @@ describe("ProtectedRoute Route Guard Suite", () => {
     });
 
     expect(screen.getByRole("status")).toBeInTheDocument();
-    expect(screen.getByText("Caricamento…")).toBeInTheDocument();
+    expect(screen.getByText("Jurio")).toBeInTheDocument();
+    expect(screen.queryByTestId("protected-content")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("mock-navigate")).not.toBeInTheDocument();
+  });
+
+  test("blocca l'accesso e mostra ErrorScreen quando lo status globale è 'error'", () => {
+    renderWithAuth({
+      user: null,
+      status: "error",
+      errorMessage: "Token di sessione revocato",
+      hasConflict: false,
+    });
+
+    expect(screen.getByTestId("error-screen")).toBeInTheDocument();
+    expect(
+      screen.getByText("Errore di connessione. Impossibile verificare l'identità.")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Token di sessione revocato")).toBeInTheDocument();
     expect(screen.queryByTestId("protected-content")).not.toBeInTheDocument();
     expect(screen.queryByTestId("mock-navigate")).not.toBeInTheDocument();
   });

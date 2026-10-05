@@ -1,275 +1,348 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('consent', 'default', {
-        'analytics_storage': 'denied',
-        'ad_storage': 'denied',
-        'ad_user_data': 'denied',
-        'ad_personalization': 'denied',
-        'wait_for_update': 500
-    });
-    </script>
-    <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="869d54bc-6b13-4281-a6ab-489dc313a855"  type="text/javascript"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galleria Giurisprudenza | Jurio</title>
-    <meta name="description" content="Esplora le ultime analisi giurisprudenziali di Jurio, incluse le pronunce a Sezioni Unite della Cassazione.">
+    <meta name="color-scheme" content="light dark">
+    <meta name="theme-color" content="#fcfcfc" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#0f1115" media="(prefers-color-scheme: dark)">
+
+    <title>Giurisprudenza: analisi di Cassazione, TAR e Consiglio di Stato | Jurio</title>
+    <meta name="description" content="Analisi delle pronunce rilevanti di Corte di Cassazione, Sezioni Unite, TAR e Consiglio di Stato, per diritto civile, penale, amministrativo e del lavoro. A cura di Jurio.">
+    <meta name="robots" content="index, follow, max-image-preview:large">
     <link rel="canonical" href="https://jurio.it/blog">
-    
-    <!-- Open Graph SEO -->
-    <meta property="og:title" content="Galleria Giurisprudenza | Jurio">
-    <meta property="og:description" content="Esplora le ultime analisi giurisprudenziali di Jurio.">
+
+    <!-- Open Graph / Social -->
+    <meta property="og:site_name" content="Jurio">
+    <meta property="og:locale" content="it_IT">
     <meta property="og:type" content="website">
+    <meta property="og:title" content="Giurisprudenza: analisi di Cassazione, TAR e Consiglio di Stato | Jurio">
+    <meta property="og:description" content="Le ultime pronunce di Cassazione, Sezioni Unite, TAR e Consiglio di Stato, analizzate da Jurio.">
     <meta property="og:url" content="https://jurio.it/blog">
+    <meta property="og:image" content="https://jurio.it/logo.webp">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Giurisprudenza | Jurio">
+    <meta name="twitter:description" content="Analisi delle pronunce rilevanti di Cassazione, TAR e Consiglio di Stato.">
+
+    <!-- Iubenda -->
+    <script type="text/javascript" src="https://embeds.iubenda.com/widgets/7f06adba-d6ba-41a7-9758-69f5297af96e.js"></script>
+
+    <!-- Flag JS: evita contenuti nascosti se JavaScript è disattivato -->
+    <script>document.documentElement.classList.add("js");</script>
+
     <link rel="stylesheet" href="/styles.css">
-    
-    <!-- JSON-LD per SEO Avanzata (Galleria) -->
+
+    <!-- Dati strutturati -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "CollectionPage",
-      "headline": "Galleria Articoli e Giurisprudenza",
-      "description": "Galleria visiva degli approfondimenti giuridici di Jurio.",
-      "url": "https://jurio.it/blog",
-      "publisher": {
-        "@type": "Organization",
-        "name": "Jurio",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://jurio.it/logo.webp"
+      "@graph": [
+        {
+          "@type": "CollectionPage",
+          "@id": "https://jurio.it/blog#pagina",
+          "url": "https://jurio.it/blog",
+          "name": "Giurisprudenza | Jurio",
+          "description": "Analisi delle pronunce rilevanti di Cassazione, Sezioni Unite, TAR e Consiglio di Stato.",
+          "inLanguage": "it-IT",
+          "isPartOf": { "@type": "WebSite", "name": "Jurio", "url": "https://jurio.it" },
+          "publisher": {
+            "@type": "Organization",
+            "name": "Jurio",
+            "url": "https://jurio.it",
+            "logo": { "@type": "ImageObject", "url": "https://jurio.it/logo.webp" }
+          },
+          "mainEntity": {
+            "@type": "ItemList",
+            "itemListElement": [
+              { "@type": "ListItem", "position": 1, "url": "https://jurio.it/blog/fideiussioni-bancarie-schema-abi-sezioni-unite-24825-2026.html", "name": "Fideiussione specifica e clausole ABI" },
+              { "@type": "ListItem", "position": 2, "url": "https://jurio.it/blog/art-103-cpp-avvocato-indagato-sezioni-unite.html", "name": "Art. 103 c.p.p. e avvocato indagato: rimessione alle Sezioni Unite" },
+              { "@type": "ListItem", "position": 3, "url": "https://jurio.it/blog/accesso_difensivo_nominativo_agente_accertatore_tar_lazio_14477.html", "name": "Accesso difensivo e riservatezza: il TAR Lazio sul nominativo dell'agente accertatore" },
+              { "@type": "ListItem", "position": 4, "url": "https://jurio.it/blog/curatore-speciale-minori-stranieri-tutore-consolare-sezioni-unite-24044-2026.html", "name": "Curatore speciale e minori stranieri: il ruolo del tutore consolare" },
+              { "@type": "ListItem", "position": 5, "url": "https://jurio.it/blog/intercettazioni-captatore-informatico-cassazione-29131-2026.html", "name": "Intercettazioni con captatore informatico: limiti di utilizzabilità" },
+              { "@type": "ListItem", "position": 6, "url": "https://jurio.it/blog/appalti_terzo_classificato_inversione_procedimentale_tar_catania.html", "name": "Il terzo classificato e l'inversione procedimentale: l'onere di impugnazione" },
+              { "@type": "ListItem", "position": 7, "url": "https://jurio.it/blog/cittadinanza-minore-bipolide-sezioni-unite-24045-2026.html", "name": "Cittadinanza e status del minore bipolide" },
+              { "@type": "ListItem", "position": 8, "url": "https://jurio.it/blog/omessa_comunicazione_variazioni_patrimoniali_dissociazione_mafiosa.html", "name": "Variazioni patrimoniali e dissociazione mafiosa" },
+              { "@type": "ListItem", "position": 9, "url": "https://jurio.it/blog/scomputo-oneri-urbanizzazione-cessione-aree-consiglio-stato.html", "name": "Scomputo oneri di urbanizzazione per cessione aree" },
+              { "@type": "ListItem", "position": 10, "url": "https://jurio.it/blog/incapacita-naturale-licenziamento-240-giorni.html", "name": "Incapacità naturale e licenziamento" },
+              { "@type": "ListItem", "position": 11, "url": "https://jurio.it/blog/lieve-entita-stupefacenti-decreto-sicurezza-2026.html", "name": "Spaccio di lieve entità e Decreto Sicurezza 2026" },
+              { "@type": "ListItem", "position": 12, "url": "https://jurio.it/blog/pas-fotovoltaico-opere-connesse-tar-campania.html", "name": "PAS fotovoltaico e opere connesse: il TAR Campania" },
+              { "@type": "ListItem", "position": 13, "url": "https://jurio.it/blog/riduzione-orario-scolastico-disabili-discriminazione-cassazione-23363-2026.html", "name": "Riduzione dell'orario scolastico per alunni con disabilità" },
+              { "@type": "ListItem", "position": 14, "url": "https://jurio.it/blog/restituzione-termine-persona-offesa-art-175-cpp.html", "name": "Restituzione nel termine della persona offesa per la costituzione di parte civile" },
+              { "@type": "ListItem", "position": 15, "url": "https://jurio.it/blog/bonifiche-ambientali-responsabilita-inquinamento-storico.html", "name": "Bonifiche e inquinamento storico" }
+            ]
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://jurio.it/" },
+            { "@type": "ListItem", "position": 2, "name": "Giurisprudenza", "item": "https://jurio.it/blog" }
+          ]
         }
-      }
+      ]
     }
     </script>
 
     <style>
         /* ==========================================================================
-           Stili Base
+           Design system
            ========================================================================== */
         :root {
-            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             --font-serif: "Lora", "Merriweather", Georgia, "Times New Roman", serif;
-            --color-bg: #f5f6f7;
+
+            --color-bg: #fcfcfc;
             --color-surface: #ffffff;
-            --color-text: #1a1d21;
-            --color-primary: #e0a32e;
-            --color-primary-hover: #f0b541;
-            --color-border: #d6d9de;
-            --color-muted: #5f6672;
-            --container: 1180px;
-            --ease-smooth: cubic-bezier(.22, 1, .36, 1);
+            --color-text: #111827;
+            --color-text-muted: #4b5563;
+            --color-primary: #8f6a1c;   /* contrasto AA su sfondo chiaro */
+            --color-border: #e5e7eb;
+
+            --container: 1200px;
+            --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        * { box-sizing: border-box; }
-        
         @media (prefers-color-scheme: dark) {
             :root {
-                --color-bg: #111111;
-                --color-surface: #1a1a1a;
-                --color-text: #e6e7ea;
-                --color-primary: #e0a32e;
-                --color-primary-hover: #f0b541;
-                --color-border: #2e2e2e;
+                --color-bg: #0f1115;
+                --color-surface: #181a1f;
+                --color-text: #f9fafb;
+                --color-text-muted: #9ca3af;
+                --color-primary: #d4a345;
+                --color-border: #272a30;
             }
-            .skip-link { background: var(--color-text); color: var(--color-bg); }
-            ::selection { background: rgba(213, 168, 95, .24); }
         }
 
-        html { scroll-behavior: smooth; }
-        body { margin: 0; min-width: 320px; background: var(--color-bg); color: var(--color-text); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; line-height: 1.75; overflow-x: hidden; }
-        h1, h2, h3 { font-family: var(--font-serif); }
-        a { color: inherit; -webkit-tap-highlight-color: transparent; }
-        img { max-width: 100%; display: block; }
-        :focus-visible { outline: 3px solid rgba(154, 107, 37, .55); outline-offset: 4px; }
-        
-        .skip-link { position: fixed; left: 1rem; top: 1rem; z-index: 1000; transform: translateY(-160%); transition: transform .18s ease; background: var(--color-text); color: #fff; padding: .7rem 1rem; border-radius: 10px; font-weight: 700; text-decoration: none; }
+        *, *::before, *::after { box-sizing: border-box; }
+        html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+        body {
+            margin: 0;
+            background: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--font-sans);
+            -webkit-font-smoothing: antialiased;
+            line-height: 1.6;
+        }
+
+        h1, h2 {
+            font-family: var(--font-serif);
+            font-weight: 500;
+            color: var(--color-text);
+        }
+
+        a { text-decoration: none; color: inherit; }
+        img { max-width: 100%; height: auto; display: block; }
+
+        .container {
+            width: min(var(--container), calc(100% - 48px));
+            margin-inline: auto;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--color-primary);
+            outline-offset: 3px;
+            border-radius: 2px;
+        }
+
+        .skip-link {
+            position: fixed; left: 1rem; top: 1rem; z-index: 1000;
+            transform: translateY(-160%); transition: transform .2s;
+            background: var(--color-text); color: var(--color-bg);
+            padding: .75rem 1rem; border-radius: 6px; font-weight: 600;
+        }
         .skip-link:focus { transform: translateY(0); }
-        
-        .container { width: min(1400px, calc(100% - 40px)); margin-inline: auto; }
-        
-        /* Nav */
-        .site-header { position: sticky; top: 0; z-index: 50; background: color-mix(in srgb, var(--color-surface) 88%, transparent); border-bottom: 1px solid var(--color-border); backdrop-filter: blur(14px); transition: box-shadow .35s var(--ease-smooth); }
-        .site-header.is-scrolled { box-shadow: 0 8px 28px rgba(0, 0, 0, .06); }
-        
-        main { overflow: clip; }
-        .section { padding: clamp(4.5rem, 8vw, 7rem) 0; }
-        
+
+        .visually-hidden {
+            position: absolute !important; width: 1px; height: 1px;
+            margin: -1px; padding: 0; overflow: hidden;
+            clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+        }
+
         /* ==========================================================================
-           Piccolo Header di Pagina
+           Intestazione di pagina
            ========================================================================== */
         .page-header {
-            padding: 4rem 0 1.5rem;
+            padding: 5rem 0 2.5rem;
             text-align: center;
+            max-width: 700px;
+            margin: 0 auto;
         }
         .page-header h1 {
-            margin: 0 0 0.5rem;
+            margin: 0 0 1rem;
             font-size: clamp(2.2rem, 5vw, 3.5rem);
-            letter-spacing: -0.03em;
+            letter-spacing: -0.02em;
             line-height: 1.1;
         }
         .page-header p {
             margin: 0;
-            color: var(--color-muted);
-            font-size: clamp(1rem, 1.5vw, 1.15rem);
-        }
-        
-        /* ==========================================================================
-           IG Grid (Verticale 3:4, Gap 0)
-           ========================================================================== */
-        .ig-grid { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 0; 
-            margin-top: 1rem;
-            border: 1px solid var(--color-border);
-        }
-        
-        .ig-card { 
-            position: relative; 
-            display: block;
-            aspect-ratio: 3 / 4; 
-            overflow: hidden;
-            text-decoration: none;
-            isolation: isolate;
-            background: #000;
-            border-radius: 0; 
+            color: var(--color-text-muted);
+            font-size: clamp(1.05rem, 2vw, 1.2rem);
         }
 
-        .ig-card img {
+        /* ==========================================================================
+           Filtri per area
+           ========================================================================== */
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: .5rem;
+            margin: 0 0 3.5rem;
+            padding: 0;
+            list-style: none;
+        }
+        .filters button {
+            font: inherit;
+            font-size: .8rem;
+            font-weight: 500;
+            letter-spacing: .04em;
+            color: var(--color-text-muted);
+            background: transparent;
+            border: 1px solid var(--color-border);
+            border-radius: 999px;
+            padding: .45rem 1rem;
+            cursor: pointer;
+            transition: color .2s, border-color .2s, background-color .2s;
+        }
+        .filters button:hover { color: var(--color-text); border-color: var(--color-text-muted); }
+        .filters button[aria-pressed="true"] {
+            color: var(--color-bg);
+            background: var(--color-text);
+            border-color: var(--color-text);
+        }
+
+        /* ==========================================================================
+           Griglia editoriale (immagini verticali 3:4)
+           ========================================================================== */
+        .editorial-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 4rem 2.5rem;
+            padding-bottom: 6rem;
+        }
+        .editorial-grid [hidden] { display: none; }
+
+        .article-card { display: flex; }
+
+        .article-card > a {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            width: 100%;
+        }
+
+        .image-wrapper {
+            position: relative;
+            aspect-ratio: 3 / 4;
+            overflow: hidden;
+            border-radius: 4px;
+            background: var(--color-border);
+        }
+        .image-wrapper img {
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: transform 0.8s var(--ease-smooth), opacity 0.4s ease;
+            transition: transform .8s var(--ease-smooth);
         }
 
-        .ig-card:hover img {
-            transform: scale(1.05);
-            opacity: 0.6; 
-        }
+        .content { display: flex; flex-direction: column; flex-grow: 1; }
 
-        /* Anteprima all'Hover */
-        .ig-card-preview {
-            position: absolute;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.80); 
+        /* Tag */
+        .meta {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-            text-align: center;
-            opacity: 0;
-            transition: opacity 0.4s var(--ease-smooth);
-            backdrop-filter: blur(5px);
-        }
-
-        .ig-card:hover .ig-card-preview {
-            opacity: 1;
-        }
-
-        .ig-card-preview h3 {
-            color: #ffffff;
-            font-size: clamp(1.1rem, 1.5vw, 1.35rem);
-            margin: 0 0 0.5rem 0;
-            line-height: 1.25;
-            font-family: var(--font-sans);
+            flex-wrap: wrap;
+            gap: .4rem .75rem;
+            margin: 0 0 .75rem;
+            padding: 0;
+            list-style: none;
+            font-size: .7rem;
             font-weight: 600;
-            letter-spacing: -0.02em;
-            transform: translateY(20px);
-            transition: transform 0.5s var(--ease-smooth);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--color-text-muted);
+        }
+        .meta li + li::before {
+            content: "·";
+            margin-right: .75rem;
+            color: var(--color-border);
+        }
+        .meta .tag-area { color: var(--color-primary); }
+
+        .article-card h2 {
+            font-size: 1.3rem;
+            line-height: 1.3;
+            margin: 0 0 .75rem;
+            transition: color .3s ease;
+            text-wrap: balance;
         }
 
-        .ig-card-preview p {
-            color: #d1d5db;
-            font-size: 0.9rem;
-            margin: 0 0 1.5rem 0;
-            line-height: 1.6;
+        .excerpt {
+            color: var(--color-text-muted);
+            font-size: .95rem;
+            margin: 0 0 1.5rem;
             display: -webkit-box;
             -webkit-box-orient: vertical;
-            -webkit-line-clamp: 4;
-            line-clamp: 4; /* Proprietà standard per compatibilità */
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
             overflow: hidden;
-            transform: translateY(20px);
-            transition: transform 0.5s var(--ease-smooth);
-            transition-delay: 0.05s;
+            flex-grow: 1;
         }
 
-        .ig-card-link-text {
-            color: var(--color-primary);
-            font-size: 0.75rem;
-            font-weight: 800;
-            letter-spacing: 0.15em;
+        .read-more {
+            font-size: .8rem;
+            font-weight: 600;
+            letter-spacing: .1em;
             text-transform: uppercase;
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
-            transform: translateY(20px);
-            transition: transform 0.5s var(--ease-smooth);
-            transition-delay: 0.1s;
+            gap: .5rem;
+            margin-top: auto;
+            transition: color .3s ease;
         }
-        
-        .ig-card-link-text::after {
+        .read-more::after {
             content: "→";
-            font-size: 1.1em;
-            transition: transform 0.2s ease;
+            font-size: 1.2em;
+            transition: transform .3s var(--ease-smooth);
         }
 
-        .ig-card:hover .ig-card-preview h3,
-        .ig-card:hover .ig-card-preview p,
-        .ig-card:hover .ig-card-link-text {
-            transform: translateY(0);
-        }
+        .article-card > a:hover img,
+        .article-card > a:focus-visible img { transform: scale(1.04); }
+        .article-card > a:hover h2,
+        .article-card > a:hover .read-more,
+        .article-card > a:focus-visible h2,
+        .article-card > a:focus-visible .read-more { color: var(--color-primary); }
+        .article-card > a:hover .read-more::after { transform: translateX(4px); }
 
-        .ig-card:hover .ig-card-link-text::after {
-            transform: translateX(4px);
+        /* Animazioni allo scroll (solo con JS attivo) */
+        .js .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity .8s var(--ease-smooth), transform .8s var(--ease-smooth);
         }
-        
-        /* Animazioni Scroll */
-        .reveal { opacity: 0; transform: translateY(28px); transition: opacity .8s var(--ease-smooth), transform .8s var(--ease-smooth); will-change: opacity, transform; }
-        .reveal.is-visible { opacity: 1; transform: none; }
-        [data-stagger] > .reveal:nth-child(1) { transition-delay: 0ms; }
-        [data-stagger] > .reveal:nth-child(2) { transition-delay: 70ms; }
-        
+        .js .reveal.is-visible { opacity: 1; transform: none; }
+
         /* ==========================================================================
-           Responsive Mobile
+           Responsive
            ========================================================================== */
-        @media (max-width: 1050px) {
-            .ig-grid { grid-template-columns: repeat(3, 1fr); }
-            .ig-card-preview { padding: 1.5rem; }
+        @media (max-width: 1024px) {
+            .editorial-grid { grid-template-columns: repeat(2, 1fr); gap: 3rem 2rem; }
         }
-        @media (max-width: 720px) {
-            /* 1. Ripristina il padding/margine laterale per header, footer e testi */
-            .container { width: min(1400px, calc(100% - 32px)); } 
-            
-            /* 2. Solo la griglia del blog va a tutto schermo da bordo a bordo */
-            #blog.container { 
-                width: 100%; 
-                max-width: 100%; 
-            }
 
-            .page-header { 
-                padding: 2.5rem 0 1rem; 
-                text-align: left;
+        @media (max-width: 768px) {
+            .page-header { padding: 3rem 0 2rem; text-align: left; }
+            .filters { justify-content: flex-start; margin-bottom: 2.5rem; }
+            .editorial-grid {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+                max-width: 480px;
+                margin-inline: auto;
             }
-            .page-header h1 { font-size: clamp(2rem, 10vw, 2.5rem); }
-            
-            .ig-grid { 
-                grid-template-columns: repeat(2, 1fr); 
-                border: none;
-                margin-top: 1rem;
-            }
-            .ig-card-preview { padding: 1rem; }
-            .ig-card-preview p { display: none; } 
-            .ig-card-preview h3 { font-size: 0.95rem; }
         }
-        
+
         @media (prefers-reduced-motion: reduce) {
-            html { scroll-behavior: auto; }
-            *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
-            .reveal { opacity: 1; transform: none !important; }
+            *, *::before, *::after { transition-duration: .01ms !important; scroll-behavior: auto !important; }
+            .js .reveal { opacity: 1; transform: none !important; }
         }
     </style>
 </head>
@@ -277,134 +350,362 @@
 
     <a href="#main-content" class="skip-link">Vai al contenuto principale</a>
 
-    <!-- Container Header Dinamico -->
-    <div id="header"></div> 
+    <!-- Header dinamico -->
+    <div id="header"></div>
 
     <main id="main-content">
 
-        <!-- Piccolo Header descrittivo -->
         <header class="page-header container reveal">
-            <h1>Blog e Giurisprudenza</h1>
-            <p>Esplora le nostre ultime analisi sulle pronunce rilevanti.</p>
+            <h1>Giurisprudenza</h1>
+            <p>Analisi delle pronunce rilevanti della Corte di Cassazione, delle Sezioni Unite e delle giurisdizioni amministrative.</p>
         </header>
 
-        <!-- Griglia Articoli -->
-        <section id="blog" class="section container" style="padding-top: 0; padding-bottom: 2rem;">
-            <div class="ig-grid reveal" data-stagger>
-                
-                <!-- Articolo 1: Fideiussioni ABI -->
-                <a href="https://jurio.it/blog/fideiussioni-bancarie-schema-abi-sezioni-unite-24825-2026.html" class="ig-card reveal" aria-label="Leggi: Fideiussione Specifica e Clausole ABI">
-                    <img src="https://jurio.it/blog/fideiussioni-bancarie-schema-abi-sezioni-unite-24825-2026.webp" alt="Copertina: Fideiussione Specifica e Clausole ABI" loading="lazy" decoding="async">
-                    <div class="ig-card-preview">
-                        <h3>Fideiussione Specifica e Clausole ABI</h3>
-                        <p>SS.UU. n. 24825/2026: onere della prova sulle garanzie a valle e interruzione della decadenza ex art. 1957 c.c.</p>
-                        <span class="ig-card-link-text">Leggi articolo</span>
-                    </div>
-                </a>
+        <section class="container" aria-labelledby="filters-label">
+            <h2 id="filters-label" class="visually-hidden">Filtra le analisi per area del diritto</h2>
+            <ul class="filters" id="filters">
+                <li><button type="button" data-filter="tutti" aria-pressed="true">Tutti</button></li>
+                <li><button type="button" data-filter="civile" aria-pressed="false">Civile</button></li>
+                <li><button type="button" data-filter="penale" aria-pressed="false">Penale</button></li>
+                <li><button type="button" data-filter="amministrativo" aria-pressed="false">Amministrativo</button></li>
+                <li><button type="button" data-filter="lavoro" aria-pressed="false">Lavoro</button></li>
+            </ul>
+            <p class="visually-hidden" id="filter-status" role="status" aria-live="polite"></p>
 
-                <!-- Articolo 2: Art. 103 c.p.p. -->
-                <a href="https://jurio.it/blog/art-103-cpp-avvocato-indagato-sezioni-unite.html" class="ig-card reveal" aria-label="Leggi: Art. 103 c.p.p. e avvocato indagato">
-                    <img src="https://jurio.it/blog/art-103-cpp-avvocato-indagato-sezioni-unite.webp" alt="Copertina: Garanzie difensive e art. 103 c.p.p." loading="lazy" decoding="async">
-                    <div class="ig-card-preview">
-                        <h3>Art. 103 c.p.p. e avvocato indagato: la Cassazione rimette alle Sezioni Unite</h3>
-                        <p>La Sesta sezione penale ricostruisce il contrasto giurisprudenziale sulle garanzie difensive quando il legale è indagato e rimette il quesito alle Sezioni Unite.</p>
-                        <span class="ig-card-link-text">Leggi articolo</span>
-                    </div>
-                </a>
+            <div class="editorial-grid" id="blog">
 
-                <!-- Articolo 3: Curatore Speciale Minori Stranieri (Corretto l'allineamento con l'URL 24044/2026) -->
-                <a href="https://jurio.it/blog/curatore-speciale-minori-stranieri-tutore-consolare-sezioni-unite-24044-2026.html" class="ig-card reveal" aria-label="Leggi: Curatore speciale per minori stranieri e tutore consolare">
-                    <img src="https://jurio.it/blog/curatore-speciale-minori-stranieri-tutore-consolare-sezioni-unite-24044-2026.webp" alt="Copertina: Curatore speciale per minori stranieri" loading="lazy" decoding="async">
-                    <div class="ig-card-preview">
-                        <h3>Curatore Speciale e Minori Stranieri: Le Sezioni Unite sul Tutore Consolare</h3>
-                        <p>SS.UU. n. 24044/2026: chiariti i presupposti di nomina del curatore speciale e i rapporti con le funzioni del tutore consolare nei procedimenti minorili.</p>
-                        <span class="ig-card-link-text">Leggi articolo</span>
-                    </div>
-                </a>
+                <!-- 1 -->
+                <article class="article-card reveal" data-area="civile">
+                    <a href="https://jurio.it/blog/fideiussioni-bancarie-schema-abi-sezioni-unite-24825-2026.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/fideiussioni-bancarie-schema-abi-sezioni-unite-24825-2026.webp" alt="Copertina dell'analisi sulla fideiussione specifica e sulle clausole ABI (Cass. SS.UU. 24825/2026)" width="600" height="800" fetchpriority="high" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>Cassazione SS.UU.</li>
+                                <li class="tag-area">Civile</li>
+                            </ul>
+                            <h2>Fideiussione specifica e clausole ABI</h2>
+                            <p class="excerpt">SS.UU. n. 24825/2026: onere della prova sulle garanzie a valle e interruzione della decadenza ex art. 1957 c.c.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
 
-                <!-- Articolo 4: Cittadinanza Minore Bipolide -->
-                <a href="https://jurio.it/blog/cittadinanza-minore-bipolide-sezioni-unite-24045-2026.html" class="ig-card reveal" aria-label="Leggi: Cittadinanza e Minore Bipolide">
-                    <img src="https://jurio.it/blog/cittadinanza-minore-bipolide-sezioni-unite-24045-2026.webp" alt="Copertina: Cittadinanza e Minore Bipolide" loading="lazy" decoding="async">
-                    <div class="ig-card-preview">
-                        <h3>Cittadinanza e Minore Bipolide</h3>
-                        <p>SS.UU. n. 24045/2026: il minore con doppia cittadinanza non perde lo status italiano alla naturalizzazione del genitore.</p>
-                        <span class="ig-card-link-text">Leggi articolo</span>
-                    </div>
-                </a>
-                
-                <!-- Articolo 5: Incapacità Naturale e Licenziamento -->
-                <a href="https://jurio.it/blog/incapacita-naturale-licenziamento-240-giorn.html" class="ig-card reveal" aria-label="Leggi: Incapacità Naturale e Licenziamento">
-                    <img src="https://jurio.it/blog/incapacita-naturale-licenziamento-240-giorn.webp" alt="Copertina: Incapacità Naturale e Licenziamento" loading="lazy" decoding="async">
-                    <div class="ig-card-preview">
-                        <h3>Incapacità Naturale e Licenziamento: Il Dialogo fra Cassazione e Consulta</h3>
-                        <p>Come cambia l'impugnazione del licenziamento per il lavoratore in stato di incapacità. Analisi della sentenza delle Sezioni Unite n. 23486/2026.</p>
-                        <span class="ig-card-link-text">Leggi articolo</span>
-                    </div>
-                </a>
+                <!-- 2 -->
+                <article class="article-card reveal" data-area="penale">
+                    <a href="https://jurio.it/blog/art-103-cpp-avvocato-indagato-sezioni-unite.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/art-103-cpp-avvocato-indagato-sezioni-unite.webp" alt="Copertina dell'analisi sull'art. 103 c.p.p. e le garanzie difensive dell'avvocato indagato" width="600" height="800" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>Cassazione</li>
+                                <li class="tag-area">Penale</li>
+                            </ul>
+                            <h2>Art. 103 c.p.p. e avvocato indagato: rimessione alle Sezioni Unite</h2>
+                            <p class="excerpt">La Sesta sezione penale ricostruisce il contrasto giurisprudenziale sulle garanzie difensive quando il legale è indagato e rimette il quesito alle Sezioni Unite.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
 
-                <!-- Articolo 6: Riduzione Orario Scolastico Disabili -->
-                <a href="https://jurio.it/blog/riduzione-orario-scolastico-disabili-discriminazione-cassazione-23363-2026.html" class="ig-card reveal" aria-label="Leggi: Riduzione Orario Scolastico per Alunni Disabili">
-                    <img src="https://jurio.it/blog/riduzione-orario-scolastico-disabili-discriminazione-cassazione-23363-2026.webp" alt="Copertina: Riduzione Orario Scolastico per Alunni Disabili" loading="lazy" decoding="async">
-                    <div class="ig-card-preview">
-                        <h3>Riduzione Orario Scolastico per Alunni Disabili: Le Sezioni Unite Ridisegnano la Tutela</h3>
-                        <p>Analisi della sentenza n. 23363/2026: il diritto incomprimibile all'istruzione, il ruolo del PEI e il contrasto interpretativo sulla riduzione d'orario.</p>
-                        <span class="ig-card-link-text">Leggi articolo</span>
-                    </div>
-                </a>
+                <!-- 3 -->
+                <article class="article-card reveal" data-area="amministrativo">
+                    <a href="https://jurio.it/blog/accesso_difensivo_nominativo_agente_accertatore_tar_lazio_14477.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/accesso_difensivo_nominativo_agente_accertatore_tar_lazio_14477.webp" alt="Copertina dell'analisi del TAR Lazio su accesso difensivo e nominativo dell'agente accertatore" width="600" height="800" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>TAR Lazio</li>
+                                <li class="tag-area">Amministrativo</li>
+                            </ul>
+                            <h2>Accesso difensivo e riservatezza: il TAR Lazio sul nominativo dell'agente accertatore</h2>
+                            <p class="excerpt">Il TAR Lazio fa prevalere il diritto di difesa sulla privacy del pubblico dipendente: le generalità dell'agente di Polizia Locale non sono coperte da anonimato.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
+
+                <!-- 4 -->
+                <article class="article-card reveal" data-area="civile">
+                    <a href="https://jurio.it/blog/curatore-speciale-minori-stranieri-tutore-consolare-sezioni-unite-24044-2026.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/curatore-speciale-minori-stranieri-tutore-consolare-sezioni-unite-24044-2026.webp" alt="Copertina dell'analisi sul curatore speciale per minori stranieri e il tutore consolare (Cass. SS.UU. 24044/2026)" width="600" height="800" loading="lazy" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>Cassazione SS.UU.</li>
+                                <li class="tag-area">Civile</li>
+                            </ul>
+                            <h2>Curatore speciale e minori stranieri: il ruolo del tutore consolare</h2>
+                            <p class="excerpt">SS.UU. n. 24044/2026: chiariti i presupposti di nomina del curatore speciale e i rapporti con le funzioni del tutore consolare nei procedimenti minorili.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
+
+                <!-- 5 -->
+                <article class="article-card reveal" data-area="penale">
+                    <a href="https://jurio.it/blog/intercettazioni-captatore-informatico-cassazione-29131-2026.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/intercettazioni-captatore-informatico-cassazione-29131-2026.webp" alt="Copertina dell'analisi sui limiti di utilizzabilità delle intercettazioni con captatore informatico (Cass. 29131/2026)" width="600" height="800" loading="lazy" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>Cassazione</li>
+                                <li class="tag-area">Penale</li>
+                            </ul>
+                            <h2>Intercettazioni con captatore informatico: limiti di utilizzabilità</h2>
+                            <p class="excerpt">Trojan, omissis nei decreti, sospensione delle operazioni e attivazione a singhiozzo: come la Cassazione (sent. 29131/2026) ricostruisce i limiti di utilizzabilità delle intercettazioni.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
+
+                <!-- 6 -->
+                <article class="article-card reveal" data-area="amministrativo">
+                    <a href="https://jurio.it/blog/appalti_terzo_classificato_inversione_procedimentale_tar_catania.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/appalti_terzo_classificato_inversione_procedimentale_tar_catania.webp" alt="Copertina dell'analisi sul terzo classificato e l'inversione procedimentale negli appalti (TAR Catania 2398/2026)" width="600" height="800" loading="lazy" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>TAR Catania</li>
+                                <li class="tag-area">Amministrativo</li>
+                            </ul>
+                            <h2>Il terzo classificato e l'inversione procedimentale: l'onere di impugnazione</h2>
+                            <p class="excerpt">Chi si classifica terzo in una gara d'appalto con inversione procedimentale può limitarsi a censurare il primo? La risposta del TAR Catania con la sentenza n. 2398/2026.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
+
+                <!-- 7 -->
+                <article class="article-card reveal" data-area="civile">
+                    <a href="https://jurio.it/blog/cittadinanza-minore-bipolide-sezioni-unite-24045-2026.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/cittadinanza-minore-bipolide-sezioni-unite-24045-2026.webp" alt="Copertina dell'analisi su cittadinanza e status del minore bipolide (Cass. SS.UU. 24045/2026)" width="600" height="800" loading="lazy" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>Cassazione SS.UU.</li>
+                                <li class="tag-area">Civile</li>
+                            </ul>
+                            <h2>Cittadinanza e status del minore bipolide</h2>
+                            <p class="excerpt">SS.UU. n. 24045/2026: il minore con doppia cittadinanza non perde lo status italiano alla naturalizzazione del genitore.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
+
+                <!-- 8 -->
+                <article class="article-card reveal" data-area="penale">
+                    <a href="https://jurio.it/blog/omessa_comunicazione_variazioni_patrimoniali_dissociazione_mafiosa.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/omessa_comunicazione_variazioni_patrimoniali_dissociazione_mafiosa.webp" alt="Copertina dell'analisi su omessa comunicazione delle variazioni patrimoniali e dissociazione mafiosa" width="600" height="800" loading="lazy" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>Cassazione</li>
+                                <li class="tag-area">Penale</li>
+                            </ul>
+                            <h2>Variazioni patrimoniali e dissociazione mafiosa: la Cassazione fa chiarezza</h2>
+                            <p class="excerpt">Se un condannato per mafia si dissocia, deve ancora comunicare i suoi acquisti alla Guardia di Finanza? La Cassazione fissa i confini tra sconti di pena e obblighi di trasparenza.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
+
+                <!-- 9 -->
+                <article class="article-card reveal" data-area="amministrativo">
+                    <a href="https://jurio.it/blog/scomputo-oneri-urbanizzazione-cessione-aree-consiglio-stato.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/scomputo-oneri-urbanizzazione-cessione-aree-consiglio-stato.webp" alt="Copertina dell'analisi del Consiglio di Stato sullo scomputo degli oneri di urbanizzazione e la cessione di aree" width="600" height="800" loading="lazy" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>Consiglio di Stato</li>
+                                <li class="tag-area">Amministrativo</li>
+                            </ul>
+                            <h2>Scomputo oneri di urbanizzazione per cessione aree: la decisione del Consiglio di Stato</h2>
+                            <p class="excerpt">Il Consiglio di Stato ribalta la lettura del T.A.R. e salva lo scomputo degli oneri convenzionali a fronte della cessione gratuita di aree.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
+
+                <!-- 10 -->
+                <article class="article-card reveal" data-area="lavoro">
+                    <a href="https://jurio.it/blog/incapacita-naturale-licenziamento-240-giorni.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/incapacita-naturale-licenziamento-240-giorni.webp" alt="Copertina dell'analisi su incapacità naturale e impugnazione del licenziamento (Cass. SS.UU. 23486/2026)" width="600" height="800" loading="lazy" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>Cassazione SS.UU.</li>
+                                <li class="tag-area">Lavoro</li>
+                            </ul>
+                            <h2>Incapacità naturale e licenziamento: il dialogo fra Cassazione e Consulta</h2>
+                            <p class="excerpt">Come cambia l'impugnazione del licenziamento per il lavoratore in stato di incapacità. Analisi della sentenza delle Sezioni Unite n. 23486/2026.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
+
+                <!-- 11 -->
+                <article class="article-card reveal" data-area="penale">
+                    <a href="https://jurio.it/blog/lieve-entita-stupefacenti-decreto-sicurezza-2026.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/lieve-entita-stupefacenti-decreto-sicurezza-2026.webp" alt="Copertina dell'analisi sullo spaccio di lieve entità e il Decreto Sicurezza 2026" width="600" height="800" loading="lazy" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>Cassazione</li>
+                                <li class="tag-area">Penale</li>
+                            </ul>
+                            <h2>Spaccio di lieve entità e Decreto Sicurezza 2026: il confine tra occasionalità e abitualità</h2>
+                            <p class="excerpt">Come cambia il fatto di lieve entità (art. 73 co. 5) con la nuova clausola di esclusione per condotte continuative e abituali. La prima lettura della Cassazione.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
+
+                <!-- 12 -->
+                <article class="article-card reveal" data-area="amministrativo">
+                    <a href="https://jurio.it/blog/pas-fotovoltaico-opere-connesse-tar-campania.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/pas-fotovoltaico-opere-connesse-tar-campania.webp" alt="Copertina dell'analisi del TAR Campania sulla PAS per impianti fotovoltaici e le opere connesse (sent. 4767/2026)" width="600" height="800" loading="lazy" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>TAR Campania</li>
+                                <li class="tag-area">Amministrativo</li>
+                            </ul>
+                            <h2>PAS fotovoltaico e opere connesse: il TAR Campania</h2>
+                            <p class="excerpt">Il TAR Campania (sent. 4767/2026) chiarisce se la PAS per impianti fotovoltaici consente l'esproprio per le opere connesse. Analisi dell'art. 8 d.lgs. 190/2024.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
+
+                <!-- 13 -->
+                <article class="article-card reveal" data-area="civile">
+                    <a href="https://jurio.it/blog/riduzione-orario-scolastico-disabili-discriminazione-cassazione-23363-2026.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/riduzione-orario-scolastico-disabili-discriminazione-cassazione-23363-2026.webp" alt="Copertina dell'analisi sulla riduzione dell'orario scolastico per alunni con disabilità (Cass. 23363/2026)" width="600" height="800" loading="lazy" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>Cassazione</li>
+                                <li class="tag-area">Civile</li>
+                            </ul>
+                            <h2>Riduzione dell'orario scolastico per alunni con disabilità: nuova tutela</h2>
+                            <p class="excerpt">Analisi della sentenza n. 23363/2026: il diritto incomprimibile all'istruzione, il ruolo del PEI e il contrasto interpretativo sulla riduzione d'orario.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
+
+                <!-- 14 -->
+                <article class="article-card reveal" data-area="penale">
+                    <a href="https://jurio.it/blog/restituzione-termine-persona-offesa-art-175-cpp.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/restituzione-termine-persona-offesa-art-175-cpp.webp" alt="Copertina dell'analisi sulla restituzione nel termine della persona offesa ex art. 175 c.p.p." width="600" height="800" loading="lazy" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>Procedura penale</li>
+                                <li class="tag-area">Penale</li>
+                            </ul>
+                            <h2>La restituzione nel termine della persona offesa per la costituzione di parte civile</h2>
+                            <p class="excerpt">Dall'estraneità formale al ruolo di «parte in senso tecnico»: l'evoluzione giurisprudenziale per la tutela della conoscenza effettiva della vittima.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
+
+                <!-- 15 -->
+                <article class="article-card reveal" data-area="amministrativo">
+                    <a href="https://jurio.it/blog/bonifiche-ambientali-responsabilita-inquinamento-storico.html">
+                        <div class="image-wrapper">
+                            <img src="https://jurio.it/blog/bonifiche-ambientali-responsabilita-inquinamento-storico.webp" alt="Copertina dell'analisi su bonifiche ambientali e inquinamento storico (Cons. Stato 5712/2026, ex cokeria di Avenza)" width="600" height="800" loading="lazy" decoding="async">
+                        </div>
+                        <div class="content">
+                            <ul class="meta">
+                                <li>Consiglio di Stato</li>
+                                <li class="tag-area">Amministrativo</li>
+                            </ul>
+                            <h2>Bonifiche e inquinamento storico</h2>
+                            <p class="excerpt">Il principio «chi inquina paga» prevale. Analisi della sentenza Cons. Stato 5712/2026 sull'ex cokeria di Avenza.</p>
+                            <span class="read-more">Leggi l'analisi</span>
+                        </div>
+                    </a>
+                </article>
 
             </div>
         </section>
+
     </main>
 
-    <!-- Container Footer Dinamico -->
+    <!-- Footer dinamico -->
     <div id="footer"></div>
 
     <script>
-        document.addEventListener("DOMContentLoaded", async () => {
-        const components = [
-            { selector: "#header", file: "/header.html" },
-            { selector: "#footer", file: "/footer.html" }
-        ];
-        await Promise.all(
-            components.map(async ({ selector, file }) => {
-            const element = document.querySelector(selector);
-            if (!element) return;
-            try {
-                const response = await fetch(file);
-                if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                element.innerHTML = await response.text();
-            } catch (error) {
-                console.error(`Errore nel caricamento di ${file}:`, error);
-            }
-            })
-        );
-        });
-    </script>
-
-    <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const observerOptions = { root: null, rootMargin: "0px", threshold: 0.1 };
-            const observer = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add("is-visible");
+
+            /* Header e footer */
+            [["#header", "/header.html"], ["#footer", "/footer.html"]].forEach(async ([selector, file]) => {
+                const el = document.querySelector(selector);
+                if (!el) return;
+                try {
+                    const res = await fetch(file);
+                    if (!res.ok) throw new Error("HTTP " + res.status);
+                    el.innerHTML = await res.text();
+                } catch (err) {
+                    console.error("Errore nel caricamento di " + file + ":", err);
+                }
+            });
+
+            /* Animazioni allo scroll */
+            const cards = document.querySelectorAll(".reveal");
+            if ("IntersectionObserver" in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach((entry, i) => {
+                        if (!entry.isIntersecting) return;
+                        setTimeout(() => entry.target.classList.add("is-visible"), i * 100);
                         observer.unobserve(entry.target);
-                    }
-                });
-            }, observerOptions);
-
-            document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
-
-            const header = document.querySelector(".site-header");
-            if (header) {
-                window.addEventListener("scroll", () => {
-                    if (window.scrollY > 20) {
-                        header.classList.add("is-scrolled");
-                    } else {
-                        header.classList.remove("is-scrolled");
-                    }
-                }, { passive: true });
+                    });
+                }, { rootMargin: "0px 0px -50px 0px", threshold: 0.1 });
+                cards.forEach((el) => observer.observe(el));
+            } else {
+                cards.forEach((el) => el.classList.add("is-visible"));
             }
+
+            /* Filtro per area */
+            const buttons = document.querySelectorAll("#filters button");
+            const articles = document.querySelectorAll(".article-card");
+            const status = document.getElementById("filter-status");
+
+            buttons.forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const filter = btn.dataset.filter;
+                    let visible = 0;
+
+                    buttons.forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
+
+                    articles.forEach((card) => {
+                        const show = filter === "tutti" || card.dataset.area === filter;
+                        card.hidden = !show;
+                        if (show) {
+                            card.classList.add("is-visible");
+                            visible++;
+                        }
+                    });
+
+                    status.textContent = visible + (visible === 1 ? " analisi mostrata" : " analisi mostrate");
+                });
+            });
         });
     </script>
 </body>

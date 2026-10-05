@@ -103,7 +103,7 @@ export function useRegisterPageLogic() {
       const appVerifier = window.recaptchaVerifier;
       if (!appVerifier) throw new Error("ReCaptcha non inizializzato");
 
-      const confirmation = await sendPhoneVerification(user, fullPhone, appVerifier);
+      const confirmation = await sendPhoneVerification(fullPhone, appVerifier);
       
       setConfirmationResult(confirmation);
       setIsOtpSent(true);

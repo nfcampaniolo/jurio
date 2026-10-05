@@ -11,12 +11,13 @@ export interface PlanLimits {
 
 // Sostituisce Record<string, any> con Record<string, PlanLimits>
 const PLAN_LIMITS: Record<string, PlanLimits> = {
-  personale: { research: 100, analysis: 0, synthesis: 20, deep_analysis: 30 },
-  personale_m: { research: 100, analysis: 0, synthesis: 20, deep_analysis: 30 },
-  business: { research: 100, analysis: 200, synthesis: 100, deep_analysis: 30 },
-  business_m: { research: 100, analysis: 200, synthesis: 100, deep_analysis: 30 },
-  admin: { research: 100, analysis: 200, synthesis: 9999, deep_analysis: 30 },
-  default: { research: 100, analysis: 0, synthesis: 5, deep_analysis: 30 } // Fallback
+  personale: { research: 200, analysis: 0, synthesis: 20, deep_analysis: 30 },
+  personale_m: { research: 200, analysis: 0, synthesis: 20, deep_analysis: 30 },
+  business: { research: 200, analysis: 200, synthesis: 100, deep_analysis: 30 },
+  business_m: { research: 200, analysis: 200, synthesis: 100, deep_analysis: 30 },
+  admin: { research: 200, analysis: 200, synthesis: 9999, deep_analysis: 30 },
+  prova: { research: 200, analysis: 200, synthesis: 100, deep_analysis: 30 },
+  default: { research: 200, analysis: 0, synthesis: 5, deep_analysis: 30 } // Fallback
 };
 
 export function useUserLimits(uid: string | undefined) {

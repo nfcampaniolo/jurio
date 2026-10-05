@@ -40,8 +40,8 @@ export type RegisterDoc = {
 };
 
 export const consentItems = [
-  { key: "privacy", label: "Accetto la Privacy Policy", link: "/privacy", required: true },
-  { key: "terms", label: "Accetto i Termini e le Condizioni", link: "/termini", required: true },
+  { key: "privacy", label: "Accetto la Privacy Policy", link: "https://jurio.it/privacy", required: true },
+  { key: "terms", label: "Accetto i Termini e le Condizioni", link: "https://jurio.it/termini", required: true },
   { key: "comms", label: "Ricevere comunicazioni via email" },
   { key: "marketing", label: "Ricevere email promozionali" },
 ];

@@ -12,6 +12,7 @@ import {
   FaArrowLeft,
   FaSearch,
   FaFileAlt,
+  FaExclamationTriangle,
 } from "react-icons/fa";
 import { Loader2 } from "lucide-react";
 import { type PromptBuilderForm } from "@/interfaces/interfaces";
@@ -34,6 +35,8 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
     isGenerating,
     generatePrompt,
     isAccessDenied,
+    error,
+    clearError,
   } = usePromptGenerator();
 
   const [activeHint, setActiveHint] = useState<string | null>(null);
@@ -43,9 +46,10 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
     control,
     handleSubmit,
     watch,
+    reset,
     formState: { errors },
   } = useForm<PromptBuilderForm>({
-    defaultValues: template || {
+    defaultValues: {
       title: "",
       objective: "",
       notes: "",
@@ -67,27 +71,43 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
 
   const watchFields = watch("fields");
 
-useEffect(() => {
-  // NIENTE PIÙ pushState QUI. Lo gestisce handleOpenCreator.
+  // PRECOMPILAZIONE DEL MODULO (Fix "Crea da Modello")
+  useEffect(() => {
+    if (template) {
+      reset({
+        title: template.title || "",
+        objective: template.objective || "",
+        notes: template.notes || "",
+        fields: template.fields && template.fields.length > 0
+          ? template.fields
+          : [{ name: "", type: "string", description: "", isRequired: true }],
+      });
+    } else {
+      reset({
+        title: "",
+        objective: "",
+        notes: "",
+        fields: [{ name: "", type: "string", description: "", isRequired: true }],
+      });
+    }
+  }, [template, reset]);
 
-  const handlePopState = () => {
-    // Intercetta il tasto "Indietro" del browser
-    onBack();
-  };
+  useEffect(() => {
+    const handlePopState = () => {
+      onBack();
+    };
 
-  window.addEventListener("popstate", handlePopState);
-
-  return () => {
-    window.removeEventListener("popstate", handlePopState);
-  };
-});
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [onBack]);
 
   useEffect(() => {
     if (generatedPrompt && !isGenerating) {
       const timer = setTimeout(() => {
         onBack();
       }, 1800);
-
       return () => clearTimeout(timer);
     }
   }, [generatedPrompt, isGenerating, onBack]);
@@ -117,7 +137,7 @@ useEffect(() => {
 
           <div className="flex items-center gap-2 mb-3">
             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-semibold bg-(--color-bg) border border-(--color-border) text-(--color-muted)">
-              NUOVO MODELLO
+              {template ? "DUPLICA MODELLO" : "NUOVO MODELLO"}
             </span>
           </div>
 
@@ -142,7 +162,6 @@ useEffect(() => {
           <div className="w-8 h-8 shrink-0 rounded-lg bg-(--color-bg) border border-(--color-border) flex items-center justify-center">
             <FaSlidersH className="w-3.5 h-3.5 text-(--color-text)" />
           </div>
-
           <div>
             <p className="text-sm font-medium text-(--color-text)">
               1. Dai un nome al modello
@@ -157,7 +176,6 @@ useEffect(() => {
           <div className="w-8 h-8 shrink-0 rounded-lg bg-(--color-bg) border border-(--color-border) flex items-center justify-center">
             <FaSearch className="w-3.5 h-3.5 text-(--color-text)" />
           </div>
-
           <div>
             <p className="text-sm font-medium text-(--color-text)">
               2. Scegli cosa cercare
@@ -172,7 +190,6 @@ useEffect(() => {
           <div className="w-8 h-8 shrink-0 rounded-lg bg-(--color-bg) border border-(--color-border) flex items-center justify-center">
             <FaFileAlt className="w-3.5 h-3.5 text-(--color-text)" />
           </div>
-
           <div>
             <p className="text-sm font-medium text-(--color-text)">
               3. Lascia che l'AI lo usi
@@ -188,36 +205,50 @@ useEffect(() => {
       <div className="relative bg-(--color-surface) border border-(--color-border) rounded-2xl shadow-(--shadow-soft) overflow-hidden">
         <div className="h-1 bg-(--color-primary)" />
 
-        {/* GENERATION OVERLAY */}
+        {/* OVERLAY PROFESSIONALE: CARICAMENTO & ERRORE */}
         <AnimatePresence>
-          {(isGenerating || generatedPrompt) && (
+          {(isGenerating || generatedPrompt || error) && (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-50 bg-(--color-surface)/95 backdrop-blur-sm flex items-center justify-center p-6"
+              className="absolute inset-0 z-50 bg-(--color-surface)/95 backdrop-blur-md flex items-center justify-center p-6 border-t border-(--color-border)"
             >
               {isGenerating ? (
                 <div className="text-center max-w-sm">
-                  <div className="w-12 h-12 rounded-full bg-(--color-bg) border border-(--color-border) flex items-center justify-center mx-auto">
-                    <Loader2
-                      size={22}
-                      className="animate-spin text-(--color-text)"
-                    />
+                  <div className="w-16 h-16 rounded-2xl bg-(--color-bg) border border-(--color-border) flex items-center justify-center mx-auto mb-6 shadow-xs relative overflow-hidden">
+                    <div className="absolute inset-0 bg-linear-to-tr from-transparent via-(--color-text)/5 to-transparent animate-pulse" />
+                    <Loader2 size={26} className="animate-spin text-(--color-text) opacity-90" />
                   </div>
-
-                  <h3
-                    className="mt-5 text-xl font-medium text-(--color-text)"
-                    style={{ fontFamily: "var(--font-serif)" }}
-                  >
-                    Stiamo creando il modello
+                  <h3 className="text-xl font-medium text-(--color-text) tracking-tight mb-2" style={{ fontFamily: "var(--font-serif)" }}>
+                    Elaborazione Regole in Corso
                   </h3>
-
-                  <p className="mt-2 text-sm text-(--color-muted) leading-relaxed">
-                    L'AI sta trasformando le tue indicazioni in un modello
-                    pronto per l'analisi automatica.
+                  <p className="text-sm text-(--color-muted) leading-relaxed">
+                    I nostri sistemi stanno strutturando e validando le istruzioni per il motore AI. L'operazione richiede pochi istanti.
                   </p>
                 </div>
+              ) : error ? (
+                <motion.div
+                  initial={shouldReduceMotion ? {} : { scale: 0.96, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="text-center max-w-sm"
+                >
+                  <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6 text-red-600 dark:text-red-400">
+                    <FaExclamationTriangle size={24} />
+                  </div>
+                  <h3 className="text-xl font-medium text-(--color-text) tracking-tight mb-2" style={{ fontFamily: "var(--font-serif)" }}>
+                    Impossibile Generare il Modello
+                  </h3>
+                  <p className="text-sm text-(--color-muted) leading-relaxed mb-6">
+                    {error}
+                  </p>
+                  <button
+                    onClick={clearError}
+                    className="px-5 py-2.5 bg-(--color-bg) border border-(--color-border) hover:border-(--color-text) text-(--color-text) rounded-xl text-sm font-medium transition-all shadow-xs cursor-pointer"
+                  >
+                    Torna all'Editor
+                  </button>
+                </motion.div>
               ) : (
                 <motion.div
                   initial={shouldReduceMotion ? {} : { scale: 0.96, opacity: 0 }}
@@ -225,20 +256,14 @@ useEffect(() => {
                   transition={{ duration: 0.25 }}
                   className="text-center max-w-sm"
                 >
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto text-emerald-600 dark:text-emerald-400">
-                    <FaCheckCircle size={22} />
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-6 text-emerald-600 dark:text-emerald-400 shadow-xs">
+                    <FaCheckCircle size={26} />
                   </div>
-
-                  <h3
-                    className="mt-5 text-xl font-medium text-(--color-text)"
-                    style={{ fontFamily: "var(--font-serif)" }}
-                  >
-                    Modello creato
+                  <h3 className="text-xl font-medium text-(--color-text) tracking-tight mb-2" style={{ fontFamily: "var(--font-serif)" }}>
+                    Modello Creato e Verificato
                   </h3>
-
-                  <p className="mt-2 text-sm text-(--color-muted)">
-                    È stato salvato nell'archivio ed è pronto per essere
-                    utilizzato.
+                  <p className="text-sm text-(--color-muted) leading-relaxed">
+                    Il prompt è stato salvato in sicurezza nell'archivio. Reindirizzamento in corso...
                   </p>
                 </motion.div>
               )}
@@ -278,12 +303,10 @@ useEffect(() => {
                     <label className="text-sm font-medium text-(--color-text)">
                       Nome del modello
                     </label>
-
                     <p className="mt-1 text-xs text-(--color-muted)">
                       Scegli un nome facile da riconoscere nell'archivio.
                     </p>
                   </div>
-
                   <input
                     {...register("title", {
                       required: "Inserisci un nome per il modello",
@@ -291,7 +314,6 @@ useEffect(() => {
                     placeholder="Es. Analisi contratti di locazione"
                     className="w-full px-3.5 py-3 rounded-xl border border-(--color-border) bg-(--color-bg) text-sm text-(--color-text) outline-none focus:border-(--color-text) focus:ring-1 focus:ring-(--color-text) transition-all placeholder:text-(--color-muted)/50"
                   />
-
                   {errors.title && (
                     <p className="text-xs text-red-600 dark:text-red-400">
                       {errors.title.message}
@@ -306,12 +328,10 @@ useEffect(() => {
                       <label className="text-sm font-medium text-(--color-text)">
                         Cosa vuoi analizzare?
                       </label>
-
                       <p className="mt-1 text-xs text-(--color-muted)">
                         Spiega all'AI quale risultato vuoi ottenere.
                       </p>
                     </div>
-
                     <button
                       type="button"
                       onMouseEnter={() => setActiveHint("objective")}
@@ -337,7 +357,6 @@ useEffect(() => {
                     placeholder="Es. Individua durata, canone, responsabilità e condizioni di recesso..."
                     className="w-full h-32 p-3.5 rounded-xl border border-(--color-border) bg-(--color-bg) text-sm text-(--color-text) resize-none outline-none focus:border-(--color-text) focus:ring-1 focus:ring-(--color-text) transition-all placeholder:text-(--color-muted)/50 leading-relaxed"
                   />
-
                   {errors.objective && (
                     <p className="text-xs text-red-600 dark:text-red-400">
                       {errors.objective.message}
@@ -352,17 +371,14 @@ useEffect(() => {
                       <label className="text-sm font-medium text-(--color-text)">
                         Regole aggiuntive
                       </label>
-
                       <span className="text-[11px] text-(--color-muted)">
                         Facoltativo
                       </span>
                     </div>
-
                     <p className="mt-1 text-xs text-(--color-muted)">
                       Aggiungi regole su formato, precisione o dati mancanti.
                     </p>
                   </div>
-
                   <textarea
                     {...register("notes")}
                     placeholder="Es. Usa GG/MM/AAAA. Se il dato non è presente, lascia il campo vuoto."
@@ -379,20 +395,17 @@ useEffect(() => {
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-(--color-muted)">
                     Dati da trovare
                   </p>
-
                   <h2
                     className="mt-1.5 text-2xl font-medium text-(--color-text)"
                     style={{ fontFamily: "var(--font-serif)" }}
                   >
                     Cosa deve trovare l'AI
                   </h2>
-
                   <p className="mt-2 text-sm text-(--color-muted) leading-relaxed">
                     Aggiungi un campo per ogni informazione che vuoi estrarre
                     dai documenti.
                   </p>
                 </div>
-
                 <button
                   type="button"
                   onClick={() =>
@@ -424,12 +437,10 @@ useEffect(() => {
                         <span className="flex items-center justify-center w-6 h-6 rounded-md bg-(--color-surface) border border-(--color-border) text-[10px] font-semibold text-(--color-muted)">
                           {index + 1}
                         </span>
-
                         <span className="text-sm font-medium text-(--color-text)">
                           Informazione da estrarre
                         </span>
                       </div>
-
                       {fields.length > 1 && (
                         <button
                           type="button"
@@ -449,12 +460,10 @@ useEffect(() => {
                           <label className="text-xs font-medium text-(--color-text)">
                             Nome del dato
                           </label>
-
                           <p className="mt-0.5 text-[11px] text-(--color-muted)">
                             La chiave che userai nel risultato.
                           </p>
                         </div>
-
                         <input
                           {...register(`fields.${index}.name` as const, {
                             required: true,
@@ -470,12 +479,10 @@ useEffect(() => {
                           <label className="text-xs font-medium text-(--color-text)">
                             Tipo di risultato
                           </label>
-
                           <p className="mt-0.5 text-[11px] text-(--color-muted)">
                             Come vuoi ricevere il dato.
                           </p>
                         </div>
-
                         <select
                           {...register(`fields.${index}.type` as const)}
                           className="w-full px-3 py-2.5 rounded-lg border border-(--color-border) bg-(--color-surface) text-sm text-(--color-text) outline-none focus:border-(--color-text) focus:ring-1 focus:ring-(--color-text) cursor-pointer"
@@ -495,18 +502,15 @@ useEffect(() => {
                             <label className="text-xs font-medium text-(--color-text)">
                               Valori possibili
                             </label>
-
                             <p className="mt-0.5 text-[11px] text-(--color-muted)">
                               Inserisci le opzioni separate da virgola.
                             </p>
                           </div>
-
                           <input
                             {...register(
                               `fields.${index}.enumValues` as const,
                               {
-                                required:
-                                  "Definisci almeno due valori",
+                                required: "Definisci almeno due valori",
                               }
                             )}
                             placeholder="Es. Confermato, Sospeso, Risolto"
@@ -521,13 +525,10 @@ useEffect(() => {
                           <label className="text-xs font-medium text-(--color-text)">
                             Come deve trovarlo?
                           </label>
-
                           <p className="mt-0.5 text-[11px] text-(--color-muted)">
-                            Descrivi in modo semplice cosa deve cercare
-                            nel documento.
+                            Descrivi in modo semplice cosa deve cercare.
                           </p>
                         </div>
-
                         <input
                           {...register(
                             `fields.${index}.description` as const,
@@ -554,11 +555,9 @@ useEffect(() => {
                             )}
                             className="w-4 h-4 rounded border-(--color-border) accent-(--color-text) cursor-pointer"
                           />
-
                           <span className="text-xs text-(--color-text)">
                             Questo dato è importante
                           </span>
-
                           <span className="text-[11px] text-(--color-muted)">
                             L'AI segnalerà se non riesce a trovarlo.
                           </span>
@@ -577,18 +576,15 @@ useEffect(() => {
               <div className="w-8 h-8 shrink-0 rounded-lg bg-(--color-bg) border border-(--color-border) flex items-center justify-center">
                 <FaDatabase className="w-3.5 h-3.5 text-(--color-muted)" />
               </div>
-
               <div>
                 <p className="text-sm font-medium text-(--color-text)">
                   Il modello verrà salvato nell'archivio
                 </p>
-
                 <p className="mt-0.5 text-xs text-(--color-muted)">
                   Potrai riutilizzarlo su nuovi documenti senza ricrearlo.
                 </p>
               </div>
             </div>
-
             <button
               type="submit"
               disabled={isGenerating || !!generatedPrompt}

@@ -8,7 +8,7 @@ import type { AuthContextType } from "@/context/AuthContext";
 const { mockAuthState, mockNavigateComponent, mockUserExists } = vi.hoisted(() => ({
   mockAuthState: {
     user: null as User | null,
-    status: 'loading', // Ora usiamo lo status esplicito
+    status: 'loading',
     hasConflict: false,
     errorMessage: null,
     resolveConflict: vi.fn(),
@@ -47,7 +47,7 @@ vi.mock("@/shared/services/user", () => ({
 /* ---------- mock ErrorScreen component ---------- */
 vi.mock("@/shared/components/ErrorScreen", () => ({
   __esModule: true,
-  ErrorScreen: ({ message, details }: { message: string, details?: string }) => (
+  ErrorScreen: ({ message, details }: { message: string; details?: string }) => (
     <div data-testid="error-screen">
       <span>{message}</span>
       {details && <span>{details}</span>}
@@ -78,7 +78,7 @@ describe("RegistrationRoute Route Guard Suite", () => {
     );
 
     expect(screen.getByRole("status")).toBeInTheDocument();
-    expect(screen.getByText("Caricamento…")).toBeInTheDocument();
+    expect(screen.getByText("Jurio")).toBeInTheDocument();
     expect(screen.queryByTestId("register-form")).not.toBeInTheDocument();
     expect(mockUserExists).not.toHaveBeenCalled();
   });
@@ -111,7 +111,7 @@ describe("RegistrationRoute Route Guard Suite", () => {
     );
 
     expect(screen.getByRole("status")).toBeInTheDocument();
-    expect(screen.getByText("Caricamento…")).toBeInTheDocument();
+    expect(screen.getByText("Jurio")).toBeInTheDocument();
     expect(screen.queryByTestId("register-form")).not.toBeInTheDocument();
     expect(mockUserExists).toHaveBeenCalledWith("usr_flv_2026");
   });
@@ -158,6 +158,7 @@ describe("RegistrationRoute Route Guard Suite", () => {
   });
 
   test("BLOCCA l'accesso mostrando ErrorScreen se la verifica su Firestore fallisce per errore di rete", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     mockAuthState.user = { uid: "usr_flv_2026" } as unknown as User;
     mockAuthState.status = 'authenticated';
     mockUserExists.mockRejectedValue(new Error("Timeout Firestore"));
@@ -172,10 +173,11 @@ describe("RegistrationRoute Route Guard Suite", () => {
       expect(screen.getByTestId("error-screen")).toBeInTheDocument();
     });
 
-    // Assicuriamoci che venga mostrato l'errore e NON il form (Risoluzione del falso negativo)
     expect(screen.getByText(/Errore di rete/i)).toBeInTheDocument();
     expect(screen.queryByTestId("register-form")).not.toBeInTheDocument();
     expect(screen.queryByTestId("mock-navigate")).not.toBeInTheDocument();
+
+    consoleErrorSpy.mockRestore();
   });
 
   test("BLOCCA l'accesso se il context di autenticazione globale è in stato di errore", () => {

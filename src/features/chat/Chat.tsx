@@ -206,7 +206,7 @@ export const LegalChatPage = () => {
 
       {/* 3. RIGHT SIDEBAR (FONTI & THREAD FASCICOLO) */}
       <aside className={`
-        absolute inset-0 z-50 flex lg:relative lg:inset-auto lg:w-80 xl:w-96 lg:shrink-0
+        absolute inset-0 z-20 flex lg:relative lg:inset-auto lg:w-80 xl:w-96 lg:shrink-0
         ${showMobileSidebar ? 'pointer-events-auto' : 'pointer-events-none lg:pointer-events-auto'}
         ${viewMode === 'workspace' ? 'lg:hidden' : 'lg:flex'} 
       `}>

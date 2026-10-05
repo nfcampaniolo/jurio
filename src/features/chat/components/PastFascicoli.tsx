@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useTransition } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Folder, ChevronRight, MessageSquare, Files, Loader2, Trash2, Pencil } from "lucide-react";
 import type { PastFascicolo, PastChat } from "@/interfaces/interfaces";
@@ -46,6 +46,8 @@ export const PastFascicoli: React.FC<PastFascicoliProps> = ({
   onRenameFascicolo,
   onRenameChat
 }) => {
+  const [isPending, startTransition] = useTransition();
+
   // 1. Inizializza lo stato leggendo l'hash dall'URL, se presente
   const [activeTab, setActiveTab] = useState<'fascicoli' | 'chats'>(() => {
     if (typeof window !== "undefined") {
@@ -118,7 +120,7 @@ export const PastFascicoli: React.FC<PastFascicoliProps> = ({
       {/* TABS CONTROLLER */}
       <div className="flex items-center gap-2 mb-8 bg-(--color-surface) border border-(--color-border) p-1.5 rounded-lg w-fit shadow-xs">
         <button
-          onClick={() => setActiveTab('fascicoli')}
+          onClick={() => startTransition(() => setActiveTab('fascicoli'))}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-md font-bold text-xs uppercase tracking-wider transition-all outline-none ${
             activeTab === 'fascicoli' 
               ? 'bg-(--color-text) text-(--color-surface) shadow-xs' 
@@ -128,7 +130,7 @@ export const PastFascicoli: React.FC<PastFascicoliProps> = ({
           <Folder size={16} /> Fascicoli ({fascicoli.length})
         </button>
         <button
-          onClick={() => setActiveTab('chats')}
+          onClick={() => startTransition(() => setActiveTab('chats'))}
           className={`flex items-center gap-2 px-5 py-2.5 rounded-md font-bold text-xs uppercase tracking-wider transition-all outline-none ${
             activeTab === 'chats' 
               ? 'bg-(--color-text) text-(--color-surface) shadow-xs' 
@@ -140,134 +142,139 @@ export const PastFascicoli: React.FC<PastFascicoliProps> = ({
       </div>
 
       {/* LISTA DINAMICA */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 pb-10">
-        <AnimatePresence mode="popLayout">
-          {activeTab === 'fascicoli' && fascicoli.map((f) => (
-            <motion.div 
-              key={`fascicolo-${f.id}`}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              onClick={() => handleSelectFascicolo(f)}
-              role="button"
-              tabIndex={0}
-              className={`flex flex-col p-6 bg-(--color-surface) border border-(--color-border) rounded-lg transition-all text-left group shadow-(--shadow-soft) outline-none
-                ${loadingId !== null ? 'opacity-70 cursor-wait' : 'cursor-pointer hover:border-(--color-text)'}`}
-            >
-              <div className="flex items-start justify-between w-full mb-4">
-                <div className="p-3 bg-(--color-bg) border border-(--color-border) rounded-md text-(--color-text)">
-                  <Folder size={20} className="opacity-80" />
-                </div>
-                
-                {/* Azioni: Rinomina, Elimina e Vai */}
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRenameFascicolo(f.id, f.title);
-                    }}
-                    className="p-1.5 text-(--color-muted) hover:text-(--color-text) hover:bg-(--color-bg) rounded-sm transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 outline-none"
-                    title="Rinomina"
-                    aria-label="Rinomina fascicolo"
-                  >
-                    <Pencil size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteFascicolo(f.id);
-                    }}
-                    className="p-1.5 text-(--color-muted) hover:text-red-600 hover:bg-red-500/10 rounded-sm transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 outline-none"
-                    title="Elimina"
-                    aria-label="Elimina fascicolo"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                  <div className="p-1.5 bg-(--color-bg) border border-(--color-border) rounded-sm shrink-0">
-                    {loadingId === f.id ? (
-                      <Loader2 size={16} className="animate-spin text-(--color-text)" />
-                    ) : (
-                      <ChevronRight size={16} className="text-(--color-text) opacity-70 group-hover:opacity-100 transition-opacity" />
-                    )}
+      <div className={`pb-10 transition-opacity duration-200 ${isPending ? 'opacity-50' : 'opacity-100'}`}>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.15 }}
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-5"
+          >
+            {activeTab === 'fascicoli' && fascicoli.map((f) => (
+              // Rimosso <motion.div> e le prop initial/animate. Usiamo un <div> normale.
+              <div 
+                key={`fascicolo-${f.id}`}
+                onClick={() => handleSelectFascicolo(f)}
+                role="button"
+                tabIndex={0}
+                className={`flex flex-col p-6 bg-(--color-surface) border border-(--color-border) rounded-lg transition-all text-left group shadow-(--shadow-soft) outline-none
+                  ${loadingId !== null ? 'opacity-70 cursor-wait' : 'cursor-pointer hover:border-(--color-text)'}`}
+              >
+                <div className="flex items-start justify-between w-full mb-4">
+                  <div className="p-3 bg-(--color-bg) border border-(--color-border) rounded-md text-(--color-text)">
+                    <Folder size={20} className="opacity-80" />
+                  </div>
+                  
+                  {/* Azioni: Rinomina, Elimina e Vai */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRenameFascicolo(f.id, f.title);
+                      }}
+                      className="p-1.5 text-(--color-muted) hover:text-(--color-text) hover:bg-(--color-bg) rounded-sm transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 outline-none"
+                      title="Rinomina"
+                      aria-label="Rinomina fascicolo"
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteFascicolo(f.id);
+                      }}
+                      className="p-1.5 text-(--color-muted) hover:text-red-600 hover:bg-red-500/10 rounded-sm transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 outline-none"
+                      title="Elimina"
+                      aria-label="Elimina fascicolo"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                    <div className="p-1.5 bg-(--color-bg) border border-(--color-border) rounded-sm shrink-0">
+                      {loadingId === f.id ? (
+                        <Loader2 size={16} className="animate-spin text-(--color-text)" />
+                      ) : (
+                        <ChevronRight size={16} className="text-(--color-text) opacity-70 group-hover:opacity-100 transition-opacity" />
+                      )}
+                    </div>
                   </div>
                 </div>
+                
+                <h3 className="text-base font-bold text-(--color-text) leading-tight mb-3 flex-1 tracking-tight">
+                  {f.title}
+                </h3>
+                
+                <span className="flex items-center gap-1.5 text-xs text-(--color-muted) font-light">
+                  <Clock size={13} className="opacity-70" /> 
+                  {formatDate(f.updatedAt)} 
+                </span>
               </div>
-              
-              <h3 className="text-base font-bold text-(--color-text) leading-tight mb-3 flex-1 tracking-tight">
-                {f.title}
-              </h3>
-              
-              <span className="flex items-center gap-1.5 text-xs text-(--color-muted) font-light">
-                <Clock size={13} className="opacity-70" /> 
-                {formatDate(f.updatedAt)} 
-              </span>
-            </motion.div>
-          ))}
+            ))}
 
-          {activeTab === 'chats' && chats.map((c) => (
-            <motion.div 
-              key={`chat-${c.id}`}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              onClick={() => handleSelectChat(c)}
-              role="button"
-              tabIndex={0}
-              className={`flex flex-col p-6 bg-(--color-surface) border border-(--color-border) rounded-lg transition-all text-left group shadow-(--shadow-soft) outline-none
-                ${loadingId !== null ? 'opacity-70 cursor-wait' : 'cursor-pointer hover:border-(--color-text)'}`}
-            >
-              <div className="flex items-start justify-between w-full mb-4">
-                <div className="p-3 bg-(--color-bg) border border-(--color-border) rounded-md text-(--color-text)">
-                  <MessageSquare size={20} className="opacity-80" />
-                </div>
-                
-                {/* Azioni: Rinomina, Elimina e Vai */}
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRenameChat(c.id, c.title || "Nuova Ricerca");
-                    }}
-                    className="p-1.5 text-(--color-muted) hover:text-(--color-text) hover:bg-(--color-bg) rounded-sm transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 outline-none"
-                    title="Rinomina"
-                    aria-label="Rinomina chat"
-                  >
-                    <Pencil size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteChat(c.id);
-                    }}
-                    className="p-1.5 text-(--color-muted) hover:text-red-600 hover:bg-red-500/10 rounded-sm transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 outline-none"
-                    title="Elimina"
-                    aria-label="Elimina chat"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                  <div className="p-1.5 bg-(--color-bg) border border-(--color-border) rounded-sm shrink-0">
-                    {loadingId === c.id ? (
-                      <Loader2 size={16} className="animate-spin text-(--color-text)" />
-                    ) : (
-                      <ChevronRight size={16} className="text-(--color-text) opacity-70 group-hover:opacity-100 transition-opacity" />
-                    )}
+            {activeTab === 'chats' && chats.map((c) => (
+              // Idem qui: <div> normale
+              <div 
+                key={`chat-${c.id}`}
+                onClick={() => handleSelectChat(c)}
+                role="button"
+                tabIndex={0}
+                className={`flex flex-col p-6 bg-(--color-surface) border border-(--color-border) rounded-lg transition-all text-left group shadow-(--shadow-soft) outline-none
+                  ${loadingId !== null ? 'opacity-70 cursor-wait' : 'cursor-pointer hover:border-(--color-text)'}`}
+              >
+                <div className="flex items-start justify-between w-full mb-4">
+                  <div className="p-3 bg-(--color-bg) border border-(--color-border) rounded-md text-(--color-text)">
+                    <MessageSquare size={20} className="opacity-80" />
+                  </div>
+                  
+                  {/* Azioni: Rinomina, Elimina e Vai */}
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onRenameChat(c.id, c.title || "Nuova Ricerca");
+                      }}
+                      className="p-1.5 text-(--color-muted) hover:text-(--color-text) hover:bg-(--color-bg) rounded-sm transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 outline-none"
+                      title="Rinomina"
+                      aria-label="Rinomina chat"
+                    >
+                      <Pencil size={15} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteChat(c.id);
+                      }}
+                      className="p-1.5 text-(--color-muted) hover:text-red-600 hover:bg-red-500/10 rounded-sm transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 outline-none"
+                      title="Elimina"
+                      aria-label="Elimina chat"
+                    >
+                      <Trash2 size={15} />
+                    </button>
+                    <div className="p-1.5 bg-(--color-bg) border border-(--color-border) rounded-sm shrink-0">
+                      {loadingId === c.id ? (
+                        <Loader2 size={16} className="animate-spin text-(--color-text)" />
+                      ) : (
+                        <ChevronRight size={16} className="text-(--color-text) opacity-70 group-hover:opacity-100 transition-opacity" />
+                      )}
+                    </div>
                   </div>
                 </div>
+                
+                <h3 className="text-base font-bold text-(--color-text) leading-tight mb-3 flex-1 tracking-tight">
+                  {c.title || "Nuova Ricerca"}
+                </h3>
+                
+                <div className="flex items-center gap-3 text-xs text-(--color-muted) font-light border-t border-(--color-border) pt-3 mt-2">
+                  <span className="flex items-center gap-1.5"><Clock size={13} className="opacity-70" /> {formatDate(c.updatedAt)}</span>
+                </div>
               </div>
-              
-              <h3 className="text-base font-bold text-(--color-text) leading-tight mb-3 flex-1 tracking-tight">
-                {c.title || "Nuova Ricerca"}
-              </h3>
-              
-              <div className="flex items-center gap-3 text-xs text-(--color-muted) font-light border-t border-(--color-border) pt-3 mt-2">
-                <span className="flex items-center gap-1.5"><Clock size={13} className="opacity-70" /> {formatDate(c.updatedAt)}</span>
-              </div>
-            </motion.div>
-          ))}
+            ))}
+          </motion.div>
         </AnimatePresence>
       </div>
     </motion.div>

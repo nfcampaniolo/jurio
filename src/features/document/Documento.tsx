@@ -14,11 +14,35 @@ import { AccessDenied } from "../../shared/components/AccessDenied";
 import { MassimaCard } from './components/Massima';
 
 const LoadingSpinner = () => (
-  <div className="flex items-center justify-center py-20 w-full">
-    <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-neutral-900"></div>
+  <div 
+    className="mt-8 mb-10 max-w-7xl mx-auto w-full animate-pulse space-y-6" 
+    aria-hidden="true"
+  >
+    {/* Mock Intestazione (Titolo ed estremi) */}
+    <div className="bg-(--color-surface) border border-(--color-border) rounded-2xl p-8 shadow-(--shadow-soft)">
+      <div className="h-6 bg-(--color-border) rounded w-1/4 mb-6 opacity-60"></div>
+      <div className="space-y-4">
+        <div className="h-5 bg-(--color-border) rounded w-3/4 opacity-40"></div>
+        <div className="h-5 bg-(--color-border) rounded w-1/2 opacity-40"></div>
+      </div>
+    </div>
+    
+    {/* Mock Corpo del Documento / Massima */}
+    <div className="bg-(--color-surface) border border-(--color-border) rounded-2xl p-8 shadow-(--shadow-soft)">
+       <div className="flex gap-4 border-b border-(--color-border) pb-4 mb-6 opacity-30">
+          <div className="h-4 bg-(--color-border) rounded w-24"></div>
+          <div className="h-4 bg-(--color-border) rounded w-24"></div>
+       </div>
+       <div className="space-y-4">
+          <div className="h-4 bg-(--color-border) rounded w-full opacity-30"></div>
+          <div className="h-4 bg-(--color-border) rounded w-full opacity-30"></div>
+          <div className="h-4 bg-(--color-border) rounded w-5/6 opacity-30"></div>
+          <div className="h-4 bg-(--color-border) rounded w-full opacity-30"></div>
+          <div className="h-4 bg-(--color-border) rounded w-4/6 opacity-30"></div>
+       </div>
+    </div>
   </div>
 );
-
 export const Documento = () => {
   const { user, status } = useAuth();
   const authLoading = status === 'loading';

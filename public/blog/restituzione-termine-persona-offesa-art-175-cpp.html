@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <script type="text/javascript" src="https://embeds.iubenda.com/widgets/7f06adba-d6ba-41a7-9758-69f5297af96e.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Meta e SEO allineati al contenuto -->
+    <title>Restituzione nel termine per la persona offesa (Art. 175 c.p.p.) | Jurio</title>
+    <meta name="description" content="Con la sentenza n. 936/2026, la Cassazione estende alla persona offesa l'art. 175 c.p.p., sanzionando le prassi notificatorie concretamente discriminatorie in tema di violenza domestica.">
+    <link rel="canonical" href="https://jurio.it/blog/restituzione-termine-persona-offesa-art-175-cpp">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="La restituzione nel termine della persona offesa per la costituzione di parte civile">
+    <meta property="og:description" content="Dall'estraneità formale al ruolo di 'parte in senso tecnico': l'evoluzione giurisprudenziale per la tutela della conoscenza effettiva della vittima.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://jurio.it/blog/restituzione-termine-persona-offesa-art-175-cpp">
+    <meta property="og:image" content="https://jurio.it/blog/restituzione-termine-persona-offesa.webp">
+    
+    <link rel="stylesheet" href="https://jurio.it/styles.css">
+    
+    <style>
+        :root {
+            --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+            --font-serif: "Lora", "Merriweather", Georgia, "Times New Roman", serif;
+            /* Background & testo */
+            --color-bg: #f5f6f7;
+            --color-surface: #ffffff;
+            --color-text: #1a1d21;
+            /* Grigio istituzionale */
+            --color-primary: #e0a32e;
+            --color-primary-hover: #f0b541;
+            /* Neutri */
+            --color-border: #d6d9de;
+            --color-muted: #5f6672;
+            --shadow-soft: 0 14px 45px rgba(42, 34, 24, .07);
+            --shadow-hover: 0 22px 60px rgba(42, 34, 24, .11);
+            --container: 1180px;
+            --radius: 18px;
+            --button-bg: var(--color-text);
+            --button-text: var(--color-bg);
+            --button-bg-hover: var(--color-primary);
+            --text-base-size: 16px;
+        }
+
+        * { box-sizing: border-box; }
+
+        /* Tema chiaro/scuro: segue automaticamente la preferenza del sistema. */
+        @media (prefers-color-scheme: dark) {
+            :root {
+            --color-bg: #111111;
+            --color-surface: #1a1a1a;
+            --color-text: #e6e7ea;
+            --color-primary: #e0a32e;
+            --color-primary-hover: #f0b541;
+            --color-border: #2e2e2e;
+            --color-muted: #a1a7b0;
+            --shadow-soft: 0 8px 18px rgba(0, 0, 0, 0.45);
+            }
+
+            .skip-link { background: var(--color-text); color: var(--color-bg); }
+            .header-cta, .button-primary { color: var(--color-bg); background: var(--color-text); }
+            .header-cta:hover { background: #ffffff; }
+            .demo-media { background: #25221f; }
+            .pricing-banner {
+            background: #0f0e0d;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .32);
+            }
+            .pricing-banner p, .pricing-points { color: #d1c8bc; }
+            .pricing-cta .button-primary { color: #181613; background: #f7f1e8; }
+            ::selection { background: rgba(213, 168, 95, .24); }
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            margin: 0;
+            min-width: 320px;
+            background: var(--color-bg);
+            color: var(--color-text);
+            font-family: var(--font-sans);
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+            line-height: 1.75;
+        }
+        body, button, a { font-family: var(--font-sans); }
+        h1, h2, h3 { font-family: var(--font-serif); }
+        a { color: inherit; }
+        img, video { max-width: 100%; }
+        img { display: block; }
+        button, a { -webkit-tap-highlight-color: transparent; }
+        :focus-visible { outline: 3px solid rgba(154, 107, 37, .55); outline-offset: 4px; }
+        ::selection { background: rgba(154, 107, 37, .18); }
+
+        .skip-link {
+            position: fixed; left: 1rem; top: 1rem; z-index: 1000;
+            transform: translateY(-160%); transition: transform .18s ease;
+            background: var(--color-text); color: #fff; padding: .7rem 1rem;
+            border-radius: 10px; font-weight: 700; text-decoration: none;
+        }
+        .skip-link:focus { transform: translateY(0); }
+
+        .container { width: min(var(--container), calc(100% - 40px)); margin-inline: auto; }
+        .serif { font-family: var(--font-serif); }
+
+        .site-header {
+            position: sticky; top: 0; z-index: 50;
+            background: color-mix(in srgb, var(--color-surface) 88%, transparent);
+            border-bottom: 1px solid var(--color-border);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        .header-inner {
+            min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 2rem;
+        }
+        .brand {
+            font-family: var(--font-serif); font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 700;
+            text-decoration: none; letter-spacing: -.03em;
+        }
+        .nav { display: flex; align-items: center; gap: 1.7rem; }
+        .nav a {
+            text-decoration: none; color: var(--color-muted); font-size: .72rem; font-weight: 800;
+            text-transform: uppercase; letter-spacing: .14em; transition: color .18s ease;
+        }
+        .nav a:hover { color: var(--color-text); }
+        .header-cta {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-height: 44px; padding: 0 1.1rem; border-radius: 10px;
+            background: var(--button-bg); color: var(--button-text); text-decoration: none; font-size: .9rem; font-weight: 750;
+            transition: transform .18s ease, background .18s ease;
+        }
+        .header-cta:hover { background: var(--button-bg-hover); transform: translateY(-1px); }
+
+        main { overflow: clip; }
+        
+        .demo-card {
+            position: relative; overflow: hidden; border: 1px solid var(--color-border);
+            border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-soft);
+        }
+        .demo-card::before, .accent::before {
+            content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--color-primary);
+        }
+        .demo-media { aspect-ratio: 21 / 9; background: #ece8df; }
+        .demo-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; }
+        .step { padding: 2rem; list-style-type: none; border-top: 1px solid var(--color-border); }
+        .step-num { font-size: .72rem; font-weight: 850; letter-spacing: .15em; color: var(--color-primary); }
+        .step h3 { margin: .85rem 0 .65rem; font-family: var(--font-serif); font-size: 1.55rem; line-height: 1.15; }
+        .step p { margin: 0; color: var(--color-muted); line-height: 1.7; text-align: justify; hyphens: auto; -webkit-hyphens: auto; -ms-hyphens: auto; }
+
+        .faq { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            border: 1px solid var(--color-border); 
+            border-radius: var(--radius); 
+            overflow: hidden; 
+            background: var(--color-surface); 
+            box-shadow: var(--shadow-soft); 
+        }
+
+        details + details { border-top: 1px solid var(--color-border); }
+        summary {
+            list-style: none; cursor: pointer; padding: 1.35rem 1.5rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+            transition: background-color 0.25s ease;
+        }
+        summary::-webkit-details-marker { display: none; }
+        summary:hover { background: color-mix(in srgb, var(--color-bg) 55%, transparent); }
+        summary::after {
+            content: ""; flex: 0 0 auto; width: 10px; height: 10px;
+            border-right: 2px solid var(--color-muted); border-bottom: 2px solid var(--color-muted);
+            transform: translateY(-25%) rotate(45deg);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease;
+        }
+        details[open] summary::after { transform: translateY(25%) rotate(225deg); border-color: var(--color-text); }
+        details > p {
+            margin: 0; padding: 0 1.5rem; color: var(--color-muted); line-height: 1.75; display: block; 
+            max-height: 0; opacity: 0; transform: translateY(-10px); text-align: justify;
+            transition: max-height 0.3s ease, opacity 0.2s ease, transform 0.2s ease, padding-bottom 0.3s ease;
+        }
+        details[open] > p {
+            padding-bottom: 1.35rem; max-height: 30rem; opacity: 1; transform: translateY(0); 
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease 0.05s, transform 0.35s ease 0.05s, padding-bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .cta-box { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2rem; align-items: center; padding: clamp(2rem, 5vw, 4.5rem); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 24px; box-shadow: var(--shadow-soft); }
+        .cta-box h2 { margin: 0; font-family: var(--font-serif); font-size: clamp(2.4rem, 4.6vw, 4.3rem); line-height: 1; letter-spacing: -.045em; font-weight: 500; }
+        .cta-box h2 em { color: var(--color-primary); font-style: italic; }
+        .cta-box p { margin: 1rem 0 0; color: var(--color-muted); max-width: 760px; line-height: 1.75; text-align: justify; }
+
+        footer { margin-top: 4rem; padding: 4rem 0 2rem; border-top: 1px solid var(--color-border); background: var(--color-surface); }
+
+        /* --- Visual refresh --- */
+        :root {
+            --ease-smooth: cubic-bezier(.22, 1, .36, 1);
+            --ease-snappy: cubic-bezier(.2, .8, .2, 1);
+        }
+
+        body { overflow-x: hidden; }
+        ::selection { background: rgba(224, 163, 46, .18); color: var(--color-text); }
+
+        .demo-card {
+            transform: translateZ(0);
+            transition: transform .7s var(--ease-smooth), box-shadow .7s var(--ease-smooth);
+            will-change: transform;
+        }
+        .demo-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-hover); }
+
+        .step {
+            position: relative; min-height: 210px;
+            transition: transform .55s var(--ease-smooth), box-shadow .55s var(--ease-smooth), border-color .35s ease;
+        }
+        .step::after {
+            content: ""; position: absolute; left: 2rem; bottom: 0; width: 38px; height: 1px;
+            background: var(--color-primary); transform: scaleX(.35); transform-origin: left;
+            transition: transform .45s var(--ease-smooth);
+        }
+        .step:hover::after { transform: scaleX(1); }
+        .step-num { display: inline-flex; align-items: center; gap: .5rem; }
+        .step-num::after { content: ""; width: 42px; height: 1px; background: currentColor; opacity: .35; }
+
+        summary { position: relative; }
+        summary::before {
+            content: ""; position: absolute; left: 1.5rem; bottom: 0; width: 0; height: 1px;
+            background: var(--color-primary); transition: width .45s var(--ease-smooth);
+        }
+        details[open] summary::before { width: calc(100% - 3rem); }
+
+        .cta-box { position: relative; overflow: hidden; transition: transform .55s var(--ease-smooth), box-shadow .55s var(--ease-smooth), border-color .35s ease; }
+        .cta-box::before {
+            content: ""; position: absolute; width: 240px; height: 240px; right: -70px; bottom: -150px;
+            border-radius: 50%; border: 1px solid rgba(224, 163, 46, .13); box-shadow: 0 0 0 40px rgba(224, 163, 46, .035);
+            pointer-events: none;
+        }
+        .hero-actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 2rem; }
+        .button {
+            display: inline-flex; align-items: center; justify-content: center; gap: .6rem;
+            min-height: 48px; padding: 0 1.15rem; border-radius: 10px; text-decoration: none;
+            font-weight: 750; border: 1px solid transparent; transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+        }
+        .button-primary { color: var(--button-text); background: var(--button-bg); box-shadow: 0 10px 24px rgba(36,33,29,.08); }
+        .button-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 34px rgba(36,33,29,.12); }
+        .button-secondary { background: var(--color-surface); border-color: var(--color-border); }
+        .button-secondary:hover { transform: translateY(-2px); box-shadow: var(--shadow-soft); }
+
+        /* Scroll reveal */
+        .reveal {
+            opacity: 0; transform: translateY(28px);
+            transition: opacity .8s var(--ease-smooth), transform .8s var(--ease-smooth);
+            will-change: opacity, transform;
+        }
+        .reveal.reveal-left { transform: translateX(-30px); }
+        .reveal.reveal-right { transform: translateX(30px); }
+        .reveal.is-visible { opacity: 1 !important; transform: none !important; }
+
+        .scroll-progress {
+            position: fixed; top: 0; left: 0; width: 100%; height: 2px; z-index: 200;
+            transform-origin: left; transform: scaleX(0); background: var(--color-primary); pointer-events: none; opacity: .9;
+        }
+
+        .legal-page { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+        .legal-header { max-width: 900px; margin: 0 auto 4.5rem; }
+        .legal-title { font-size: clamp(3rem, 6vw, 5rem); line-height: .98; text-wrap: balance; font-weight: 500; letter-spacing: -.045em; margin: 0; }
+        .legal-intro { margin: 1.5rem 0 0; max-width: 800px; color: var(--color-muted); font-size: 1.1rem; line-height: 1.8; text-align: justify; }
+        .legal-content { max-width: 900px; margin: 0 auto;}
+        
+        /* TESTO GIUSTIFICATO GLOBALE PER PARAGRAFI DEL CONTENUTO */
+        .legal-content p {
+            text-align: justify;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            -ms-hyphens: auto;
+            margin: 0 0 1.2rem;
+        }
+        
+        .legal-section { position: relative; padding: 2.8rem 0; border-top: 1px solid var(--color-border); }
+        .legal-section:first-child { padding-top: 0; border-top: 0; }
+        .legal-section h2 { font-size: clamp(1.55rem, 2.5vw, 2rem); font-weight: 600; line-height: 1.15; letter-spacing: -.025em; margin: 0 0 1.5rem; }
+
+        .cookie-type-box {
+            padding: 1.5rem; background-color: color-mix(in srgb, var(--color-bg) 50%, transparent);
+            border-left: 3px solid var(--color-primary); border-radius: 12px; border: 1px solid var(--color-border);
+            border-left-width: 4px; margin-top: 1.5rem; margin-bottom: 1.5rem;
+        }
+        .cookie-type-box h3 { margin: 0 0 0.5rem 0; color: var(--color-primary); font-family: var(--font-sans); font-size: 1.1rem; }
+        .cookie-type-box p { text-align: justify; hyphens: auto; -webkit-hyphens: auto; -ms-hyphens: auto; margin-bottom: 0;}
+
+        /* Note e Bibliografia */
+        sup a { color: var(--color-primary); text-decoration: none; font-weight: 700; padding: 0 0.15rem; transition: color 0.2s ease; }
+        sup a:hover { color: var(--color-primary-hover); text-decoration: underline; }
+        .legal-list { max-width: 780px; margin: 1.2rem 0 0; padding-left: 1.5rem; }
+        .legal-list li { margin-bottom: .65rem; padding-left: .25rem; text-align: justify; }
+        .legal-list li::marker { color: var(--color-primary); }
+        .legal-list a { color: var(--color-primary); text-decoration: none; transition: color 0.2s ease; }
+        .legal-list a:hover { text-decoration: underline; color: var(--color-primary-hover); }
+
+        .locked-link {
+            display: inline-flex; align-items: center; gap: 0.35rem; color: var(--color-primary);
+            font-weight: 600; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; transition: color .18s ease;
+        }
+        .locked-link:hover { color: var(--color-primary-hover); }
+        .locked-link svg { width: 14px; height: 14px; fill: currentColor; }
+        
+        blockquote { margin: 2rem 0; padding: 1.5rem 2rem; background: var(--color-surface); border-left: 4px solid var(--color-primary); border-radius: 0 12px 12px 0; box-shadow: var(--shadow-soft); font-style: italic; color: var(--color-muted); }
+        blockquote p { margin: 0 !important; }
+
+        @media (max-width: 720px) {
+            .container { width: min(100% - 28px, var(--container)); }
+            .legal-page { padding: 3.5rem 0; }
+            .legal-header { margin-bottom: 2.5rem; }
+            .legal-title { font-size: clamp(2.7rem, 13vw, 3.7rem); }
+            .legal-section { padding: 2rem 0; }
+            .steps { grid-template-columns: 1fr; gap: 0; }
+            .step { min-height: 0; padding: 1.5rem 0 1.7rem; border-top: 1px solid var(--color-border); }
+            .step:first-child { border-top: 0; padding-top: 0; }
+            .cta-box { grid-template-columns: 1fr; gap: 1.5rem; padding: 1.7rem 1.35rem; border-radius: 18px; }
+            .cta-box h2 { font-size: clamp(2.2rem, 10vw, 3.2rem); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+            .scroll-progress { display: none; }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Elementi dinamici necessari agli script -->
+    <div id="scrollProgress" class="scroll-progress"></div>
+    <div id="header"></div>
+
+    <main class="legal-page container">
+        <!-- HEADER ARTICOLO -->
+        <header class="legal-header">
+            <span class="eyebrow">Diritto Processuale Penale</span>
+            <h1 class="legal-title">La restituzione nel termine della persona offesa: la tutela della conoscenza effettiva</h1>
+            <p class="legal-intro serif" style="font-style: italic;">Con la sentenza n. 936/2026, la Suprema Corte supera definitivamente l'estraneità formale della persona offesa all'art. 175 c.p.p. e smantella le prassi notificatorie concretamente discriminatorie che precludono la costituzione di parte civile per le vittime di violenza domestica in strutture protette.</p>
+            
+            <div style="margin-top: 1.5rem; display: flex; gap: 1rem; align-items: center; font-size: 0.85rem; color: var(--color-muted); font-weight: 600;">
+                <time datetime="2026-09-27">27 Sett. 2026</time>
+                <span>•</span>
+                <span>Cass., Sez. VI pen., 24 settembre 2026, n. 936</span>
+            </div>
+        </header>
+
+        <!-- IMMAGINE PRINCIPALE -->
+        <div class="demo-card" style="margin-bottom: 4.5rem; max-width: 900px; margin-inline: auto;">
+            <div class="demo-media">
+                <img src="https://images.pexels.com/photos/29763051/pexels-photo-29763051.jpeg">
+            </div>
+        </div>
+
+        <!-- CORPO DELL'ARTICOLO -->
+        <article class="legal-content">
+            
+            <!-- SEZIONE 1 -->
+            <section class="legal-section">
+                <h2>Il problema concreto: notifica formale e reale isolamento</h2>
+                <p>Una persona offesa di nazionalità straniera, vittima di gravi maltrattamenti in famiglia, viene collocata assieme ai figli minorenni all'interno di una casa rifugio ad indirizzo protetto e segreto. Le rigide regole interne della struttura le impongono l'isolamento dal mondo esterno, comportando finanche la consegna del telefono cellulare. Contestualmente alla denuncia-querela, trovandosi in uno stato di grave turbamento emotivo e possedendo una scarsa padronanza della lingua italiana, elegge domicilio formale presso l'abitazione dell'interprete, figura con cui non intrattiene alcun legame personale o fiduciario.</p>
+                <p>Nella fase di <em>vocatio in ius</em>, il decreto di giudizio immediato e il verbale di udienza vengono regolarmente notificati a tale domicilio formale, ricevuti dalla figlia dell'interprete. All'indirizzo della casa rifugio giungerà unicamente una notifica che la cita in veste di <em>testimone</em>. Avendo così perso, di fatto, la possibilità di costituirsi parte civile nei tempi previsti dal rito, la donna richiede la restituzione nel termine per forza maggiore. Il Tribunale di Ragusa respinge l'istanza con un approccio prettamente formalistico, limitandosi a rilevare la ritualità della notifica (artt. 161, 157, 148 c.p.p.). Da questo diniego origina l'intervento risolutore della Sesta Sezione penale della Cassazione, con la sentenza n. 936/2026<sup><a href="#note-1" id="ref-1">1</a></sup>.</p>
+            </section>
+
+            <!-- SEZIONE 2 -->
+            <section class="legal-section">
+                <h2>Il quadro normativo e il limite testuale dell'art. 175 c.p.p.</h2>
+                <p>La disputa ermeneutica sorge in ragione del rigido tenore letterale dell'art. 175, comma 1, del codice di procedura penale. La norma stabilisce che <em>«il pubblico ministero, le parti private e i difensori sono restituiti nel termine stabilito a pena di decadenza, se provano di non averlo potuto osservare per caso fortuito o per forza maggiore»</em>. La persona offesa, non essendo tecnicamente una "parte" (se non dopo l'avvenuta costituzione di parte civile), non vi è esplicitamente menzionata.</p>
+                <p>A controbilanciare questo vuoto letterale interviene l'architettura dei diritti informativi strutturata dagli artt. 90-bis e 90-quater c.p.p. L'obbligo di fornire alla vittima (soprattutto se particolarmente vulnerabile) informazioni chiare sul proprio ruolo procedimentale <em>"sin dal primo contatto con l'autorità procedente"</em> è il frutto di un lungo iter di recepimento europeo, inaugurato con la direttiva 2012/29/UE. Tale impianto è stato sistematicamente irrobustito in Italia dai successivi interventi normativi: dalla legge n. 69 del 2019 (Codice Rosso), alla legge n. 168 del 2023 sul contrasto alla violenza domestica, sino alle recenti disposizioni della l. n. 181 del 2025<sup><a href="#note-2" id="ref-2">2</a></sup> in tema di femminicidio. È proprio in questo iato tra la forma processuale e la garanzia sostanziale che la giurisprudenza di legittimità ha progressivamente mutato rotta.</p>
+            </section>
+
+            <!-- SEZIONE TIMELINE -->
+            <section class="legal-section">
+                <h2>L'evoluzione del contrasto: dall'esclusione all'indirizzo estensivo</h2>
+                <p>Il riconoscimento dell'art. 175 c.p.p. in capo alla persona offesa ha vissuto un'evoluzione travagliata, culminata oggi in un consolidato orientamento maggioritario che ne ammette l'applicabilità sistematica.</p>
+                
+                <div class="steps" style="grid-template-columns: 1fr; gap: 1.5rem; margin-top: 2.5rem;">
+                    
+                    <div class="step reveal">
+                        <span class="step-num">Fino al 2019</span>
+                        <h3>Il rigore letterale e l'esclusione</h3>
+                        <p>In un primo periodo, la Corte di Cassazione (Cass., Sez. 5, n. 10111/2015 e Cass., Sez. 2, n. 20764/2019) si è attestata su un'interpretazione restrittiva, negando recisamente la restituzione. Si affermava che la persona offesa, non essendo parte del processo in senso tecnico, non potesse giovarsi dell'art. 175 c.p.p., istituto riservato a imputato, p.m. e parte civile.</p>
+                    </div>
+
+                    <div class="step reveal">
+                        <span class="step-num">2019 - 2022</span>
+                        <h3>Le prime aperture ermeneutiche</h3>
+                        <p>Contestualmente al rafforzamento normativo, l'interpretazione inizia a mutare. Pronunce come Cass., Sez. 3, n. 18844/2019 e Cass., Sez. 5, n. 8543/2021 rilevano che l'art. 175 c.p.p. trova applicazione anche nella fase delle indagini preliminari, dove esistono solo "soggetti del procedimento" e non ancora "parti" tecniche. Il divieto letterale inizia a scricchiolare.</p>
+                    </div>
+
+                    <div class="step reveal">
+                        <span class="step-num">2022 - 2026</span>
+                        <h3>Il consolidamento dell'orientamento maggioritario</h3>
+                        <p>Con le pronunce 
+                            <a href="https://jurio.it/giurisprudenza/63ce831c-83da-47d2-9e61-aecb27e93f2e" class="locked-link" title="Riservato agli utenti Jurio">
+                                <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>
+                                Cass. n. 34794/2022
+                            </a>, Cass., Sez. 6, n. 25287/2023 e <a href="https://jurio.it/giurisprudenza/cbf8c655-09ab-42f1-babc-4e64eb82e977" class="locked-link" title="Riservato agli utenti Jurio">
+                                <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>
+                                Cass., Sez. 2, n. 11835/2024
+                            </a>, l'indirizzo estensivo diviene diritto vivente, riconoscendo stabilmente che la persona offesa può ottenere la restituzione nel termine per non veder vanificata la tutela anticipata dei diritti civili.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEZIONE 3 -->
+            <section class="legal-section">
+                <h2>La sentenza n. 936/2026: il superamento delle prassi discriminatorie</h2>
+                <p>Muovendosi in questo solco ormai tracciato, la Cassazione con la pronuncia n. 936/2026 fissa un principio di fondamentale importanza, censurando la prospettiva meramente formale adottata dai giudici di merito. Il Supremo Collegio avalla esplicitamente le molteplici allegazioni difensive comprovanti la forza maggiore: non solo l'isolamento e la consegna del telefono, ma l'assenza di comunicazioni con l'interprete e il fatto che la pendenza del procedimento non fosse emersa neppure da specifiche interrogazioni sollecitate ex art. 335 c.p.p.</p>
+                <blockquote>
+                    <p>Richiamando il diritto di difesa (art. 24 Cost.) e il principio del giusto processo (art. 111 Cost.), i giudici di legittimità qualificano la notifica al domicilio formale di una vittima nota per essere collocata in casa rifugio come una prassi «formalmente neutra ma concretamente discriminatoria».</p>
+                </blockquote>
+                <p>Sulla scorta delle disposizioni europee (direttiva UE 2024/1385, art. 24), della Convenzione di Istanbul (art. 56, comma 1, lett. c; art. 30), della Raccomandazione generale n. 33 del Comitato CEDAW e dei noti leading case della Corte EDU (<em>Talpis c. Italia, Landi c. Italia, De Giorgi c. Italia</em>), la Corte sancisce che gli Stati hanno precisi obblighi positivi di protezione effettiva. Dinanzi all'impossibilità oggettiva di acquisire la conoscenza sostanziale del procedimento, la regolarità formale della notificazione cede il passo al diritto inderogabile della vittima vulnerabile di essere restituita in termini.</p>
+            </section>
+
+            <!-- HIGHLIGHT / LIMITI -->
+            <aside class="cookie-type-box reveal">
+                <h3>Approfondimenti: i limiti soggettivi e temporali</h3>
+                <p>L'estensione dell'istituto delineata dalla giurisprudenza incontra tuttavia precise delimitazioni documentate dalla ricerca. Sotto il profilo procedurale, Cass., Sez. 5, n. 36470/2023 ha precisato che la decorrenza dei dieci giorni utili per avanzare istanza può essere innescata anche da una notifica come "testimone", se questa reca gli estremi completi e palesa all'interessato l'esistenza del giudizio; la sentenza 936/2026 fa però eccezione, valorizzando la condizione di fragilità e di segregazione che ha reso inesigibile tale consapevolezza tecnica. Sotto il profilo soggettivo, <a href="https://jurio.it/giurisprudenza/63ce831c-83da-47d2-9e61-aecb27e93f2e" class="locked-link" title="Riservato agli utenti Jurio">
+                                <svg viewBox="0 0 24 24"><path d="M18 10v-4c0-3.313-2.687-6-6-6s-6 2.687-6 6v4h-3v14h18v-14h-3zm-10-4c0-2.206 1.794-4 4-4s4 1.794 4 4v4h-8v-4zm5 11.236v2.764h-2v-2.764c-.604-.346-1-1.002-1-1.736 0-1.104.896-2 2-2s2 .896 2 2c0 .734-.396 1.39-1 1.736z"/></svg>
+                                Cass. n. 18712/2022
+                            </a> ha chiarito che l'applicabilità dell'art. 175 c.p.p. resta preclusa per soggetti portatori di meri interessi economici, quali i creditori insinuati nel passivo per reati di bancarotta, essendo privi della qualifica propria di persona offesa.</p>
+            </aside>
+
+            <!-- SEZIONE 4 -->
+            <section class="legal-section">
+                <h2>Lo stato del dibattito e convergenze giurisprudenziali</h2>
+                <p>La decisione si colloca in un momento storico in cui la giurisprudenza delle alte Corti sta ridisegnando in profondità le prerogative della persona offesa. Significative convergenze giungono dalla Corte Costituzionale: con la sentenza n. 59 del 27 aprile 2026, la Consulta ha ribadito come la vittima sia titolare non solo di un interesse civilistico, ma di un concorrente interesse all'affermazione della responsabilità penale, fungendo da impulso critico al P.M. Pochi mesi dopo, con la sentenza n. 132 del 21 luglio 2026, il Giudice delle leggi ha persino demolito l'art. 37 c.p.p., consentendo alla persona offesa opponente di ricusare il GIP.</p>
+                <p>Se, allo stato dell'arte, il riconoscimento della restituzione nel termine per la persona offesa appare acquisito (in particolare per il caso di mancata ricezione della <em>vocatio in ius</em>), la sentenza 936/2026 segna il nuovo orizzonte della "forza maggiore": l'inidoneità assoluta della forma notificatoria a garantire la conoscenza sostanziale dinanzi all'isolamento imposto dalle misure di prevenzione dei femminicidi e dei maltrattamenti.</p>
+            </section>
+
+            <!-- FAQ -->
+            <section class="legal-section">
+                <h2>Domande Frequenti (FAQ)</h2>
+                <div class="faq reveal">
+                    <details>
+                        <summary>La persona offesa può richiedere la restituzione nel termine ex art. 175 c.p.p.?</summary>
+                        <p>Sì. Sebbene non espressamente menzionata dal dato testuale della norma, la giurisprudenza di legittimità maggioritaria – consolidatasi dal 2022 in poi e ribadita da ultimo con sentenza n. 936/2026 – riconosce questo diritto alla persona offesa al fine di tutelarne concretamente le prerogative partecipative e risarcitorie.</p>
+                    </details>
+                    <details>
+                        <summary>La notifica ricevuta solo in qualità di testimone impedisce la restituzione?</summary>
+                        <p>Non necessariamente. Se in linea di principio (Cass. 36470/2023) un atto di citazione testimoniale che riporta puntualmente gli estremi del procedimento integra un'effettiva conoscenza idonea a far decorrere il termine decadenziale di dieci giorni, la Cassazione ha stabilito che ciò non vale per una vittima di violenza domestica segregata in struttura protetta, ove la citazione non garantisce l'acquisizione di una reale consapevolezza delle proprie facoltà processuali.</p>
+                    </details>
+                    <details>
+                        <summary>Cosa si intende per prassi notificatoria "concretamente discriminatoria"?</summary>
+                        <p>Si intende la prassi per cui l'Autorità, pur essendo a conoscenza della peculiare situazione di vulnerabilità e isolamento della vittima (es. collocamento in casa rifugio ad indirizzo segreto), si limita a recapitare gli atti fondamentali (come il decreto di giudizio immediato) al solo domicilio formale eletto inizialmente, svuotando di fatto il diritto di difesa e violando gli obblighi convenzionali di protezione dello Stato.</p>
+                    </details>
+                </div>
+            </section>
+
+            <!-- NOTE E BIBLIOGRAFIA -->
+            <section class="legal-section" id="bibliografia">
+                <h2>Fonti e Giurisprudenza richiamata</h2>
+                <ol class="legal-list" style="font-size: 0.85rem; color: var(--color-muted);">
+                    <li id="note-1">Cass., Sez. VI pen., 24 settembre 2026, n. 936 (R.G. 16921/2026). <a href="#ref-1" aria-label="Torna al testo">↩</a></li>
+                    <li id="note-2">L'apparato normativo include: Dir. 2012/29/UE; l. 69/2019 (Codice Rosso); l. 168/2023; l. 181/2025; nonché la l. n. 182 del 2025 (menzionata nel testo del provvedimento). A livello internazionale: Dir. UE 2024/1385, art. 24; Convenzione di Istanbul, art. 30 e 56. <a href="#ref-2" aria-label="Torna al testo">↩</a></li>
+                    <li>Cass., Sez. V pen., 22 aprile 2022, n. 18712.</li>
+                    <li>Cass., Sez. V pen., 22 giugno 2022, n. 34794.</li>
+                    <li>Cass., Sez. VI pen., 30 marzo 2023, n. 25287.</li>
+                    <li>Cass., Sez. V pen., n. 36470/2023.</li>
+                    <li>Cass., Sez. II pen., n. 11835/2024.</li>
+                    <li>Corte Cost., sent. 559/1990; sent. 27 aprile 2026, n. 59; sent. 21 luglio 2026, n. 132.</li>
+                    <li>Corte EDU, sentenze <em>Arnoldi c. Italia</em> (2017); <em>Talpis c. Italia</em> (2017); <em>Landi c. Italia</em> (2022); <em>De Giorgi c. Italia</em> (2022).</li>
+                </ol>
+            </section>
+
+        </article>
+        
+        <!-- CTA JURIO FINALE -->
+        <div class="cta-box reveal" style="margin-top: 4rem; max-width: 900px; margin-inline: auto;">
+            <div>
+                <h2>Cerca. <em>Analizza.</em> Scegli.</h2>
+                <p>Ricerca e confronta l'evoluzione giurisprudenziale penalistica direttamente sulle fonti con l'IA di Jurio. Sblocca l'accesso illimitato a tutto il database per l'approfondimento giuridico.</p>
+                <div class="hero-actions">
+                    <a href="/prezzi" class="button button-primary">Scopri i piani</a>
+                    <a href="/login" class="button button-secondary">Accedi</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="footer"></div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const components = [
+                {
+                    selector: "#header",
+                    file: "/header.html",
+                },
+                {
+                    selector: "#footer",
+                    file: "/footer.html",
+                },
+            ];
+
+            await Promise.all(
+                components.map(async ({ selector, file }) => {
+                    const element = document.querySelector(selector);
+
+                    if (!element) return;
+
+                    try {
+                        const response = await fetch(file);
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP ${response.status}`);
+                        }
+
+                        element.innerHTML = await response.text();
+                    } catch (error) {
+                        console.error(`Errore nel caricamento di ${file}:`, error);
+                    }
+                })
+            );
+        });
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const observerOptions = {
+                root: null,
+                rootMargin: "0px",
+                threshold: 0.1,
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("is-visible");
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            document.querySelectorAll(".reveal").forEach((el) => observer.observe(el));
+
+            const header = document.querySelector(".site-header");
+
+            window.addEventListener(
+                "scroll",
+                () => {
+                    if (!header) return;
+
+                    if (window.scrollY > 20) {
+                        header.classList.add("is-scrolled");
+                    } else {
+                        header.classList.remove("is-scrolled");
+                    }
+                },
+                { passive: true }
+            );
+        });
+    </script>
+    <!-- SCRIPT PER REVEAL & SCROLL PROGRESS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const reveals = document.querySelectorAll('.reveal');
+            
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('is-visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, {
+                    threshold: 0.1,
+                    rootMargin: '0px 0px -40px 0px'
+                });
+
+                reveals.forEach(el => observer.observe(el));
+            } else {
+                reveals.forEach(el => el.classList.add('is-visible'));
+            }
+
+            const progressBar = document.getElementById('scrollProgress');
+            if (progressBar) {
+                window.addEventListener('scroll', () => {
+                    const total = document.documentElement.scrollHeight - window.innerHeight;
+                    if (total > 0) {
+                        const progress = window.scrollY / total;
+                        progressBar.style.transform = `scaleX(${progress})`;
+                    }
+                }, { passive: true });
+            }
+        });
+    </script>
+
+    <!-- DATI STRUTTURATI SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "La restituzione nel termine della persona offesa per la costituzione di parte civile",
+      "image": "https://jurio.it/blog/restituzione-termine-persona-offesa.webp",
+      "author": {
+        "@type": "Organization",
+        "name": "Redazione Jurio"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Jurio",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://jurio.it/logo.webp"
+        }
+      },
+      "datePublished": "2026-09-27T09:00:00+02:00",
+      "dateModified": "2026-09-27T09:00:00+02:00",
+      "description": "Con la sentenza n. 936/2026, la Cassazione estende alla persona offesa l'art. 175 c.p.p., smantellando le prassi notificatorie concretamente discriminatorie in tema di violenza domestica.",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://jurio.it/blog/restituzione-termine-persona-offesa-art-175-cpp"
+      }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "La persona offesa può richiedere la restituzione nel termine ex art. 175 c.p.p.?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Sì. Sebbene non espressamente menzionata dal dato testuale della norma, la giurisprudenza di legittimità maggioritaria riconosce questo diritto alla persona offesa al fine di tutelarne concretamente le prerogative partecipative e risarcitorie, orientamento ribadito dalla Cassazione n. 936/2026."
+        }
+      }, {
+        "@type": "Question",
+        "name": "La notifica ricevuta solo in qualità di testimone impedisce la restituzione?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Non necessariamente. Se in linea generale un atto di citazione che riporta gli estremi del procedimento può far decorrere il termine di dieci giorni, ciò non vale per una vittima segregata in struttura protetta, ove la citazione non garantisce l'acquisizione di una reale consapevolezza delle facoltà processuali."
+        }
+      }, {
+        "@type": "Question",
+        "name": "Cosa si intende per prassi notificatoria concretamente discriminatoria?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Si intende la prassi per cui l'Autorità, pur conoscendo la vulnerabilità e l'isolamento della vittima (es. in casa rifugio), recapita gli atti essenziali al solo domicilio formale eletto inizialmente, svuotando il diritto di difesa e violando gli obblighi convenzionali di protezione."
+        }
+      }]
+    }
+    </script>
+</body>
+</html>

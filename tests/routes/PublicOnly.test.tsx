@@ -37,6 +37,17 @@ vi.mock("@/context/useAuth", () => ({
   useAuth: () => mockAuthState,
 }));
 
+/* ---------- mock ErrorScreen component ---------- */
+vi.mock("@/shared/components/ErrorScreen", () => ({
+  __esModule: true,
+  ErrorScreen: ({ message, details }: { message: string; details?: string }) => (
+    <div data-testid="error-screen">
+      <span>{message}</span>
+      {details && <span>{details}</span>}
+    </div>
+  ),
+}));
+
 /* ---------- component under test ---------- */
 import { PublicOnly } from "@/routes/PublicOnly";
 
@@ -49,7 +60,7 @@ describe("PublicOnly Route Guard Suite", () => {
     mockAuthState.errorMessage = null;
   });
 
-  test("renderizza il loader (AuthLoader) quando lo stato di autenticazione è in caricamento ('loading')", () => {
+  test("renderizza il loader (AuthLoader) con brand 'Jurio' quando lo stato di autenticazione è in caricamento ('loading')", () => {
     mockAuthState.status = "loading";
 
     render(
@@ -59,9 +70,27 @@ describe("PublicOnly Route Guard Suite", () => {
     );
 
     expect(screen.getByRole("status")).toBeInTheDocument();
-    expect(screen.getByText("Caricamento…")).toBeInTheDocument();
+    expect(screen.getByText("Jurio")).toBeInTheDocument();
     expect(screen.queryByTestId("guest-content")).not.toBeInTheDocument();
     expect(screen.queryByTestId("mock-navigate")).not.toBeInTheDocument();
+  });
+
+  test("blocca l'accesso e mostra ErrorScreen quando lo stato globale è 'error'", () => {
+    mockAuthState.status = "error";
+    mockAuthState.errorMessage = "Connessione di rete assente";
+
+    render(
+      <PublicOnly>
+        <div data-testid="guest-content">Login Form</div>
+      </PublicOnly>
+    );
+
+    expect(screen.getByTestId("error-screen")).toBeInTheDocument();
+    expect(screen.getByText("Errore di rete temporaneo.")).toBeInTheDocument();
+    expect(screen.getByText("Connessione di rete assente")).toBeInTheDocument();
+    expect(screen.queryByTestId("guest-content")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("mock-navigate")).not.toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   test("reindirizza alla pagina '/profilo' con replace quando l'utente è già autenticato ('authenticated')", () => {

@@ -1,6 +1,7 @@
 import { getFirestore } from "firebase-admin/firestore";
 import { getDb, getAdmin, sanitize, getAdminAuth } from "./deps";
 import { enqueueMonthlyUsageEmail, calculateReportData } from "./email";
+import { SEZIONI_CASSAZIONE_CIVILE, SEZIONI_CASSAZIONE_PENALE } from "./params";
 
 export async function scheduleDowngradeTask(args: {
   projectId: string;
@@ -45,29 +46,6 @@ export type DowngradeTxResult = {
   alreadyEmailed: boolean;
   shouldSendEmail: boolean;
 };
-
-// --- COSTANTI ---
-export const SEZIONI_CASSAZIONE_CIVILE = [
-  "PRIMA SEZIONE CIVILE",
-  "SECONDA SEZIONE CIVILE",
-  "TERZA SEZIONE CIVILE",
-  "QUARTA SEZIONE CIVILE",
-  "QUINTA SEZIONE CIVILE",
-  "SESTA SEZIONE CIVILE",
-  "SEZIONI UNITE CIVILI",
-] as const;
-
-export const SEZIONI_CASSAZIONE_PENALE = [
-  "PRIMA SEZIONE PENALE",
-  "SECONDA SEZIONE PENALE",
-  "TERZA SEZIONE PENALE",
-  "QUARTA SEZIONE PENALE",
-  "QUINTA SEZIONE PENALE",
-  "SESTA SEZIONE PENALE",
-  "SETTIMA SEZIONE PENALE",
-  "SEZIONE FERIALE PENALE",
-  "SEZIONI UNITE PENALI",
-] as const;
 
 // --- METODO CRON ---
 export async function computeAndSaveWeeklyStats() {

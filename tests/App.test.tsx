@@ -7,9 +7,6 @@ vi.mock("@/shared/components/ScrollToTop", () => ({
   default: () => <div data-testid="mock-scroll-to-top" />,
 }));
 
-// Abbiamo rimosso il mock di AuthLoader. 
-// Lasciamo che React renderizzi quello vero, che è solo pura UI!
-
 /* ---------- mock rotte applicative ---------- */
 vi.mock("@/routes/routes", async () => {
   const ReactModule = await import("react");
@@ -45,9 +42,9 @@ describe("App Root Component Suite", () => {
 
     expect(screen.getByTestId("mock-scroll-to-top")).toBeInTheDocument();
     expect(screen.getByTestId("mock-home-page")).toBeInTheDocument();
-    
-    // Verifica che il vero AuthLoader NON sia presente
-    expect(screen.queryByText(/Caricamento…/i)).toBeNull();
+
+    // Verifica che AuthLoader non sia presente quando la pagina è pronta
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 
   test("mostra AuthLoader come fallback di Suspense quando una rotta lazy è in caricamento", () => {
@@ -55,10 +52,12 @@ describe("App Root Component Suite", () => {
 
     render(<App />);
 
-    // Suspense si attiva: mostra SOLO il fallback e nasconde i children
-    expect(screen.getByText(/Caricamento…/i)).toBeInTheDocument();
-    
-    // Verifica corretta: ScrollToTop NON deve essere nel DOM in questo momento!
-    expect(screen.queryByTestId("mock-scroll-to-top")).toBeNull();
+    // Suspense scatta: AuthLoader espone role="status" e il brand "Jurio"
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.getByText("Jurio")).toBeInTheDocument();
+
+    // ScrollToTop e la rotta non devono essere nel DOM durante il fallback di Suspense
+    expect(screen.queryByTestId("mock-scroll-to-top")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("mock-home-page")).not.toBeInTheDocument();
   });
 });

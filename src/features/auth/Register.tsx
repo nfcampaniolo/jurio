@@ -3,7 +3,6 @@ import React from "react";
 import { motion, useReducedMotion, AnimatePresence } from "framer-motion";
 import { Input } from "@/shared/components/Input";
 import { useRegisterPageLogic } from "@/features/auth/hooks/useRegisterPageLogic";
-import { Link } from "react-router-dom";
 import { consentItems, roleOptions } from "@/interfaces/interfaces";
 import { Loader2 } from "lucide-react";
 
@@ -275,10 +274,11 @@ export const Register: React.FC = () => {
                     <span className="font-bold uppercase tracking-wider text-(--color-text)">
                       {item.label} {item.required ? "(obbligatorio)" : ""}
                     </span>
-
                     {item.link && (
-                      <Link
-                        to={item.link}
+                      <a
+                        href={item.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="ml-2 inline-flex items-center text-(--color-text) font-bold underline underline-offset-2 hover:opacity-80 transition-opacity"
                       >
                         vedi
@@ -292,7 +292,7 @@ export const Register: React.FC = () => {
                         >
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
                         </svg>
-                      </Link>
+                      </a>
                     )}
                   </label>
                 </div>

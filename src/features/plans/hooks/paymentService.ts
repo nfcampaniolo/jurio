@@ -22,13 +22,6 @@ export const fetchUserPayments = async (uid: string): Promise<PaymentRecord[]> =
     where,
     getDocs,
   } = await import("firebase/firestore");
-  // Query per PayPal
-  const paypalQuery = query(
-    collection(db, "paypalOrders"),
-    where("uid", "==", uid),
-    where("status", "==", "COMPLETED")
-  );
-
   // Query per Stripe
   const stripeQuery = query(
     collection(db, "stripeSessions"),
@@ -37,29 +30,11 @@ export const fetchUserPayments = async (uid: string): Promise<PaymentRecord[]> =
   );
 
   // Eseguiamo le due query in parallelo
-  const [paypalSnap, stripeSnap] = await Promise.all([
-    getDocs(paypalQuery),
+  const [stripeSnap] = await Promise.all([
     getDocs(stripeQuery),
   ]);
 
   const records: PaymentRecord[] = [];
-
-  // Parsing dei risultati PayPal
-  paypalSnap.forEach((doc) => {
-    const data = doc.data();
-    records.push({
-      id: doc.id,
-      provider: "paypal",
-      status: data.status,
-      completedAt: data.completedAt instanceof Timestamp 
-        ? data.completedAt.toDate() 
-        : new Date(data.completedAt),
-      paidCurrency: data.paidCurrency || "EUR",
-      paidValue: Number(data.paidValue || 0),
-      planId: data.planId,
-      paypalCaptureId: data.paypalCaptureId,
-    });
-  });
 
   // Parsing dei risultati Stripe
   stripeSnap.forEach((doc) => {

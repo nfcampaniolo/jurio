@@ -7,12 +7,28 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Firebase Logs
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# Dependencies & Build output
 node_modules
 dist
 dist-ssr
-*.local
+coverage/
+
 # Environment variables
 .env
+.env.*
+!.env.example
+*.local
+
+# Firebase & Emulators data
+.firebase/
+dati-mock/
+firebase-export/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -24,6 +40,7 @@ dist-ssr
 *.sln
 *.sw?
 
-# Nascondi la cartella word
+# Nascondi la cartella word e scripts
 word/
 scripts/
+compilance/

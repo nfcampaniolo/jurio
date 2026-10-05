@@ -13,7 +13,7 @@ const NOMI_AREE = Object.values(AREE).join("', '");
 export function createMcpServer(authHeader: string): McpServer {
   const server = new McpServer({
     name: "jurio-mcp",
-    version: "1.0.4",
+    version: "1.0.5",
   });
   
   // --------------------------------------------------------------------------
@@ -403,7 +403,9 @@ function formatDocument(doc: any): string {
   if (doc.data_decisione) lines.push(`DATA: ${doc.data_decisione}`);
   if (doc.massima?.trim()) lines.push(`MASSIMA: ${doc.massima.trim()}`);
   if (doc.fattispecie_rilevante?.trim()) lines.push(`FATTISPECIE: ${doc.fattispecie_rilevante.trim()}`);
-  if (doc.url?.trim()) lines.push(`URL: https://jurio.it/giurisprudenza/${doc.id?.trim() ?? ""}`);
+  if (doc.id) {
+    lines.push(`URL: https://jurio.it/giurisprudenza/${doc.id.trim()}`);
+  }
   return lines.join("\n");
 }
 

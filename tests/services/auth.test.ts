@@ -139,6 +139,14 @@ describe("Auth Service Suite", () => {
     delete window.recaptchaVerifier;
     mockAuth.currentUser = mockUser;
 
+    // FONDAMENTALE: Vitest/JSDOM di default imposta hostname a "localhost".
+    // Dobbiamo simularlo a un dominio di prod per testare i flussi reali
+    // senza far scattare il bypass locale (isLocalhost) che abbiamo inserito.
+    Object.defineProperty(window, "location", {
+      value: { hostname: "jurio.it" },
+      writable: true,
+    });
+
     vi.stubGlobal(
       "fetch",
       vi.fn().mockResolvedValue({
@@ -219,7 +227,7 @@ describe("Auth Service Suite", () => {
       );
 
       expect(fetch).toHaveBeenCalledWith(
-        expect.any(String), // Accetta sia "" della CI che l'URL in locale
+        expect.any(String),
         expect.objectContaining({
           method: "POST",
           body: "{}",
@@ -453,6 +461,47 @@ describe("Auth Service Suite", () => {
       expect(callbackSpy).toHaveBeenCalledWith(mockUser, false);
     });
 
+    test("ignora i conflitti bypassando la logica in locale", async () => {
+      // Forziamo l'hostname a localhost per testare il bypass
+      Object.defineProperty(window, "location", {
+        value: { hostname: "localhost" },
+        writable: true,
+      });
+
+      let authCallback: (u: User | null) => void = () => {};
+      let snapshotCallback: (snap: DocumentSnapshot) => void = () => {};
+
+      mockOnAuthStateChanged.mockImplementation((_auth, cb) => {
+        authCallback = cb;
+        return vi.fn();
+      });
+
+      mockOnSnapshot.mockImplementation((_ref, cb) => {
+        snapshotCallback = cb;
+        return vi.fn();
+      });
+
+      const callbackSpy = vi.fn();
+      onUserStateChange(callbackSpy);
+
+      await vi.waitFor(() => {
+        expect(mockOnAuthStateChanged).toHaveBeenCalled();
+      });
+
+      authCallback(mockUser);
+
+      localStorage.setItem("active_session_id", "session_A");
+
+      const conflictSnap = {
+        data: () => ({ currentSessionId: "session_B" }),
+      } as unknown as DocumentSnapshot;
+
+      snapshotCallback(conflictSnap);
+
+      // Deve restituire false nonostante i codici siano diversi
+      expect(callbackSpy).toHaveBeenCalledWith(mockUser, false);
+    });
+
     test("la funzione di cleanup annulla gli ascolti di auth e firestore", async () => {
       const unsubAuthMock = vi.fn();
       const unsubFirestoreMock = vi.fn();
@@ -560,22 +609,33 @@ describe("Auth Service Suite", () => {
       expect(mockRecaptchaVerifier).toHaveBeenCalledTimes(1);
     });
 
-    test("sendPhoneVerification collega il telefono e restituisce confirmationResult", async () => {
+    test("sendPhoneVerification collega il telefono basandosi su auth.currentUser", async () => {
       const mockConfirmation = { verificationId: "otp_req_123" } as unknown as ConfirmationResult;
       mockLinkWithPhoneNumber.mockResolvedValueOnce(mockConfirmation);
 
       const appVerifier = {} as ApplicationVerifier;
-      const res = await sendPhoneVerification(mockUser, "+393400000000", appVerifier);
+      const res = await sendPhoneVerification("+393400000000", appVerifier);
 
+      // Assicurati che peschi l'utente corretto dal mockAuth (mockUser)
       expect(mockLinkWithPhoneNumber).toHaveBeenCalledWith(mockUser, "+393400000000", appVerifier);
       expect(res).toBe(mockConfirmation);
+    });
+
+    test("sendPhoneVerification lancia errore se auth.currentUser è null", async () => {
+      mockAuth.currentUser = null; // Simuliamo utente disconnesso
+
+      await expect(
+        sendPhoneVerification("+393400000000", {} as ApplicationVerifier)
+      ).rejects.toThrow("Utente non autenticato");
+
+      expect(mockLinkWithPhoneNumber).not.toHaveBeenCalled();
     });
 
     test("sendPhoneVerification traccia analytics_error in caso di eccezione", async () => {
       mockLinkWithPhoneNumber.mockRejectedValueOnce(new Error("auth/invalid-phone-number"));
 
       await expect(
-        sendPhoneVerification(mockUser, "invalid-num", {} as ApplicationVerifier)
+        sendPhoneVerification("invalid-num", {} as ApplicationVerifier)
       ).rejects.toThrow("auth/invalid-phone-number");
 
       expect(mockTrackEvent).toHaveBeenCalledWith("analytics_error", {

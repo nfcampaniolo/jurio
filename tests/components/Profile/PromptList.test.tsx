@@ -78,7 +78,7 @@ describe("PromptList Component Suite", () => {
   /* STATO DI CARICAMENTO (LOADING)                                             */
   /* -------------------------------------------------------------------------- */
   describe("Stato di Caricamento", () => {
-    test("mostra lo spinner e il messaggio di caricamento quando isLoading è true", () => {
+    test("mostra lo spinner e i testi professionali di caricamento quando isLoading è true", () => {
       render(
         <PromptList
           prompts={[]}
@@ -88,7 +88,10 @@ describe("PromptList Component Suite", () => {
         />
       );
 
-      expect(screen.getByText(/caricamento prompt\.\.\./i)).toBeInTheDocument();
+      expect(screen.getByText(/inizializzazione archivio/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/sincronizzazione dei modelli di estrazione in corso\.\.\./i)
+      ).toBeInTheDocument();
       expect(screen.queryByText(/nessun prompt/i)).not.toBeInTheDocument();
       expect(screen.queryByText("Estrattore Clausole Vessatorie")).not.toBeInTheDocument();
     });
@@ -109,7 +112,7 @@ describe("PromptList Component Suite", () => {
       );
 
       expect(
-        screen.getByText("Personalizza l’intelligenza di Jurio sui tuoi documenti")
+        screen.getByText(/personalizza l['’]intelligenza di jurio sui tuoi documenti/i)
       ).toBeInTheDocument();
       expect(screen.getByText("Workflow & Automazione")).toBeInTheDocument();
     });
@@ -234,7 +237,7 @@ describe("PromptList Component Suite", () => {
   /* FORMATTAZIONE DATE (HELPER FORMATDATE)                                      */
   /* -------------------------------------------------------------------------- */
   describe("Rami di Formattazione Data", () => {
-    test("gestisce correttamente stringhe ISO, numeri epoch, date nulle e non valide", () => {
+    test("gestisce correttamente oggetti Date, Timestamp, stringhe ISO, numeri epoch, date nulle e non valide", () => {
       const variedPrompts: SavedPrompt[] = [
         {
           id: "p_iso",
@@ -260,6 +263,12 @@ describe("PromptList Component Suite", () => {
           objective: "Test Nullo",
           createdAt: null,
         } as unknown as SavedPrompt,
+        {
+          id: "p_undefined",
+          title: "Prompt Undefined",
+          objective: "Test Undefined",
+          createdAt: undefined,
+        } as unknown as SavedPrompt,
       ];
 
       render(
@@ -271,8 +280,14 @@ describe("PromptList Component Suite", () => {
         />
       );
 
-      expect(screen.getByText(/Data sconosciuta/i)).toBeInTheDocument();
-      expect(screen.getByText(/Data non valida/i)).toBeInTheDocument();
+      // Null e Undefined producono "Data sconosciuta"
+      expect(screen.getAllByText(/data sconosciuta/i)).toHaveLength(2);
+
+      // Valore non valido produce "Data non valida"
+      expect(screen.getByText(/data non valida/i)).toBeInTheDocument();
+
+      // Controllo che i formati validi non generino fallback di errore
+      expect(screen.queryAllByText(/data non valida/i)).toHaveLength(1);
     });
   });
 });

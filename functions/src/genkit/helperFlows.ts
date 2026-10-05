@@ -135,7 +135,7 @@ export function getExecutionProfile(promptLower: string): ExecutionProfile {
 
   if (needsDeepReasoning) {
     return { model: "vertexai/gemini-1.5-pro", dbLimit: 5, webLimit: 3 };
-  } else {
+  }  else {
     return { model: "vertexai/gemini-2.5-flash", dbLimit: 5, webLimit: 2 };
   }
 }

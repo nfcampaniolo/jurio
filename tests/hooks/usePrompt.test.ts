@@ -51,7 +51,7 @@ vi.mock("react-hot-toast", () => ({
 
 vi.mock("@/config/apiClient", () => ({
   __esModule: true,
-  fetchWithSecurity: (...args: unknown[]) => mockFetchWithSecurity(...args),
+  fetchWithSecurity: mockFetchWithSecurity,
 }));
 
 vi.mock("@/config/env", () => ({
@@ -67,12 +67,12 @@ vi.mock("firebase/auth", () => ({
 vi.mock("firebase/firestore", () => ({
   __esModule: true,
   getFirestore: () => mockFirestoreDb,
-  collection: (...args: unknown[]) => mockCollection(...args),
-  doc: (...args: unknown[]) => mockDoc(...args),
-  query: (...args: unknown[]) => mockQuery(...args),
+  collection: mockCollection,
+  doc: mockDoc,
+  query: mockQuery,
   orderBy: (field: string, dir?: "asc" | "desc") => mockOrderBy(field, dir),
-  onSnapshot: (...args: unknown[]) => mockOnSnapshot(...args),
-  deleteDoc: (...args: unknown[]) => mockDeleteDoc(...args),
+  onSnapshot: mockOnSnapshot,
+  deleteDoc: mockDeleteDoc,
 }));
 
 /* ---------- helper per stream SSE ---------- */
@@ -103,7 +103,6 @@ describe("Prompt Hooks Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthState.currentUser = { uid: "usr_flv_2026" };
-    // Resetta useLocation al suo stato di default prima di ogni test
     mockUseLocation.mockReturnValue({ hash: "", pathname: "/dashboard", search: "", state: null, key: "default" });
     vi.spyOn(console, "error").mockImplementation(() => {});
     vi.spyOn(console, "warn").mockImplementation(() => {});
@@ -126,11 +125,12 @@ describe("Prompt Hooks Suite", () => {
       expect(result.current.generatedPrompt).toBeNull();
       expect(result.current.isGenerating).toBe(false);
       expect(result.current.isAccessDenied).toBe(false);
+      expect(result.current.error).toBeNull();
     });
 
     test("consuma lo stream SSE, imposta generatedPrompt e mostra toast di successo", async () => {
       const sseChunks = [
-        "data: {\"result\": \"Prompt generato con formula giuridica\"}\n\n",
+        'data: {"result": "Prompt generato con formula giuridica"}\n\n',
         "data: [DONE]\n\n",
       ];
 
@@ -154,7 +154,8 @@ describe("Prompt Hooks Suite", () => {
 
       expect(result.current.generatedPrompt).toBe("Prompt generato con formula giuridica");
       expect(result.current.isGenerating).toBe(false);
-      expect(mockToast.success).toHaveBeenCalledWith("Prompt generato con successo!");
+      expect(result.current.error).toBeNull();
+      expect(mockToast.success).toHaveBeenCalledWith("Modello creato con successo!");
     });
 
     test("intercetta risposta 403 impostando isAccessDenied a true", async () => {
@@ -189,12 +190,13 @@ describe("Prompt Hooks Suite", () => {
 
       expect(result.current.generatedPrompt).toBeNull();
       expect(result.current.isGenerating).toBe(false);
-      expect(mockToast.error).toHaveBeenCalledWith("Errore durante la generazione del prompt.");
+      expect(result.current.error).toBe("Errore di comunicazione con i server.");
+      expect(mockToast.error).toHaveBeenCalledWith("Elaborazione interrotta.");
     });
 
     test("intercetta chunk SSE con errore registrando il warning su console", async () => {
       const sseChunks = [
-        "data: {\"error\": {\"message\": \"Quota token AI esaurita per il mese corrente\"}}\n\n",
+        'data: {"error": {"message": "Quota token AI esaurita per il mese corrente"}}\n\n',
       ];
 
       mockFetchWithSecurity.mockResolvedValueOnce(createMockSseResponse(sseChunks));
@@ -214,7 +216,7 @@ describe("Prompt Hooks Suite", () => {
     });
 
     test("clearPrompt azzera il prompt generato", async () => {
-      const sseChunks = ["data: {\"result\": \"Prompt attivo\"}\n\n"];
+      const sseChunks = ['data: {"result": "Prompt attivo"}\n\n'];
       mockFetchWithSecurity.mockResolvedValueOnce(createMockSseResponse(sseChunks));
 
       const { result } = renderHook(() => usePromptGenerator());
@@ -229,6 +231,26 @@ describe("Prompt Hooks Suite", () => {
       });
 
       expect(result.current.generatedPrompt).toBeNull();
+    });
+
+    test("clearError azzera lo stato di errore", async () => {
+      mockFetchWithSecurity.mockResolvedValueOnce({
+        status: 500,
+        ok: false,
+      });
+
+      const { result } = renderHook(() => usePromptGenerator());
+
+      await act(async () => {
+        await result.current.generatePrompt(sampleFormData);
+      });
+      expect(result.current.error).toBe("Errore di comunicazione con i server.");
+
+      act(() => {
+        result.current.clearError();
+      });
+
+      expect(result.current.error).toBeNull();
     });
   });
 
@@ -276,7 +298,7 @@ describe("Prompt Hooks Suite", () => {
 
       expect(result.current.isLoading).toBe(false);
       expect(result.current.prompts).toEqual([]);
-      expect(mockToast.error).toHaveBeenCalledWith("Impossibile caricare i prompt.");
+      expect(mockToast.error).toHaveBeenCalledWith("Impossibile caricare l'archivio prompt.");
     });
 
     test("non avvia la sottoscrizione se auth.currentUser è nullo", () => {
@@ -301,7 +323,6 @@ describe("Prompt Hooks Suite", () => {
         result.current.handleOpenCreator(baseTemplate);
       });
 
-      // L'hook usa navigate("#crea"), verifichiamo che venga chiamato correttamente
       expect(mockNavigate).toHaveBeenCalledWith("#crea");
       expect(result.current.selectedTemplate).toEqual({
         ...baseTemplate,
@@ -317,9 +338,8 @@ describe("Prompt Hooks Suite", () => {
     });
 
     test("handleBackToList resetta il template e naviga alla pathname rimuovendo l'hash", () => {
-      // Simuliamo che l'URL contenga l'hash "#crea"
       mockUseLocation.mockReturnValue({ hash: "#crea", pathname: "/dashboard", search: "", state: null, key: "default" });
-      
+
       const { result } = renderHook(() => usePromptDashboard());
 
       act(() => {
@@ -327,7 +347,6 @@ describe("Prompt Hooks Suite", () => {
       });
 
       expect(result.current.selectedTemplate).toBeUndefined();
-      // Il nuovo hook naviga verso `location.pathname` anziché usare -1
       expect(mockNavigate).toHaveBeenCalledWith("/dashboard");
     });
 

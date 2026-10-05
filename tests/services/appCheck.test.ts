@@ -2,11 +2,11 @@ import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import type { AppCheck } from "firebase/app-check";
 
 /* ---------- hoisted mocks ---------- */
-const { mockInitializeAppCheck, mockReCaptchaV3ProviderInstance, mockFirebaseApp } = vi.hoisted(() => {
-  const providerInstance = { isReCaptchaV3: true };
+const { mockInitializeAppCheck, mockReCaptchaEnterpriseProviderInstance, mockFirebaseApp } = vi.hoisted(() => {
+  const providerInstance = { isReCaptchaEnterprise: true };
   return {
     mockInitializeAppCheck: vi.fn(),
-    mockReCaptchaV3ProviderInstance: providerInstance,
+    mockReCaptchaEnterpriseProviderInstance: providerInstance,
     mockFirebaseApp: { name: "[DEFAULT]" },
   };
 });
@@ -14,9 +14,9 @@ const { mockInitializeAppCheck, mockReCaptchaV3ProviderInstance, mockFirebaseApp
 /* ---------- mock modules ---------- */
 vi.mock("firebase/app-check", () => ({
   __esModule: true,
-  initializeAppCheck: (...args: unknown[]) => mockInitializeAppCheck(...args),
-  ReCaptchaV3Provider: vi.fn().mockImplementation(function (siteKey: string) {
-    return { ...mockReCaptchaV3ProviderInstance, siteKey };
+  initializeAppCheck: mockInitializeAppCheck,
+  ReCaptchaEnterpriseProvider: vi.fn().mockImplementation(function (siteKey: string) {
+    return { ...mockReCaptchaEnterpriseProviderInstance, siteKey };
   }),
 }));
 
@@ -124,8 +124,8 @@ describe("Firebase App Check Service Suite", () => {
     ).toBeUndefined();
   });
 
-  test("inizializza AppCheck con il provider ReCaptchaV3 e autoRefresh abilitato", async () => {
-    vi.stubEnv("VITE_RECAPTCHA_SITE_KEY", "recaptcha-v3-public-key");
+  test("inizializza AppCheck con il provider ReCaptchaEnterprise e autoRefresh abilitato", async () => {
+    vi.stubEnv("VITE_RECAPTCHA_SITE_KEY", "recaptcha-enterprise-public-key");
     vi.stubEnv("DEV", false);
 
     const { initializeFirebaseAppCheck } = await import("@/infrastructure/appCheck");
@@ -136,12 +136,12 @@ describe("Firebase App Check Service Suite", () => {
       expect.objectContaining({
         isTokenAutoRefreshEnabled: true,
         provider: expect.objectContaining({
-          siteKey: "recaptcha-v3-public-key",
+          siteKey: "recaptcha-enterprise-public-key",
         }),
       })
     );
 
-    expect(console.info).toHaveBeenCalledWith("🛡️ Firebase App Check inizializzato.");
+    expect(console.info).toHaveBeenCalledWith("🛡️ Firebase App Check (Enterprise) inizializzato.");
     expect(instance).toBe(fakeAppCheckInstance);
   });
 
