@@ -84,7 +84,7 @@ export function useTeamMembers({ teamId, currentUserUid }: UseTeamMembersProps) 
       }
     };
 
-    setupSubscription();
+   void setupSubscription();
 
     return () => {
       isMounted = false;
@@ -136,7 +136,7 @@ export function useTeamMembers({ teamId, currentUserUid }: UseTeamMembersProps) 
 
       // 4. Gestione Redirect post-abbandono
       if (uidDelete === currentUserUid) {
-        void navigate("/profilo");
+        navigate("/profilo");
       }
     } catch (error: unknown) {
       console.error("[removeMember] Error:", error);
