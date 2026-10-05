@@ -170,7 +170,7 @@ export const Profile: React.FC = () => {
           cancelText="Annulla"
           confirmationPhrase="ELIMINA-ACCOUNT"
           onExport={() => {
-            exportAccount();
+            void exportAccount();
             toast("Preparazione esportazione dati...");
           }}
           onCancel={() => setConfirmOpen(false)}

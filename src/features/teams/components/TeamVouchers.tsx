@@ -169,7 +169,7 @@ export default function TeamVouchers({ team }: { team: Team }) {
                         className="flex flex-col sm:flex-row w-full md:w-auto items-stretch sm:items-center gap-2"
                         onSubmit={(e) => {
                           e.preventDefault();
-                          handleSendInviteEmail(v.id);
+                          void handleSendInviteEmail(v.id);
                         }}
                       >
                         <input

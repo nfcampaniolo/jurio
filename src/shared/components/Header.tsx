@@ -47,7 +47,7 @@ export const Header: React.FC = () => {
     let unsubBroadcast: (() => void) | undefined;
     let isCancelled = false;
 
-    (async () => {
+    void (async () => {
       try {
         const { collection, doc, query, where, limit, orderBy, onSnapshot } = await import("firebase/firestore");
         const { getDb } = await import("@/infrastructure/db");

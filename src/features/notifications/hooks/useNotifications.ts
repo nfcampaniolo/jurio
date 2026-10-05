@@ -31,7 +31,7 @@ export function useNotifications() {
     let unsubUser: (() => void) | undefined;
     let isCancelled = false;
 
-    (async () => {
+    void (async () => {
       try {
         const { collection, doc, query, where, orderBy, limit, onSnapshot } = await import("firebase/firestore");
         const { getDb } = await import("@/infrastructure/db");

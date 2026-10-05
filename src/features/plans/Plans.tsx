@@ -71,13 +71,13 @@ export const Plans: React.FC = () => {
         if (isMounted && couponData) setActiveCoupon(couponData);
       }
     };
-    loadCoupon();
+    void loadCoupon();
     return () => { isMounted = false; };
   }, [user?.uid]);
 
   useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         setPlansLoading(true);
         setPlansErr(null);

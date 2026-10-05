@@ -25,7 +25,7 @@ export default function StripeCheckout({
 
   React.useEffect(() => {
     let cancelled = false;
-    (async () => {
+    void (async () => {
       try {
         setLoadingPrice(true);
         setPriceErr(null);

@@ -59,7 +59,7 @@ export const Upload: React.FC = () => {
 
   // --- ESECUZIONE ANALISI CON PROMPT ---
   const handleAnalyzeClick = () => {
-    analyzeReason(selectedPromptId); 
+    void analyzeReason(selectedPromptId); 
   };
 
   useEffect(() => {
@@ -340,7 +340,7 @@ export const Upload: React.FC = () => {
         cancelText="Annulla"
         onConfirm={() => {
           setIsDuplicateModalOpen(false); 
-          executeAnalysis(selectedPromptId, duplicateId || undefined);
+          void executeAnalysis(selectedPromptId, duplicateId || undefined);
         }}
         onCancel={() => setIsDuplicateModalOpen(false)}
       />

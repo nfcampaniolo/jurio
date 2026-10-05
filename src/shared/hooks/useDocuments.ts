@@ -57,7 +57,7 @@ export const useDocuments = () => {
   }, [userId]);
 
   useEffect(() => {
-    fetchDocuments();
+    void fetchDocuments();
   }, [fetchDocuments]);
 
   const deleteDocumento = useCallback(async (id: string) => {
@@ -141,7 +141,7 @@ export function useSavedSentenze() {
   }, [uid]);
 
   useEffect(() => {
-    fetchSentences();
+   void  fetchSentences();
   }, [fetchSentences]);
 
   const unsaveSentence = useCallback(

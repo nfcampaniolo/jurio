@@ -132,7 +132,7 @@ export default function NotificationsPage() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      handleNotificationClick(notif);
+                      void handleNotificationClick(notif);
                     }
                   }}
                   className={`relative flex items-start gap-4 p-4 rounded-lg border transition-all cursor-pointer shadow-xs overflow-hidden outline-none focus-visible:ring-1 focus-visible:ring-(--color-text) ${

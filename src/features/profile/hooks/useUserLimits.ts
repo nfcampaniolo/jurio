@@ -52,7 +52,7 @@ export function useUserLimits(uid: string | undefined) {
       }
     }
 
-    fetchUserPlan();
+   void fetchUserPlan();
   }, [uid]);
 
   return { limits, planName, loadingLimits };

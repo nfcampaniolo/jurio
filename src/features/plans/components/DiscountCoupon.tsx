@@ -37,7 +37,7 @@ export const DiscountCoupon: React.FC<DiscountCouponProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim().length >= 5) verifyCoupon(inputValue.trim());
+    if (inputValue.trim().length >= 5) void verifyCoupon(inputValue.trim());
   };
 
   return (

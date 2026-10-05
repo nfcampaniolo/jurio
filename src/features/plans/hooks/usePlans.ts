@@ -20,7 +20,7 @@ export function useTrialInfo(params: { isTrial: boolean; uid: string | null }): 
   React.useEffect(() => {
     let cancelled = false;
 
-    (async () => {
+   void (async () => {
       if (!isTrial || !uid) {
         setTrialLeft(null);
         setTrialErr(null);

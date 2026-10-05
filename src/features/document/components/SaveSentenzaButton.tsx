@@ -22,7 +22,7 @@ export function SaveSentenzaButton({
   useEffect(() => {
     let alive = true;
 
-    (async () => {
+   void (async () => {
       if (!userId || !sentenzaId) return;
       try {
         const exists = await isSentenzaSaved(userId, sentenzaId);

@@ -41,7 +41,7 @@ export const useProfile = () => {
 
     let cancelled = false;
 
-    (async () => {
+    void (async () => {
       try {
         const exists = await userExists(user.uid);
         if (!exists) {
@@ -97,7 +97,7 @@ export const useProfile = () => {
 
     let cancelled = false;
 
-    (async () => {
+    void (async () => {
       try {
         // Lazy import: non trascina firebase/storage nel bundle iniziale
         const [{ getStorageClient }, storageFns] = await Promise.all([

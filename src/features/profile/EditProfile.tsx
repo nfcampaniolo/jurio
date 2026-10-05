@@ -75,7 +75,7 @@ export const EditProfile: React.FC = () => {
     try {
       await handleSave();
       toast.success("Profilo aggiornato");
-      void navigate("/profilo", { replace: true });
+      await navigate("/profilo", { replace: true });
     } catch (e) {
       console.error(e);
       toast.error("Errore durante il salvataggio.");

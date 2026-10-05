@@ -159,7 +159,7 @@ export const useLegalChat = (initialData?: { docs?: AttachedDocument[] }) => {
       setSessionType('fascicolo'); setIsSetupComplete(true); setActiveThreadId(threadId || null);
       if (!isUrlLoaded.current && pastFascicoli.length > 0) {
         const fascicoloToLoad = pastFascicoli.find(f => f.id === fascicoloId);
-        if (fascicoloToLoad) { setIsReadOnly(fascicoloToLoad.ownerId !== user?.uid); loadPastFascicolo(fascicoloToLoad); isUrlLoaded.current = true; }
+        if (fascicoloToLoad) { setIsReadOnly(fascicoloToLoad.ownerId !== user?.uid); void loadPastFascicolo(fascicoloToLoad); isUrlLoaded.current = true; }
         else { setMessages([]); setThreadTitle(""); setIsReadOnly(false); }
       } else if (isUrlLoaded.current && threadId) {
         void fetchFascicoloData(fascicoloId).then((threadsData: DBThreadPayload[]) => {

@@ -190,7 +190,7 @@ export function useUsageData(uid: string | undefined) {
       }
     }
 
-    fetchData();
+    void fetchData();
     return () => { isMounted = false; };
   }, [uid]);
 

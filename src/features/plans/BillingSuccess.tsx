@@ -36,7 +36,7 @@ export default function BillingSuccess() {
     let unsub: (() => void) | null = null;
     let cancelled = false;
 
-    (async () => {
+    void (async () => {
       try {
         const db = await getDb();
         if (cancelled) return;

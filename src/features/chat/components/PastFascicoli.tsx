@@ -62,7 +62,6 @@ export const PastFascicoli: React.FC<PastFascicoliProps> = ({
   // 2. Aggiorna l'URL quando l'utente cambia tab
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Uso replaceState per non riempire la history del browser con i click sulle tab
       window.history.replaceState(null, "", `#${activeTab}`);
     }
   }, [activeTab]);
@@ -92,6 +91,20 @@ export const PastFascicoli: React.FC<PastFascicoliProps> = ({
     setLoadingId(c.id);
     await onSelectChat(c);
     setLoadingId(null);
+  };
+
+  const handleFascicoloKeyDown = (e: React.KeyboardEvent, f: PastFascicolo) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      void handleSelectFascicolo(f);
+    }
+  };
+
+  const handleChatKeyDown = (e: React.KeyboardEvent, c: PastChat) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      void handleSelectChat(c);
+    }
   };
 
   return (
@@ -153,10 +166,10 @@ export const PastFascicoli: React.FC<PastFascicoliProps> = ({
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-5"
           >
             {activeTab === 'fascicoli' && fascicoli.map((f) => (
-              // Rimosso <motion.div> e le prop initial/animate. Usiamo un <div> normale.
               <div 
                 key={`fascicolo-${f.id}`}
-                onClick={() => handleSelectFascicolo(f)}
+                onClick={() => void handleSelectFascicolo(f)}
+                onKeyDown={(e) => handleFascicoloKeyDown(e, f)}
                 role="button"
                 tabIndex={0}
                 className={`flex flex-col p-6 bg-(--color-surface) border border-(--color-border) rounded-lg transition-all text-left group shadow-(--shadow-soft) outline-none
@@ -215,10 +228,10 @@ export const PastFascicoli: React.FC<PastFascicoliProps> = ({
             ))}
 
             {activeTab === 'chats' && chats.map((c) => (
-              // Idem qui: <div> normale
               <div 
                 key={`chat-${c.id}`}
-                onClick={() => handleSelectChat(c)}
+                onClick={() => void handleSelectChat(c)}
+                onKeyDown={(e) => handleChatKeyDown(e, c)}
                 role="button"
                 tabIndex={0}
                 className={`flex flex-col p-6 bg-(--color-surface) border border-(--color-border) rounded-lg transition-all text-left group shadow-(--shadow-soft) outline-none

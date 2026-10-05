@@ -254,7 +254,7 @@ export const SearchBar = () => {
             </div>
             <div className="p-4 border-t border-(--color-border) bg-(--color-surface)">
                <button 
-                 onClick={() => { setShowFilters(false); if(isSearching) handleSearch(searchInput); }} 
+                 onClick={() => { setShowFilters(false); if(isSearching) void handleSearch(searchInput); }} 
                  className="w-full py-3 bg-(--color-text) text-(--color-surface) rounded-md text-xs font-bold uppercase tracking-widest shadow-xs transition-opacity hover:opacity-90 outline-none"
                >
                  Applica filtri
@@ -270,7 +270,7 @@ export const SearchBar = () => {
           <div className="hidden sm:flex gap-2">
             <button
               type="button"
-              onClick={() => openPicker()}
+              onClick={() => void openPicker()}
               disabled={loading}
               className="p-3 rounded-md hover:bg-(--color-bg) transition-colors flex items-center justify-center disabled:opacity-60 bg-(--color-surface) border border-(--color-border) text-(--color-text) outline-none shadow-xs"
               title="Apri pannello termini"
@@ -439,7 +439,7 @@ export const SearchBar = () => {
           </button>
 
           <button
-            onClick={() => handleSearch(searchInput)}
+            onClick={() => void handleSearch(searchInput)}
             disabled={loading || (!searchInput.trim() && !(filterGrado || filterTipo || startDate || endDate))}
             className="p-3 rounded-md bg-(--color-text) text-(--color-surface) hover:opacity-90 transition-opacity flex items-center justify-center disabled:opacity-30 shadow-xs shrink-0 outline-none"
             aria-label="Avvia ricerca"

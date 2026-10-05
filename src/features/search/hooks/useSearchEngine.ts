@@ -73,7 +73,7 @@ export function useSearchHistory(uid: string | null, searchInput: string) {
       }
     };
 
-    fetchHistory();
+    void fetchHistory();
 
     return () => { cancelled = true; };
   }, [uid]);

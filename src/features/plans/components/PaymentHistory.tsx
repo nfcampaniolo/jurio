@@ -34,7 +34,7 @@ export const PaymentHistory: React.FC<PaymentHistoryProps> = ({ uid }) => {
       }
     };
 
-    loadPayments();
+    void loadPayments();
 
     return () => {
       isMounted = false; 

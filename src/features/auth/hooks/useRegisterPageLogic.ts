@@ -217,7 +217,7 @@ export function useRegisterPageLogic() {
       void trackEvent("free_trial_start", {});
 
       toast.success("Dati salvati e prova gratuita attivata!");
-      void navigate("/profilo", { replace: true });
+      await navigate("/profilo", { replace: true });
     } catch (error: unknown) {
       console.error(error);
       const err = error as Error;

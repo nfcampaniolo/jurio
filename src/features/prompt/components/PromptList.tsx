@@ -18,7 +18,7 @@ export const PromptList: React.FC<PromptListProps> = ({ prompts, isLoading, onCr
 
   const handleCopy = (e: React.MouseEvent, content: string) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(content);
+    void navigator.clipboard.writeText(content);
     toast.success("Prompt copiato negli appunti!");
   };
 

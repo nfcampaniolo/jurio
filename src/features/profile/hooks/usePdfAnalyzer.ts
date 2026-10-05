@@ -505,7 +505,7 @@ export const usePdfAnalyzer = () => {
   };
 
   const handleFiles = (files: FileList) => {
-    if (files.length) uploadAndAnalyze(files[0]);
+    if (files.length) void uploadAndAnalyze(files[0]);
   };
   
   const handleDrag = (e: React.DragEvent<HTMLElement>) => {

@@ -121,7 +121,7 @@ export const useDocumento = (id?: string | null) => {
       }
     };
 
-    fetchDocument();
+    void fetchDocument();
     
     return () => {
       if (fetchedRef.current !== id) {

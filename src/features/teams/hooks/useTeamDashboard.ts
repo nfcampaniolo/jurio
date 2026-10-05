@@ -64,7 +64,7 @@ export function useTeamDashboard() {
       }
     };
 
-    setupTeamSubscription();
+    void setupTeamSubscription();
 
     return () => {
       isMounted = false;

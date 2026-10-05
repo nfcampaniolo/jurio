@@ -36,12 +36,12 @@ export async function initializeOptionalServices(): Promise<void> {
 
   // Performance di solito non usa cookie traccianti per PII, ma verifica la tua policy.
   // Lo inizializziamo subito per non perdere i parametri di First Contentful Paint.
-  initPerformance(); 
+  void initPerformance(); 
 
   // Logica di controllo Consenso per Analytics
   const checkAndInitAnalytics = () => {
     if (window.Cookiebot?.consent?.statistics) {
-      initAnalytics();
+     void initAnalytics();
     }
   };
 

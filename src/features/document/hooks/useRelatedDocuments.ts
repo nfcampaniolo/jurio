@@ -113,7 +113,7 @@ export const useRelatedDocuments = ({
       }
     };
 
-    fetchRelatedDocs();
+    void fetchRelatedDocs();
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uid, massima, mode, selectedNorms.join(','), shouldFetch]); 

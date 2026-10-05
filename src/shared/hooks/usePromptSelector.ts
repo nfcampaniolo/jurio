@@ -45,7 +45,7 @@ export const usePromptSelector = ({ value, onChange }: UsePromptSelectorProps) =
       }
     };
 
-    fetchAllPrompts();
+    void fetchAllPrompts();
   }, []);
 
   // Gestione interna del reindirizzamento o della selezione

@@ -60,7 +60,7 @@ export const useOneDrive = () => {
 
   useEffect(() => {
     if (microsoftToken) {
-      fetchFiles();
+      void fetchFiles();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [microsoftToken]);
