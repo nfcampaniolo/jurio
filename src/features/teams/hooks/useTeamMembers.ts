@@ -136,7 +136,7 @@ export function useTeamMembers({ teamId, currentUserUid }: UseTeamMembersProps) 
 
       // 4. Gestione Redirect post-abbandono
       if (uidDelete === currentUserUid) {
-        navigate("/profilo");
+       void navigate("/profilo");
       }
     } catch (error: unknown) {
       console.error("[removeMember] Error:", error);
