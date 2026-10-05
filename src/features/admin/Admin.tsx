@@ -218,10 +218,10 @@ export const Admin: React.FC = () => {
           title="Elimina Profilo"
           message="Sei sicuro di voler eliminare l'account? Questa azione è irreversibile."
           onCancel={() => setConfirmOpen(false)}
-          onConfirm={() => {
-            deleteAccount();
+          onConfirm={async () => {
+            await deleteAccount();
             toast.success("Profilo eliminato");
-            navigate("/registrati", { replace: true });
+            void navigate("/registrati", { replace: true });
             setConfirmOpen(false);
           }}
         />

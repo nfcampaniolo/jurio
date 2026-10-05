@@ -31,7 +31,7 @@ export async function fetchApplyCoupon(
     }
 
     // Tracciamo l'errore per Analytics come fai tu
-    trackEvent("analytics_error", {
+    void trackEvent("analytics_error", {
       name: "fetchApplyCoupon",
       reason: `applyCoupon failed (${r.status}): ${text}`,
     });
@@ -42,7 +42,7 @@ export async function fetchApplyCoupon(
   const data = JSON.parse(text);
   
   if (data.status !== "SUCCESS" || !data.coupon) {
-    trackEvent("analytics_error", { name: "fetchApplyCoupon", reason: "Invalid format from server" });
+    void trackEvent("analytics_error", { name: "fetchApplyCoupon", reason: "Invalid format from server" });
     throw new Error("Risposta non valida dal server");
   }
 

@@ -174,11 +174,11 @@ export const Profile: React.FC = () => {
             toast("Preparazione esportazione dati...");
           }}
           onCancel={() => setConfirmOpen(false)}
-          onConfirm={() => {
+          onConfirm={async () => {
             setConfirmOpen(false); // Chiudi subito la modale nello stato
-            deleteAccount();
+            await deleteAccount();
             toast.success("Profilo eliminato con successo");
-            navigate("/login", { replace: true }); // La navigazione raderà al suolo il componente
+            void navigate("/login", { replace: true }); // La navigazione raderà al suolo il componente
           }}
         />
 

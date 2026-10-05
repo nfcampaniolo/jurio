@@ -66,7 +66,7 @@ export function useSearchHistory(uid: string | null, searchInput: string) {
         if (!cancelled) setUserTerms(terms);
       } catch (e) {
         if (!cancelled) setUserTerms([]);
-        trackEvent("analytics_error", { 
+        void trackEvent("analytics_error", { 
           name: "loadUserSearchTerms", 
           reason: e instanceof Error ? e.message : "unknown_error" 
         });
@@ -209,7 +209,7 @@ export function useSearchEngine(
       filters.filterGrado || filters.filterTipo || filters.filterTipologia || filters.startDate || filters.endDate || filters.filterSezione || filters.sortBy !== "relevance"
     );
 
-    trackEvent("sentence_searched", { query_length: trimmedInput.length, filters_used: hasAnyFilters });
+    void trackEvent("sentence_searched", { query_length: trimmedInput.length, filters_used: hasAnyFilters });
 
     try {
       return await withTrace(
@@ -303,7 +303,7 @@ export function useSearchEngine(
           setResults(finalResults);
           setVisibleCount(10);
 
-          trackEvent("sentence_searched", {
+          void trackEvent("sentence_searched", {
             query_length: trimmedInput.length,
             filters_used: hasAnyFilters,
             results_count: finalResults.length + filteredGenericTop.length,

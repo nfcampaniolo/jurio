@@ -311,9 +311,11 @@ describe("Profile Page Suite", () => {
     fireEvent.click(screen.getByTestId("btn-action-delete"));
     fireEvent.click(screen.getByTestId("btn-modal-confirm"));
 
-    expect(mockDeleteAccount).toHaveBeenCalledTimes(1);
-    expect(mockToast.success).toHaveBeenCalledWith("Profilo eliminato con successo");
-    expect(mockNavigate).toHaveBeenCalledWith("/login", { replace: true });
-    expect(screen.queryByTestId("confirm-modal")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(mockDeleteAccount).toHaveBeenCalledTimes(1);
+      expect(mockToast.success).toHaveBeenCalledWith("Profilo eliminato con successo");
+      expect(mockNavigate).toHaveBeenCalledWith("/login", { replace: true });
+      expect(screen.queryByTestId("confirm-modal")).not.toBeInTheDocument();
+    });
   });
 });

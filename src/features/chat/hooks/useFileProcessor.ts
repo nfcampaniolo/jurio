@@ -57,17 +57,17 @@ export const useFileProcessor = ({ user, setIsProcessingFiles, setAttachedDocs, 
               const { data } = await worker.recognize(file);
               text = data.text || "";
               await worker.terminate();
-              trackEvent("sentenze_ocr", { success: true, processing_time_ms: Math.round(performance.now() - ocrStart) });
+              void trackEvent("sentenze_ocr", { success: true, processing_time_ms: Math.round(performance.now() - ocrStart) });
             }
           }
 
           if (text.length > MAX_CHARS) {
             toast.error(`Il file "${file.name}" supera il limite di caratteri.`, { duration: 6000 });
-            trackEvent("document_uploaded", { file_type: docType, file_size_kb: fileSizeKb, source: "desktop", success: false, error_type: "max_chars_exceeded" });
+            void trackEvent("document_uploaded", { file_type: docType, file_size_kb: fileSizeKb, source: "desktop", success: false, error_type: "max_chars_exceeded" });
             return null; 
           }
 
-          trackEvent("document_uploaded", { file_type: docType, file_size_kb: fileSizeKb, source: "desktop", success: true });
+          void trackEvent("document_uploaded", { file_type: docType, file_size_kb: fileSizeKb, source: "desktop", success: true });
           startedAt = performance.now(); 
 
           const { res, payload } = await withTrace("reason_analyze", { input_len: text.length }, async () => {
@@ -87,7 +87,7 @@ export const useFileProcessor = ({ user, setIsProcessingFiles, setAttachedDocs, 
           if (!res.ok) {
             let errorType = `http_${res.status}`;
             if (res.status === 401) errorType = "unauthorized_401"; else if (res.status === 403) errorType = "forbidden_403"; else if (res.status === 400) errorType = "bad_request_400"; else if (res.status === 413) errorType = "payload_too_large_413";
-            trackEvent("sentence_processed", { input_type: docType, success: false, processing_time_ms: Math.round(performance.now() - startedAt), error_type: errorType });
+            void trackEvent("sentence_processed", { input_type: docType, success: false, processing_time_ms: Math.round(performance.now() - startedAt), error_type: errorType });
             if (res.status === 403 || res.status === 404) { setDenyOpen(true); toast.error("Mancata autorizzazione.", { id: toastId }); throw new Error("Accesso negato."); } 
             else { toast.error("Errore critico durante l'elaborazione.", { id: toastId }); throw new Error(`API error ${res.status}`); }
           }
@@ -97,7 +97,7 @@ export const useFileProcessor = ({ user, setIsProcessingFiles, setAttachedDocs, 
             try { messageObj = JSON.parse(payload.message); } catch { messageObj = { massima: payload.message }; }
           } else if (typeof payload?.message === "object" && payload.message !== null) { messageObj = payload.message as ParsedMessage; }
 
-          if (messageObj.warning === "input_non_sentenza") { trackEvent("sentence_processed", { input_type: docType, success: false, processing_time_ms: Math.round(performance.now() - startedAt), error_type: "input_non_sentenza" }); return null; }
+          if (messageObj.warning === "input_non_sentenza") { void trackEvent("sentence_processed", { input_type: docType, success: false, processing_time_ms: Math.round(performance.now() - startedAt), error_type: "input_non_sentenza" }); return null; }
 
           const finalResult = { ...messageObj, tipo_documento: messageObj.tipo_documento || "documento_giurisprudenza_generico", nome_file: file.name, fascicoloIds: targetFascicoloId ? [targetFascicoloId] : [] } as DocumentoGiurisprudenziale;
 
@@ -106,7 +106,7 @@ export const useFileProcessor = ({ user, setIsProcessingFiles, setAttachedDocs, 
               await loadSentence(file, newId, `users/${user.uid}/documents`);
           });
 
-          trackEvent("sentence_processed", { input_type: docType, success: true, processing_time_ms: Math.round(performance.now() - startedAt) });
+          void trackEvent("sentence_processed", { input_type: docType, success: true, processing_time_ms: Math.round(performance.now() - startedAt) });
 
           return {
             id: String(newId), name: file.name,
@@ -117,7 +117,7 @@ export const useFileProcessor = ({ user, setIsProcessingFiles, setAttachedDocs, 
           } as AttachedDocument;
 
         } catch (fileError) {
-          trackEvent("sentence_processed", { input_type: docType, success: false, processing_time_ms: Math.round(performance.now() - startedAt), error_type: fileError instanceof Error ? fileError.message : "unknown_error" });
+          void trackEvent("sentence_processed", { input_type: docType, success: false, processing_time_ms: Math.round(performance.now() - startedAt), error_type: fileError instanceof Error ? fileError.message : "unknown_error" });
           return null; 
         }
       }));

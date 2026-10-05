@@ -47,7 +47,7 @@ export function useSearchBar() {
   };
 
   const handleClick = (doc: DocumentoGiurisprudenziale) => {
-    trackEvent("sentence_opened", { source: "search" });
+    void trackEvent("sentence_opened", { source: "search" });
     const isMobile = window.innerWidth < 768;
     const target = isMobile ? "_self" : "_blank";
     const newWindow = window.open(`/giurisprudenza/${doc.id}`, target);

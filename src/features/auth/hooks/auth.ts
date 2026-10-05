@@ -109,12 +109,12 @@ export async function registerWithEmail(email: string, password: string) {
       throw new Error("Impossibile creare la sessione sicura. Riprova.");
     }
 
-    trackEvent("sign_up", { method: "email", success: true });
+    void trackEvent("sign_up", { method: "email", success: true });
     return cred;
   } catch (err) {
     console.error("[registerWithEmail] Eccezione finale blocco registrazione:", err);
-    trackEvent("sign_up", { method: "email", success: false });
-    trackEvent("analytics_error", {
+    void trackEvent("sign_up", { method: "email", success: false });
+    void trackEvent("analytics_error", {
       name: "sign_up",
       reason: err instanceof Error ? err.message : "unknown_error",
     });
@@ -143,12 +143,12 @@ export async function loginWithEmail(email: string, password: string) {
       throw new Error("Errore durante l'avvio della sessione sicura.");
     }
 
-    trackEvent("login", { method: "email", success: true });
+    void trackEvent("login", { method: "email", success: true });
     return cred;
   } catch (err) {
     console.error("[loginWithEmail] Eccezione finale blocco login:", err);
-    trackEvent("login", { method: "email", success: false });
-    trackEvent("analytics_error", {
+    void trackEvent("login", { method: "email", success: false });
+    void trackEvent("analytics_error", {
       name: "login",
       reason: err instanceof Error ? err.message : "unknown_error",
     });
@@ -178,12 +178,12 @@ export async function loginWithGoogle(): Promise<User> {
       throw new Error("Errore durante l'avvio della sessione sicura con Google.");
     }
     
-    trackEvent("login", { method: "google", success: true });
+    void trackEvent("login", { method: "google", success: true });
     return credential.user;
   } catch (err) {
     console.error("[loginWithGoogle] Eccezione finale blocco login Google:", err);
-    trackEvent("login", { method: "google", success: false });
-    trackEvent("analytics_error", {
+    void trackEvent("login", { method: "google", success: false });
+    void trackEvent("analytics_error", {
       name: "login",
       reason: err instanceof Error ? err.message : "unknown_error",
     });
@@ -200,11 +200,11 @@ export async function logout() {
     localStorage.removeItem("active_session_id");
     console.log("[logout] Disconnessione completata, pulizia localStorage effettuata.");
     
-    trackEvent("logout", {});
+    void trackEvent("logout", {});
     return;
   } catch (err) {
     console.error("[logout] Errore durante la disconnessione:", err);
-    trackEvent("analytics_error", {
+    void trackEvent("analytics_error", {
       name: "logout",
       reason: err instanceof Error ? err.message : "unknown_error",
     });
@@ -301,11 +301,11 @@ export async function resetPassword(email: string) {
   try {
     const res = await sendPasswordResetEmail(auth, email);
     console.log("[resetPassword] Email di reset inviata con successo.");
-    trackEvent("password_reset_requested", { method: "email" });
+    void trackEvent("password_reset_requested", { method: "email" });
     return res;
   } catch (err) {
     console.error("[resetPassword] Errore durante l'invio dell'email di reset:", err);
-    trackEvent("analytics_error", {
+    void trackEvent("analytics_error", {
       name: "reset_password",
       reason: err instanceof Error ? err.message : "unknown_error",
     });
@@ -327,7 +327,7 @@ export async function ensureAnonAuth() {
     }
   } catch (err) {
     console.error("[ensureAnonAuth] Errore durante l'autenticazione anonima:", err);
-    trackEvent("analytics_error", {
+    void trackEvent("analytics_error", {
       name: "ensure_anon_auth",
       reason: err instanceof Error ? err.message : "unknown_error",
     });
@@ -378,7 +378,7 @@ export async function sendPhoneVerification(
     return confirmationResult;
   } catch (err: unknown) {
     console.error("[sendPhoneVerification] Errore durante l'invio dell'SMS:", err);
-    trackEvent("analytics_error", {
+    void trackEvent("analytics_error", {
       name: "phone_verification_requested",
       reason: err instanceof Error ? err.message : "unknown_error",
     });
@@ -394,7 +394,7 @@ export async function confirmPhoneVerification(confirmationResult: ConfirmationR
     return result.user;
   } catch (err: unknown) {
     console.error("[confirmPhoneVerification] Errore durante la conferma del codice OTP:", err);
-    trackEvent("analytics_error", {
+    void trackEvent("analytics_error", {
       name: "phone_verified",
       reason: err instanceof Error ? err.message : "unknown_error",
     });

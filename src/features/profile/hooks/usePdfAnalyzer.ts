@@ -59,7 +59,7 @@ export const usePdfAnalyzer = () => {
 
     if (!user) {
       setLoading(false);
-      trackEvent("analytics_error", { name: "uploadAndAnalyze", reason: "unauthenticated" });
+      void trackEvent("analytics_error", { name: "uploadAndAnalyze", reason: "unauthenticated" });
       return;
     }
 
@@ -106,7 +106,7 @@ export const usePdfAnalyzer = () => {
           `Il limite massimo è ${MAX_CHARS.toLocaleString()} caratteri.`,
           { duration: 6000 }
         );
-        trackEvent("document_uploaded", {
+        void trackEvent("document_uploaded", {
           file_type: docType,
           file_size_kb: fileSizeKb,
           source: dragActive ? "dragdrop" : "desktop",
@@ -119,7 +119,7 @@ export const usePdfAnalyzer = () => {
       setExtractedText(finalExtractedText);
       setProgress(null);
 
-      trackEvent("document_uploaded", {
+      void trackEvent("document_uploaded", {
         file_type: docType,
         file_size_kb: fileSizeKb,
         source: dragActive ? "dragdrop" : "desktop",
@@ -131,14 +131,14 @@ export const usePdfAnalyzer = () => {
       toast.error(`Errore nell'analisi del file: ${err instanceof Error ? err.message : "Errore sconosciuto"}`);
       setProgress(null);
 
-      trackEvent("document_uploaded", {
+      void trackEvent("document_uploaded", {
         file_type: docType,
         file_size_kb: fileSizeKb,
         source: dragActive ? "dragdrop" : "desktop",
         success: false,
         error_type: err instanceof Error ? err.message : "unknown_error",
       });
-      trackEvent("analytics_error", {
+      void trackEvent("analytics_error", {
         name: "uploadAndAnalyze",
         reason: err instanceof Error ? err.message : "unknown_error",
       });
@@ -167,7 +167,7 @@ export const usePdfAnalyzer = () => {
 
     await worker.terminate();
     const ocrMs = Math.round(performance.now() - ocrStart);
-    trackEvent("sentenze_ocr", { success: true, processing_time_ms: ocrMs });
+    void trackEvent("sentenze_ocr", { success: true, processing_time_ms: ocrMs });
     
     return ocrText;
   };
@@ -263,7 +263,7 @@ export const usePdfAnalyzer = () => {
 
         if (res.status === 401) {
           toast.error("Sessione scaduta. Effettua di nuovo l’accesso.");
-          trackEvent("sentence_processed", {
+          void trackEvent("sentence_processed", {
             input_type: docType,
             success: false,
             processing_time_ms: Math.round(performance.now() - startedAt),
@@ -282,7 +282,7 @@ export const usePdfAnalyzer = () => {
                 style: { whiteSpace: "pre-line", maxWidth: "350px", lineHeight: "1.5" },
               }
             );
-            trackEvent("sentence_processed", {
+            void trackEvent("sentence_processed", {
               input_type: docType,
               success: false,
               processing_time_ms: Math.round(performance.now() - startedAt),
@@ -294,7 +294,7 @@ export const usePdfAnalyzer = () => {
           // 2. GESTIONE ESISTENTE: Piano non autorizzato (es. utente free)
           if (errorObj?.error === "Access denied") {
             setDenyOpen(true);
-            trackEvent("sentence_processed", {
+            void trackEvent("sentence_processed", {
               input_type: docType,
               success: false,
               processing_time_ms: Math.round(performance.now() - startedAt),
@@ -305,7 +305,7 @@ export const usePdfAnalyzer = () => {
           else {
             console.log("Access denied error from server:", errorObj?.error);
             setDenyOpen(true);
-            trackEvent("sentence_processed", {
+            void trackEvent("sentence_processed", {
               input_type: docType,
               success: false,
               processing_time_ms: Math.round(performance.now() - startedAt),
@@ -316,7 +316,7 @@ export const usePdfAnalyzer = () => {
         } 
         if (res.status === 400) {
           toast.error("Richiesta non valida. Riprova.");
-          trackEvent("sentence_processed", {
+          void trackEvent("sentence_processed", {
             input_type: docType,
             success: false,
             processing_time_ms: Math.round(performance.now() - startedAt),
@@ -327,7 +327,7 @@ export const usePdfAnalyzer = () => {
 
         if (res.status === 413) {
           toast.error("Documento troppo grande. Riduci il file e riprova.");
-          trackEvent("sentence_processed", {
+          void trackEvent("sentence_processed", {
             input_type: docType,
             success: false,
             processing_time_ms: Math.round(performance.now() - startedAt),
@@ -339,14 +339,14 @@ export const usePdfAnalyzer = () => {
         console.error("reason API error", res.status, serverError);
         toast.error("Analisi fallita.");
 
-        trackEvent("sentence_processed", {
+        void trackEvent("sentence_processed", {
           input_type: docType,
           success: false,
           processing_time_ms: Math.round(performance.now() - startedAt),
           error_type: `http_${res.status}`,
         });
 
-        trackEvent("analytics_error", { name: "reason_api", reason: `HTTP ${res.status}` });
+        void trackEvent("analytics_error", { name: "reason_api", reason: `HTTP ${res.status}` });
         return;
       }
 
@@ -362,7 +362,7 @@ export const usePdfAnalyzer = () => {
           parsed = JSON.parse(messageStr);
         } catch {
           toast.error("Errore nell'analisi del file. Si prega di riprovare.");
-          trackEvent("sentence_processed", {
+          void trackEvent("sentence_processed", {
             input_type: docType,
             success: false,
             processing_time_ms: Math.round(performance.now() - startedAt),
@@ -373,7 +373,7 @@ export const usePdfAnalyzer = () => {
 
         if (typeof parsed !== "object" || parsed === null) {
           toast.error("Risposta non valida dal server.");
-          trackEvent("sentence_processed", {
+          void trackEvent("sentence_processed", {
             input_type: docType,
             success: false,
             processing_time_ms: Math.round(performance.now() - startedAt),
@@ -389,7 +389,7 @@ export const usePdfAnalyzer = () => {
           messageStr = JSON.stringify(messageObj);
         } catch {
           toast.error("Risposta non valida dal server.");
-          trackEvent("sentence_processed", {
+          void trackEvent("sentence_processed", {
             input_type: docType,
             success: false,
             processing_time_ms: Math.round(performance.now() - startedAt),
@@ -399,7 +399,7 @@ export const usePdfAnalyzer = () => {
         }
       } else {
         toast.error("Risposta non valida dal server.");
-        trackEvent("sentence_processed", {
+        void trackEvent("sentence_processed", {
           input_type: docType,
           success: false,
           processing_time_ms: Math.round(performance.now() - startedAt),
@@ -414,7 +414,7 @@ export const usePdfAnalyzer = () => {
           style: { whiteSpace: "pre-line", maxWidth: "350px", lineHeight: "1.5" },
         });
 
-        trackEvent("sentence_processed", {
+        void trackEvent("sentence_processed", {
           input_type: docType,
           success: false,
           processing_time_ms: Math.round(performance.now() - startedAt),
@@ -434,7 +434,7 @@ export const usePdfAnalyzer = () => {
         } as DocumentoGiurisprudenziale;
       } catch {
         toast.error("Errore nell'analisi del file. Si prega di riprovare.");
-        trackEvent("sentence_processed", {
+        void trackEvent("sentence_processed", {
           input_type: docType,
           success: false,
           processing_time_ms: Math.round(performance.now() - startedAt),
@@ -477,7 +477,7 @@ export const usePdfAnalyzer = () => {
         }
       }
 
-      trackEvent("sentence_processed", {
+      void trackEvent("sentence_processed", {
         input_type: docType,
         success: true,
         processing_time_ms: Math.round(performance.now() - startedAt),
@@ -487,14 +487,14 @@ export const usePdfAnalyzer = () => {
       console.error(err);
       toast.error("Errore nell'analisi del file. Si prega di riprovare.");
 
-      trackEvent("sentence_processed", {
+      void trackEvent("sentence_processed", {
         input_type: docType,
         success: false,
         processing_time_ms: Math.round(performance.now() - startedAt),
         error_type: err instanceof Error ? err.message : "unknown_error",
       });
 
-      trackEvent("analytics_error", {
+      void trackEvent("analytics_error", {
         name: "analyzeReason",
         reason: err instanceof Error ? err.message : "unknown_error",
       });

@@ -177,7 +177,7 @@ export const useEntityOperations = ({
       const userId = await getCurrentUserId();
       await deleteDocument("documents", id);
       await deleteDocumentStorage(id, `users/${userId}/documents`);
-      trackEvent("document_deleted", {});
+      void trackEvent("document_deleted", {});
       toast.success("Documento eliminato");
     } catch (err) {
       console.error("Errore eliminazione:", err);

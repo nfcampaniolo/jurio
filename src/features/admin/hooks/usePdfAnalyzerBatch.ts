@@ -268,7 +268,7 @@ export const usePdfAnalyzerAdminBatch = () => {
               updateItem(it.id, { progress: `OCR in corso… pagina ${p}/${tot}` });
             });
 
-            trackEvent("sentenze_ocr", {
+            void trackEvent("sentenze_ocr", {
               success: true,
               processing_time_ms: Math.round(performance.now() - startedAt),
             });
@@ -367,7 +367,7 @@ export const usePdfAnalyzerAdminBatch = () => {
               skipReason: "input_non_sentenza",
               error: "Il testo non sembra un documento giurisprudenziale.",
             });
-            trackEvent("sentence_processed", {
+            void trackEvent("sentence_processed", {
               input_type: docType,
               success: false,
               processing_time_ms: Math.round(performance.now() - startedAt),
@@ -403,7 +403,7 @@ export const usePdfAnalyzerAdminBatch = () => {
           doneCount++;
           updateItem(it.id, { status: "done", progress: "Completato.", result: parsedResult });
 
-          trackEvent("sentence_processed", {
+          void trackEvent("sentence_processed", {
             input_type: docType,
             success: true,
             processing_time_ms: Math.round(performance.now() - startedAt),
@@ -420,14 +420,14 @@ export const usePdfAnalyzerAdminBatch = () => {
             progress: undefined,
           });
 
-          trackEvent("sentence_processed", {
+          void trackEvent("sentence_processed", {
             input_type: docType,
             success: false,
             processing_time_ms: Math.round(performance.now() - startedAt),
             error_type: msg,
           });
 
-          trackEvent("analytics_error", { name: "admin_batch_item", reason: msg });
+          void trackEvent("analytics_error", { name: "admin_batch_item", reason: msg });
 
           continue;
         }

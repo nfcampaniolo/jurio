@@ -47,7 +47,7 @@ export const useDocuments = () => {
       console.error("Errore caricamento documenti:", err);
       setError("Errore nel caricamento dei documenti");
 
-      trackEvent("analytics_error", {
+      void trackEvent("analytics_error", {
         name: "listDocumentsByUser",
         reason: err instanceof Error ? err.message : "unknown_error",
       });
@@ -65,9 +65,9 @@ export const useDocuments = () => {
       await deleteDocument("documents", id);
       await deleteDocumentStorage(id, `users/${userId}/documents`);
 
-      trackEvent("document_deleted", {});
+      void trackEvent("document_deleted", {});
     } catch (err) {
-      trackEvent("analytics_error", {
+      void trackEvent("analytics_error", {
         name: "deleteDocumento",
         reason: err instanceof Error ? err.message : "unknown_error",
       });
@@ -113,7 +113,7 @@ export function useSavedSentenze() {
     try {
       const data = await listSavedSentenzeByUser(uid);
       setSavedDocs(data);
-      trackEvent("saved_sentence_opened", {});
+      void trackEvent("saved_sentence_opened", {});
     } catch (err) {
       console.error("Errore caricamento documenti:", err);
 
@@ -122,7 +122,7 @@ export function useSavedSentenze() {
           setIsUnauthorized(true);
           setError("Non sei autorizzato a visualizzare queste sentenze.");
 
-          trackEvent("analytics_error", {
+          void trackEvent("analytics_error", {
             name: "listSavedSentenzeByUser",
             reason: err.code,
           });
@@ -131,7 +131,7 @@ export function useSavedSentenze() {
       }
 
       setError("Errore nel caricamento dei documenti");
-      trackEvent("analytics_error", {
+      void trackEvent("analytics_error", {
         name: "listSavedSentenzeByUser",
         reason: err instanceof Error ? err.message : "unknown_error",
       });
@@ -148,7 +148,7 @@ export function useSavedSentenze() {
     async (sentenceId: string) => {
       if (!uid) {
         setIsUnauthorized(true);
-        trackEvent("analytics_error", {
+        void trackEvent("analytics_error", {
           name: "unsaveSentence",
           reason: "unauthenticated",
         });
@@ -157,7 +157,7 @@ export function useSavedSentenze() {
       try {
         await deleteSaveSentence(uid, sentenceId);
       } catch (err) {
-        trackEvent("analytics_error", {
+        void trackEvent("analytics_error", {
           name: "unsaveSentence",
           reason: err instanceof Error ? err.message : "unknown_error",
         });

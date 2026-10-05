@@ -154,7 +154,7 @@ export const useProfile = () => {
       );
 
       // tracking success
-      trackEvent("profile_updated", { type: true });
+      void trackEvent("profile_updated", { type: true });
 
       toast.success("Dati salvati correttamente");
       setAvatarFile(null);
@@ -163,7 +163,7 @@ export const useProfile = () => {
       console.error(e);
 
       // tracking failure
-      trackEvent("analytics_error", {
+      void trackEvent("analytics_error", {
         name: "profile_updated",
         reason: e instanceof Error ? e.message : "unknown_error",
       });

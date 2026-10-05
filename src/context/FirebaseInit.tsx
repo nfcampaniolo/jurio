@@ -5,7 +5,7 @@ import { initializeOptionalServices } from "@/infrastructure/optionalService";
 
 export default function FirebaseInit() {
   useEffect(() => {
-    initializeOptionalServices();
+    void initializeOptionalServices();
   }, []);
 
   return null;

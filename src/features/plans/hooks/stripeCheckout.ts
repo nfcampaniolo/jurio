@@ -24,7 +24,7 @@ export async function fetchPlanPrice(
   const r = await fetchWithSecurity(getStripe().GET_PRICE_URL, { id: planId });
   const text = await r.text();
   if (!r.ok) {
-    trackEvent("analytics_error", {
+    void trackEvent("analytics_error", {
       name: "fetchPlanPrice",
       reason: `getPrice failed (${r.status}): ${text}`,
     });
@@ -33,7 +33,7 @@ export async function fetchPlanPrice(
 
   const data = JSON.parse(text) as PriceResponse;
   if (typeof data.price !== "number" || !Number.isFinite(data.price)) {
-    trackEvent("analytics_error", { name: "fetchPlanPrice", reason: "Invalid price from getPrice" });
+    void trackEvent("analytics_error", { name: "fetchPlanPrice", reason: "Invalid price from getPrice" });
     throw new Error("Invalid price from getPrice");
   }
 
@@ -61,7 +61,7 @@ export async function createCheckoutSessionServer(
   const { planId, source, billing_period } = args;
 
   // tracking: checkout start
-  trackEvent("checkout_start", { plan_type: planId, payment_provider: "stripe" });
+  void trackEvent("checkout_start", { plan_type: planId, payment_provider: "stripe" });
 
   try {
     console.log("Creating Stripe session for plan:", planId);
@@ -75,7 +75,7 @@ export async function createCheckoutSessionServer(
 
     const text = await r.text();
     if (!r.ok) {
-      trackEvent("purchase_failed", {
+      void trackEvent("purchase_failed", {
         plan_type: planId,
         payment_provider: "stripe",
         stage: "create_session",
@@ -89,7 +89,7 @@ export async function createCheckoutSessionServer(
     const sessionId = data.sessionId ?? data.id;
 
     if (!url) {
-      trackEvent("purchase_failed", {
+      void trackEvent("purchase_failed", {
         plan_type: planId,
         payment_provider: "stripe",
         stage: "create_session",
@@ -100,7 +100,7 @@ export async function createCheckoutSessionServer(
 
     return { url, sessionId };
   } catch (err) {
-    trackEvent("analytics_error", {
+    void trackEvent("analytics_error", {
       name: "createCheckoutSessionServer",
       reason: err instanceof Error ? err.message : "unknown_error",
     });

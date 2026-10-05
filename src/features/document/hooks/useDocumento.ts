@@ -47,7 +47,7 @@ export const useDocumento = (id?: string | null) => {
 
       if (trackedOpenRef.current !== id) {
         trackedOpenRef.current = id;
-        trackEvent(isGiurisprudenza ? "sentence_opened" : "document_opened", { source: "direct" });
+        void trackEvent(isGiurisprudenza ? "sentence_opened" : "document_opened", { source: "direct" });
       }
 
       setLoading(true);
@@ -64,7 +64,7 @@ export const useDocumento = (id?: string | null) => {
           setDeny(true);
           setSelectedDoc(null);
           setPdfUrl(null);
-          trackEvent("analytics_error", {
+          void trackEvent("analytics_error", {
             name: isGiurisprudenza ? "sentence_opened" : "document_opened",
             reason: "denied",
           });
@@ -101,7 +101,7 @@ export const useDocumento = (id?: string | null) => {
           setSelectedDoc(null);
           setPdfUrl(null);
           if (document) {
-             trackEvent("analytics_error", {
+             void trackEvent("analytics_error", {
               name: "useDocumento",
               reason: `unexpected_document_type:${typeof document}`,
             });
@@ -111,7 +111,7 @@ export const useDocumento = (id?: string | null) => {
         console.error("[useDocumento] Errore bloccante nel blocco try/catch:", err);
         setSelectedDoc(null);
         setPdfUrl(null);
-        trackEvent("analytics_error", {
+        void trackEvent("analytics_error", {
           name: "useDocumento",
           reason: err instanceof Error ? err.message : "unknown_error",
         });

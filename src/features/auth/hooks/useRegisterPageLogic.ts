@@ -212,16 +212,16 @@ export function useRegisterPageLogic() {
       const text = await r.text();
       if (!r.ok) throw new Error(`getRegister failed (${r.status}): ${text}`);
 
-      trackEvent("sign_up", { method: "email", success: true });
-      trackEvent("profile_updated", { type: true });
-      trackEvent("free_trial_start", {});
+      void trackEvent("sign_up", { method: "email", success: true });
+      void trackEvent("profile_updated", { type: true });
+      void trackEvent("free_trial_start", {});
 
       toast.success("Dati salvati e prova gratuita attivata!");
       navigate("/profilo", { replace: true });
     } catch (error: unknown) {
       console.error(error);
       const err = error as Error;
-      trackEvent("analytics_error", {
+      void trackEvent("analytics_error", {
         name: "register_flow",
         reason: err.message || "unknown_error",
       });
