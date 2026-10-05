@@ -37,7 +37,7 @@ const CitationBranch: React.FC<CitationBranchProps> = ({ citazioneTesto }) => {
         setLoading(false);
       }
     }
-    fetchPrecedente();
+    void fetchPrecedente();
     return () => { isMounted = false; };
   }, [citazioneTesto]);
 

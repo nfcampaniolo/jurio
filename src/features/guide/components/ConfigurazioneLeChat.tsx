@@ -4,8 +4,8 @@ import { FiCopy } from "react-icons/fi";
 export default function ConfigurazioneLeChat() {
   const mcpUrl = "https://jurio.it/mcp";
 
-  const handleCopyUrl = () => {
-    navigator.clipboard.writeText(mcpUrl);
+  const handleCopyUrl = async () => {
+    await navigator.clipboard.writeText(mcpUrl);
     toast.success("URL copiato negli appunti!");
   };
 

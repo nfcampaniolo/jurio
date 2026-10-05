@@ -89,25 +89,25 @@ export const Profile: React.FC = () => {
       id: "pricing",
       label: "Piani",
       icon: <FiDollarSign />,
-      onClick: () => navigate("/profilo/piani"),
+      onClick: () => void navigate("/profilo/piani"),
     },
     {
       id: "edit",
       label: "Modifica Profilo",
       icon: <FiUser />,
-      onClick: () => navigate("/profilo/modifica"),
+      onClick: () => void navigate("/profilo/modifica"),
     },
     {
       id: "utilizzi",
       label: "Utilizzi",
       icon: <FiActivity />,
-      onClick: () => navigate("/profilo/utilizzi"),
+      onClick: () => void navigate("/profilo/utilizzi"),
     },
     {
       id: "team",
       label: "Workspace",
       icon: <FiLayout />,
-      onClick: () => navigate("/profilo/team"),
+      onClick: () => void navigate("/profilo/team"),
     },
     {
       id: "logout",
@@ -117,7 +117,7 @@ export const Profile: React.FC = () => {
         void (async () => {
           const { logout } = await import("@/features/auth/hooks/auth");
           await logout();
-          navigate("/login", { replace: true });
+          void navigate("/login", { replace: true });
         })();
       },
     },
@@ -178,7 +178,7 @@ export const Profile: React.FC = () => {
             setConfirmOpen(false); // Chiudi subito la modale nello stato
             await deleteAccount();
             toast.success("Profilo eliminato con successo");
-            void navigate("/login", { replace: true }); // La navigazione raderà al suolo il componente
+            void void navigate("/login", { replace: true }); // La navigazione raderà al suolo il componente
           }}
         />
 

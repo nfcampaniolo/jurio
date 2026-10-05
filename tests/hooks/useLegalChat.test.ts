@@ -339,7 +339,7 @@ describe("useLegalChat Orchestrator Suite", () => {
       expect(mockNavigate).not.toHaveBeenCalled();
     });
 
-    test("closeSession invoca navigate(-1)", () => {
+    test("closeSession invoca void navigate(-1)", () => {
       const { result } = renderHook(() => useLegalChat());
 
       act(() => {

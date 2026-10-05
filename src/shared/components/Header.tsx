@@ -114,7 +114,7 @@ export const Header: React.FC = () => {
 
   const onCtaClick = () => {
     closeMenu();
-    navigate(user ? "/profilo" : "/login");
+    void navigate(user ? "/profilo" : "/login");
   };
 
   useEffect(() => {

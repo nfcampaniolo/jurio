@@ -221,7 +221,7 @@ export const Admin: React.FC = () => {
           onConfirm={async () => {
             await deleteAccount();
             toast.success("Profilo eliminato");
-            void navigate("/registrati", { replace: true });
+            void void navigate("/registrati", { replace: true });
             setConfirmOpen(false);
           }}
         />

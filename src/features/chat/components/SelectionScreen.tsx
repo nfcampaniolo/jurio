@@ -111,7 +111,7 @@ export const SelectionScreen = ({
           {/* AZIONE SECONDARIA (Archivio) */}
           <motion.button 
             whileHover={{ x: 5 }} 
-            onClick={() => navigate('/storico')} 
+            onClick={() => void navigate('/storico')} 
             className="group flex items-center gap-3 px-6 py-4 mt-4 text-(--color-text) hover:opacity-80 transition-all mb-16 mx-auto outline-none"
           >
             <div className="flex items-center justify-center w-8 h-8 bg-(--color-surface) border border-(--color-border) rounded-md group- transition-colors">

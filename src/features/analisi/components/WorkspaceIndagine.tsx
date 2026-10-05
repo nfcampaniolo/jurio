@@ -75,10 +75,10 @@ export const WorkspaceIndagine: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSession?.id]);
 
-  const handleSalvaTitolo = () => {
+  const handleSalvaTitolo = async () => {
     setIsEditingTitle(false);
     if (activeSession && titoloEditabile.trim() !== activeSession.title) {
-      updateTitle(titoloEditabile.trim());
+      void updateTitle(titoloEditabile.trim());
     }
   };
 

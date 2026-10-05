@@ -40,7 +40,7 @@ export default function BillingCancel() {
             <div className="mt-5 flex flex-col gap-2 sm:flex-row">
               <button
                 type="button"
-                onClick={() => navigate("/profilo/piani")}
+                onClick={() => void navigate("/profilo/piani")}
                 className="inline-flex w-full items-center justify-center rounded-xl bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-neutral-800 active:scale-[0.99] disabled:opacity-60 dark:bg-neutral-100 dark:text-neutral-900 dark:hover:bg-white cursor-pointer"
               >
                 Riprova
@@ -48,7 +48,7 @@ export default function BillingCancel() {
 
               <button
                 type="button"
-                onClick={() => navigate("/profilo")}
+                onClick={() => void navigate("/profilo")}
                 className="inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 shadow-sm hover:bg-neutral-50 active:scale-[0.99] dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-100 dark:hover:bg-neutral-900 cursor-pointer"
               >
                 Torna alla home

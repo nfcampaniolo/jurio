@@ -60,7 +60,7 @@ export function useOAuthLogic() {
         }
       }
     };
-    processAuthorization();
+    void processAuthorization();
     return () => {
       isMounted = false;
     };

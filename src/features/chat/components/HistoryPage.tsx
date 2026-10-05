@@ -43,9 +43,9 @@ export const HistoryPage = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<DeleteTarget>(null);
 
-  const handleSelectFascicolo = (fascicolo: PastFascicolo) => navigate(`/fascicolo/${fascicolo.id}`);
-  const handleSelectChat = (chat: PastChat) => navigate(`/chat/${chat.id}`);
-  const handleBack = () => navigate(-1);
+  const handleSelectFascicolo = (fascicolo: PastFascicolo) => void navigate(`/fascicolo/${fascicolo.id}`);
+  const handleSelectChat = (chat: PastChat) => void navigate(`/chat/${chat.id}`);
+  const handleBack = () => void navigate(-1);
 
 // --- GESTIONE ELIMINAZIONE ---
   const openDeleteModal = (id: string, type: "fascicolo" | "chat") => {

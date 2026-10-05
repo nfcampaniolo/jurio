@@ -19,9 +19,9 @@ export function useGoogleAuthLogic() {
       setUser(user);
       const exists = await userExists(user.uid);
       if (exists) {
-        navigate("/profilo");
+        void navigate("/profilo");
       } else {
-        navigate("/registrati");
+        void navigate("/registrati");
       }
     } catch (err) {
       setError(

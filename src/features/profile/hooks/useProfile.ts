@@ -35,7 +35,7 @@ export const useProfile = () => {
     if (loading) return;
 
     if (!user) {
-      navigate("/login", { replace: true });
+      void navigate("/login", { replace: true });
       return;
     }
 
@@ -45,7 +45,7 @@ export const useProfile = () => {
       try {
         const exists = await userExists(user.uid);
         if (!exists) {
-          navigate("/registrati", { replace: true });
+          void navigate("/registrati", { replace: true });
           return;
         }
 
@@ -183,7 +183,7 @@ export const useProfile = () => {
       await deleteUser(uid);
       await logout();
       toast.success("Profilo eliminato correttamente");
-      navigate("/ricerca", { replace: true });
+      void navigate("/ricerca", { replace: true });
     } catch (error: unknown) {
       console.error("Errore eliminazione account:", error);
       const maybe = error as { code?: string; message?: string };

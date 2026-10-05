@@ -91,7 +91,7 @@ export const ReportSintesi: React.FC<ReportSintesiProps> = ({ session }) => {
     }).filter((item): item is MappedRef => item !== null);
   };
 
-  const copiaReport = () => {
+  const copiaReport = async () => {
     const cleanArgs = sintesiStrategica?.argomentazioniAzione?.map((a: string) => parseReferences(a).cleanText) || [];
     const cleanRischi = sintesiStrategica?.rischiEEccezioni?.map((r: string) => parseReferences(r).cleanText) || [];
     const conclusioniParsed = parseReferences(sintesiStrategica?.conclusioniStrategiche || "");
@@ -114,7 +114,7 @@ CONCLUSIONI OPERATIVE
 ${conclusioniParsed.cleanText}
     `.trim();
 
-    navigator.clipboard.writeText(testo);
+    await navigator.clipboard.writeText(testo);
     setCopiato(true);
     setTimeout(() => setCopiato(false), 2000);
   };

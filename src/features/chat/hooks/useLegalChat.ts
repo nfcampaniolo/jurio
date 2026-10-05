@@ -96,7 +96,7 @@ export const useLegalChat = (initialData?: { docs?: AttachedDocument[] }) => {
         setPastFascicoli(fascicoliRes); setPastChats(chatsRes);           
       } catch (error) { console.error(error); } finally { setIsLoadingData(false); }
     };
-    fetchUserData();
+    void fetchUserData();
   }, [user?.uid]);
   
   // --- Sincronizzazione Rotte / Dati ---
@@ -116,7 +116,7 @@ export const useLegalChat = (initialData?: { docs?: AttachedDocument[] }) => {
         if (diff !== 0) return diff; if (a.role === 'user' && b.role === 'model') return -1; if (a.role === 'model' && b.role === 'user') return 1; return 0;
       });
       setSessionTitle(chat.title); setMessages(sortedMessages.map((m: Message) => ({ ...m, isHistorical: true })));
-      setAttachedDocs([]); navigate(`/chat/${chat.id}`);
+      setAttachedDocs([]); void navigate(`/chat/${chat.id}`);
     } catch (error) { console.error(`[❌ ChatLoad] Errore`); console.error(error);} finally { setIsLoadingData(false); }
   }, [navigate]);
 
@@ -136,11 +136,11 @@ export const useLegalChat = (initialData?: { docs?: AttachedDocument[] }) => {
         const activeThread = threadsData.find((t: DBThreadPayload) => t.threadId === targetThreadId) || threadsData[0];
         setActiveThreadId(activeThread.threadId); setThreadTitle(activeThread.threadData?.title || "Conversazione");
         setMessages(activeThread.messages.map((m: Message) => ({ ...m, isHistorical: true })));
-        if (!threadId) navigate(`/fascicolo/${fascicolo.id}/${targetThreadId}`);
+        if (!threadId) void navigate(`/fascicolo/${fascicolo.id}/${targetThreadId}`);
       } else {
         const newThreadUid = uuidv4();
         setThreads([{ id: newThreadUid, title: "Nuova conversazione", createdAt: new Date() }]);
-        setMessages([]); setThreadTitle("Nuova conversazione"); navigate(`/fascicolo/${fascicolo.id}/${newThreadUid}`);
+        setMessages([]); setThreadTitle("Nuova conversazione"); void navigate(`/fascicolo/${fascicolo.id}/${newThreadUid}`);
       }
     } catch (error) { toast.error("Errore nel caricamento."); console.error(error);} finally { setIsLoadingData(false); }
   }, [threadId, navigate]);
@@ -153,7 +153,7 @@ export const useLegalChat = (initialData?: { docs?: AttachedDocument[] }) => {
       setSessionType('temporanea'); setIsSetupComplete(true); setIsReadOnly(false);
       if (!isUrlLoaded.current && pastChats.length > 0) {
         const chatToLoad = pastChats.find(c => c.id === chatId);
-        if (chatToLoad) { loadPastChat(chatToLoad); isUrlLoaded.current = true; }
+        if (chatToLoad) {void loadPastChat(chatToLoad); isUrlLoaded.current = true; }
       }
     } else if (fascicoloId) {
       setSessionType('fascicolo'); setIsSetupComplete(true); setActiveThreadId(threadId || null);
@@ -162,7 +162,7 @@ export const useLegalChat = (initialData?: { docs?: AttachedDocument[] }) => {
         if (fascicoloToLoad) { setIsReadOnly(fascicoloToLoad.ownerId !== user?.uid); loadPastFascicolo(fascicoloToLoad); isUrlLoaded.current = true; }
         else { setMessages([]); setThreadTitle(""); setIsReadOnly(false); }
       } else if (isUrlLoaded.current && threadId) {
-        fetchFascicoloData(fascicoloId).then((threadsData: DBThreadPayload[]) => {
+        void fetchFascicoloData(fascicoloId).then((threadsData: DBThreadPayload[]) => {
           const activeThread = threadsData.find(t => t.threadId === threadId);
           if (activeThread) { setActiveThreadId(threadId); setThreadTitle(activeThread.threadData?.title || "Conversazione"); setMessages(activeThread.messages.map((m: Message) => ({ ...m, isHistorical: true }))); } 
           else { setMessages([]); }
@@ -182,21 +182,21 @@ export const useLegalChat = (initialData?: { docs?: AttachedDocument[] }) => {
   ]);
   
   // Navigazione & Helpers
-  const startTempChat = () => navigate(`/chat/${uuidv4()}`);
-  const startFascicoloSetup = (): void => { setSessionTitle(""); setThreadTitle(""); setSessionType('fascicolo'); setIsSetupComplete(false); navigate('/crea-nuovo-fascicolo'); };
-  const finalizeFascicoloCreation = () => { setIsSetupComplete(true); navigate(`/fascicolo/${uuidv4()}/${uuidv4()}`); };
-  const closeSession = () => navigate(-1);
+  const startTempChat = () => void navigate(`/chat/${uuidv4()}`);
+  const startFascicoloSetup = (): void => { setSessionTitle(""); setThreadTitle(""); setSessionType('fascicolo'); setIsSetupComplete(false); void navigate('/crea-nuovo-fascicolo'); };
+  const finalizeFascicoloCreation = () => { setIsSetupComplete(true); void navigate(`/fascicolo/${uuidv4()}/${uuidv4()}`); };
+  const closeSession = () => void navigate(-1);
   const clearFilters = () => { setFilterGrado(""); setFilterSezione(""); setFilterTipo(""); setFilterTipologia(""); setStartDate(""); setEndDate(""); };
   const toggleDocSelection = (doc: AttachedDocument) => setAttachedDocs(prev => prev.find(d => d.id === doc.id) ? prev.filter(d => d.id !== doc.id) : [...prev, doc]);
   const removeAttachment = (id: string) => setAttachedDocs(prev => prev.filter(d => d.id !== id));
 
-  const startThread = (selectedThreadId: string) => { if (!fascicoloId) return; setActiveThreadId(selectedThreadId); navigate(`/fascicolo/${fascicoloId}/${selectedThreadId}`); };
+  const startThread = (selectedThreadId: string) => { if (!fascicoloId) return; setActiveThreadId(selectedThreadId); void navigate(`/fascicolo/${fascicoloId}/${selectedThreadId}`); };
   const createNewThread = () => {
     if (!fascicoloId) { toast.error("Nessun fascicolo attivo."); return; }
     const newThreadId = uuidv4();
     setMessages([]); setThreadTitle("Nuova conversazione"); setAttachedDocs([]); clearFilters();
     setThreads(prev => [{ id: newThreadId, title: "Nuova conversazione", createdAt: new Date() }, ...prev]);
-    setActiveThreadId(newThreadId); navigate(`/fascicolo/${fascicoloId}/${newThreadId}`);
+    setActiveThreadId(newThreadId); void navigate(`/fascicolo/${fascicoloId}/${newThreadId}`);
   };
 
   const convertChatToFascicolo = async (title: string) => {
@@ -210,7 +210,7 @@ export const useLegalChat = (initialData?: { docs?: AttachedDocument[] }) => {
       if (appCheckToken) headers['X-Firebase-AppCheck'] = appCheckToken;
       const response = await fetch(LEGAL_AGENT_ENDPOINT, { method: 'POST', headers, body: JSON.stringify({ action: 'migrate', old_chat_uuid: chatId, new_fascicolo_uuid: newFascicoloId, title, metadatiFascicolo: {} }) });
       if (!response.ok) throw new Error(`Errore migrazione. Status: ${response.status}`);
-      navigate(`/fascicolo/${newFascicoloId}/${newThreadId}`);
+      void navigate(`/fascicolo/${newFascicoloId}/${newThreadId}`);
     } catch (error) { console.error('🚨 Errore:', error); setIsConverting(false); }
   };
 

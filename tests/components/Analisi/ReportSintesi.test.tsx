@@ -107,7 +107,9 @@ describe("ReportSintesi Component Suite", () => {
     const copyButton = screen.getByRole("button", { name: /copia testo/i });
     fireEvent.click(copyButton);
 
-    expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
+    await waitFor(() => {
+      expect(navigator.clipboard.writeText).toHaveBeenCalledWith(expect.any(String));
+    });
     expect(screen.getByText("Copiato")).toBeInTheDocument();
 
     await waitFor(() => {

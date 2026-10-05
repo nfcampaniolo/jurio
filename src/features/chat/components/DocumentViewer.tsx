@@ -117,7 +117,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       }
     };
 
-    loadDocumentText();
+    void loadDocumentText();
 
     return () => {
       isMounted = false;

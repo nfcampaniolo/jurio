@@ -162,13 +162,13 @@ export const usePromptDashboard = () => {
       } else {
         setSelectedTemplate(undefined);
       }
-      navigate("#crea");
+      void navigate("#crea");
     };
 
   const handleBackToList = () => {
     setSelectedTemplate(undefined);
     if (location.hash.includes("crea")) {
-      navigate(location.pathname);
+      void navigate(location.pathname);
     }
   };
 

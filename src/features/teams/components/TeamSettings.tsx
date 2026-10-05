@@ -58,7 +58,7 @@ export default function TeamSettings({ team, isManager }: TeamSettingsProps) {
     setIsDeleting(true);
     try {
       await deleteTeamAction(team.id, revokeDocs);
-      navigate("/profilo");
+      void navigate("/profilo");
     } catch (error) {
       console.error("Errore eliminazione:", error);
       // Mostra toast di errore

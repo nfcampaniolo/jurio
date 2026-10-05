@@ -78,7 +78,7 @@ export default function TeamDashboard() {
             {/* Bottone Indietro */}
             <button
               type="button"
-              onClick={() => navigate(-1)}
+              onClick={() => void navigate(-1)}
               className="self-start sm:self-auto inline-flex items-center gap-2 px-3.5 py-2 sm:px-4 sm:py-2.5 rounded-md border border-(--color-border) bg-(--color-surface) hover:border-(--color-text) active:scale-[0.98] text-(--color-text) text-[11px] sm:text-xs font-bold uppercase tracking-widest transition-all shadow-xs outline-none cursor-pointer"
               aria-label="Torna al profilo"
             >

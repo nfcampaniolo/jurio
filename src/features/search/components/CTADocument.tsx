@@ -7,7 +7,7 @@ export const CTADocument: React.FC = () => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate('/profilo#section1');
+    void navigate('/profilo#section1');
   };
 
   return (

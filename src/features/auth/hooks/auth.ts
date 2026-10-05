@@ -255,7 +255,7 @@ export function onUserStateChange(callback: (user: User | null, hasConflict: boo
   let unsubFirestore: undefined | (() => void);
   let cancelled = false;
 
-  (async () => {
+  void (async () => {
     const auth = await getAuthClient();
     const { onAuthStateChanged } = await import("firebase/auth");
     const { getDb } = await import("@/infrastructure/db");

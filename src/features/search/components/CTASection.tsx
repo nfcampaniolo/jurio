@@ -6,7 +6,7 @@ const CTASection: React.FC = () => {
   const navigate = useNavigate();
 
   const handleClick = () => {
-    navigate('/login');
+    void navigate('/login');
   };
 
   return (

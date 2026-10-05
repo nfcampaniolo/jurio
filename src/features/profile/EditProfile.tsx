@@ -75,7 +75,7 @@ export const EditProfile: React.FC = () => {
     try {
       await handleSave();
       toast.success("Profilo aggiornato");
-      navigate("/profilo", { replace: true });
+      void navigate("/profilo", { replace: true });
     } catch (e) {
       console.error(e);
       toast.error("Errore durante il salvataggio.");
@@ -105,7 +105,7 @@ export const EditProfile: React.FC = () => {
           </div>
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => void navigate(-1)}
             className="inline-flex w-fit items-center gap-2 px-4 py-2.5 rounded-md border border-(--color-border) bg-(--color-surface) hover:border-(--color-text) text-(--color-text) text-xs font-bold uppercase tracking-widest transition-colors shadow-xs outline-none cursor-pointer"
             aria-label="Torna al profilo"
           >
@@ -157,7 +157,7 @@ export const EditProfile: React.FC = () => {
             <div className="flex flex-row gap-3">
               <motion.button
                 type="button"
-                onClick={() => navigate("/profilo")}
+                onClick={() => void navigate("/profilo")}
                 className="w-full sm:w-auto px-5 py-2.5 rounded-md border border-(--color-border) text-(--color-text) bg-(--color-surface) hover:bg-(--color-bg) transition-colors text-xs font-bold uppercase tracking-widest outline-none shadow-xs cursor-pointer"
                 disabled={saving}
                 whileHover={shouldReduceMotion ? undefined : { y: -1 }}

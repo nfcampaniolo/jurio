@@ -24,7 +24,7 @@ const CustomAudioPlayer = ({ file }: { file: string }) => {
   const togglePlay = () => {
     if (audioRef.current) {
       if (isPlaying) audioRef.current.pause();
-      else audioRef.current.play();
+      else void audioRef.current.play();
       setIsPlaying(!isPlaying);
     }
   };

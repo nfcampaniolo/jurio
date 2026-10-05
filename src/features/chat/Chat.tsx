@@ -322,7 +322,7 @@ export const LegalChatPage = () => {
         onConfirm={(title: string) => {
           setShowTitleModal(false);
           setSessionTitle(title);
-          convertChatToFascicolo(title);
+          void convertChatToFascicolo(title);
         }}
         initialTitle={sessionTitle}
       />

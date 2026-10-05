@@ -30,7 +30,7 @@ export const FascicoloSetupPage: React.FC = () => {
 
   // --- HANDLER NAVIGAZIONE ---
   const handleCancel = (): void => {
-    navigate(-1); 
+    void navigate(-1); 
   };
 
   const handleSubmit = async (): Promise<void> => {
@@ -42,7 +42,7 @@ export const FascicoloSetupPage: React.FC = () => {
       const newFascicoloId = uuidv4(); 
       
       // Passiamo i dati vitali tramite lo state del router
-      navigate(`/fascicolo/${newFascicoloId}/${newThreadId}`, {
+      void navigate(`/fascicolo/${newFascicoloId}/${newThreadId}`, {
         state: {
           inizializzaTitolo: sessionTitle,
           inizializzaDocumenti: attachedDocs

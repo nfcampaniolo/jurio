@@ -147,7 +147,7 @@ export default function UserUsage() {
           )}
           <button
             type="button"
-            onClick={() => navigate(-1)}
+            onClick={() => void navigate(-1)}
             className="inline-flex w-fit items-center gap-2 px-4 py-2.5 rounded-md border border-(--color-border) bg-(--color-surface) hover:border-(--color-text) text-(--color-text) text-xs font-bold uppercase tracking-widest transition-colors shadow-xs outline-none cursor-pointer"
             aria-label="Torna al profilo"
           >

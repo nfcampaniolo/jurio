@@ -133,7 +133,7 @@ export function useNotifications() {
     }
 
     if (notif.link) {
-      navigate(notif.link);
+      void navigate(notif.link);
     }
   };
 

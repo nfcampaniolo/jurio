@@ -21,7 +21,7 @@ export default function NotFound() {
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <button
           type="button"
-          onClick={() => navigate("/chat")}
+          onClick={() => void navigate("/chat")}
           className="rounded-md bg-(--color-text) text-(--color-surface) px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all outline-none shadow-xs"
         >
           Torna alla home
@@ -29,7 +29,7 @@ export default function NotFound() {
 
         <button
           type="button"
-          onClick={() => navigate(-1)}
+          onClick={() => void navigate(-1)}
           className="rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text) px-5 py-2.5 text-xs font-bold uppercase tracking-widest hover:border-(--color-text) transition-colors outline-none shadow-xs"
         >
           Torna indietro
@@ -37,7 +37,7 @@ export default function NotFound() {
 
         <button
           type="button"
-          onClick={() => navigate("/ricerca")}
+          onClick={() => void navigate("/ricerca")}
           className="px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-(--color-muted) hover:text-(--color-text) transition-colors underline underline-offset-2 outline-none"
         >
           Vai alla ricerca

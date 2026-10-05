@@ -16,7 +16,7 @@ export default function Session() {
   // Se il conflitto si risolve (via takeover o in background), esci subito da questa pagina
   useEffect(() => {
     if (status === 'authenticated' && !hasConflict) {
-      navigate(from, { replace: true });
+      void navigate(from, { replace: true });
     }
   }, [hasConflict, status, from, navigate]);
 
@@ -29,13 +29,13 @@ export default function Session() {
       resolveConflict();
       
       // 2. Navigazione immediata
-      navigate(from, { replace: true });
+      void navigate(from, { replace: true });
     } catch (error: unknown) {
       console.error("Errore durante la forzatura:", error);
 
       if (error instanceof Error) {
         if (error.message === "no_user") {
-          navigate('/login');
+          void navigate('/login');
           return;
         }
         alert(error.message);
@@ -51,7 +51,7 @@ export default function Session() {
     setIsLoading(true);
     try {
       await clearLocalSession();
-      navigate('/login');
+      void navigate('/login');
     } catch (error) {
       console.error("Errore durante il logout:", error);
     } finally {

@@ -30,9 +30,9 @@ export function useAuthFormLogic(initialMode: "login" | "register") {
         console.log(res.user);
         const exists = await userExists(res.user.uid);
         if (exists) {
-          navigate("/profilo");
+          void navigate("/profilo");
         } else {
-          navigate("/registrati");
+          void navigate("/registrati");
         }
       } else {
           // Controllo requisiti password

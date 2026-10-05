@@ -63,9 +63,9 @@ export const ApprofondimentoGiurisprudenziale: React.FC = () => {
 
   const handleCambioSessione = (nuovoId: string | null) => {
     if (nuovoId) {
-      navigate(`/analisi/${nuovoId}`);
+      void navigate(`/analisi/${nuovoId}`);
     } else {
-      navigate("/analisi");
+      void navigate("/analisi");
     }
     setSidebarAperta(false);
   };

@@ -12,12 +12,12 @@ export const navigateItem = (
   closeMenu?.();
 
   if (item.type === "route") {
-    navigate(item.target);
+    void navigate(item.target);
     return;
   }
 
   if (window.location.pathname !== "/") {
-    navigate("/ricerca");
+    void navigate("/ricerca");
     setTimeout(() => {
       document
         .getElementById(item.target)

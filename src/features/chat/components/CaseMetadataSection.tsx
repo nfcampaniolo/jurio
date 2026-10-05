@@ -44,7 +44,7 @@ export const CaseMetadataSection: React.FC<CaseMetadataSectionProps> = ({
       }
     };
 
-    setupListener();
+    void setupListener();
 
     return () => {
       unsubscribe();

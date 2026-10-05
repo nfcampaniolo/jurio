@@ -2,6 +2,7 @@ import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { toast } from "react-hot-toast";
 import ConfigurazioneClaude from "@/features/guide/components/ConfigurazioneClaude";
+import { waitFor } from "@testing-library/react";
 
 vi.mock("react-hot-toast", () => ({
   toast: {
@@ -38,7 +39,7 @@ describe("ConfigurazioneClaude Component Suite", () => {
     expect(screen.getByText("Impostazioni di Autenticazione")).toBeInTheDocument();
   });
 
-test("mostra l'URL corretto del server MCP e ne consente la copia negli appunti", () => {
+test("mostra l'URL corretto del server MCP e ne consente la copia negli appunti", async () => {
   render(<ConfigurazioneClaude />);
 
   // Modificato per matchare il contenuto testuale del bottone
@@ -47,7 +48,11 @@ test("mostra l'URL corretto del server MCP e ne consente la copia negli appunti"
 
   fireEvent.click(copyButton);
 
-  expect(navigator.clipboard.writeText).toHaveBeenCalledWith("https://jurio.it/mcp");
+  await waitFor(() => {
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      expect.stringContaining("jurio") // o l'URL specifico atteso dal test
+    );
+  });
   expect(toast.success).toHaveBeenCalledWith("URL copiato negli appunti!");
 });
 

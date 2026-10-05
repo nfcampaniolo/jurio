@@ -25,35 +25,60 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
   // 1. Fetch Lista Sessioni (Sidebar)
   useEffect(() => {
     if (!user) return;
-    
+
     let unsub: (() => void) | undefined;
     let isMounted = true;
 
     const setupListener = async () => {
-      const db = await getDb();
-      if (!isMounted) return;
+      try {
+        const db = await getDb();
+        if (!isMounted) return;
 
-      const q = query(
-        collection(db, "deep_analysis_sessions"), 
-        where("user", "==", user.uid), 
-        orderBy("updatedAt", "desc")
-      );
-      
-      unsub = onSnapshot(q, (snap) => {
-        const list = snap.docs.map(d => ({ 
-          id: d.id, 
-          ...d.data({ serverTimestamps: "estimate" }) 
-        } as DeepAnalysisSession));
-        setSessionsList(list);
-        setLoading(false);
-      });
+        const q = query(
+          collection(db, "deep_analysis_sessions"),
+          where("user", "==", user.uid),
+          orderBy("updatedAt", "desc")
+        );
+
+        unsub = onSnapshot(
+          q,
+          (snap) => {
+            const list = snap.docs.map(
+              (d) =>
+                ({
+                  id: d.id,
+                  ...d.data({ serverTimestamps: "estimate" }),
+                } as DeepAnalysisSession)
+            );
+
+            setSessionsList(list);
+            setLoading(false);
+          },
+          (error) => {
+            console.error("Errore snapshot sessioni:", error);
+            setLoading(false);
+          }
+        );
+
+        // Se nel frattempo il componente è stato smontato durante la risoluzione di getDb()
+        if (!isMounted && unsub) {
+          unsub();
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.error("Errore inizializzazione db:", error);
+          setLoading(false);
+        }
+      }
     };
 
-    setupListener();
+    void setupListener();
 
     return () => {
       isMounted = false;
-      if (unsub) unsub();
+      if (unsub) {
+        unsub();
+      }
     };
   }, [user]);
 
@@ -83,7 +108,7 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
       });
     };
 
-    setupListener();
+    void setupListener();
 
     return () => {
       isMounted = false;
