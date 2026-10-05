@@ -326,7 +326,7 @@ export const SearchBar = () => {
                       Filtri Avanzati
                     </button>
                     <button 
-                      onClick={() => { setShowMobileMenu(false); openPicker(); }} 
+                      onClick={() => { setShowMobileMenu(false); void openPicker(); }} 
                       className="w-full text-left px-4 py-3 flex items-center gap-3 text-xs font-bold uppercase tracking-wider hover:bg-(--color-bg) transition-colors text-(--color-text) outline-none"
                     >
                       <BookOpen size={15} className="opacity-70" />
@@ -406,7 +406,7 @@ export const SearchBar = () => {
                             e.preventDefault(); 
                             setSearchInput(term);
                             setShowSuggestions(false);
-                            handleSearch(term);
+                            void handleSearch(term);
                           }}
                         >
                           <div className="shrink-0 opacity-40 text-(--color-text)"><Search size={14} /></div>
