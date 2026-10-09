@@ -26,11 +26,15 @@ export const UploadDoctrine: React.FC = () => {
     <div className="w-full mx-auto max-w-5xl text-start px-4 md:px-0">
       {/* HEADER */}
       <header className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-medium mb-2 text-(--color-text) tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>
+        <h1
+          className="text-2xl md:text-3xl font-medium mb-2 text-(--color-text) tracking-tight"
+          style={{ fontFamily: "var(--font-serif)" }}
+        >
           Inserimento Dottrina Singola
         </h1>
         <p className="text-xs sm:text-sm text-(--color-muted) font-light leading-relaxed">
-          Carica un singolo documento PDF, fornisci l'URL ufficiale della fonte e il testo estratto per avviare l'indicizzazione tematica.
+          Carica un singolo documento PDF, fornisci l'URL ufficiale della fonte e il testo estratto per
+          avviare l'indicizzazione tematica.
         </p>
       </header>
 
@@ -72,8 +76,9 @@ export const UploadDoctrine: React.FC = () => {
               e.preventDefault();
               setDragActive(false);
               if (loading || isExtracting) return;
+
               if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                handleFileSelect(e.dataTransfer.files[0]);
+                void handleFileSelect(e.dataTransfer.files[0]);
               }
             }}
             onClick={() => {
@@ -87,7 +92,11 @@ export const UploadDoctrine: React.FC = () => {
               <div className="flex flex-col items-center text-center">
                 <div
                   className={`mb-4 grid h-14 w-14 place-items-center rounded-md border
-                    ${dragActive ? "border-(--color-text) bg-(--color-bg)" : "border-(--color-border) bg-(--color-bg)"}
+                    ${
+                      dragActive
+                        ? "border-(--color-text) bg-(--color-bg)"
+                        : "border-(--color-border) bg-(--color-bg)"
+                    }
                   `}
                 >
                   <FiUploadCloud className="text-(--color-text) opacity-70" size={26} />
@@ -96,13 +105,19 @@ export const UploadDoctrine: React.FC = () => {
                   Trascina qui il file PDF
                 </p>
                 <p className="mt-1 text-xs text-(--color-muted) font-light">
-                  oppure <span className="text-(--color-text) font-bold underline underline-offset-2">seleziona file</span>
+                  oppure{" "}
+                  <span className="text-(--color-text) font-bold underline underline-offset-2">
+                    seleziona file
+                  </span>
                 </p>
               </div>
             ) : (
-              <div className="w-full flex flex-col items-center text-center relative z-10" onClick={(e) => e.stopPropagation()}>
-                 <div className="mb-4 grid h-14 w-14 place-items-center rounded-md border border-emerald-500/30 bg-emerald-500/10 text-emerald-600">
-                    <FiFileText size={26} />
+              <div
+                className="w-full flex flex-col items-center text-center relative z-10"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="mb-4 grid h-14 w-14 place-items-center rounded-md border border-emerald-500/30 bg-emerald-500/10 text-emerald-600">
+                  <FiFileText size={26} />
                 </div>
                 <p className="text-sm font-medium text-(--color-text) tracking-tight truncate max-w-full px-4">
                   {file.name}
@@ -110,14 +125,17 @@ export const UploadDoctrine: React.FC = () => {
                 <p className="mt-0.5 text-xs text-(--color-muted) font-light">
                   {(file.size / 1024 / 1024).toFixed(2)} MB
                 </p>
+
                 {!loading && !isExtracting && (
-                   <button
-                   type="button"
-                   onClick={removeFile}
-                   className="mt-4 inline-flex items-center gap-2 rounded-md border border-red-500/20 bg-(--color-bg) px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors outline-none"
-                 >
-                   <FiX size={12} /> Rimuovi
-                 </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      void removeFile();
+                    }}
+                    className="mt-4 inline-flex items-center gap-2 rounded-md border border-red-500/20 bg-(--color-bg) px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors outline-none"
+                  >
+                    <FiX size={12} /> Rimuovi
+                  </button>
                 )}
               </div>
             )}
@@ -130,8 +148,9 @@ export const UploadDoctrine: React.FC = () => {
               disabled={loading || isExtracting}
               onChange={(e) => {
                 if (loading || isExtracting) return;
+
                 if (e.target.files && e.target.files[0]) {
-                  handleFileSelect(e.target.files[0]);
+                  void handleFileSelect(e.target.files[0]);
                 }
               }}
             />
@@ -159,6 +178,7 @@ export const UploadDoctrine: React.FC = () => {
               <div className="flex items-center gap-2">
                 <FiFileText size={14} /> Testo Estratto *
               </div>
+
               {isExtracting && (
                 <span className="text-[10px] text-(--color-primary) flex items-center gap-1 animate-pulse">
                   <div className="h-3 w-3 border-2 border-(--color-primary) border-t-transparent rounded-full animate-spin" />
@@ -171,8 +191,8 @@ export const UploadDoctrine: React.FC = () => {
               onChange={(e) => setExtractedText(e.target.value)}
               disabled={loading || isExtracting}
               placeholder={
-                isExtracting 
-                  ? "Attendere, sto leggendo il PDF..." 
+                isExtracting
+                  ? "Attendere, sto leggendo il PDF..."
                   : "Il testo estratto apparirà qui automaticamente. Puoi anche modificarlo o incollarlo a mano..."
               }
               className={`w-full flex-1 min-h-40 resize-none rounded-md border px-4 py-3 text-sm font-light transition-all outline-none shadow-xs
@@ -191,7 +211,9 @@ export const UploadDoctrine: React.FC = () => {
       <div className="mt-8 w-full p-4 bg-(--color-surface) border border-(--color-border) rounded-lg flex justify-between items-center shadow-xs">
         <button
           type="button"
-          onClick={resetForm}
+          onClick={() => {
+            void resetForm();
+          }}
           disabled={loading || isExtracting}
           className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md border border-(--color-border) bg-(--color-bg) text-(--color-text) text-xs font-bold uppercase tracking-widest hover:bg-(--color-border)/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed outline-none"
         >
@@ -200,7 +222,9 @@ export const UploadDoctrine: React.FC = () => {
 
         <button
           type="button"
-          onClick={validateAndSubmit}
+          onClick={() => {
+            void validateAndSubmit();
+          }}
           disabled={loading || isExtracting || !file || !url || !extractedText}
           className="inline-flex items-center gap-2 px-6 py-2.5 rounded-md bg-(--color-text) text-(--color-surface) text-xs font-bold uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed outline-none"
         >
@@ -209,6 +233,7 @@ export const UploadDoctrine: React.FC = () => {
           ) : (
             <FiSave size={14} />
           )}
+
           {loading ? "Elaborazione..." : "Elabora e Salva"}
         </button>
       </div>
