@@ -1,48 +1,55 @@
 import { ai, CFG } from "./config";
-import { ricercaFascicoloUtente, ricercaDatabaseInterno, analizzaDistinguishFattispecie, webSearchTool } from "./tools";
-import { getDb } from "../deps";
-
-const db = getDb();
+import { ricercaFascicoloUtente, ricercaDatabaseInterno, webSearchTool } from "./tools";
 
 // ─────────────────────────────────────────────
 // Helper — Legal Agent Chat (Jurio Chat)
 // ─────────────────────────────────────────────
+export interface FlowChunkPayload {
+  status?: string;
+  text?: string;
+}
+export interface ToolContext {
+  userId: string;
+  fascicoloId: string | null;
+  uiFilters: unknown[];
+  docs: string[];
+  dbLimit: number;
+  webLimit: number;
+}
 
-export function buildLegalAgentSystemPrompt({
-  uiFiltersString,
-  docs,
-  alreadySeenIds,
-  fascicoloId,
-  metadatiFascicolo
-}: {
+export interface ExecutionProfile {
+  model: string;
+  dbLimit: number;
+  webLimit: number;
+}
+
+export function buildLegalAgentSystemPrompt(params: {
   uiFiltersString: string;
   docs: string[];
   alreadySeenIds: string[];
   userId: string;
   fascicoloId?: string | null;
-  metadatiFascicolo?: Record<string, string>;
+  metadatiFascicolo?: Record<string, unknown>;
 }): string {
+  const { uiFiltersString, docs, alreadySeenIds, fascicoloId, metadatiFascicolo } = params;
+  
   const staticPrompt = `# IDENTITÀ E SCOPO
 Sei Jurio, assistente legale AI specializzato esclusivamente nel diritto italiano.
 Rispondi in modo tecnico e oggettivo, non integrare conoscenze esterne non presenti nei tool.
 
 # REGOLE VINCOLANTI (CRITICO)
 - DIVIETO ASSOLUTO: Non inserire MAI nella risposta all'utente "ID tecnici", UUID o stringhe alfanumeriche di sistema.
-- Usa SOLO riferimenti discorsivi e testuali (es. "Il documento caricato", "La sentenza n. 123/2024").
+- Usa SOLO riferimenti discorsivi e testuali.
 - Inventare sentenze o fatti giuridici è severamente vietato.
 
 # GESTIONE FILTRI E RICERCHE
-I filtri richiesti dall'utente (es. Data, Organo, Materia) vengono APPLICATI AUTOMATICAMENTE DAL SISTEMA a livello di database.
-- NON dire MAI all'utente "non posso applicare il filtro", "i filtri sono attivi" o frasi simili.
-- Esegui le ricerche tramite i tool dando per scontato che i risultati ricevuti rispettino già i filtri imposti.
+I filtri richiesti dall'utente vengono APPLICATI AUTOMATICAMENTE DAL SISTEMA a livello di database.
+- NON dire MAI all'utente "non posso applicare il filtro" o "i filtri sono attivi".
 
 # POLITICA DI UTILIZZO DEI TOOL
-- Usa i tool SOLO se le informazioni presenti nella cronologia o nel 'CONTESTO DINAMICO' non sono sufficienti per rispondere.
-- Se la domanda è un follow-up logico su documenti o sentenze già discussi, RISPONDI DIRETTAMENTE senza invocare tool.
-- Prediligi database interni e riferimenti normativi. Usa 'ricercaWebLegale' solo se esplicitamente richiesto o per news.
-
-# ASSISTENZA APPLICATIVO
-Nel caso di richieste sull'applicativo rimanda alla sezione contatti: https://jurio.it/contatti#bot`;
+- Usa i tool SOLO se le informazioni presenti nella cronologia o nel 'CONTESTO DINAMICO' non sono sufficienti.
+- Se la domanda è un follow-up logico su entità già discusse, RISPONDI DIRETTAMENTE senza invocare tool.
+- Prediligi database interni e riferimenti normativi. Usa 'webSearchTool' se richiesto o per news.`;
 
   let dynamicContext = `\n\n--- \n# CONTESTO DINAMICO CORRENTE\n`;
   dynamicContext += `- Filtri UI attivi: ${uiFiltersString}\n`;
@@ -50,15 +57,16 @@ Nel caso di richieste sull'applicativo rimanda alla sezione contatti: https://ju
   dynamicContext += `- Pronunce già utilizzate in chat: ${alreadySeenIds.length > 0 ? alreadySeenIds.join(", ") : "Nessuna"}\n`;
 
   if (fascicoloId) {
-    const metadatiString = metadatiFascicolo && Object.keys(metadatiFascicolo).length > 0 
-      ? Object.entries(metadatiFascicolo).map(([k, v]) => `- ${k}: ${v}`).join('\n')
+    const metadatiString = metadatiFascicolo && Object.keys(metadatiFascicolo).length > 0
+      // 👈 Aggiunto String(v) per convertire in sicurezza l'unknown in stringa
+      ? Object.entries(metadatiFascicolo).map(([k, v]) => `- ${k}: ${String(v)}`).join("\n")
       : "Nessun metadato ancora estratto.";
 
     dynamicContext += `\n# FASCICOLO (ID: ${fascicoloId})
 Questi sono i dati strutturati (metadati) attuali del caso:
 ${metadatiString}
 
-(Nota operativa: hai a disposizione il tool 'aggiornaMetadatiFascicolo'. Se dalla chat o dai documenti emergono nuovi nomi chiave, valori economici o date non presenti nei metadati, usa il tool per salvarli in autonomia).`;
+(Nota: usa il tool 'aggiornaMetadatiFascicolo' per salvare autonomamente nuovi nomi o valori chiave).`;
   }
 
   return staticPrompt + dynamicContext;
@@ -69,7 +77,6 @@ export async function generateChatTitle(prompt: string, isFirstMessage?: boolean
   
   const generateTask = ai.generate({
     prompt: `Genera un titolo riassuntivo di max 4 parole per questa richiesta legale: "${prompt}". REGOLE TASSATIVE: Niente ragionamenti, niente prefissi (no "Titolo:"), niente virgolette. Solo le parole.`,
-    config: { temperature: 0.1 },
   }).then(res => res.text.trim()).catch(e => {
     console.warn("Errore generazione titolo:", e);
     return undefined;
@@ -79,18 +86,27 @@ export async function generateChatTitle(prompt: string, isFirstMessage?: boolean
   return Promise.race([generateTask, timeout]);
 }
 
-export function prepareContextAndMessages(input: any): any[] {
+export function prepareContextAndMessages(input: {
+  prompt: string;
+  history?: Array<Record<string, unknown>>;
+  filters?: unknown[];
+  docs?: string[];
+  userId: string;
+  fascicoloId?: string | null;
+  metadatiFascicolo?: Record<string, unknown>;
+}): any[] {
   const trimmedHistory = (input.history ?? []).slice(-4);
-  const uiFiltersString = input.filters && Object.keys(input.filters).length > 0
-    ? JSON.stringify(input.filters, null, 2) : "Nessun filtro imposto.";
+  const uiFiltersString = input.filters && input.filters.length > 0
+    ? JSON.stringify(input.filters, null, 2)
+    : "Nessun filtro imposto.";
 
   const alreadySeenIds: string[] = trimmedHistory.length > 0
     ? Array.from(new Set<string>(
       trimmedHistory
-        .filter((msg: { role: string }) => msg.role === 'model')
-        .flatMap((msg: { content: string }) => {
-           if (typeof msg.content !== 'string') return [];
-           return msg.content.match(/[a-zA-Z0-9]{20,}/g) ?? [];
+        .filter((msg) => msg.role === "model")
+        .flatMap((msg) => {
+          if (typeof msg.content !== "string") return [];
+          return msg.content.match(/[a-zA-Z0-9]{20,}/g) ?? [];
         })
     )) : [];
 
@@ -103,15 +119,15 @@ export function prepareContextAndMessages(input: any): any[] {
     metadatiFascicolo: input.metadatiFascicolo,
   });
 
-  const chatContext = trimmedHistory.map((msg: { role: string; content: string }) => ({
-    role: msg.role === 'user' ? 'user' : 'model',
-    content: [{ text: msg.content }],
+  const chatContext = trimmedHistory.map((msg) => ({
+    role: msg.role === "user" ? "user" : "model",
+    content: [{ text: String(msg.content) }],
   }));
 
   return [
-    { role: "system" as const, content: [{ text: systemPrompt }] },
+    { role: "system", content: [{ text: systemPrompt }] },
     ...chatContext,
-    { role: "user" as const, content: [{ text: input.prompt }] },
+    { role: "user", content: [{ text: input.prompt }] },
   ];
 }
 
@@ -123,209 +139,152 @@ export interface ExecutionProfile {
 
 export function getExecutionProfile(promptLower: string): ExecutionProfile {
   if (promptLower.length < 150) {
-    return { model: "vertexai/gemini-2.5-flash", dbLimit: 3, webLimit: 2 };
+    return { model: "vertexai/gemini-3.8-flash", dbLimit: 5, webLimit: 2 };
   }
-  const hasComparison = /confronta|compara|differenz|distingu|paragon/i.test(promptLower);
-  const hasApplicability = /si applica|applicabil|caso concreto|caso di specie|fattispecie|distinguishing/i.test(promptLower);
-  const hasConflict = /conflitto|contrasto|orientament|tesi contrapposte|sezioni unite|prevale/i.test(promptLower);
-  const hasLegalReasoning = /argomenta|ragionamento|spiega il perché|valuta l'esito|ricostruisci|alla luce (dei|della)/i.test(promptLower);
-
-  const complexityScore = [hasComparison, hasApplicability, hasConflict, hasLegalReasoning].filter(Boolean).length;
-  const needsDeepReasoning = complexityScore >= 3;
-
-  if (needsDeepReasoning) {
-    return { model: "vertexai/gemini-1.5-pro", dbLimit: 5, webLimit: 3 };
-  }  else {
-    return { model: "vertexai/gemini-2.5-flash", dbLimit: 5, webLimit: 2 };
-  }
+  return { model: "vertexai/gemini-3.8-flash", dbLimit: 8, webLimit: 3 };
 }
 
 export async function executeDeterministicRetrieval(
-  input: any,
+  input: { prompt: string; fascicoloId?: string | null },
   promptLower: string,
-  toolContext: any,
-  sendChunk: any
+  toolContext: ToolContext,
+  sendChunk: (payload: any) => void
 ) {
-  const isConversational =
-    promptLower.length < 25 &&
-    /^(grazie|ok|chiaro|perfetto|ciao|va bene|ottimo|esatto)/.test(promptLower);
-
-  const isDatabaseQuery =
-    /(sentenza|ordinanza|cassazione|tribunale|tar|provvediment|art\.|articolo|legge|codice|decreto|direttiva|giurisprudenza|massima)/i
-      .test(promptLower);
-
-  const hasDocs =
-    Array.isArray(toolContext.docs) && toolContext.docs.length > 0;
-
-  const isFascicoloQuery =
-    (
-      input.fascicoloId &&
-      /(questo documento|il contratto|il file|fascicolo|allegato|caricato|documentazione)/i
-        .test(promptLower)
-    ) || hasDocs;
-
-  const needsWebSearch =
-    /(recente|news|novità|aggiornament|oggi|notizi|tempo reale|ultim'ora)/i
-      .test(promptLower);
-
-  const isDistinguishQuery =
-    /(fattispecie|caso concreto|mio caso|differenz|analizza i fatti|applicabil|distinguish)/i
-      .test(promptLower);
-
-  const matchPuntuale =
-    promptLower.match(/\b\d{1,6}\/\d{4}\b/);
-
-  const matchNormativa =
-    promptLower.match(
-      /(?:art|articolo)\.?\s*\d+(?:\s*(?:bis|ter|quater|quinquies))?/i
-    );
-
-  const matchExecutive =
-    promptLower.match(
-      /\b(procedi|procediamo|vai\s+avanti|vai\s+pure|continua|continuiamo|prosegui|proseguiamo|esegui|eseguiamo|avvia|applicalo|fallo|puoi\s+procedere|andiamo\s+avanti|prcedi)\b/i
-    );
+  const isConversational = promptLower.length < 25 && /^(grazie|ok|chiaro|perfetto|ciao|va bene|ottimo|esatto)/.test(promptLower);
+  const hasDocs = toolContext.docs.length > 0;
+  const matchPuntuale = promptLower.match(/\b\d{1,6}\/\d{4}\b/);
+  const matchNormativa = promptLower.match(/(?:art|articolo|legge|l\.)\.?\s*\d+(?:\s*(?:bis|ter|quater|quinquies))?/i);
+  const matchExecutive = promptLower.match(/\b(procedi|procediamo|vai\s+avanti|vai\s+pure|continua|continuiamo|prosegui|proseguiamo|esegui|eseguiamo|avvia|applicalo|fallo|puoi\s+procedere|andiamo\s+avanti|prcedi)\b/i);
+  const isFascicoloQuery = (input.fascicoloId && /(questo documento|il contratto|il file|fascicolo|allegato|caricato|documentazione)/i.test(promptLower)) || hasDocs;
 
   const hasExecutiveIntent = Boolean(matchExecutive);
-
   let preRetrievalOutput: any = null;
-  let preRetrievalToolName = "";
+  let preRetrievalSourceName = ""; 
 
   if (!isConversational) {
     try {
       if (hasDocs) {
-        sendChunk({
-          status: "Lettura dei documenti allegati..."
-        });
-
-        preRetrievalToolName = "ricercaFascicoloUtente";
-
-        preRetrievalOutput = await ricercaFascicoloUtente(
-          { query: input.prompt },
-          { context: toolContext }
-        );
-
+        sendChunk({ status: "Lettura dei documenti allegati..." });
+        preRetrievalSourceName = "Documentazione Allegata";
+        preRetrievalOutput = await ricercaFascicoloUtente({ query: input.prompt }, { context: toolContext });
       } else if (matchPuntuale) {
-        sendChunk({
-          status: `Ricerca sentenza ${matchPuntuale[0]}...`
-        });
-
-        preRetrievalToolName = "ricercaDatabaseInterno";
-
-        preRetrievalOutput = await ricercaDatabaseInterno(
-          {
-            tipo_ricerca: "puntuale",
-            numero_sentenza: matchPuntuale[0],
-            query: input.prompt
-          },
-          { context: toolContext }
-        );
-
+        sendChunk({ status: `Ricerca sentenza ${matchPuntuale[0]}...` });
+        preRetrievalSourceName = "Database Giurisprudenza";
+        preRetrievalOutput = await ricercaDatabaseInterno({ tipo_ricerca: "puntuale", numero_sentenza: matchPuntuale[0], query: input.prompt }, { context: toolContext });
       } else if (matchNormativa) {
-        sendChunk({
-          status: `Ricerca riferimento ${matchNormativa[0]}...`
-        });
-
-        preRetrievalToolName = "ricercaDatabaseInterno";
-
-        preRetrievalOutput = await ricercaDatabaseInterno(
-          {
-            tipo_ricerca: "normativa",
-            query: matchNormativa[0]
-          }
-        );
+        sendChunk({ status: `Ricerca riferimento normativo in corso...` });
+        preRetrievalSourceName = "Ricerca Normativa Web";
+        preRetrievalOutput = await webSearchTool({ query: `Normativa vigente giurisprudenza ${matchNormativa[0]}`, focus: "tutto" });
       } else if (isFascicoloQuery) {
-        sendChunk({
-          status: "Consultazione documenti utente..."
-        });
-
-        preRetrievalToolName = "ricercaFascicoloUtente";
-
-        preRetrievalOutput = await ricercaFascicoloUtente(
-          { query: input.prompt },
-          { context: toolContext }
-        );
+        sendChunk({ status: "Consultazione documenti utente..." });
+        preRetrievalSourceName = "Fascicolo Personale";
+        preRetrievalOutput = await ricercaFascicoloUtente({ query: input.prompt }, { context: toolContext });
       }
-    } catch (err) {
-      console.warn(
-        "Errore pre-retrieval deterministico:",
-        err
-      );
+    } catch (err: unknown) {
+      console.warn("Errore pre-retrieval deterministico:", err);
     }
   }
 
-  let dynamicTools: any[] = [];
-  let skipTurn1 = false;
+  // 1. NORMALIZZAZIONE ROBUSTA DELL'OUTPUT IN UN ARRAY
+  let normalizedArray: any[] = [];
+  if (Array.isArray(preRetrievalOutput)) {
+    normalizedArray = preRetrievalOutput;
+  } else if (preRetrievalOutput && typeof preRetrievalOutput === "object") {
+    normalizedArray = Array.isArray(preRetrievalOutput.topMatches) ? preRetrievalOutput.topMatches 
+                    : Array.isArray(preRetrievalOutput.risultati) ? preRetrievalOutput.risultati 
+                    : Array.isArray(preRetrievalOutput.results) ? preRetrievalOutput.results 
+                    : [preRetrievalOutput];
+  }
 
-  const isEmptyRetrieval =
-    preRetrievalOutput &&
-    Array.isArray(preRetrievalOutput) &&
-    preRetrievalOutput[0]?.messaggio?.includes("Nessun paragrafo");
-  if (
-    preRetrievalOutput &&
-    (!Array.isArray(preRetrievalOutput) ||
-      !preRetrievalOutput[0]?.error) &&
-    !isEmptyRetrieval &&
-    !hasExecutiveIntent
-  ) {
+  const isEmptyRetrieval = normalizedArray.length > 0 && typeof normalizedArray[0]?.messaggio === "string" && normalizedArray[0].messaggio.includes("Nessun paragrafo");
+  
+  let skipTurn1 = false;
+  // 2. Controllo errori e vuoti sull'array normalizzato
+  if (preRetrievalOutput && !normalizedArray[0]?.error && !isEmptyRetrieval && !hasExecutiveIntent) {
     skipTurn1 = true;
   }
-
-  if (!isConversational) {
-    if (hasExecutiveIntent) {
-      dynamicTools = [
-        ricercaDatabaseInterno,
-        ricercaFascicoloUtente,
-        analizzaDistinguishFattispecie,
-        webSearchTool,
-      ];
-    } else {
-      if (isDatabaseQuery) {
-        dynamicTools.push(ricercaDatabaseInterno);
-      }
-      if (isFascicoloQuery || hasDocs) {
-        dynamicTools.push(ricercaFascicoloUtente);
-      }
-      if (isDistinguishQuery) {
-        dynamicTools.push(analizzaDistinguishFattispecie);
-      }
-      if (needsWebSearch) {
-        dynamicTools.push(webSearchTool);
-      }
-      if (
-        hasDocs &&
-        !dynamicTools.includes(ricercaFascicoloUtente)
-      ) {
-        dynamicTools.push(ricercaFascicoloUtente);
-      }
-    }
-  }
-  return {
-    skipTurn1,
-    preRetrievalOutput,
-    preRetrievalToolName,
-    dynamicTools,
-  };
+  
+  return { skipTurn1, preRetrievalOutput, preRetrievalSourceName, normalizedArray };
 }
 
-export function extractAndFormatSources(messages: any[]) {
+export function extractAndFormatSources(
+  messages: any[],
+  rawOutputs: any[] = [],
+  defaultDeterministicType: string = "documento_allegato",
+  toolResponses: any[] = []
+) {
   const fontiUniche = new Map<string, unknown>();
-  
+
+  const processItems = (items: any[], defaultType: string) => {
+    for (const fonte of items) {
+      if (
+        !fonte ||
+        typeof fonte !== "object" ||
+        fonte.error ||
+        (typeof fonte.messaggio === "string" && fonte.messaggio.includes("Nessun paragrafo"))
+      ) {
+        continue;
+      }
+
+      const baseKey = fonte.documento_id ?? fonte.id ?? fonte._id_interno ?? fonte.urn ?? fonte.link ?? fonte.url_riferimento;
+      const fallbackKey = typeof fonte.titolo === "string" ? fonte.titolo : (fonte.numero_sentenza || fonte.nome_file || null);
+      const key = baseKey ? String(baseKey) : fallbackKey;
+
+      if (key && !fontiUniche.has(key)) {
+        if (!fonte._type) fonte._type = defaultType;
+        fontiUniche.set(key, fonte);
+      }
+    }
+  };
+
   try {
-    messages.forEach((msg: any) => {
-      if (msg.role !== 'tool') return;
-      (msg.content || []).forEach((part: any) => {
-        const output = part.toolResponse?.output;
-        if (!output) return;
-        const items: any[] = Array.isArray(output) ? output : (output.topMatches || []);
-        items.forEach((fonte: any) => {
-          if (!fonte || fonte.error || fonte.messaggio) return; 
-          const baseKey = fonte.documento_id ?? fonte.id ?? fonte._id_interno ?? fonte.urn ?? fonte.link;
-          const fallbackKey = typeof fonte.titolo === 'string' ? fonte.titolo : (fonte.numero_sentenza || Math.random().toString(36));
-          const key = baseKey ? String(baseKey) : fallbackKey;
-          if (!fontiUniche.has(key)) fontiUniche.set(key, fonte);
-        });
-      });
-    });
+    // 1. Estrazione dalla cronologia dei messaggi
+    for (const msg of messages) {
+      if (msg.role !== "tool") continue;
+      for (const part of msg.content || []) {
+        const output = part.toolResponse?.output as any;
+        if (!output) continue;
+
+        const toolName = part.toolResponse?.name || "";
+        
+        // Esclude il manuale dalla generazione delle fonti visibili
+        if (toolName === "ricercaManualeTool") {
+          continue;
+        }
+
+        const items: any[] = Array.isArray(output) ? output : (output.topMatches || output.risultati || output.results || [output]);
+        let toolType = "database_interno";
+        if (toolName === "ricercaFascicoloUtente") toolType = "documento_allegato";
+        if (toolName === "webSearchTool") toolType = "web_search";
+
+        processItems(items, toolType);
+      }
+    }
+
+    // 2. Estrazione diretta dagli output grezzi dei tool
+    for (const tr of toolResponses) {
+      const output = tr.toolResponse?.output;
+      if (!output) continue;
+
+      const toolName = tr.toolResponse?.name || "";
+      
+      // Esclude il manuale dalla generazione delle fonti visibili
+      if (toolName === "ricercaManualeTool") {
+        continue;
+      }
+
+      const items: any[] = Array.isArray(output) ? output : (output.topMatches || output.risultati || output.results || [output]);
+      let toolType = "database_interno";
+      if (toolName === "ricercaFascicoloUtente") toolType = "documento_allegato";
+      if (toolName === "webSearchTool") toolType = "web_search";
+
+      processItems(items, toolType);
+    }
+
+    // 3. Documenti caricati passivamente
+    if (rawOutputs.length > 0) {
+      processItems(rawOutputs, defaultDeterministicType);
+    }
   } catch (parseError) {
     console.warn("⚠️ Errore parsing fonti:", parseError);
   }
@@ -338,26 +297,54 @@ export function extractAndFormatSources(messages: any[]) {
         else if (f._distance !== undefined) rawScore = 1 - f._distance;
       }
 
-      const isExactMatch = f._type === 'giurisprudenza_puntuale' || f._type === 'giurisprudenza_normativa';
-      let matchPercentage = isExactMatch ? 100 : (rawScore !== null ? Math.max(0, Math.min(100, Math.round(rawScore * 100))) : 0);
+      const isExactMatch = f._type === "giurisprudenza_puntuale" || f._type === "giurisprudenza_normativa";
+
+      let matchPercentage = 85;
+      if (isExactMatch) {
+        matchPercentage = 100;
+      } else if (rawScore !== null) {
+        matchPercentage = Math.max(0, Math.min(100, Math.round(rawScore * 100)));
+      }
+
+      // Estrazione del nome reale: se nessun metadato è valorizzato, resta null
+      const identificativo =
+        f.nome_file ||
+        f.fileName ||
+        f.name ||
+        f.titolo ||
+        f.numero_sentenza ||
+        (f.organo_giudicante && (f.dataSentenza || f.data)
+          ? `${f.organo_giudicante} del ${f.dataSentenza || f.data}`
+          : null) ||
+        f.fonte ||
+        null;
 
       return {
-        _type: f._type || (f.fonte ? 'web_search' : 'database_interno'),
+        _type: f._type,
         documento_id: f.documento_id ?? f.id ?? f._id_interno ?? f.parentId ?? null,
         posizione_originale: f.posizione_originale ?? f.index ?? null,
         timestamp: f.timestamp ?? new Date().toISOString(),
-        identificativo: f.nome_file || f.numero_sentenza || f.titolo || "Documento",
-        score: rawScore !== null ? rawScore : (isExactMatch ? 1 : null), 
-        match_percentage: matchPercentage,          
+        identificativo,
+        score: rawScore !== null ? rawScore : (isExactMatch ? 1 : null),
+        match_percentage: matchPercentage,
         organo_giudicante: f.organo_giudicante ?? null,
         data_pubblicazione: f.dataSentenza ?? f.data ?? f.date ?? null,
         fonte_web: f.fonte ?? null,
-        url_riferimento: f.link ?? f.urn ?? f.url ?? null
+        url_riferimento: f.link ?? f.urn ?? f.url ?? null,
       };
     })
-    .filter((f: any) => 
-      f._type === 'web_search' || f._type === 'documento_allegato' || f._type === 'document_chunk' || 
-      f._type?.startsWith('giurisprudenza_') || f.fonte_web || f.match_percentage >= 75
+    .filter((f: any) =>
+      // Esclude categoricamente elementi privi di un identificativo leggibile
+      Boolean(f.identificativo) &&
+      (
+        f._type === "web_search" ||
+        f._type === "documento_allegato" ||
+        f._type === "document_chunk" ||
+        f._type === "database_interno" ||
+        f._type?.startsWith("giurisprudenza_") ||
+        f.fonte_web ||
+        f.match_percentage >= 60
+      )
     )
     .sort((a: any, b: any) => b.match_percentage - a.match_percentage)
     .slice(0, CFG.MAX_SOURCES);
@@ -478,10 +465,10 @@ ATTENZIONE: Le query devono essere CONCISE e OTTIMIZZATE per un motore di ricerc
 ## FASE 4 — RICERCA DELLE FONTI E OBBLIGO RICERCA WEB
 Utilizza i tool disponibili nel seguente ordine di preferenza:
 1. "ricercaDatabaseInterno"
-2. "ricercaWebLegale"
+2. "webSearchTool"
 
 REGOLA TASSATIVA SULLA RICERCA WEB:
-Se, dopo aver consultato il database interno, l'esito provvisorio risulta essere GIALLO o ROSSO, sei OBBLIGATO a chiamare anche il tool "ricercaWebLegale" per cercare conferme, smentite o novità normative prima di emettere il verdetto finale. Non fermarti mai al database interno se l'esito non è Verde.
+Se, dopo aver consultato il database interno, l'esito provvisorio risulta essere GIALLO o ROSSO, sei OBBLIGATO a chiamare anche il tool "webSearchTool" per cercare conferme, smentite o novità normative prima di emettere il verdetto finale. Non fermarti mai al database interno se l'esito non è Verde.
 
 ## FASE 5 — VALUTAZIONE E GERARCHIA DELLE FONTI
 Una fonte è rilevante se riguarda realmente la medesima questione giuridica (o fattuale tramite distinguishing).
@@ -528,26 +515,6 @@ Il linguaggio deve essere: freddo, tecnico, impersonale (terza persona). Privo d
 // ─────────────────────────────────────────────
 // Helper — Deep Analysis
 // ─────────────────────────────────────────────
-
-export async function getModelForUser(userId: string): Promise<string> {
-  if (!userId) return "vertexai/gemini-2.5-flash";
-  
-  try {
-    const userDoc = await db.collection("register").doc(userId).get();
-    
-    if (userDoc.exists) {
-      const planId = userDoc.data()?.planId;
-      if (["business", "business_m", "admin"].includes(planId)) {
-        return "vertexai/gemini-2.5-pro";
-      }
-    }
-  } catch (error) {
-    console.error("Errore durante il recupero del planId da Firestore:", error);
-  }
-  
-  // Fallback di default
-  return "vertexai/gemini-2.5-flash";
-}
 
 export const isUrl = (val: string) => {
   try {

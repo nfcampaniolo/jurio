@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import type { User } from "firebase/auth";
 import type { Message, AttachedDocument } from "@/interfaces/interfaces";
-import type { MessagingProps } from "@/features/chat/hooks/useChatMessaging"; // <-- adegua il path di import se necessario
+import type { MessagingProps } from "@/features/chat/hooks/useChatMessaging";
 
 /* ---------- hoisted mocks ---------- */
 const {
@@ -418,7 +418,7 @@ describe("useChatMessaging Hook Suite", () => {
       expect(defaultProps.setAgentState).toHaveBeenCalledWith("error");
 
       const modelMessage = messagesState.find((m) => m.role === "model");
-      expect(modelMessage?.content).toContain("Accesso negato.");
+      expect(modelMessage?.content).toContain("Accesso negato");
     });
 
     test("gestisce errore 500 del server e ripristina agentState a idle dopo il timeout", async () => {
@@ -439,7 +439,7 @@ describe("useChatMessaging Hook Suite", () => {
       expect(defaultProps.setAgentState).toHaveBeenCalledWith("error");
 
       const modelMessage = messagesState.find((m) => m.role === "model");
-      expect(modelMessage?.content).toContain("Errore API: 500");
+      expect(modelMessage?.content).toContain("500");
 
       act(() => {
         vi.advanceTimersByTime(5000);

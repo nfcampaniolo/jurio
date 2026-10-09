@@ -108,10 +108,18 @@ export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({
 
   const handleProcessAndClose = async () => {
     if (pendingFiles.length > 0) {
-      await onProcessFiles(pendingFiles, selectedPromptId, fascicoloId);
-      setPendingFiles([]); 
+      try {
+        await onProcessFiles(pendingFiles, selectedPromptId, fascicoloId);
+        setPendingFiles([]); 
+        onClose();
+      } catch (err: unknown) {
+        console.error("Errore durante il caricamento dei file:", err);
+        const errorMessage = (err as { message?: string })?.message || "Errore durante il caricamento o l'elaborazione dei file.";
+        toast.error(errorMessage);
+      }
+    } else {
+      onClose();
     }
-    onClose();
   };
 
   const handleRenameSubmit = async (e: React.FormEvent) => {

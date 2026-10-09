@@ -8,8 +8,6 @@ describe("AnalysisSettingsSection Component Suite", () => {
     sourceInternalDB: true,
     sourceWeb: true,
     confidenceLevel: 80,
-    temperature: 0.3,
-    topK: 10,
   };
 
   const defaultProps = {
@@ -42,9 +40,6 @@ describe("AnalysisSettingsSection Component Suite", () => {
     expect(screen.getByText("Ricerca Web")).toBeInTheDocument();
     expect(screen.getByText("Livello di Confidenza")).toBeInTheDocument();
     expect(screen.getByText("80%")).toBeInTheDocument();
-    expect(screen.getByText("Temperatura")).toBeInTheDocument();
-    expect(screen.getByText("0.3")).toBeInTheDocument();
-    expect(screen.getByText("N. Risultati (k)")).toBeInTheDocument();
   });
 
   test("chiude il pannello cliccando sul pulsante di chiusura o sull'overlay", () => {
@@ -75,7 +70,7 @@ describe("AnalysisSettingsSection Component Suite", () => {
     ).not.toBeInTheDocument();
 
     // Trova i bottoni delle info e clicca sul secondo (Confidenza)
-    const infoButtons = screen.getAllByRole("button", { name: "" }).filter(
+    const infoButtons = screen.getAllByRole("button").filter(
       (btn) => btn.querySelector("svg.lucide-info")
     );
     fireEvent.click(infoButtons[1]);
@@ -85,36 +80,16 @@ describe("AnalysisSettingsSection Component Suite", () => {
     ).toBeInTheDocument();
   });
 
-  test("aggiorna i valori di confidenza, temperatura e topK tramite i controlli input", () => {
+  test("aggiorna il valore di confidenza tramite il controllo slider", () => {
     const setConfigMock = vi.fn();
     render(<AnalysisSettingsSection {...defaultProps} setConfig={setConfigMock} />);
 
-    // Recupera tutti gli slider presenti nel pannello (0: confidenza, 1: temperatura)
-    const sliders = screen.getAllByRole("slider");
+    // Recupera lo slider della confidenza (min 50, max 100, step 5)
+    const slider = screen.getByRole("slider");
     
-    // Slider Confidenza (min 50, max 100, step 5)
-    fireEvent.change(sliders[0], { target: { value: "90" } });
+    fireEvent.change(slider, { target: { value: "90" } });
     expect(setConfigMock).toHaveBeenCalledWith(
       expect.objectContaining({ confidenceLevel: 90 })
-    );
-
-    // Slider Temperatura (min 0, max 1, step 0.1)
-    fireEvent.change(sliders[1], { target: { value: "0.7" } });
-    expect(setConfigMock).toHaveBeenCalledWith(
-      expect.objectContaining({ temperature: 0.7 })
-    );
-
-    // Input Numerico TopK
-    const topKInput = screen.getByRole("spinbutton");
-    fireEvent.change(topKInput, { target: { value: "25" } });
-    expect(setConfigMock).toHaveBeenCalledWith(
-      expect.objectContaining({ topK: 25 })
-    );
-
-    // Blur su TopK per testare la funzione clampValue
-    fireEvent.blur(topKInput, { target: { value: "100" } });
-    expect(setConfigMock).toHaveBeenCalledWith(
-      expect.objectContaining({ topK: 50 })
     );
   });
 
@@ -134,11 +109,9 @@ describe("AnalysisSettingsSection Component Suite", () => {
       />
     );
 
-    // I checkbox sono associati alle label o intercettati via type
     const checkboxes = screen.getAllByRole("checkbox");
     const dbCheckbox = checkboxes[0]; // Banca Dati Interna (attualmente false)
 
-    // Tenta di attivare DB (ora entrambe attive)
     fireEvent.click(dbCheckbox);
     expect(setConfigMock).toHaveBeenCalled();
   });

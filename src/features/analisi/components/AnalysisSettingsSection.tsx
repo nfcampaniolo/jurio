@@ -6,13 +6,11 @@ import {
   Settings2, 
   Database, 
   Globe, 
-  SlidersHorizontal, 
   AlertCircle, 
   Play, 
   X,
   Info,
   Target,
-  Hash,
   Search
 } from "lucide-react";
 import type { DeepAnalysisConfig } from "@/features/analisi/hooks/types";
@@ -108,11 +106,6 @@ export const AnalysisSettingsSection: React.FC<AnalysisSettingsSectionProps> = (
 
   const toggleInfo = (id: string) => {
     setActiveInfo(prev => prev === id ? null : id);
-  };
-
-  // Funzione di utilità per limitare i valori inseriti manualmente (Clamp)
-  const clampValue = (val: number, min: number, max: number) => {
-    return Math.min(Math.max(val, min), max);
   };
 
   // Determina se almeno una fonte è attiva per validare lo stato d'avvio
@@ -232,55 +225,6 @@ export const AnalysisSettingsSection: React.FC<AnalysisSettingsSectionProps> = (
               </div>
 
               <hr className="border-(--color-border) my-6" />
-
-              {/* 3. Parametri LLM */}
-              <div className="space-y-6">
-                <div>
-                  <LabelWithInfo 
-                    id="temperatura" 
-                    label="Temperatura" 
-                    icon={<SlidersHorizontal size={13} className="opacity-70"/>}
-                    description="Controlla la creatività del modello linguistico (0.0 - 1.0). Verso 0.0 (Analitico) favorisce risposte logiche e aderenti alle fonti. Valori più alti introducono variabilità lessicale, ma aumentano il rischio di parafrasi imprecise."
-                    isActive={activeInfo === "temperatura"}
-                    onToggle={toggleInfo}
-                    rightElement={
-                      <span className="text-xs font-mono text-(--color-text) bg-(--color-bg) px-2 py-0.5 rounded-sm border border-(--color-border) shadow-xs">
-                        {config.temperature.toFixed(1)}
-                      </span>
-                    }
-                  />
-                  <input 
-                    type="range" min="0" max="1" step="0.1"
-                    value={config.temperature}
-                    onChange={(e) => setConfig({...config, temperature: Number(e.target.value)})}
-                    className="w-full accent-(--color-text) cursor-pointer mt-2"
-                  />
-                  <div className="flex justify-between text-[10px] text-(--color-muted) px-0.5 mt-1.5 font-light uppercase tracking-widest">
-                    <span>Analitico</span>
-                    <span>Creativo</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <LabelWithInfo 
-                      id="topk" 
-                      label="N. Risultati (k)" 
-                      icon={<Hash size={13} className="opacity-70"/>}
-                      description="Numero massimo di frammenti più rilevanti da analizzare (Range: 1 - 50). Oltre i 50 risultati si rischia di saturare il contesto disorientando il modello (Lost in the middle)."
-                      isActive={activeInfo === "topk"}
-                      onToggle={toggleInfo}
-                    />
-                    <input 
-                      type="number" min="1" max="50"
-                      value={config.topK}
-                      onChange={(e) => setConfig({...config, topK: Number(e.target.value)})}
-                      onBlur={(e) => setConfig({...config, topK: clampValue(Number(e.target.value), 1, 50)})}
-                      className="w-full p-2.5 bg-(--color-bg) border border-(--color-border) rounded-md text-sm text-center text-(--color-text) focus:border-(--color-text) outline-none shadow-xs font-mono mt-1"
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
 
             {/* Footer / Pulsante Avvio */}

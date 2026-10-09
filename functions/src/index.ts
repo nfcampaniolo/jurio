@@ -6,23 +6,19 @@ import { MAX_INPUT_CHARS, PROMPT_MASSIMAZIONE } from "./params";
 import { enqueueWelcomeEmail, enqueueTrialEmail, queuePurchaseEmailOnceStripe, enqueueDowngradeEmail, enqueueContactEmail, enqueueVoucherEmail, enqueueWelcomeTeamEmail, enqueueRemoveTeamEmail, enqueueCloseTeamEmail, dispatchMailAndNotification, NotificationType } from "./email";
 import { corsHandlerDomain, requireAppCheck, requireUidFromAuthHeader, consumePerMinuteFeature, consumeDailyFeature, getKeywordStems, calculateMatchScore, applyHighlightWithRegex, generateHighlightRegex, runUpdateFonte, runUpdateMetadata, runCleanupDuplicates, processFascicoloDocs, processSubscriptionInTx, tryScheduleDowngradeTask, updateUserDocuments, removeUserVisibilityFromDocuments, incrementRagCounter, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, PlanDoc, getStripe, getWebhookSecret,normalizePlanId, handleEmbeddingCreation, handleEmbeddingDocumentCreation, handleFascicoloCreation, handleEmbeddingManualCreation} from "./utils";
 import { scheduleDowngradeTask, DowngradeTxResult, computeAndSaveWeeklyStats, computeAndSaveMonthlyUsage } from "./tasks";
-import {FilterInput, SearchRequestBody, ScoredJurioItem, JurioSentenceDoc, MessageDoc, FascicoloDoc, ExtractedMetadataItem, EstraiMetadatiResult, SupportRequestBody, ReasoningRequestBody, ReasoningFlowOutput, PromptFieldInput, PromptAgentRequestBody, EnhancePromptMessage, EnhancePromptRequestBody, MaintenanceTaskBody, ProgressCallback, MergeCategoryRequestBody, ReasoningAdminResponse, ReasoningAdminRequestBody, ManualContentRequestBody, SubmitFeedbackRequestBody, DeepAnalysisRequestBody, DeepAnalysisConfig, DEFAULT_CONFIG, AdminNotificationRequestBody, GenerateEmbeddingRequestBody, GenerateEmbeddingResponse, ExtractDocumentRequestBody, GetRegisterResponse, GetPriceRequestBody, GetPriceResponse, CheckoutSessionRequestBody, SyncUserSessionResponse, ForceTakeoverSessionResponse, AssignTeamSeatRequestBody, AssignTeamSeatResponse, SendTeamInviteEmailResponse, SendTeamInviteEmailRequestBody, ShareAllTeamDocumentsResponse, ShareAllTeamDocumentsRequestBody, VerifyVoucherRequestBody, VerifyVoucherResponse, RemoveTeamMemberRequestBody, RemoveTeamMemberResponse, ApplyCouponRequestBody, ApplyCouponResponse, DeleteTeamResponse, DeleteTeamRequestBody, CloudFileDownloadRequestBody, CloudFilesListRequestBody} from "./interfaces";
+import {FilterInput, SearchRequestBody, ScoredJurioItem, JurioSentenceDoc, MessageDoc, FascicoloDoc, ExtractedMetadataItem, EstraiMetadatiResult, SupportRequestBody, ReasoningRequestBody, ReasoningFlowOutput, PromptFieldInput, PromptAgentRequestBody, EnhancePromptMessage, EnhancePromptRequestBody, MaintenanceTaskBody, ProgressCallback, MergeCategoryRequestBody, ReasoningAdminResponse, ReasoningAdminRequestBody, ManualContentRequestBody, SubmitFeedbackRequestBody, DeepAnalysisRequestBody, DeepAnalysisConfig, DEFAULT_CONFIG, AdminNotificationRequestBody, GenerateEmbeddingRequestBody, GenerateEmbeddingResponse, ExtractDocumentRequestBody, GetRegisterResponse, GetPriceRequestBody, GetPriceResponse, CheckoutSessionRequestBody, AssignTeamSeatRequestBody, AssignTeamSeatResponse, SendTeamInviteEmailResponse, SendTeamInviteEmailRequestBody, ShareAllTeamDocumentsResponse, ShareAllTeamDocumentsRequestBody, VerifyVoucherRequestBody, VerifyVoucherResponse, RemoveTeamMemberRequestBody, RemoveTeamMemberResponse, ApplyCouponRequestBody, ApplyCouponResponse, DeleteTeamResponse, DeleteTeamRequestBody, CloudFileDownloadRequestBody, CloudFilesListRequestBody} from "./interfaces";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import OpenAI from "openai";
 import Stripe from "stripe";
 import { SpeechClient } from "@google-cloud/speech";
-import { legalAgentFlow, legalAgentSupport, legalGeminiFallbackFlow, reasoningFlow, estraiMetadatiFlow, wordQuoteFlow, wordReviewFlow, promptBuilderFlow, researchAnalysisFlow, refineResearchFlow, generateSynthesisReportFlow, enhancePromptFlow } from './genkit/flows';
+import { legalAgentFlow, legalAgentSupport, legalGeminiFallbackFlow, reasoningFlow, estraiMetadatiFlow, wordQuoteFlow, wordReviewFlow, promptBuilderFlow, researchAnalysisFlow, refineResearchFlow, generateSynthesisReportFlow, enhancePromptFlow, doctrineFlow, InquadramentoSchema, MappaDialetticaSchema } from './genkit/flows';
 import { onSchedule } from "firebase-functions/v2/scheduler"; 
 // @ts-ignore
 import pdfExtract from "pdf-extraction";
 import * as busboyModule from "busboy";
 import { google } from "googleapis";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { createMcpServer } from "./mcpServer";
-import { createHash, randomBytes, randomUUID } from "crypto";
-
-import express from "express";
-import cors from "cors";
+import { app } from "./mpc/app";
+import { createHash, randomUUID } from "crypto";
 
 const Busboy = busboyModule.default || busboyModule;
 const db = getDb();
@@ -39,172 +35,6 @@ setGlobalOptions({
   invoker: "public"
 });
 
-// ============================================================================
-// MCP SERVER (EXPRESS)
-// ============================================================================
-
-const app = express();
-app.use(cors({ origin: true }));
-app.use(express.json());
-
-// Normalizza le richieste: rimuove il prefisso /mcp se presente
-app.use((req, res, next) => {
-  if (req.url.startsWith("/mcp/")) {
-    req.url = req.url.replace(/^\/mcp/, "");
-  } else if (req.url === "/mcp") {
-    req.url = "/";
-  }
-  next();
-});
-
-// 1. Server Card
-app.get(["/.well-known/mcp/server-card", "/.well-known/mcp/server-card/"], (req, res) => {
-  res.status(200).json({
-    name: "Jurio MCP Server",
-    version: "1.0.4",
-    description: "Server MCP per la ricerca nella giurisprudenza italiana",
-  });
-});
-
-// 2. Protected Resource (RFC 9723)
-app.get([
-  "/.well-known/oauth-protected-resource",
-  "/.well-known/oauth-protected-resource/",
-  "/.well-known/oauth-protected-resource/mcp"
-], (req, res) => {
-  res.status(200).json({
-    resource: "https://jurio.it/mcp",
-    authorization_servers: ["https://jurio.it/mcp"]
-  });
-});
-
-// 3. Authorization Server Metadata (RFC 8414 & OpenID Discovery)
-app.get([
-  "/.well-known/oauth-authorization-server",
-  "/.well-known/oauth-authorization-server/",
-  "/.well-known/oauth-authorization-server/mcp",
-  "/.well-known/openid-configuration",
-  "/.well-known/openid-configuration/",
-  "/.well-known/openid-configuration/mcp"
-], (req, res) => {
-  res.status(200).json({
-    issuer: "https://jurio.it/mcp",
-    authorization_endpoint: "https://jurio.it/mcp/authorize",
-    token_endpoint: "https://jurio.it/mcp/token",
-    registration_endpoint: "https://jurio.it/mcp/register",
-    response_types_supported: ["code"],
-    grant_types_supported: ["authorization_code"],
-    code_challenge_methods_supported: ["S256", "plain"]
-  });
-});
-
-// 4. Dynamic Client Registration (RFC 7591)
-app.post("/register", (req, res) => {
-  res.status(201).json({
-    client_id: "jurio_claude_client_id_auto",
-    client_secret: "jurio_secret_dummy",
-    client_id_issued_at: Math.floor(Date.now() / 1000),
-    client_secret_expires_at: 0,
-    grant_types: ["authorization_code"],
-    response_types: ["code"],
-    redirect_uris: req.body?.redirect_uris || [],
-    token_endpoint_auth_method: "client_secret_post"
-  });
-});
-
-// 5. OAuth Authorize
-app.get("/authorize", (req, res) => {
-  const { client_id, redirect_uri, state, response_type } = req.query;
-  if (response_type !== "code") {
-    res.status(400).send("Unsupported response_type. Must be 'code'.");
-    return;
-  }
-  const loginUrl = new URL("https://jurio.it/oauth-login");
-  if (client_id) loginUrl.searchParams.append("client_id", String(client_id));
-  if (redirect_uri) loginUrl.searchParams.append("redirect_uri", String(redirect_uri));
-  if (state) loginUrl.searchParams.append("state", String(state));
-  res.redirect(302, loginUrl.toString());
-});
-
-// 6. OAuth Token Exchange
-app.post("/token", async (req, res) => {
-  const code = req.body?.code || req.query?.code;
-  const grant_type = req.body?.grant_type || req.query?.grant_type;
-
-  if (grant_type !== "authorization_code" || !code) {
-    res.status(400).json({ error: "unsupported_grant_type" });
-    return;
-  }
-
-  try {
-    const codeRef = db.collection("oauth_codes").doc(code as string);
-    const codeSnap = await codeRef.get();
-
-    if (!codeSnap.exists) {
-      res.status(401).json({ error: "invalid_grant", error_description: "Codice non valido o scaduto" });
-      return;
-    }
-
-    await codeRef.delete();
-    const accessToken = randomBytes(32).toString("hex");
-
-    const expireDate = new Date();
-    expireDate.setFullYear(expireDate.getFullYear() + 1);
-
-    await db.collection("oauth_tokens").doc(accessToken).set({
-      uid: codeSnap.data()?.uid,
-      createdAt: FieldValue.serverTimestamp(),
-      expiresAt: Timestamp.fromDate(expireDate),
-      client_id: req.body?.client_id || req.query?.client_id || "claude_web"
-    });
-
-    res.status(200).json({
-      access_token: accessToken,
-      token_type: "Bearer",
-      expires_in: 31536000,
-    });
-  } catch (err) {
-    console.error("[JURIO-MCP] Errore scambio token:", err);
-    res.status(500).json({ error: "server_error" });
-  }
-});
-
-// 7. MCP Protocol Transport (protetto da Bearer token)
-app.use(async (req, res) => {
-  if (req.method === "OPTIONS") { 
-    res.status(204).end(); 
-    return; 
-  }
-
-  const authHeader = typeof req.headers?.authorization === "string" ? req.headers.authorization : "";
-
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.set("WWW-Authenticate", 'Bearer realm="jurio", error="unauthorized"');
-    res.status(401).json({
-      error: "unauthorized",
-      message: "Autenticazione richiesta per utilizzare Jurio MCP."
-    });
-    return;
-  }
-
-  const server = createMcpServer(authHeader);
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-    enableJsonResponse: true,
-  });
-
-  res.on("close", () => {
-    transport.close().catch(console.error);
-  });
-
-  try {
-    await server.connect(transport);
-    await transport.handleRequest(req, res, req.body);
-  } catch (error) {
-    console.error("[JURIO-MCP] Errore MCP:", error);
-    if (!res.headersSent) res.status(500).json({ error: "MCP server error" });
-  }
-});
 
 export const jurioMcpServer = onRequest(
   { timeoutSeconds: 300, memory: "512MiB" },
@@ -541,351 +371,963 @@ export const vectorSearchJurio = onRequest(
   }
 );
 
-export const legalAgent = onRequest(
-  { 
-    secrets: ["GOOGLE_GENAI_API_KEY", "OPENAI_API_KEY", "TAVILY_API_KEY"],
-    timeoutSeconds: 300,
-    memory: "2GiB",
-    concurrency: 80 // Consigliato per scalare meglio su singola istanza
-  }, 
+export const vectorSearchDoctrine = onRequest(
+  {
+    secrets: ["OPENAI_API_KEY"], 
+    timeoutSeconds: 75,
+    memory: "1GiB",
+    cpu: 1,
+    concurrency: 80
+  },
   async (req, res) => {
-    return corsHandlerDomain(req, res, async (): Promise<void> => {
-      if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+    return corsHandlerDomain(req, res, async () => {
+      if (req.method === "OPTIONS") return res.status(204).end();
+      if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
 
-     try {
-        await requireAppCheck(req);
-        const uid = await requireUidFromAuthHeader(req);
+      // Istanziazione Lazy del client OpenAI
+      if (!oaClient && process.env.OPENAI_API_KEY) {
+        oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+      } else if (!oaClient) {
+        console.error("[JURIO-SEARCH-DOCTRINE] OPENAI_API_KEY mancante nel Secret Manager.");
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
 
-        const { prompt, context, filters, docs, metadatiFascicolo, action, old_chat_uuid, new_fascicolo_uuid, title } = req.body;
-        
-        // GESTIONE MIGRAZIONE 
-        if (action === "migrate") {
-          const batch = db.batch();
-          const oldChatDoc = await db.collection('chats').doc(old_chat_uuid).get();
-          const oldChatTitle = oldChatDoc.data()?.title || "Conversazione importata";
-          const oldChatRef = db.collection('chats').doc(old_chat_uuid).collection('messages');
-          const oldChatSnap = await oldChatRef.get();
-          
-          batch.set(db.collection('fascicoli').doc(new_fascicolo_uuid), {
-            ownerId: uid, title: title || oldChatTitle,
-            createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            updatedAt: admin.firestore.FieldValue.serverTimestamp()
-          }, { merge: true });
+      try {
+        // 1) INPUT SANITIZATION
+        const body = (req.body ?? {}) as any; 
+        const queryText = typeof body.query === "string" ? body.query.trim() : "";
 
-          if (!oldChatSnap.empty) {
-            const threadRef = db.collection('fascicoli').doc(new_fascicolo_uuid).collection('threads').doc(old_chat_uuid);
-            batch.set(threadRef, { title: oldChatTitle, createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() });
-            
-            const newMsgRef = threadRef.collection('messages');
-            oldChatSnap.forEach((doc) => {
-              const data = doc.data();
-              batch.set(newMsgRef.doc(doc.id), { ...sanitize(data), timestamp: data.timestamp || data.createdAt || admin.firestore.FieldValue.serverTimestamp() });
-              batch.delete(doc.ref);
-            });
-            batch.delete(db.collection('chats').doc(old_chat_uuid));
+        if (!queryText || queryText.length > 1500) {
+          return res.status(400).json({ error: "Bad Request: Invalid 'query'" });
+        }
+
+        const requestedLimit = Number(body.limit);
+        const limit = Number.isFinite(requestedLimit)
+          ? Math.min(Math.max(Math.floor(requestedLimit), 1), 100)
+          : 50;
+
+        const filters: any[] = Array.isArray(body.filters) ? body.filters : [];
+        const collectionName = "doctrine";
+
+        // 2) AUTH E SICUREZZA
+        let uid: string = "";
+        const authHeader = req.headers.authorization || "";
+        const token = authHeader.replace("Bearer ", "").trim();
+        let isOAuthRequest = false;
+
+        if (token) {
+          const [tokenSnap, directUserSnap] = await Promise.all([
+            db.collection("oauth_tokens").doc(token).get(),
+            db.collection("register").doc(token).get()
+          ]);
+
+          if (tokenSnap.exists) {
+            uid = String(tokenSnap.data()?.uid || "");
+            isOAuthRequest = true;
+          } else if (directUserSnap.exists) {
+            uid = token;
+            isOAuthRequest = true;
           }
-          await batch.commit();
-          res.status(200).json({ success: true });
-          return;
         }
 
-        const isFascicolo = context?.type === 'fascicolo';
-        const fascicoloId = isFascicolo ? context.fascicolo_uuid : null;
-        const parentId = isFascicolo ? context.fascicolo_uuid : context.chat_uuid;
-        const threadId = isFascicolo ? context.thread_uuid : null;
-
-        if (!parentId || typeof parentId !== 'string') { res.status(400).json({ error: "Bad Request", details: "Identificativo sessione mancante." }); return; }
-
-        let messagesRef: FirebaseFirestore.CollectionReference;
-        const backgroundTasks: Promise<any>[] = []; // Gestione sicura dei task pendenti
-
-        if (isFascicolo && threadId) {
-          messagesRef = db.collection('fascicoli').doc(parentId).collection('threads').doc(threadId).collection('messages');
-          backgroundTasks.push(processFascicoloDocs(fascicoloId!, docs || []).catch(e => console.error("Errore processFascicoloDocs:", e)));
-        } else {
-          messagesRef = db.collection('chats').doc(parentId).collection('messages');
+        if (!isOAuthRequest || !uid) {
+          try {
+            await requireAppCheck(req);
+            uid = await requireUidFromAuthHeader(req);
+          } catch (authError) {
+            return res.status(401).json({ error: "Unauthorized" });
+          }
         }
 
-        const userPromise = db.collection("register").doc(uid).get();
-        const historyPromise = messagesRef.orderBy('timestamp', 'desc').limit(6).get();
+        if (!uid) return res.status(401).json({ error: "Unauthorized" });
 
-        const [userSnap, historySnap] = await Promise.all([userPromise, historyPromise]);
+        // 3) ESECUZIONE PARALLELA (Embedding + Rate Limits)
+        const limits = { perMinute: 20, perDay: 200 };
+        const [embeddingPromiseResult, userSnap] = await Promise.all([
+          oaClient.embeddings.create({
+            model: "text-embedding-3-small",
+            input: `Contesto giuridico italiano dottrinale: ${queryText}`,
+            dimensions: 1536,
+          }),
+          db.collection("register").doc(uid).get(),
+          consumePerMinuteFeature(uid, "research", limits.perMinute),
+          consumeDailyFeature(uid, "research", limits.perDay)
+        ]);
 
-        if (!userSnap.exists) { res.status(404).json({ error: "User not found" }); return; }
-        const planId = String(userSnap.data()?.planId ?? "");
-        if (!["prova", "admin", "business", "business_m"].includes(planId)) { res.status(403).json({ error: "Access denied" }); return; }
-
-        const limits = planId === "prova" ? { perMinute: 5, perDay: 20 }
-                     : ["business", "business_m"].includes(planId) ? { perMinute: 20, perDay: 200 }
-                     : { perMinute: 60, perDay: 10_000 };
+        if (!userSnap.exists) {
+          return res.status(404).json({ error: "Not Found" }); 
+        }
         
-        // RATE LIMITING NON BLOCCANTE (Eseguito in background)
-        backgroundTasks.push(
-          Promise.all([
-            consumePerMinuteFeature(uid, "legal_agent" as any, limits.perMinute),
-            consumeDailyFeature(uid, "legal_agent" as any, limits.perDay)
-          ]).catch(e => console.error("Errore limiti:", e))
+        const planId = String(userSnap.data()?.planId ?? "");
+        const allowedPlans = new Set(["prova", "admin", "business", "personale", "business_m", "personale_m"]);
+
+        if (!allowedPlans.has(planId)) {
+          return res.status(403).json({ error: "Forbidden", message: "Piano non abilitato." });
+        }
+        
+        const queryVector = embeddingPromiseResult.data[0].embedding;
+
+        // 4) COSTRUZIONE QUERY
+        let baseQuery = db.collection(collectionName).select(
+          "tipo_documento", "origine", "numero_anno", "data_documento", 
+          "tematica", "questione_di_diritto", "orientamento", "tipo_orientamento", 
+          "materia", "norme_citate", "precedenti_citati", "sintesi", "url_pdf", "document_base_id"
         );
 
-        const dbHistory = historySnap.docs.map((doc) => {
+        // Applica i filtri opzionali
+        const appliedFilters = filters.reduce((q: any, f: any) => {
+          if (f && typeof f.field === "string" && typeof f.operator === "string" && f.value !== undefined) {
+            let queryValue = f.value;
+            if (f.value && typeof f.value === "object" && f.value !== null &&
+               (("type" in f.value && f.value.type === "firestore/timestamp/1.0") || "seconds" in f.value)) {
+              const valAsObj = f.value;
+              if (typeof valAsObj.seconds === "number") {
+                queryValue = new Timestamp(valAsObj.seconds, valAsObj.nanoseconds || 0);
+              }
+            }
+            return q.where(f.field, f.operator, queryValue);
+          }
+          return q;
+        }, baseQuery);
+
+        // 5) RICERCA VETTORIALE PURA
+        const sSnap = await appliedFilters
+          .findNearest({
+            vectorField: "embedding",
+            queryVector: FieldValue.vector(queryVector),
+            limit: limit, // Nessun over-fetching, prendiamo solo i richiesti
+            distanceMeasure: "COSINE",
+            distanceResultField: "distance"
+          })
+          .get();
+
+        const safeTruncate = (text: unknown): string | null => 
+          typeof text === "string" && text.length > 0 ? text.substring(0, 10000) : null;
+
+        // 6) MAPPATURA RISULTATI
+        const results = sSnap.docs.map((doc: any) => {
           const data = doc.data();
-          return { role: String(data.role || 'user'), content: String(data.content || '') };
-        }).reverse();
-        const isFirstMessage = historySnap.empty;
-
-        // FLUSH HEADER SSE: Apre la connessione istantaneamente
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders(); 
-
-        const flowStream = legalAgentFlow.stream({
-          prompt, filters, docs: docs || [], history: dbHistory, isFirstMessage, userId: uid, fascicoloId: fascicoloId, metadatiFascicolo: metadatiFascicolo || {}
+          return {
+            id: doc.id,
+            document_base_id: data.document_base_id || null,
+            url_pdf: data.url_pdf || null,
+            tipo_documento: data.tipo_documento || "dottrina",
+            origine: data.origine || null,
+            numero_anno: data.numero_anno || null,
+            data_documento: data.data_documento || null,
+            tematica: data.tematica || null,
+            questione_di_diritto: data.questione_di_diritto || null,
+            orientamento: data.orientamento || null,
+            tipo_orientamento: data.tipo_orientamento || null,
+            materia: data.materia || null,
+            norme_citate: data.norme_citate || [],
+            precedenti_citati: data.precedenti_citati || [],
+            sintesi: safeTruncate(data.sintesi),
+            _distance: typeof data.distance === "number" ? data.distance : null,
+          };
         });
 
-        for await (const chunk of flowStream.stream) {
-          res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
-        }
+        // 7) OUTPUT DIRETTO
+        return res.status(200).json({ results });
 
-        const finalOutput = await flowStream.output; 
-        const sanitizedResult = sanitize(finalOutput);
-        
-        res.write(`data: ${JSON.stringify({ result: sanitizedResult })}\n\n`);
-        res.write(`data: [DONE]\n\n`);
-        res.end();
-
-        // PREPARAZIONE BATCH UPDATE
-        const batch = db.batch();
-        batch.set(messagesRef.doc(), { role: 'user', content: prompt, timestamp: admin.firestore.FieldValue.serverTimestamp() });
-        batch.set(messagesRef.doc(), { role: 'model', content: sanitizedResult.risposta, sources: sanitizedResult.fonti || [], timestamp: admin.firestore.FieldValue.serverTimestamp() });
-        
-        const parentRef = db.collection(isFascicolo ? 'fascicoli' : 'chats').doc(parentId);
-        const parentUpdate: any = { updatedAt: admin.firestore.FieldValue.serverTimestamp(), ownerId: uid };
-
-        if (isFirstMessage && sanitizedResult.titoloGenerato) {
-          if (isFascicolo && threadId) {
-            batch.set(db.collection('fascicoli').doc(parentId).collection('threads').doc(threadId), { title: sanitizedResult.titoloGenerato, createdAt: admin.firestore.FieldValue.serverTimestamp(), updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-            if (context.title) parentUpdate.title = context.title;
-          } else {
-            parentUpdate.title = sanitizedResult.titoloGenerato;
-          }
-        }
-        if(isFascicolo && threadId) {
-          batch.set(db.collection('fascicoli').doc(parentId).collection('threads').doc(threadId), { updatedAt: admin.firestore.FieldValue.serverTimestamp() }, { merge: true });
-        }
-        
-        batch.set(parentRef, parentUpdate, { merge: true });
-
-        // Aggiungiamo la scrittura DB ai task in background e attendiamo la fine sicura
-        backgroundTasks.push(batch.commit().catch(e => console.error("Errore batch:", e)));
-        await Promise.all(backgroundTasks);
-
-      } catch (err: any) {
-        const msg = err instanceof Error ? err.message : "Internal error";
-        console.error("ERRORE CRITICO LEGAL AGENT:", err);
-
-        if (res.headersSent) {
-          res.write(`data: ${JSON.stringify({ error: { message: msg } })}\n\n`);
-          res.end();
-        } else {
-          res.status(500).json({ error: "Process failed", details: msg });
-        }
+      } catch (err) {
+        console.error("[JURIO-SEARCH-DOCTRINE] Errore non gestito:", err);
+        return res.status(500).json({ error: "Internal Server Error" });
       }
     });
   }
 );
 
-export const deepAnalysisAgent = onRequest(
-  { 
+export const legalAgent = onRequest(
+  {
     secrets: ["GOOGLE_GENAI_API_KEY", "OPENAI_API_KEY", "TAVILY_API_KEY"],
-    timeoutSeconds: 540,
-    memory: "2GiB",
-    concurrency: 80 
-  }, 
+    memory: "2GiB", // Override locale necessario per flussi AI in stream
+    concurrency: 80,
+  },
   async (req, res) => {
     return corsHandlerDomain(req, res, async (): Promise<void> => {
-      if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+      if (req.method === "OPTIONS") {
+        res.status(204).end();
+        return;
+      }
+
+      if (req.method !== "POST") {
+        res.status(405).send("Method Not Allowed");
+        return;
+      }
+
+      // Prevenzione memory leak su stream interrotti
+      let clientDisconnected = false;
+
+      req.on("aborted", () => {
+        clientDisconnected = true;
+      });
+
+      res.on("close", () => {
+        clientDisconnected = true;
+      });
 
       try {
         await requireAppCheck(req);
         const uid = await requireUidFromAuthHeader(req);
+        const body = req.body ?? {};
+        const {
+          prompt,
+          context,
+          filters,
+          docs,
+          metadatiFascicolo,
+          action,
+          old_chat_uuid,
+          new_fascicolo_uuid,
+          title,
+        } = body;
 
-        const body = req.body as DeepAnalysisRequestBody;
-        const { action, sessionId, prompt, direttivaHitl, docs, config } = body;
-
-        if (!action || !["start_research", "refine_research", "generate_synthesis"].includes(action)) { 
-          res.status(400).json({ error: "Bad Request", details: "Action non valida." }); 
-          return; 
-        }
-        if (!sessionId || typeof sessionId !== "string") {
-          res.status(400).json({ error: "Bad Request", details: "SessionId mancante o non valido." }); 
+        // --- Azione: Migrazione Chat a Fascicolo ---
+        if (action === "migrate") {
+          if (!old_chat_uuid || !new_fascicolo_uuid) {
+            res.status(400).json({ error: "Identificativi mancanti per migrazione" });
+            return;
+          }
+          await migrateChatToFascicolo({
+            uid,
+            oldChatId: old_chat_uuid,
+            newFascicoloId: new_fascicolo_uuid,
+            title,
+          });
+          res.status(200).json({ success: true });
           return;
         }
 
-        const userSnap = await admin.firestore().collection("register").doc(uid).get();
-        if (!userSnap.exists) { 
-          res.status(404).json({ error: "User not found" }); 
-          return; 
+        // --- Validazioni di base ---
+        if (typeof prompt !== "string" || !prompt.trim()) {
+          res.status(400).json({ error: "Bad Request", details: "Parametro 'prompt' mancante." });
+          return;
         }
-        
+
+        if (prompt.length > 20_000) {
+          res.status(413).json({ error: "Payload Too Large", details: "La richiesta è troppo lunga." });
+          return;
+        }
+
+        const isFascicolo = context?.type === "fascicolo";
+        const fascicoloId = isFascicolo ? context?.fascicolo_uuid ?? null : null;
+        const parentId = isFascicolo ? context?.fascicolo_uuid : context?.chat_uuid;
+        const threadId = isFascicolo ? context?.thread_uuid ?? null : null;
+
+        if (typeof parentId !== "string" || !parentId.trim()) {
+          res.status(400).json({ error: "Bad Request", details: "Identificativo sessione mancante." });
+          return;
+        }
+
+        if (isFascicolo && !threadId) {
+          res.status(400).json({ error: "Bad Request", details: "Thread del fascicolo mancante." });
+          return;
+        }
+
+        // --- Normalizzazione Dati ---
+        const normalizedDocs = Array.isArray(docs)
+          ? docs.filter((value): value is string => typeof value === "string" && value.trim().length > 0).slice(0, 50)
+          : [];
+        const normalizedFilters = Array.isArray(filters) ? filters : [];
+        const normalizedMetadata = (metadatiFascicolo && typeof metadatiFascicolo === "object" && !Array.isArray(metadatiFascicolo))
+          ? metadatiFascicolo
+          : {};
+
+        const messagesRef = isFascicolo
+          ? db.collection("fascicoli").doc(parentId).collection("threads").doc(threadId!).collection("messages")
+          : db.collection("chats").doc(parentId).collection("messages");
+
+        const backgroundTasks: Promise<void>[] = [];
+
+        // Parsing asincrono background documenti
+        if (isFascicolo && fascicoloId && normalizedDocs.length > 0) {
+          backgroundTasks.push(
+            processFascicoloDocs(fascicoloId, normalizedDocs).catch((error) => {
+              console.error("[legalAgent] Errore processFascicoloDocs:", error);
+            })
+          );
+        }
+
+        const [userSnap, historySnap] = await Promise.all([
+          db.collection("register").doc(uid).get(),
+          messagesRef.orderBy("timestamp", "desc").limit(6).get()
+        ]);
+
+        if (!userSnap.exists) {
+          res.status(404).json({ error: "User not found" });
+          return;
+        }
+
         const planId = String(userSnap.data()?.planId ?? "");
-        if (!["admin", "personale", "personale_m", "business", "business_m"].includes(planId)) { 
-          res.status(403).json({ error: "Access denied." }); 
+        const limits = getLegalAgentLimits(planId);
+
+        if (!limits) {
+          res.status(403).json({ error: "Access denied" });
+          return;
+        }
+
+        // --- SICUREZZA: Controllo Rate Limit Bloccante ---
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "legal_agent" as any, limits.perMinute),
+            consumeDailyFeature(uid, "legal_agent" as any, limits.perDay),
+          ]);
+        } catch (error) {
+          console.warn(`[legalAgent] Rate limit superato per utente ${uid}`);
+          res.status(429).json({ error: "Too Many Requests", details: "Limite di utilizzo superato." });
+          return;
+        }
+
+        const dbHistory = historySnap.docs
+          .map((doc) => {
+            const data = doc.data();
+            return {
+              role: String(data.role ?? "user"),
+              content: String(data.content ?? ""),
+            };
+          })
+          .reverse();
+
+        const isFirstMessage = historySnap.empty;
+
+        // --- Avvio Stream SSE ---
+        setupLegalAgentSse(res);
+        sendLegalAgentSse(res, { status: "Avvio dell'agente legale..." });
+
+        const flowStream = legalAgentFlow.stream({
+          prompt: prompt.trim(),
+          filters: normalizedFilters,
+          docs: normalizedDocs,
+          history: dbHistory,
+          isFirstMessage,
+          userId: uid,
+          fascicoloId,
+          metadatiFascicolo: normalizedMetadata,
+          fascicoloTitolo: isFascicolo && typeof context?.title === "string" ? context.title : null,
+        });
+
+        for await (const chunk of flowStream.stream) {
+          if (clientDisconnected || res.writableEnded) break;
+          sendLegalAgentSse(res, { message: chunk });
+        }
+
+        if (clientDisconnected) {
+          console.warn(`[legalAgent] Client disconnesso prematuramente: ${uid}`);
           return; 
         }
 
-        const sessionRef = admin.firestore().collection("deep_analysis_sessions").doc(sessionId);
-        const sessionSnap = await sessionRef.get();
+        const finalOutput = await flowStream.output;
+        const sanitizedResult = sanitize(finalOutput);
 
-        // ─── AZIONE 1: START ──────────────────────────────────────────
+        if (!res.writableEnded) {
+          sendLegalAgentSse(res, { result: sanitizedResult });
+          sendLegalAgentSseRaw(res, "[DONE]");
+          res.end();
+        }
+
+        // --- Persistenza asincrona ---
+        backgroundTasks.push(
+          persistLegalAgentConversation({
+            uid,
+            prompt: prompt.trim(),
+            result: sanitizedResult,
+            messagesRef,
+            parentId,
+            isFascicolo,
+            threadId,
+            isFirstMessage,
+            contextTitle: context?.title,
+          }).catch((error) => {
+            console.error("[legalAgent] Errore persistenza:", error);
+          })
+        );
+
+        await Promise.all(backgroundTasks);
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error("[legalAgent] ERRORE CRITICO:", err);
+
+        if (res.headersSent && !res.writableEnded) {
+          try {
+            sendLegalAgentSse(res, { error: { message: msg } });
+            res.end();
+          } catch (sseError) {
+            if (!res.writableEnded) res.end();
+          }
+          return;
+        }
+
+        res.status(500).json({ error: "Process failed", details: msg });
+      }
+    });
+  }
+);
+
+// ─────────────────────────────────────────────
+// METODI DI SUPPORTO ENDPOINT
+// ─────────────────────────────────────────────
+function getLegalAgentLimits(planId: string): { perMinute: number; perDay: number } | null {
+  switch (planId) {
+    case "prova": return { perMinute: 20, perDay: 200 };
+    case "business":
+    case "business_m": return { perMinute: 20, perDay: 200 };
+    case "admin": return { perMinute: 60, perDay: 10_000 };
+    default: return null;
+  }
+}
+
+function setupLegalAgentSse(res: any): void {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.setHeader("X-Accel-Buffering", "no");
+  res.flushHeaders();
+}
+
+function sendLegalAgentSse(res: any, payload: unknown): void {
+  if (res.writableEnded) return;
+  res.write(`data: ${JSON.stringify(payload)}\n\n`);
+}
+
+function sendLegalAgentSseRaw(res: any, payload: string): void {
+  if (res.writableEnded) return;
+  res.write(`data: ${payload}\n\n`);
+}
+
+async function persistLegalAgentConversation(args: {
+  uid: string;
+  prompt: string;
+  result: any;
+  messagesRef: FirebaseFirestore.CollectionReference;
+  parentId: string;
+  isFascicolo: boolean;
+  threadId: string | null;
+  isFirstMessage: boolean;
+  contextTitle?: string;
+}): Promise<void> {
+  const batch = db.batch();
+  const FieldValue = admin.firestore.FieldValue;
+
+  batch.set(args.messagesRef.doc(), {
+    role: "user",
+    content: args.prompt,
+    timestamp: FieldValue.serverTimestamp(),
+  });
+
+  batch.set(args.messagesRef.doc(), {
+    role: "model",
+    content: String(args.result?.risposta ?? ""),
+    sources: Array.isArray(args.result?.fonti) ? args.result.fonti : [],
+    timestamp: FieldValue.serverTimestamp(),
+  });
+
+  const parentCollection = args.isFascicolo ? "fascicoli" : "chats";
+  const parentRef = db.collection(parentCollection).doc(args.parentId);
+  const parentUpdate: Record<string, any> = {
+    ownerId: args.uid,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+
+  if (args.isFirstMessage && args.result?.titoloGenerato) {
+    if (args.isFascicolo && args.threadId) {
+      const threadRef = db.collection("fascicoli").doc(args.parentId).collection("threads").doc(args.threadId);
+      batch.set(threadRef, {
+        title: String(args.result.titoloGenerato),
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+
+      if (typeof args.contextTitle === "string" && args.contextTitle.trim()) {
+        parentUpdate.title = args.contextTitle.trim();
+      }
+    } else {
+      parentUpdate.title = String(args.result.titoloGenerato);
+    }
+  }
+
+  if (args.isFascicolo && args.threadId) {
+    const threadRef = db.collection("fascicoli").doc(args.parentId).collection("threads").doc(args.threadId);
+    batch.set(threadRef, { updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+  }
+
+  batch.set(parentRef, parentUpdate, { merge: true });
+  await batch.commit();
+}
+
+async function migrateChatToFascicolo(args: {
+  uid: string;
+  oldChatId: string;
+  newFascicoloId: string;
+  title?: string;
+}): Promise<void> {
+  const oldChatRef = db.collection("chats").doc(args.oldChatId);
+  const newFascicoloRef = db.collection("fascicoli").doc(args.newFascicoloId);
+  const FieldValue = admin.firestore.FieldValue;
+
+  const [oldChatSnap, newFascicoloSnap] = await Promise.all([oldChatRef.get(), newFascicoloRef.get()]);
+
+  if (!oldChatSnap.exists) throw new Error("Chat sorgente non trovata.");
+  if (oldChatSnap.data()?.ownerId && oldChatSnap.data()?.ownerId !== args.uid) throw new Error("Accesso alla chat sorgente negato.");
+  if (newFascicoloSnap.exists && newFascicoloSnap.data()?.ownerId !== args.uid) throw new Error("Accesso al fascicolo destinazione negato.");
+
+  const oldChatTitle = String(oldChatSnap.data()?.title ?? "Conversazione importata");
+  const finalTitle = typeof args.title === "string" && args.title.trim() ? args.title.trim() : oldChatTitle;
+
+  const oldMessagesSnap = await oldChatRef.collection("messages").get();
+  const threadRef = newFascicoloRef.collection("threads").doc(args.oldChatId);
+  const operations: Array<(batch: FirebaseFirestore.WriteBatch) => void> = [];
+
+  operations.push((batch) => {
+    batch.set(newFascicoloRef, {
+      ownerId: args.uid,
+      title: finalTitle,
+      updatedAt: FieldValue.serverTimestamp(),
+      ...(newFascicoloSnap.exists ? {} : { createdAt: FieldValue.serverTimestamp() }),
+    }, { merge: true });
+  });
+
+  operations.push((batch) => {
+    batch.set(threadRef, {
+      title: oldChatTitle,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+  });
+
+  for (const doc of oldMessagesSnap.docs) {
+    const data = doc.data();
+    const newMessageRef = threadRef.collection("messages").doc(doc.id);
+    operations.push((batch) => {
+      batch.set(newMessageRef, {
+        ...sanitize(data),
+        timestamp: data.timestamp ?? data.createdAt ?? FieldValue.serverTimestamp(),
+      });
+    });
+    operations.push((batch) => batch.delete(doc.ref));
+  }
+
+  operations.push((batch) => batch.delete(oldChatRef));
+
+  const BATCH_SIZE = 450;
+  for (let i = 0; i < operations.length; i += BATCH_SIZE) {
+    const batch = db.batch();
+    for (const operation of operations.slice(i, i + BATCH_SIZE)) operation(batch);
+    await batch.commit();
+  }
+}
+
+export const deepAnalysisAgent = onRequest(
+  {
+    secrets: [
+      "GOOGLE_GENAI_API_KEY",
+      "OPENAI_API_KEY",
+      "TAVILY_API_KEY",
+    ],
+    timeoutSeconds: 540,
+    memory: "2GiB",
+    concurrency: 80,
+  },
+  async (req, res) => {
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      if (req.method === "OPTIONS") {
+        res.status(204).end();
+        return;
+      }
+
+      if (req.method !== "POST") {
+        res.status(405).send("Method Not Allowed");
+        return;
+      }
+
+      try {
+        await requireAppCheck(req);
+        const uid = await requireUidFromAuthHeader(req);
+        const body = req.body as DeepAnalysisRequestBody;
+        const {
+          action,
+          sessionId,
+          prompt,
+          direttivaHitl,
+          docs,
+          config,
+        } = body;
+
+        const validActions = new Set<DeepAnalysisRequestBody["action"]>([
+          "start_research",
+          "refine_research",
+          "generate_synthesis",
+        ]);
+
+        if (!action || !validActions.has(action)) {
+          res.status(400).json({
+            error: "Bad Request",
+            details: "Action non valida.",
+          });
+          return;
+        }
+
+        if (typeof sessionId !== "string" || !sessionId.trim()) {
+          res.status(400).json({
+            error: "Bad Request",
+            details: "SessionId mancante o non valido.",
+          });
+          return;
+        }
+
+        const normalizedSessionId = sessionId.trim();
+        const firestore = admin.firestore();
+        const sessionRef = firestore
+          .collection("deep_analysis_sessions")
+          .doc(normalizedSessionId);
+
+        const userSnap = await firestore
+          .collection("register")
+          .doc(uid)
+          .get();
+
+        if (!userSnap.exists) {
+          res.status(404).json({ error: "User not found" });
+          return;
+        }
+
+        const planId = String(userSnap.data()?.planId ?? "");
+        if (
+          ![
+            "admin",
+            "personale",
+            "personale_m",
+            "business",
+            "business_m",
+          ].includes(planId)
+        ) {
+          res.status(403).json({ error: "Access denied." });
+          return;
+        }
+
+        const sessionSnap = await sessionRef.get();
+        const sessionData = sessionSnap.exists
+          ? sessionSnap.data() ?? {}
+          : null;
+
+        if (sessionSnap.exists) {
+          assertDeepAnalysisSessionOwner(sessionData, uid);
+        }
+
         if (action === "start_research") {
-          if (!prompt || typeof prompt !== "string") {
-            res.status(400).json({ error: "Bad Request", details: "Prompt mancante per start_research." });
+          if (typeof prompt !== "string" || !prompt.trim()) {
+            res.status(400).json({
+              error: "Bad Request",
+              details: "Prompt mancante per start_research.",
+            });
             return;
           }
 
-          // 1. CONTROLLO QUOTE IMMEDIATO (Lancia errore se superate bloccando il flusso)
-          await Promise.all([
-            consumePerMinuteFeature(uid, "deep_analysis" as any, 10),
-            consumeDailyFeature(uid, "deep_analysis" as any, 30)
-          ]);
+          const normalizedPrompt = prompt.trim();
+          const normalizedDocs = normalizeDeepAnalysisDocs(docs);
+          const resolvedConfig = resolveDeepAnalysisConfig(config);
 
-          const resolvedConfig: DeepAnalysisConfig = {
-            ...DEFAULT_CONFIG,
-            ...(config || {}),
-          };
+          await consumeDeepAnalysisQuota(uid);
 
           const output = await researchAnalysisFlow({
-            prompt, 
-            docs: docs || [], 
-            userId: uid, 
-            config: resolvedConfig
+            prompt: normalizedPrompt,
+            docs: normalizedDocs,
+            userId: uid,
+            config: resolvedConfig,
           });
-          
-          await sessionRef.set(
-            sanitize({
-              user: uid,
-              title: prompt.substring(0, 30) + "...",
-              status: "review",
-              promptOriginale: prompt,
-              documentiAllegati: docs || [],
-              configurazione: config || {},
-              inquadramento: output.inquadramento,
-              mappaDialettica: output.mappaDialettica,
-              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-              createdAt: sessionSnap.exists ? sessionSnap.data()?.createdAt : admin.firestore.FieldValue.serverTimestamp()
-            }), 
-            { merge: true }
-          );
 
-          res.status(200).json({ success: true, status: "review" });
+          const now = admin.firestore.FieldValue.serverTimestamp();
+          const sessionPayload: Record<string, any> = {
+            user: uid,
+            ownerId: uid,
+            title: createDeepAnalysisTitle(normalizedPrompt),
+            status: "review",
+            promptOriginale: normalizedPrompt,
+            documentiAllegati: normalizedDocs,
+            configurazione: resolvedConfig,
+            inquadramento: output.inquadramento,
+            mappaDialettica: output.mappaDialettica,
+            mappaConcettuale: output.mappaConcettuale,
+            fontiUsate: output.mappaConcettuale?.sourceIds ?? [],
+            updatedAt: now,
+          };
+
+          if (!sessionSnap.exists) {
+            sessionPayload.createdAt = now;
+          }
+
+          await sessionRef.set(sanitize(sessionPayload), { merge: true });
+
+          res.status(200).json({
+            success: true,
+            status: "review",
+            mappaDialettica: output.mappaDialettica,
+            mappaConcettuale: output.mappaConcettuale,
+            inquadramento: output.inquadramento,
+          });
           return;
         }
 
-        // ─── AZIONE 2: REFINE / HITL ──────────────────────────────────
+        if (!sessionSnap.exists) {
+          res.status(404).json({ error: "Session not found." });
+          return;
+        }
+
         if (action === "refine_research") {
-          if (!sessionSnap.exists) { 
-            res.status(404).json({ error: "Session not found." }); 
-            return; 
+          if (!sessionSnap.exists) {
+            res.status(404).json({
+              success: false,
+              error: "Sessione non trovata",
+            });
+            return;
           }
-          const sessionData = sessionSnap.data();
 
-          // 1. CONTROLLO QUOTE IMMEDIATO
-          await Promise.all([
-            consumePerMinuteFeature(uid, "deep_analysis" as any, 10),
-            consumeDailyFeature(uid, "deep_analysis" as any, 30)
-          ]);
+          // Da questo punto in poi sessionData è sicuramente non-null.
+          const sessionData = sessionSnap.data()!;
 
-          const savedConfig = (sessionData?.configurazione as Partial<DeepAnalysisConfig>) || {};
+          // Verifica ownership prima di leggere/modificare la sessione.
+          assertDeepAnalysisSessionOwner(sessionData, uid);
+
+          const normalizedHitl =
+            typeof direttivaHitl === "string" && direttivaHitl.trim().length > 0
+              ? direttivaHitl.trim()
+              : "Ricerca approfondimenti";
+
+          // Quota per la fase di refinement.
+          await consumeDeepAnalysisQuota(uid);
+
+          // Recupera la configurazione persistita.
+          const savedConfig =
+            sessionData.configurazione &&
+            typeof sessionData.configurazione === "object"
+              ? sessionData.configurazione
+              : {};
+
           const resolvedConfig: DeepAnalysisConfig = {
             ...DEFAULT_CONFIG,
-            ...savedConfig,
+            ...(savedConfig as Partial<DeepAnalysisConfig>),
           };
 
           const output = await refineResearchFlow({
-            originalPrompt: (sessionData?.promptOriginale as string) || "",
-            direttivaHitl: direttivaHitl || "Ricerca approfondimenti", 
-            currentInquadramento: (sessionData?.inquadramento as Record<string, unknown>) || {},
-            currentMappaDialettica: (sessionData?.mappaDialettica as Record<string, unknown>) || {},
-            docs: (sessionData?.documentiAllegati as string[]) || [],
+            originalPrompt:
+              typeof sessionData.promptOriginale === "string"
+                ? sessionData.promptOriginale
+                : "",
+
+            direttivaHitl: normalizedHitl,
+
+            currentInquadramento: InquadramentoSchema.parse(
+              sessionData.inquadramento ?? {}
+            ),
+
+            currentMappaDialettica: MappaDialetticaSchema.parse(
+              sessionData.mappaDialettica ?? {}
+            ),
+
+            currentMappaConcettuale:
+              sessionData.mappaConcettuale ?? null,
+
+            docs: Array.isArray(sessionData.documentiAllegati)
+              ? sessionData.documentiAllegati
+              : [],
+
             userId: uid,
-            config: resolvedConfig
+
+            config: resolvedConfig,
           });
 
-          await sessionRef.update(
+          const now = admin.firestore.FieldValue.serverTimestamp();
+
+          await sessionRef.set(
             sanitize({
               inquadramento: output.inquadramento,
               mappaDialettica: output.mappaDialettica,
-              updatedAt: admin.firestore.FieldValue.serverTimestamp()
-            })
+              mappaConcettuale: output.mappaConcettuale,
+              fontiUsate:
+                output.mappaConcettuale?.sourceIds ?? [],
+              status: "review",
+              updatedAt: now,
+            }),
+            { merge: true }
           );
 
-          res.status(200).json({ success: true, status: "review" });
+          res.status(200).json({
+            success: true,
+            status: "review",
+            inquadramento: output.inquadramento,
+            mappaDialettica: output.mappaDialettica,
+            mappaConcettuale: output.mappaConcettuale,
+            fontiUsate:
+              output.mappaConcettuale?.sourceIds ?? [],
+          });
+
           return;
         }
 
-        // ─── AZIONE 3: GENERATE SYNTHESIS ─────────────────────────────
         if (action === "generate_synthesis") {
-          if (!sessionSnap.exists) { 
-            res.status(404).json({ error: "Session not found." }); 
-            return; 
-          }
-          const sessionData = sessionSnap.data();
 
-          // 1. CONTROLLO QUOTE IMMEDIATO
-          await Promise.all([
-            consumePerMinuteFeature(uid, "deep_analysis" as any, 10),
-            consumeDailyFeature(uid, "deep_analysis" as any, 30)
-          ]);
-
-          const savedConfig = (sessionData?.configurazione as Partial<DeepAnalysisConfig>) || {};
-          const resolvedConfig: DeepAnalysisConfig = {
-            ...DEFAULT_CONFIG,
-            ...savedConfig,
-          };
+          await consumeDeepAnalysisQuota(uid);
 
           const output = await generateSynthesisReportFlow({
-            quesitoOriginale: (sessionData?.promptOriginale as string) || "",
-            inquadramento: sessionData?.inquadramento || {},
-            mappaDialettica: sessionData?.mappaDialettica || {},
+            quesitoOriginale: String(sessionData?.promptOriginale ?? ""),
+            inquadramento: sessionData?.inquadramento ?? {},
+            mappaDialettica: sessionData?.mappaDialettica ?? {},
+            mappaConcettuale: sessionData?.mappaConcettuale ?? undefined,
             userId: uid,
-            config: resolvedConfig
           });
 
           await sessionRef.update(
             sanitize({
               sintesiStrategica: output,
               status: "completed",
-              updatedAt: admin.firestore.FieldValue.serverTimestamp()
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
             })
           );
 
-          res.status(200).json({ success: true, status: "completed" });
+          res.status(200).json({
+            success: true,
+            status: "completed",
+            sintesiStrategica: output,
+            mappaConcettuale: sessionData?.mappaConcettuale ?? null,
+          });
           return;
         }
 
+        res.status(400).json({ error: "Unsupported action." });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Internal error";
-        console.error("ERRORE CRITICO DEEP ANALYSIS AGENT:", err);
-        
-        // CATTURA L'ERRORE DELLE QUOTE E RESTITUISCE 429
+        console.error("[DeepAnalysisAgent] ERRORE CRITICO:", err);
+
         if (msg.includes("quota_exceeded")) {
-          res.status(429).json({ error: "Quota Exceeded", details: msg });
+          res.status(429).json({
+            error: "Quota Exceeded",
+            details: msg,
+          });
           return;
         }
-        
+
         if (msg.includes("ToolLoop")) {
-          res.status(422).json({ error: "ToolLoop", details: msg });
+          res.status(422).json({
+            error: "ToolLoop",
+            details: msg,
+          });
           return;
         }
-        
-        res.status(500).json({ error: "Process failed", details: msg });
+
+        if (msg.includes("Accesso alla sessione negato")) {
+          res.status(403).json({
+            error: "Forbidden",
+            details: msg,
+          });
+          return;
+        }
+
+        res.status(500).json({
+          error: "Process failed",
+          details: msg,
+        });
       }
     });
   }
 );
+
+async function consumeDeepAnalysisQuota(uid: string): Promise<void> {
+  await Promise.all([
+    consumePerMinuteFeature(uid, "deep_analysis" as any, 10),
+    consumeDailyFeature(uid, "deep_analysis" as any, 30),
+  ]);
+}
+
+function assertDeepAnalysisSessionOwner(
+  sessionData: FirebaseFirestore.DocumentData | undefined | null,
+  uid: string
+): void {
+  const owner = sessionData?.ownerId ?? sessionData?.user;
+  if (String(owner ?? "") !== uid) {
+    throw new Error("Accesso alla sessione negato.");
+  }
+}
+
+function normalizeDeepAnalysisDocs(docs: unknown): string[] {
+  if (!Array.isArray(docs)) {
+    return [];
+  }
+
+  return Array.from(
+    new Set(
+      docs
+        .map((item) => {
+          if (typeof item === "string") {
+            return item;
+          }
+          if (item && typeof item === "object" && "id" in item) {
+            return String((item as { id: unknown }).id);
+          }
+          return "";
+        })
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  ).slice(0, 50);
+}
+
+function resolveDeepAnalysisConfig(
+  config: Partial<DeepAnalysisConfig> | null | undefined
+): DeepAnalysisConfig {
+  const source = config ?? {};
+
+  return {
+    ...DEFAULT_CONFIG,
+    confidenceLevel: clampNumber(
+      source.confidenceLevel,
+      DEFAULT_CONFIG.confidenceLevel,
+      0,
+      100
+    ),
+    sourceWeb:
+      typeof source.sourceWeb === "boolean"
+        ? source.sourceWeb
+        : DEFAULT_CONFIG.sourceWeb,
+    sourceInternalDB:
+      typeof source.sourceInternalDB === "boolean"
+        ? source.sourceInternalDB
+        : DEFAULT_CONFIG.sourceInternalDB,
+    sourceDoctrine:
+      typeof (source as any).sourceDoctrine === "boolean"
+        ? (source as any).sourceDoctrine
+        : true,
+    webLimit: clampInteger(source.webLimit, DEFAULT_CONFIG.webLimit, 1, 10),
+  } as DeepAnalysisConfig;
+}
+
+function clampNumber(
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number
+): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Math.min(Math.max(parsed, min), max);
+}
+
+function clampInteger(
+  value: unknown,
+  fallback: number,
+  min: number,
+  max: number
+): number {
+  return Math.round(clampNumber(value, fallback, min, max));
+}
+
+function createDeepAnalysisTitle(prompt: string): string {
+  const clean = prompt.replace(/\s+/g, " ").trim();
+  if (clean.length <= 60) {
+    return clean;
+  }
+  return `${clean.slice(0, 57)}...`;
+}
 
 export const wordAgent = onRequest(
   { 
@@ -1386,7 +1828,7 @@ export const reasoning = onRequest(
         res.status(200).json({
           message: parsedJson,
           status: "SENT_BY_BOT",
-          model: "gemini-3.8-flash", // Assicurati che corrisponda alla realtà del flow
+          model: "gemini-3.8-flash",
           provider: "google"
         });
         return;
@@ -2297,7 +2739,6 @@ export const reasoningAdmin = onRequest(
               { role: "user", content: `${PROMPT_MASSIMAZIONE}\n\nTESTO DA ANALIZZARE:\n${question}` },
             ],
             response_format: { type: "json_object" },
-            temperature: 0.1,
           });
 
           // Parsing sicuro del JSON
@@ -2328,7 +2769,6 @@ export const reasoningAdmin = onRequest(
               { role: "user", content: `${PROMPT_MASSIMAZIONE}\n\nTESTO DA ANALIZZARE:\n${question}` },
             ],
             response_format: { type: "json_object" },
-            temperature: 0.1,
           });
 
           const rawContent = oaResponse.choices[0]?.message?.content ?? "";
@@ -2502,153 +2942,6 @@ export const adminUploadManualContentTask = onRequest(
         
         // Risposta blindata al client
         res.status(500).json({ error: "Internal Server Error" });
-      }
-    });
-  }
-);
-
-export const submitFeedback = onRequest(
-  { 
-    timeoutSeconds: 60,
-    memory: "512MiB",
-  },
-  async (req, res) => {
-    // Nota: Aggiunto return per assicurare la risoluzione della promise
-    return corsHandlerDomain(req, res, async (): Promise<void> => {
-      // 1. CORS E METODO
-      if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
-
-      try {
-        // 2. AUTH E APP CHECK
-        let uid: string;
-        try {
-          await requireAppCheck(req);
-          uid = await requireUidFromAuthHeader(req);
-        } catch (authError) {
-          console.warn(`[JURIO-FEEDBACK] Fallimento Auth/AppCheck per IP: ${req.ip}`);
-          res.status(401).json({ error: "Unauthorized" });
-          return;
-        }
-
-        if (!uid) {
-          res.status(401).json({ error: "Unauthorized" });
-          return;
-        }
-
-        // 3. RATE LIMITING (Protezione da Spam Database)
-        const limits = { perMinute: 15, perDay: 100 };
-        try {
-          await Promise.all([
-            consumePerMinuteFeature(uid, "feedback", limits.perMinute),
-            consumeDailyFeature(uid, "feedback", limits.perDay)
-          ]);
-        } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
-        }
-        
-        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
-        const body = (req.body ?? {}) as SubmitFeedbackRequestBody;
-        
-        const isThumbsUp = typeof body.isThumbsUp === "boolean" ? body.isThumbsUp : null;
-        if (isThumbsUp === null) {
-           res.status(400).json({ error: "Bad Request: Missing or invalid 'isThumbsUp'" });
-           return;
-        }
-
-        // Troncamento delle note per evitare storage abuse nei reclami
-        const rawNotes = typeof body.notes === "string" ? body.notes.trim() : "";
-        const MAX_SAFE_NOTES = typeof MAX_NOTES_CHARS === "number" ? MAX_NOTES_CHARS : 2000;
-        
-        if (rawNotes.length > MAX_SAFE_NOTES) {
-           res.status(413).json({ error: "Payload Too Large: Notes length exceeds maximum limit" });
-           return;
-        }
-        // Evitiamo injection di codice base (pulizia molto light)
-        const notes = rawNotes.substring(0, MAX_SAFE_NOTES); 
-        
-        // Pulizia degli ID in arrivo
-        const rawIds = Array.isArray(body.ids) ? body.ids : [];
-        
-        // Protezione DB: max 30 ID processabili in una singola richiesta
-        if (rawIds.length > 30) {
-           res.status(400).json({ error: "Bad Request: Too many IDs provided in a single request (Max 30)." });
-           return;
-        }
-
-        // Sanitizziamo gli ID (max 300 caratteri in caso siano URL completi)
-        const ids = rawIds
-          .filter(id => typeof id === "string")
-          .map(id => (id as string).trim().substring(0, 300))
-          .filter(id => id.length > 0);
-        
-        if (ids.length === 0) {
-          res.status(200).json({ success: true, message: "Nessun ID valido fornito." });
-          return;
-        }
-
-        // ==========================================
-        // 5. LOGICA FEEDBACK POSITIVO
-        // ==========================================
-        if (isThumbsUp) {
-          // Scartiamo i link web esterni. Accettiamo solo ID alfanumerici standard di Firestore.
-          // Filtriamo via anche path traverse tipo "../" 
-          const validDbIds = ids.filter(id => !id.includes("/") && /^[a-zA-Z0-9_-]+$/.test(id));
-          
-          if (validDbIds.length === 0) {
-             res.status(200).json({ success: true, message: "Feedback ignorato: IDs non validi o link esterni." });
-             return;
-          }
-
-          const refs = validDbIds.map(id => db.collection("sentences").doc(id));
-          const snaps = await db.getAll(...refs);
-          const batch = db.batch();
-          
-          let updatedCount = 0;
-          snaps.forEach(snap => {
-            if (snap.exists) {
-              batch.update(snap.ref, { feedbacks: FieldValue.increment(1) });
-              updatedCount++;
-            }
-          });
-
-          if (updatedCount > 0) {
-             await batch.commit();
-          }
-
-          res.status(200).json({ success: true, message: `Feedback positivo registrato per ${updatedCount} documenti.` });
-          return;
-        } 
-        
-        // ==========================================
-        // 6. LOGICA FEEDBACK NEGATIVO (RECLAMO)
-        // ==========================================
-        else {
-          // Salviamo tutto, inclusi gli URL web lunghi passati nell'array ids
-          await db.collection("complaints").add({
-            uid: uid,
-            urls: ids, 
-            reason: notes,    
-            status: "pending",  
-            createdAt: FieldValue.serverTimestamp()
-          });
-
-          res.status(200).json({ success: true, message: "Reclamo registrato con successo." });
-          return;
-        }
-
-      } catch (err: unknown) {
-        // 7. ANTI INFORMATION DISCLOSURE
-        const msg = err instanceof Error ? err.message : "Internal error";
-        console.error(`[JURIO-FEEDBACK] Errore (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
-        
-        // Fallback silenzioso per non rompere la UI utente, ma rimuoviamo `details: msg` per sicurezza
-        res.status(200).json({ success: false, message: "Impossibile registrare il feedback in questo momento." });
       }
     });
   }
@@ -2836,6 +3129,236 @@ export const sendAdminNotification = onRequest(
         
         // Restituisce un 500 pulito senza svelare query fallite o limitazioni SMTP esterne
         res.status(500).json({ success: false, error: "Internal Server Error" });
+      }
+    });
+  }
+);
+
+export const adminDoctrineUpload = onRequest(
+  {
+    secrets: ["GOOGLE_GENAI_API_KEY"],
+    timeoutSeconds: 1200,
+    memory: "4GiB",
+    invoker: "public",
+  },
+  async (req, res) => {
+    return corsHandlerDomain(req, res, async () => {
+      if (req.method === "OPTIONS") {
+        res.status(204).end();
+        return;
+      }
+
+      if (req.method !== "POST") {
+        res.status(405).json({ error: "Method Not Allowed" });
+        return;
+      }
+
+      const reqId = randomUUID().slice(0, 6);
+
+      console.log(
+        `[DOCTRINE-${reqId}] Inizio elaborazione POST. IP: ${req.ip}`
+      );
+
+      try {
+        // ─────────────────────────────────────────────
+        // 1. AUTH + APP CHECK
+        // ─────────────────────────────────────────────
+        let uid: string;
+
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(
+            `[DOCTRINE-${reqId}] Auth/AppCheck fallito:`,
+            authError
+          );
+
+          res.status(401).json({
+            error: "Unauthorized",
+          });
+          return;
+        }
+
+        // ─────────────────────────────────────────────
+        // 2. CONTROLLO PRIVILEGI
+        // ─────────────────────────────────────────────
+        const userSnap = await db.collection("register").doc(uid).get();
+        const planId = userSnap.data()?.planId;
+
+        if (!userSnap.exists || planId !== "admin") {
+          console.warn(
+            `[DOCTRINE-${reqId}] Accesso negato per UID ${uid}. PlanId: ${planId}`
+          );
+
+          res.status(403).json({
+            error: "Forbidden: Only admins can upload doctrine documents.",
+          });
+          return;
+        }
+
+        console.log(
+          `[DOCTRINE-${reqId}] Auth superata per admin UID: ${uid}`
+        );
+
+        // ─────────────────────────────────────────────
+        // 3. LETTURA PAYLOAD
+        // ─────────────────────────────────────────────
+        const extractedText =
+          typeof req.body?.extractedText === "string"
+            ? req.body.extractedText.trim()
+            : "";
+
+        const sourceUrl =
+          typeof req.body?.sourceUrl === "string"
+            ? req.body.sourceUrl.trim()
+            : "";
+
+        if (!extractedText || !sourceUrl) {
+          console.warn(
+            `[DOCTRINE-${reqId}] Payload incompleto. URL: ${!!sourceUrl}, Testo: ${!!extractedText}`
+          );
+
+          res.status(400).json({
+            error: "Bad Request: Missing extractedText or sourceUrl",
+          });
+          return;
+        }
+
+        console.log(
+          `[DOCTRINE-${reqId}] URL: ${sourceUrl} | Testo: ${extractedText.length} caratteri`
+        );
+
+        // ─────────────────────────────────────────────
+        // 4. GENERAZIONE ID DOCUMENTO
+        // ─────────────────────────────────────────────
+        const documentBaseId = randomUUID();
+
+        // ─────────────────────────────────────────────
+        // 5. ESECUZIONE FLOW AI
+        // ─────────────────────────────────────────────
+        console.log(
+          `[DOCTRINE-${reqId}] Invocazione doctrineFlow...`
+        );
+
+        const startTime = performance.now();
+
+        const parsedDoctrine = await doctrineFlow({
+          extractedText,
+          sourceUrl,
+        });
+
+        const elapsedTimeSec = Number(
+          ((performance.now() - startTime) / 1000).toFixed(1)
+        );
+
+        if (
+          !parsedDoctrine?.tematiche ||
+          parsedDoctrine.tematiche.length === 0
+        ) {
+          throw new Error(
+            "L'AI non ha estratto alcuna tematica dal documento."
+          );
+        }
+
+        console.log(
+          `[DOCTRINE-${reqId}] Gemini completato in ${elapsedTimeSec}s. Tematiche: ${parsedDoctrine.tematiche.length}`
+        );
+
+        // ─────────────────────────────────────────────
+        // 6. SALVATAGGIO FIRESTORE
+        // ─────────────────────────────────────────────
+        const doctrineCollection = db.collection("doctrine");
+
+        // Firestore: massimo 500 writes per batch.
+        const BATCH_SIZE = 450;
+
+        let savedCount = 0;
+
+        for (
+          let start = 0;
+          start < parsedDoctrine.tematiche.length;
+          start += BATCH_SIZE
+        ) {
+          const batch = db.batch();
+
+          const batchItems = parsedDoctrine.tematiche.slice(
+            start,
+            start + BATCH_SIZE
+          );
+
+          batchItems.forEach((tema, localIndex) => {
+            const index = start + localIndex;
+
+            const nodeDocId =
+              `${documentBaseId}_theme_${index}`;
+
+            const nodeRef = doctrineCollection.doc(nodeDocId);
+
+            batch.set(nodeRef, {
+              id: nodeDocId,
+              document_base_id: documentBaseId,
+
+              ...tema,
+
+              // Nome campo standardizzato
+              sourceUrl,
+
+              // Metadati
+              uploaded_by: uid,
+              created_at: FieldValue.serverTimestamp(),
+
+              // Stato embedding
+              isEmbeddingFinished: false,
+              isEmbeddingFailed: false,
+            });
+          });
+
+          await batch.commit();
+
+          savedCount += batchItems.length;
+
+          console.log(
+            `[DOCTRINE-${reqId}] Batch Firestore ${Math.floor(start / BATCH_SIZE) + 1} completato: ${batchItems.length} documenti`
+          );
+        }
+
+        console.log(
+          `[DOCTRINE-${reqId}] Operazione conclusa. Salvati ${savedCount} documenti.`
+        );
+
+        // ─────────────────────────────────────────────
+        // 7. RISPOSTA
+        // ─────────────────────────────────────────────
+        res.status(200).json({
+          message: "Documento indicizzato con successo",
+          tematiche_estratte: parsedDoctrine.tematiche.length,
+          tematiche_salvate: savedCount,
+          docBaseId: documentBaseId,
+          processing_time_seconds: elapsedTimeSec,
+        });
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : "Internal error";
+
+        console.error(
+          `[DOCTRINE-${reqId}] Errore critico:`,
+          msg
+        );
+
+        if (err instanceof Error && err.stack) {
+          console.error(
+            `[DOCTRINE-${reqId}] Stacktrace:`,
+            err.stack
+          );
+        }
+
+        res.status(500).json({
+          error: "Internal Server Error",
+          details: msg,
+        });
       }
     });
   }
@@ -3140,6 +3663,16 @@ export const processSentenceEmbedding = onDocumentCreated(
   handleEmbeddingCreation
 );
 
+export const processDoctrineEmbedding = onDocumentCreated(
+  {
+    document: "doctrine/{docId}", 
+    secrets: ["OPENAI_API_KEY", "DEEPSEEK_API_KEY"],
+    timeoutSeconds: 120,
+    memory: "512MiB"
+  },
+  handleEmbeddingCreation
+);
+
 export const processManualEmbedding = onDocumentCreated(
   {
     document: "manual/{docId}", 
@@ -3292,7 +3825,6 @@ export const getRegister = onRequest(
           return;
         }
 
-        // 2. RATE LIMITING (Prevenzione DoS e abusi di registrazione)
         const limits = { perMinute: 5, perDay: 20 };
         try {
           await Promise.all([
@@ -3307,33 +3839,6 @@ export const getRegister = onRequest(
            }
            throw rateLimitError;
         }
-
-        // 3. CONTROLLI DI SICUREZZA TELEFONO (Anti-Farming)
-        const userRecord = await getAdminAuth().getUser(uid);
-        
-        if (!userRecord.phoneNumber) {
-          res.status(403).json({ 
-            error: "Forbidden",
-            details: "Operazione negata: Nessun numero di telefono verificato associato a questo account." 
-          });
-          return;
-        }
-
-        // Verifica anti-farming cross-account sullo stesso numero di telefono
-        const existingPhoneUsers = await db.collection("users")
-          .where("phoneNumber", "==", userRecord.phoneNumber)
-          .where("__name__", "!=", uid) 
-          .limit(1)
-          .get();
-
-        if (!existingPhoneUsers.empty) {
-          res.status(403).json({ 
-            error: "Forbidden",
-            details: "Questo numero di telefono ha già usufruito di una prova gratuita in passato." 
-          });
-          return;
-        }
-
         // 4. CREAZIONE / LETTURA ATOMICA (TRANSAZIONE)
         const ref = db.collection("register").doc(uid);
         
@@ -3998,50 +4503,27 @@ export const applyDiscountCoupon = onRequest(
   }
 );
 
-export const syncUserSession = onRequest(
-  {
-    timeoutSeconds: 30,
+export const submitFeedback = onRequest(
+  { 
+    timeoutSeconds: 60,
     memory: "512MiB",
   },
   async (req, res) => {
-    // Restituzione esplicita della Promise per evitare timeout di Express
+    // Nota: Aggiunto return per assicurare la risoluzione della promise
     return corsHandlerDomain(req, res, async (): Promise<void> => {
-      // 1. GESTIONE PREFLIGHT E METODO
-      if (req.method === "OPTIONS") { 
-        res.status(204).end(); 
-        return; 
-      }
-      if (req.method !== "POST") { 
-        res.status(405).json({ error: "Method Not Allowed" }); 
-        return; 
-      }
+      // 1. CORS E METODO
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        // 2. SICUREZZA: APP CHECK E AUTH
+        // 2. AUTH E APP CHECK
+        let uid: string;
         try {
           await requireAppCheck(req);
-        } catch (appCheckError) {
-          console.warn(`[JURIO-SYNC] Fallimento AppCheck per IP: ${req.ip}`);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-FEEDBACK] Fallimento Auth/AppCheck per IP: ${req.ip}`);
           res.status(401).json({ error: "Unauthorized" });
-          return;
-        }
-
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          res.status(401).json({ error: "Unauthorized: Missing authentication token" });
-          return;
-        }
-
-        const idToken = authHeader.split("Bearer ")[1].trim();
-        let uid: string;
-        
-        try {
-          // Usiamo getAdminAuth() in linea con le tue utility centralizzate
-          const decodedToken = await getAdminAuth().verifyIdToken(idToken);
-          uid = decodedToken.uid;
-        } catch (authErr: unknown) {
-          console.warn("[JURIO-SYNC] Token invalido in syncUserSession", authErr);
-          res.status(401).json({ error: "Unauthorized: Invalid token" });
           return;
         }
 
@@ -4050,12 +4532,12 @@ export const syncUserSession = onRequest(
           return;
         }
 
-        // 3. RATE LIMITING (Prevenzione DoS / Rigenerazione forzata continua di session ID)
-        const limits = { perMinute: 15, perDay: 200 };
+        // 3. RATE LIMITING (Protezione da Spam Database)
+        const limits = { perMinute: 15, perDay: 100 };
         try {
           await Promise.all([
-            consumePerMinuteFeature(uid, "sync_session" as any, limits.perMinute),
-            consumeDailyFeature(uid, "sync_session" as any, limits.perDay)
+            consumePerMinuteFeature(uid, "feedback", limits.perMinute),
+            consumeDailyFeature(uid, "feedback", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
            const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
@@ -4065,133 +4547,104 @@ export const syncUserSession = onRequest(
            }
            throw rateLimitError;
         }
+        
+        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as SubmitFeedbackRequestBody;
+        
+        const isThumbsUp = typeof body.isThumbsUp === "boolean" ? body.isThumbsUp : null;
+        if (isThumbsUp === null) {
+           res.status(400).json({ error: "Bad Request: Missing or invalid 'isThumbsUp'" });
+           return;
+        }
 
-        // 4. GENERAZIONE E SALVATAGGIO ATOMICO DEL SESSION ID
-        const sessionId = randomUUID();
+        // Troncamento delle note per evitare storage abuse nei reclami
+        const rawNotes = typeof body.notes === "string" ? body.notes.trim() : "";
+        const MAX_SAFE_NOTES = typeof MAX_NOTES_CHARS === "number" ? MAX_NOTES_CHARS : 2000;
+        
+        if (rawNotes.length > MAX_SAFE_NOTES) {
+           res.status(413).json({ error: "Payload Too Large: Notes length exceeds maximum limit" });
+           return;
+        }
+        // Evitiamo injection di codice base (pulizia molto light)
+        const notes = rawNotes.substring(0, MAX_SAFE_NOTES); 
+        
+        // Pulizia degli ID in arrivo
+        const rawIds = Array.isArray(body.ids) ? body.ids : [];
+        
+        // Protezione DB: max 30 ID processabili in una singola richiesta
+        if (rawIds.length > 30) {
+           res.status(400).json({ error: "Bad Request: Too many IDs provided in a single request (Max 30)." });
+           return;
+        }
 
-        await db.collection("users").doc(uid).set({
-          currentSessionId: sessionId
-        }, { merge: true });
+        // Sanitizziamo gli ID (max 300 caratteri in caso siano URL completi)
+        const ids = rawIds
+          .filter(id => typeof id === "string")
+          .map(id => (id as string).trim().substring(0, 300))
+          .filter(id => id.length > 0);
+        
+        if (ids.length === 0) {
+          res.status(200).json({ success: true, message: "Nessun ID valido fornito." });
+          return;
+        }
 
-        // 5. RISPOSTA AL CLIENT
-        const responsePayload: SyncUserSessionResponse = { 
-          success: true, 
-          sessionId 
-        };
+        // ==========================================
+        // 5. LOGICA FEEDBACK POSITIVO
+        // ==========================================
+        if (isThumbsUp) {
+          // Scartiamo i link web esterni. Accettiamo solo ID alfanumerici standard di Firestore.
+          // Filtriamo via anche path traverse tipo "../" 
+          const validDbIds = ids.filter(id => !id.includes("/") && /^[a-zA-Z0-9_-]+$/.test(id));
+          
+          if (validDbIds.length === 0) {
+             res.status(200).json({ success: true, message: "Feedback ignorato: IDs non validi o link esterni." });
+             return;
+          }
 
-        res.status(200).json(responsePayload);
-        return;
+          const refs = validDbIds.map(id => db.collection("sentences").doc(id));
+          const snaps = await db.getAll(...refs);
+          const batch = db.batch();
+          
+          let updatedCount = 0;
+          snaps.forEach(snap => {
+            if (snap.exists) {
+              batch.update(snap.ref, { feedbacks: FieldValue.increment(1) });
+              updatedCount++;
+            }
+          });
+
+          if (updatedCount > 0) {
+             await batch.commit();
+          }
+
+          res.status(200).json({ success: true, message: `Feedback positivo registrato per ${updatedCount} documenti.` });
+          return;
+        } 
+        
+        // ==========================================
+        // 6. LOGICA FEEDBACK NEGATIVO (RECLAMO)
+        // ==========================================
+        else {
+          // Salviamo tutto, inclusi gli URL web lunghi passati nell'array ids
+          await db.collection("complaints").add({
+            uid: uid,
+            urls: ids, 
+            reason: notes,    
+            status: "pending",  
+            createdAt: FieldValue.serverTimestamp()
+          });
+
+          res.status(200).json({ success: true, message: "Reclamo registrato con successo." });
+          return;
+        }
 
       } catch (err: unknown) {
-        // 6. ANTI INFORMATION DISCLOSURE
+        // 7. ANTI INFORMATION DISCLOSURE
         const msg = err instanceof Error ? err.message : "Internal error";
-        console.error(`[JURIO-SYNC] Errore critico in syncUserSession:`, msg);
+        console.error(`[JURIO-FEEDBACK] Errore (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
         
-        // Risposta blindata senza svelare dettagli interni di Firestore o di Firebase Auth
-        res.status(500).json({ error: "Internal Server Error" });
-        return;
-      }
-    });
-  }
-);
-
-export const forceTakeoverSession = onRequest(
-  {
-    timeoutSeconds: 30,
-    memory: "512MiB",
-    region: "europe-west1" // Data Residency UE obbligatoria
-  },
-  async (req, res) => {
-    // Restituzione esplicita della Promise per evitare timeout di Express
-    return corsHandlerDomain(req, res, async (): Promise<void> => {
-      // 1. GESTIONE PREFLIGHT E METODO
-      if (req.method === "OPTIONS") { 
-        res.status(204).end(); 
-        return; 
-      }
-      if (req.method !== "POST") { 
-        res.status(405).json({ error: "Method Not Allowed" }); 
-        return; 
-      }
-
-      try {
-        // 2. SICUREZZA: APP CHECK E AUTH
-        try {
-          await requireAppCheck(req);
-        } catch (appCheckError) {
-          console.warn(`[JURIO-TAKEOVER] Fallimento AppCheck per IP: ${req.ip}`);
-          res.status(401).json({ error: "Unauthorized" });
-          return;
-        }
-
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-          res.status(401).json({ error: "Unauthorized: Missing authentication token" });
-          return;
-        }
-
-        const idToken = authHeader.split("Bearer ")[1].trim();
-        let uid: string;
-        
-        try {
-          // Utilizziamo l'utility centralizzata getAdminAuth()
-          const decodedToken = await getAdminAuth().verifyIdToken(idToken);
-          uid = decodedToken.uid;
-        } catch (authErr: unknown) {
-          console.warn("[JURIO-TAKEOVER] Token invalido in forceTakeoverSession", authErr);
-          res.status(401).json({ error: "Unauthorized: Invalid token" });
-          return;
-        }
-
-        if (!uid) {
-          res.status(401).json({ error: "Unauthorized" });
-          return;
-        }
-
-        // 3. RATE LIMITING
-        const limits = { perMinute: 5, perDay: 20 };
-        try {
-          await Promise.all([
-            consumePerMinuteFeature(uid, "force_takeover" as any, limits.perMinute),
-            consumeDailyFeature(uid, "force_takeover" as any, limits.perDay)
-          ]);
-        } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
-        }
-
-        // 4. ESECUZIONE TAKEOVER
-        const newSessionId = randomUUID();
-
-        // A) Revoca dei token di refresh (il vero kick-out di sicurezza su Firebase Auth)
-        await getAdminAuth().revokeRefreshTokens(uid);
-
-        // B) Aggiornamento database
-        await db.collection("users").doc(uid).set({
-          currentSessionId: newSessionId
-        }, { merge: true });
-
-        // 5. RISPOSTA AL CLIENT
-        const responsePayload: ForceTakeoverSessionResponse = { 
-          success: true, 
-          newSessionId 
-        };
-
-        res.status(200).json(responsePayload);
-        return;
-
-      } catch (err: unknown) {
-        // 6. ANTI INFORMATION DISCLOSURE
-        const msg = err instanceof Error ? err.message : "Internal error";
-        console.error(`[JURIO-TAKEOVER] Errore critico in forceTakeoverSession:`, msg);
-        
-        // Risposta blindata senza svelare dettagli interni di Firebase Auth o Firestore
-        res.status(500).json({ error: "Internal Server Error" });
-        return;
+        // Fallback silenzioso per non rompere la UI utente, ma rimuoviamo `details: msg` per sicurezza
+        res.status(200).json({ success: false, message: "Impossibile registrare il feedback in questo momento." });
       }
     });
   }
@@ -5505,7 +5958,6 @@ export const listCloudFiles = onRequest(
   }
 );
 
-
 export const downloadCloudFile = onRequest(
   { 
     timeoutSeconds: 120, 
@@ -5632,4 +6084,3 @@ export const downloadCloudFile = onRequest(
     });
   }
 );
-

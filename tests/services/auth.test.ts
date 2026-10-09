@@ -1,24 +1,10 @@
-import { vi } from "vitest";
-
-/* ---------- inizializzazione preventiva ambiente di test ---------- */
-vi.hoisted(() => {
-  if (!import.meta.env.VITE_SYNC_SESSION_URL) {
-    import.meta.env.VITE_SYNC_SESSION_URL = "https://syncusersession-vqoobrenua-ew.a.run.app";
-  }
-  if (!import.meta.env.VITE_FORCE_TAKEOVER_URL) {
-    import.meta.env.VITE_FORCE_TAKEOVER_URL = "https://forcetakeoversession-vqoobrenua-ew.a.run.app";
-  }
-});
-
-import { describe, test, expect, beforeEach, afterEach } from "vitest";
-import type { User, UserCredential, ConfirmationResult, ApplicationVerifier } from "firebase/auth";
-import type { DocumentSnapshot } from "firebase/firestore";
+import { vi, describe, test, expect, beforeEach, afterEach } from "vitest";
+import type { User, UserCredential } from "firebase/auth";
 
 /* ---------- hoisted mocks ---------- */
 const {
   mockInitializeFirebaseAppCheck,
   mockTrackEvent,
-  mockGetDb,
   mockAuth,
   mockGetAuth,
   mockCreateUserWithEmailAndPassword,
@@ -28,13 +14,7 @@ const {
   mockSignOut,
   mockSendPasswordResetEmail,
   mockSignInAnonymously,
-  mockRecaptchaVerifier,
-  mockLinkWithPhoneNumber,
   mockOnAuthStateChanged,
-  mockDoc,
-  mockGetDoc,
-  mockUpdateDoc,
-  mockOnSnapshot,
 } = vi.hoisted(() => {
   const authInstance = {
     currentUser: null as unknown as User | null,
@@ -43,7 +23,6 @@ const {
   return {
     mockInitializeFirebaseAppCheck: vi.fn(),
     mockTrackEvent: vi.fn(),
-    mockGetDb: vi.fn(),
     mockAuth: authInstance,
     mockGetAuth: vi.fn(() => authInstance),
     mockCreateUserWithEmailAndPassword: vi.fn(),
@@ -53,13 +32,7 @@ const {
     mockSignOut: vi.fn(),
     mockSendPasswordResetEmail: vi.fn(),
     mockSignInAnonymously: vi.fn(),
-    mockRecaptchaVerifier: vi.fn(),
-    mockLinkWithPhoneNumber: vi.fn(),
     mockOnAuthStateChanged: vi.fn(),
-    mockDoc: vi.fn((...args: unknown[]) => ({ path: args.slice(1).join("/") })),
-    mockGetDoc: vi.fn(),
-    mockUpdateDoc: vi.fn(),
-    mockOnSnapshot: vi.fn(),
   };
 });
 
@@ -79,11 +52,6 @@ vi.mock("@/infrastructure/firebase", () => ({
   firebaseApp: { name: "[AUTH_APP]" },
 }));
 
-vi.mock("@/infrastructure/db", () => ({
-  __esModule: true,
-  getDb: mockGetDb,
-}));
-
 vi.mock("firebase/auth", () => ({
   __esModule: true,
   getAuth: mockGetAuth,
@@ -94,17 +62,7 @@ vi.mock("firebase/auth", () => ({
   signOut: mockSignOut,
   sendPasswordResetEmail: mockSendPasswordResetEmail,
   signInAnonymously: mockSignInAnonymously,
-  RecaptchaVerifier: mockRecaptchaVerifier,
-  linkWithPhoneNumber: mockLinkWithPhoneNumber,
   onAuthStateChanged: mockOnAuthStateChanged,
-}));
-
-vi.mock("firebase/firestore", () => ({
-  __esModule: true,
-  doc: mockDoc,
-  getDoc: mockGetDoc,
-  updateDoc: mockUpdateDoc,
-  onSnapshot: mockOnSnapshot,
 }));
 
 /* ---------- subject under test ---------- */
@@ -117,13 +75,9 @@ import {
   onUserStateChange,
   resetPassword,
   ensureAnonAuth,
-  setupRecaptcha,
-  sendPhoneVerification,
-  confirmPhoneVerification,
 } from "@/features/auth/hooks/auth";
 
 describe("Auth Service Suite", () => {
-  const fakeDbInstance = { id: "mock-firestore" };
   const mockUser = {
     uid: "usr_flv_2026",
     email: "flavio@jurio.it",
@@ -135,29 +89,8 @@ describe("Auth Service Suite", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
-    delete window.recaptchaVerifier;
     mockAuth.currentUser = mockUser;
 
-    // FONDAMENTALE: Vitest/JSDOM di default imposta hostname a "localhost".
-    // Dobbiamo simularlo a un dominio di prod per testare i flussi reali
-    // senza far scattare il bypass locale (isLocalhost) che abbiamo inserito.
-    Object.defineProperty(window, "location", {
-      value: { hostname: "jurio.it" },
-      writable: true,
-    });
-
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue({
-        ok: true,
-        json: async () => ({ sessionId: "mock_session_id_123" }),
-      })
-    );
-
-    mockUser.getIdToken = vi.fn().mockResolvedValue("mock_firebase_id_token");
-
-    mockGetDb.mockResolvedValue(fakeDbInstance);
     vi.spyOn(console, "log").mockImplementation(() => {});
     vi.spyOn(console, "warn").mockImplementation(() => {});
     vi.spyOn(console, "error").mockImplementation(() => {});
@@ -214,8 +147,8 @@ describe("Auth Service Suite", () => {
     });
   });
 
-  describe("loginWithEmail & syncSession", () => {
-    test("esegue il login, sincronizza la sessione su Cloud Run/localStorage e traccia il successo", async () => {
+  describe("loginWithEmail", () => {
+    test("esegue il login ed effettua il tracciamento analytics in caso di successo", async () => {
       mockSignInWithEmailAndPassword.mockResolvedValueOnce(mockUserCredential);
 
       const cred = await loginWithEmail("flavio@jurio.it", "ValidPassword2026!");
@@ -225,22 +158,6 @@ describe("Auth Service Suite", () => {
         "flavio@jurio.it",
         "ValidPassword2026!"
       );
-
-      expect(fetch).toHaveBeenCalledWith(
-        expect.any(String),
-        expect.objectContaining({
-          method: "POST",
-          body: "{}",
-          headers: expect.objectContaining({
-            "Authorization": expect.any(String),
-            "Content-Type": "application/json",
-            "X-Firebase-AppCheck": expect.any(String),
-          }),
-        })
-      );
-
-      expect(localStorage.getItem("active_session_id")).toBeTruthy();
-
       expect(mockTrackEvent).toHaveBeenCalledWith("login", {
         method: "email",
         success: true,
@@ -248,26 +165,7 @@ describe("Auth Service Suite", () => {
       expect(cred).toBe(mockUserCredential);
     });
 
-    test("interrompe la sessione e rilancia l'eccezione se la sincronizzazione server fallisce", async () => {
-      mockSignInWithEmailAndPassword.mockResolvedValueOnce(mockUserCredential);
-      
-      vi.stubGlobal(
-        "fetch",
-        vi.fn().mockResolvedValue({
-          ok: false,
-          status: 500,
-        })
-      );
-
-      await expect(
-        loginWithEmail("nuovo@jurio.it", "Pass!")
-      ).rejects.toThrow("Errore durante l'avvio della sessione sicura.");
-
-      expect(mockSignOut).toHaveBeenCalledWith(mockAuth);
-      expect(localStorage.getItem("active_session_id")).toBeNull();
-    });
-
-    test("traccia il fallimento se signInWithEmailAndPassword rigetta", async () => {
+    test("traccia il fallimento e rilancia l'eccezione se signInWithEmailAndPassword rigetta", async () => {
       mockSignInWithEmailAndPassword.mockRejectedValueOnce(new Error("auth/wrong-password"));
 
       await expect(
@@ -286,7 +184,7 @@ describe("Auth Service Suite", () => {
   });
 
   describe("loginWithGoogle", () => {
-    test("esegue login con popup Google, sincronizza sessione e restituisce l'utente", async () => {
+    test("esegue login con popup Google, traccia l'evento e restituisce l'utente", async () => {
       mockSignInWithPopup.mockResolvedValueOnce(mockUserCredential);
 
       const user = await loginWithGoogle();
@@ -316,14 +214,12 @@ describe("Auth Service Suite", () => {
   });
 
   describe("logout", () => {
-    test("disconnette l'utente, rimuove la sessione locale e traccia l'evento", async () => {
-      localStorage.setItem("active_session_id", "session_token_123");
+    test("disconnette l'utente e traccia l'evento di disconnessione", async () => {
       mockSignOut.mockResolvedValueOnce(undefined);
 
       await logout();
 
       expect(mockSignOut).toHaveBeenCalledWith(mockAuth);
-      expect(localStorage.getItem("active_session_id")).toBeNull();
       expect(mockTrackEvent).toHaveBeenCalledWith("logout", {});
     });
 
@@ -339,8 +235,8 @@ describe("Auth Service Suite", () => {
     });
   });
 
-  describe("onUserStateChange & verifySessionStatus", () => {
-    test("invoca il callback con null e nessun conflitto se l'utente non è autenticato", async () => {
+  describe("onUserStateChange", () => {
+    test("registra il listener di stato e invoca il callback con user e hasConflict=false", async () => {
       let authCallback: (u: User | null) => void = () => {};
       mockOnAuthStateChanged.mockImplementation((_auth, cb) => {
         authCallback = cb;
@@ -354,175 +250,49 @@ describe("Auth Service Suite", () => {
         expect(mockOnAuthStateChanged).toHaveBeenCalled();
       });
 
-      authCallback(null);
+      authCallback(mockUser);
+      expect(callbackSpy).toHaveBeenCalledWith(mockUser, false);
 
+      authCallback(null);
       expect(callbackSpy).toHaveBeenCalledWith(null, false);
     });
 
-    test("rileva assenza di conflitto se non è presente un sessionId in localStorage", async () => {
-      let authCallback: (u: User | null) => void = () => {};
-      let snapshotCallback: (snap: DocumentSnapshot) => void = () => {};
-
-      mockOnAuthStateChanged.mockImplementation((_auth, cb) => {
-        authCallback = cb;
-        return vi.fn();
-      });
-
-      mockOnSnapshot.mockImplementation((_ref, cb) => {
-        snapshotCallback = cb;
-        return vi.fn();
-      });
-
-      const callbackSpy = vi.fn();
-      onUserStateChange(callbackSpy);
-
-      await vi.waitFor(() => {
-        expect(mockOnAuthStateChanged).toHaveBeenCalled();
-      });
-
-      authCallback(mockUser);
-
-      localStorage.removeItem("active_session_id");
-
-      const mockSnap = {
-        data: () => ({ currentSessionId: "session_remota_999" }),
-      } as unknown as DocumentSnapshot;
-
-      snapshotCallback(mockSnap);
-
-      expect(callbackSpy).toHaveBeenCalledWith(mockUser, false);
-    });
-
-    test("rileva conflitto (true) se currentSessionId remoto è diverso dal token in localStorage", async () => {
-      let authCallback: (u: User | null) => void = () => {};
-      let snapshotCallback: (snap: DocumentSnapshot) => void = () => {};
-
-      mockOnAuthStateChanged.mockImplementation((_auth, cb) => {
-        authCallback = cb;
-        return vi.fn();
-      });
-
-      mockOnSnapshot.mockImplementation((_ref, cb) => {
-        snapshotCallback = cb;
-        return vi.fn();
-      });
-
-      const callbackSpy = vi.fn();
-      onUserStateChange(callbackSpy);
-
-      await vi.waitFor(() => {
-        expect(mockOnAuthStateChanged).toHaveBeenCalled();
-      });
-
-      authCallback(mockUser);
-
-      localStorage.setItem("active_session_id", "sessione_locale_attiva");
-
-      const conflictSnap = {
-        data: () => ({ currentSessionId: "sessione_acquisita_da_altro_dispositivo" }),
-      } as unknown as DocumentSnapshot;
-
-      snapshotCallback(conflictSnap);
-
-      expect(callbackSpy).toHaveBeenCalledWith(mockUser, true);
-    });
-
-    test("rileva assenza di conflitto (false) se il codice remoto coincide con quello locale", async () => {
-      let authCallback: (u: User | null) => void = () => {};
-      let snapshotCallback: (snap: DocumentSnapshot) => void = () => {};
-
-      mockOnAuthStateChanged.mockImplementation((_auth, cb) => {
-        authCallback = cb;
-        return vi.fn();
-      });
-
-      mockOnSnapshot.mockImplementation((_ref, cb) => {
-        snapshotCallback = cb;
-        return vi.fn();
-      });
-
-      const callbackSpy = vi.fn();
-      onUserStateChange(callbackSpy);
-
-      await vi.waitFor(() => {
-        expect(mockOnAuthStateChanged).toHaveBeenCalled();
-      });
-
-      authCallback(mockUser);
-
-      localStorage.setItem("active_session_id", "sessione_condivisa_456");
-
-      const matchingSnap = {
-        data: () => ({ currentSessionId: "sessione_condivisa_456" }),
-      } as unknown as DocumentSnapshot;
-
-      snapshotCallback(matchingSnap);
-
-      expect(callbackSpy).toHaveBeenCalledWith(mockUser, false);
-    });
-
-    test("ignora i conflitti bypassando la logica in locale", async () => {
-      // Forziamo l'hostname a localhost per testare il bypass
-      Object.defineProperty(window, "location", {
-        value: { hostname: "localhost" },
-        writable: true,
-      });
-
-      let authCallback: (u: User | null) => void = () => {};
-      let snapshotCallback: (snap: DocumentSnapshot) => void = () => {};
-
-      mockOnAuthStateChanged.mockImplementation((_auth, cb) => {
-        authCallback = cb;
-        return vi.fn();
-      });
-
-      mockOnSnapshot.mockImplementation((_ref, cb) => {
-        snapshotCallback = cb;
-        return vi.fn();
-      });
-
-      const callbackSpy = vi.fn();
-      onUserStateChange(callbackSpy);
-
-      await vi.waitFor(() => {
-        expect(mockOnAuthStateChanged).toHaveBeenCalled();
-      });
-
-      authCallback(mockUser);
-
-      localStorage.setItem("active_session_id", "session_A");
-
-      const conflictSnap = {
-        data: () => ({ currentSessionId: "session_B" }),
-      } as unknown as DocumentSnapshot;
-
-      snapshotCallback(conflictSnap);
-
-      // Deve restituire false nonostante i codici siano diversi
-      expect(callbackSpy).toHaveBeenCalledWith(mockUser, false);
-    });
-
-    test("la funzione di cleanup annulla gli ascolti di auth e firestore", async () => {
+    test("la funzione di cleanup annulla l'ascolto di auth", async () => {
       const unsubAuthMock = vi.fn();
-      const unsubFirestoreMock = vi.fn();
-
       mockOnAuthStateChanged.mockImplementation((_auth, cb) => {
         cb(mockUser);
         return unsubAuthMock;
       });
 
-      mockOnSnapshot.mockReturnValue(unsubFirestoreMock);
-
       const unsubscribe = onUserStateChange(vi.fn());
 
       await vi.waitFor(() => {
-        expect(mockOnSnapshot).toHaveBeenCalled();
+        expect(mockOnAuthStateChanged).toHaveBeenCalled();
       });
 
       unsubscribe();
-
       expect(unsubAuthMock).toHaveBeenCalled();
-      expect(unsubFirestoreMock).toHaveBeenCalled();
+    });
+
+    test("interrompe il setup se la pulizia viene invocata prima della risoluzione dell'import asincrono", async () => {
+      let authCallback: ((u: User | null) => void) | undefined;
+      mockOnAuthStateChanged.mockImplementation((_auth, cb) => {
+        authCallback = cb;
+        return vi.fn();
+      });
+
+      const callbackSpy = vi.fn();
+      const unsubscribe = onUserStateChange(callbackSpy);
+      unsubscribe();
+
+      await vi.waitFor(() => {
+        expect(mockInitializeFirebaseAppCheck).toHaveBeenCalled();
+      });
+
+      if (authCallback) {
+        authCallback(mockUser);
+      }
+      expect(callbackSpy).not.toHaveBeenCalled();
     });
   });
 
@@ -583,88 +353,6 @@ describe("Auth Service Suite", () => {
       expect(mockTrackEvent).toHaveBeenCalledWith("analytics_error", {
         name: "ensure_anon_auth",
         reason: "auth/operation-not-allowed",
-      });
-    });
-  });
-
-  describe("setupRecaptcha, sendPhoneVerification, confirmPhoneVerification", () => {
-    test("setupRecaptcha crea l'istanza se assente su window e la restituisce", async () => {
-      const mockVerifierInstance = { render: vi.fn() };
-      mockRecaptchaVerifier.mockImplementation(function () {
-        return mockVerifierInstance;
-      });
-
-      const verifier = await setupRecaptcha("recaptcha-container");
-
-      expect(mockRecaptchaVerifier).toHaveBeenCalledWith(
-        mockAuth,
-        "recaptcha-container",
-        expect.objectContaining({ size: "invisible" })
-      );
-      expect(window.recaptchaVerifier).toBe(mockVerifierInstance);
-      expect(verifier).toBe(mockVerifierInstance);
-
-      const secondVerifier = await setupRecaptcha("recaptcha-container");
-      expect(secondVerifier).toBe(mockVerifierInstance);
-      expect(mockRecaptchaVerifier).toHaveBeenCalledTimes(1);
-    });
-
-    test("sendPhoneVerification collega il telefono basandosi su auth.currentUser", async () => {
-      const mockConfirmation = { verificationId: "otp_req_123" } as unknown as ConfirmationResult;
-      mockLinkWithPhoneNumber.mockResolvedValueOnce(mockConfirmation);
-
-      const appVerifier = {} as ApplicationVerifier;
-      const res = await sendPhoneVerification("+393400000000", appVerifier);
-
-      // Assicurati che peschi l'utente corretto dal mockAuth (mockUser)
-      expect(mockLinkWithPhoneNumber).toHaveBeenCalledWith(mockUser, "+393400000000", appVerifier);
-      expect(res).toBe(mockConfirmation);
-    });
-
-    test("sendPhoneVerification lancia errore se auth.currentUser è null", async () => {
-      mockAuth.currentUser = null; // Simuliamo utente disconnesso
-
-      await expect(
-        sendPhoneVerification("+393400000000", {} as ApplicationVerifier)
-      ).rejects.toThrow("Utente non autenticato");
-
-      expect(mockLinkWithPhoneNumber).not.toHaveBeenCalled();
-    });
-
-    test("sendPhoneVerification traccia analytics_error in caso di eccezione", async () => {
-      mockLinkWithPhoneNumber.mockRejectedValueOnce(new Error("auth/invalid-phone-number"));
-
-      await expect(
-        sendPhoneVerification("invalid-num", {} as ApplicationVerifier)
-      ).rejects.toThrow("auth/invalid-phone-number");
-
-      expect(mockTrackEvent).toHaveBeenCalledWith("analytics_error", {
-        name: "phone_verification_requested",
-        reason: "auth/invalid-phone-number",
-      });
-    });
-
-    test("confirmPhoneVerification conferma il codice OTP e restituisce l'utente", async () => {
-      const mockConfirmFn = vi.fn().mockResolvedValueOnce({ user: mockUser });
-      const mockConfirmation = { confirm: mockConfirmFn } as unknown as ConfirmationResult;
-
-      const confirmedUser = await confirmPhoneVerification(mockConfirmation, "123456");
-
-      expect(mockConfirmFn).toHaveBeenCalledWith("123456");
-      expect(confirmedUser).toBe(mockUser);
-    });
-
-    test("confirmPhoneVerification traccia analytics_error in caso di OTP non valido", async () => {
-      const mockConfirmFn = vi.fn().mockRejectedValueOnce(new Error("auth/invalid-verification-code"));
-      const mockConfirmation = { confirm: mockConfirmFn } as unknown as ConfirmationResult;
-
-      await expect(
-        confirmPhoneVerification(mockConfirmation, "000000")
-      ).rejects.toThrow("auth/invalid-verification-code");
-
-      expect(mockTrackEvent).toHaveBeenCalledWith("analytics_error", {
-        name: "phone_verified",
-        reason: "auth/invalid-verification-code",
       });
     });
   });

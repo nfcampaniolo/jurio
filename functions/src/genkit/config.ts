@@ -9,10 +9,10 @@ export const ai = genkit({
   plugins: [
     vertexAI({
       projectId: process.env.GCLOUD_PROJECT,
-      location: 'europe-west1',
+      location: "eu",
     }),
   ],
-  model: 'vertexai/gemini-2.5-flash',
+  model: "vertexai/gemini-3.8-flash",
 });
 
 // ─────────────────────────────────────────────
@@ -21,34 +21,63 @@ export const ai = genkit({
 
 export const CFG = {
   MAX_ALLOWED_DISTANCE: 0.75,
-  ZERO_MATCH_PENALTY: 1.5,
-  MATCH_BONUS: 0.75,
-  SENTENCE_MULTIPLIER: 0.85,
+
+  MAX_SENTENCE_DISTANCE: 0.65,
+  MAX_DOCTRINE_DISTANCE: 0.68,
+  MAX_DOCUMENT_DISTANCE: 0.60,
+  MAX_DISTINGUISH_DISTANCE: 0.62,
+  MAX_MANUAL_DISTANCE: 0.60,
+
+  VECTOR_FETCH_LIMIT: 30,
+
+  SEMANTIC_SAFE_LIMIT: 5,
+
+  CHUNK_PARENT_LIMIT: 5,
+
+  EXCLUDE_IDS_LIMIT: 10,
+
+  HISTORY_WINDOW: 10,
+
+  MAX_SOURCES: 10,
 
   MAX_FIELD_CHARS: 3000,
   MAX_CHUNK_CHARS: 2000,
   MAX_WEB_CHARS: 1200,
 
-  VECTOR_FETCH_LIMIT: 75,
-  SEMANTIC_SAFE_LIMIT: 5,
-  CHUNK_PARENT_LIMIT: 5,
-  EXCLUDE_IDS_LIMIT: 10,
-  HISTORY_WINDOW: 10,
-  MAX_SOURCES: 10,
+  ZERO_MATCH_PENALTY: 1.5,
+  MATCH_BONUS: 0.75,
+  SENTENCE_MULTIPLIER: 0.85,
 
   EMBEDDING_MODEL: "text-embedding-3-small",
+
   EMBEDDING_DIMS: 1536,
 
   DOMAINS_ISTITUZIONALE: [
-    "normattiva.it", "gazzettaufficiale.it", "cortecostituzionale.it", "giustizia.it",
+    "normattiva.it",
+    "gazzettaufficiale.it",
+    "cortecostituzionale.it",
+    "giustizia.it",
+    "cortedicassazione.it",
+    "giustizia-amministrativa.it",
   ],
-  DOMAINS_EDITORIALE: [
-    "altalex.com", "diritto.it", "ilcaso.it", "sistemapenale.it",
-  ],
+
   DOMAINS_PRASSI: [
-    "agenziaentrate.gov.it", "inps.it", "inail.it", "anticorruzione.it",
-    "garanteprivacy.it", "bancaditalia.it", "lavoro.gov.it", 
-    "funzionepubblica.gov.it", "rgs.mef.gov.it", "giustizia-amministrativa.it"
+    "agenziaentrate.gov.it",
+    "inps.it",
+    "inail.it",
+    "anticorruzione.it",
+    "garanteprivacy.it",
+    "bancaditalia.it",
+    "lavoro.gov.it",
+    "funzionepubblica.gov.it",
+    "rgs.mef.gov.it",
+  ],
+
+  DOMAINS_EDITORIALE: [
+    "altalex.com",
+    "diritto.it",
+    "ilcaso.it",
+    "sistemapenale.it",
   ],
 } as const;
 
@@ -160,6 +189,65 @@ export const OrientamentoSchema = z.object({
   fonti: z.array(PrecedenteMinimaleSchema).describe("Sentenze e documenti che supportano specificamente QUESTA tesi.")
 });
 
+export const ConceptMapNodeSchema = z.object({
+  id: z.string(),
+  kind: z.enum([
+    "quesito",
+    "provvedimento",
+    "dottrina",
+    "web",
+    "documento",
+    "norma",
+    "tesi",
+  ]),
+  source: z.enum([
+    "internal",
+    "doctrine",
+    "web",
+    "document",
+    "reference",
+    "system",
+  ]),
+  sourceId: z.string().nullable(),
+  label: z.string(),
+  url: z.string().nullable().optional(),
+  resolved: z.boolean().default(true),
+  used: z.boolean().default(true),
+  metadata: z.record(z.any()).optional(),
+});
+
+export const ConceptMapEdgeSchema = z.object({
+  id: z.string(),
+  source: z.string(),
+  target: z.string(),
+  type: z.enum([
+    "rilevante_per",
+    "cita",
+    "richiama_norma",
+    "supporta",
+    "contrasta",
+    "correlato",
+  ]),
+});
+
+export const ConceptMapSchema = z.object({
+  version: z.literal(1),
+  quesito: z.string(),
+  rootId: z.string(),
+  nodes: z.array(ConceptMapNodeSchema).max(200),
+  edges: z.array(ConceptMapEdgeSchema).max(500),
+  sourceIds: z.array(z.string()).max(200),
+  stats: z.object({
+    provvedimenti: z.number(),
+    dottrina: z.number(),
+    web: z.number(),
+    documenti: z.number(),
+    norme: z.number(),
+    tesi: z.number(),
+    relazioni: z.number(),
+  }),
+});
+
 export const ResearchOutputSchema = z.object({
   inquadramento: z.object({
     qualificazioneGiuridica: z.string().describe("Qualificazione tecnica e sintetica."),
@@ -169,8 +257,9 @@ export const ResearchOutputSchema = z.object({
   mappaDialettica: z.object({
     orientamentoFavorevole: OrientamentoSchema.nullable().describe("La tesi che supporta la richiesta/posizione dell'utente."),
     orientamentoContrario: OrientamentoSchema.nullable().describe("La tesi avversa, orientamento minoritario ostile o rischi."),
-    puntiAperti: z.array(z.string()).describe("Questioni irrisolte, vuoti normativi o oscillazioni non composte.")
-  })
+    puntiAperti: z.array(z.string()).describe("Questioni irrisolte, vuoti normativi o oscillazioni non composte."),
+  }),
+  mappaConcettuale: ConceptMapSchema,
 });
 
 export const ReportSintesiSchema = z.object({
@@ -180,4 +269,63 @@ export const ReportSintesiSchema = z.object({
   argomentazioniAzione: z.array(z.string()).describe("I punti di forza e le tesi a favore. DEVI citare l'ID delle fonti a supporto."),
   rischiEEccezioni: z.array(z.string()).describe("Le debolezze, i rischi e le tesi contrarie. DEVI citare l'ID delle fonti ostili."),
   conclusioniStrategiche: z.string().describe("Il suggerimento operativo finale. Come deve muoversi l'utente alla luce dei punti aperti?")
+});
+
+const SafeString = z.preprocess((val) => {
+  if (val === null || val === undefined) return "";
+  if (typeof val === "object") return JSON.stringify(val);
+  return String(val);
+}, z.string());
+
+const SafeStringArray = z.preprocess((val) => {
+  if (val === null || val === undefined) return [];
+  if (typeof val === "string") return val.trim() !== "" ? [val] : [];
+  if (Array.isArray(val)) return val.map(v => v === null || v === undefined ? "" : String(v));
+  return [String(val)];
+}, z.array(z.string()));
+
+const SafeNumber = z.preprocess((val) => {
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
+    const parsed = parseInt(val.replace(/\D/g, ''), 10);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+}, z.number());
+
+const PrecedenteSchema = z.object({
+  sezione: SafeString,
+  numero: SafeString,
+  anno: SafeNumber,
+});
+
+const SafePrecedentiArray = z.preprocess((val) => {
+  if (!Array.isArray(val)) return [];
+  return val.map(item => (typeof item === 'object' && item !== null) ? item : {});
+}, z.array(PrecedenteSchema));
+
+const TemaDottrinaSchema = z.object({
+  tipo_documento: SafeString,
+  origine: SafeString,
+  numero_anno: SafeString,
+  data_documento: SafeString,
+  tematica: SafeString,
+  questione_di_diritto: SafeString,
+  orientamento: SafeString,
+  tipo_orientamento: SafeString,
+  sezioni_coinvolte: SafeStringArray,
+  materia: SafeString,
+  norme_citate: SafeStringArray,
+  precedenti_citati: SafePrecedentiArray,
+  tag: SafeStringArray,
+  summary: SafeString,
+  pagine: SafeString,
+  testo: SafeString,
+});
+
+export const DoctrineOutputSchema = z.object({
+  tematiche: z.preprocess(
+    (val) => (Array.isArray(val) ? val : []), 
+    z.array(TemaDottrinaSchema)
+  ),
 });

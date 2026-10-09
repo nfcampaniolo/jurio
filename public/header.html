@@ -1,9 +1,12 @@
 <header class="site-header">
   <div class="container header-inner">
+
+    <!-- BRAND -->
     <a class="brand" href="/" aria-label="Jurio — home">
       Jurio
     </a>
-    <!-- Navigazione desktop -->
+
+    <!-- DESKTOP NAV -->
     <nav class="nav" aria-label="Navigazione principale">
       <a href="/#come-funziona">Come funziona</a>
       <a href="/prezzi">Prezzi</a>
@@ -11,50 +14,116 @@
       <a href="/ricerca">Ricerca giurisprudenza</a>
       <a href="/chat">Consulente legale</a>
     </nav>
+
+    <!-- DESKTOP CTA -->
     <a class="header-cta" href="/profilo">
       Accedi
+      <span class="cta-arrow" aria-hidden="true">↗</span>
     </a>
-    <!-- Menu mobile -->
+
+    <!-- MOBILE MENU -->
     <details class="mobile-menu">
-      <summary aria-label="Apri menu">
-     </summary>
-      <nav class="mobile-nav" aria-label="Navigazione mobile">
-        <a href="/#come-funziona">Come funziona</a>
-        <a href="/prezzi">Prezzi</a>
-        <a href="/#faq">FAQ</a>
-        <a href="/ricerca">Ricerca giurisprudenza</a>
-        <a href="/chat">Consulente legale</a>
-        <span class="mobile-divider"></span>
-        <a class="mobile-login" href="/profilo">Accedi</a>
+      <summary aria-label="Apri menu" aria-controls="mobile-navigation">
+        <span class="menu-icon" aria-hidden="true">
+          <span></span>
+          <span></span>
+        </span>
+      </summary>
+
+      <nav
+        id="mobile-navigation"
+        class="mobile-nav"
+        aria-label="Navigazione mobile"
+      >
+        <div class="mobile-nav-header">
+          <span>Menu</span>
+          <span class="mobile-nav-label">JURIO</span>
+        </div>
+
+        <div class="mobile-links">
+          <a href="/#come-funziona">
+            <span>Come funziona</span>
+            <span class="mobile-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <a href="/prezzi">
+            <span>Prezzi</span>
+            <span class="mobile-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <a href="/#faq">
+            <span>FAQ</span>
+            <span class="mobile-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <a href="/ricerca">
+            <span>Ricerca giurisprudenza</span>
+            <span class="mobile-arrow" aria-hidden="true">↗</span>
+          </a>
+
+          <a class="mobile-featured" href="/chat">
+            <span>
+              <small>AI LEGAL</small>
+              Consulente legale
+            </span>
+            <span class="mobile-arrow" aria-hidden="true">↗</span>
+          </a>
+        </div>
+
+        <div class="mobile-divider"></div>
+
+        <a class="mobile-login" href="/profilo">
+          <span>Accedi al tuo profilo</span>
+          <span class="mobile-login-arrow" aria-hidden="true">→</span>
+        </a>
       </nav>
     </details>
+
   </div>
+
   <style>
     /* =====================================================
-       JURIO HEADER
+       JURIO HEADER — MODERN RESPONSIVE
        ===================================================== */
+
     .site-header {
+      --jurio-header-height: 74px;
+
       position: sticky;
       top: 0;
-      z-index: 50;
+      z-index: 100;
+
       width: 100%;
-      background: color-mix(
-        in srgb,
-        var(--color-surface) 88%,
-        transparent
-      );
-      border-bottom: 1px solid var(--color-border);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      min-height: var(--jurio-header-height);
+
+      background:
+        color-mix(
+          in srgb,
+          var(--color-surface) 82%,
+          transparent
+        );
+
+      border-bottom: 1px solid
+        color-mix(
+          in srgb,
+          var(--color-border) 70%,
+          transparent
+        );
+
+      backdrop-filter: blur(18px) saturate(150%);
+      -webkit-backdrop-filter: blur(18px) saturate(150%);
     }
+
     .header-inner {
-      min-height: 78px;
+      min-height: var(--jurio-header-height);
 
       display: flex;
       align-items: center;
       justify-content: space-between;
 
-      gap: 2rem;
+      gap: 1.5rem;
+
+      position: relative;
     }
 
     /* =====================================================
@@ -62,20 +131,25 @@
        ===================================================== */
 
     .brand {
+      position: relative;
+      z-index: 2;
+
       flex-shrink: 0;
 
-      font-family: var(--font-serif);
-      font-size: clamp(1.75rem, 3vw, 2.25rem);
-      font-weight: 700;
-      line-height: 1;
+      color: var(--color-text);
 
-      letter-spacing: -.03em;
+      font-family: var(--font-serif);
+      font-size: clamp(1.75rem, 3vw, 2.2rem);
+      font-weight: 700;
+
+      line-height: 1;
+      letter-spacing: -.045em;
 
       text-decoration: none;
 
       transition:
-        opacity .18s ease,
-        transform .18s ease;
+        opacity .2s ease,
+        transform .2s ease;
     }
 
     .brand:hover {
@@ -90,11 +164,11 @@
     .nav {
       display: flex;
       align-items: center;
+      justify-content: center;
 
-      gap: 1.7rem;
+      gap: clamp(1rem, 2vw, 1.7rem);
 
-      margin-left: auto;
-      margin-right: auto;
+      margin-inline: auto;
     }
 
     .nav a {
@@ -106,12 +180,14 @@
       font-size: .72rem;
       font-weight: 800;
 
-      letter-spacing: .14em;
+      letter-spacing: .12em;
       text-transform: uppercase;
 
       text-decoration: none;
 
-      transition: color .18s ease;
+      white-space: nowrap;
+
+      transition: color .2s ease;
     }
 
     .nav a::after {
@@ -142,13 +218,10 @@
       transform-origin: left;
     }
 
-    /* Accento sulle funzioni principali */
-    .nav a[href="/analisi"],
     .nav a[href="/chat"] {
       color: var(--color-text);
     }
 
-    .nav a[href="/analisi"]::before,
     .nav a[href="/chat"]::before {
       content: "";
 
@@ -157,45 +230,53 @@
       width: 5px;
       height: 5px;
 
-      margin-right: .45rem;
+      margin-right: .42rem;
 
       vertical-align: middle;
 
       border-radius: 50%;
+
       background: var(--color-primary);
 
       transform: translateY(-1px);
     }
 
     /* =====================================================
-       CTA
+       DESKTOP CTA
        ===================================================== */
 
     .header-cta {
       flex-shrink: 0;
 
+      min-height: 44px;
+
       display: inline-flex;
       align-items: center;
       justify-content: center;
 
-      min-height: 44px;
-      padding: 0 1.1rem;
+      gap: .55rem;
 
-      border-radius: 10px;
+      padding: 0 1rem 0 1.15rem;
+
+      border-radius: 12px;
 
       background: var(--button-bg);
       color: var(--button-text);
 
       font-family: var(--font-sans);
-      font-size: .9rem;
+      font-size: .88rem;
       font-weight: 750;
 
       text-decoration: none;
 
+      box-shadow:
+        0 1px 0 rgba(255,255,255,.08) inset,
+        0 4px 12px rgba(36, 33, 29, .05);
+
       transition:
-        transform .18s ease,
-        background .18s ease,
-        box-shadow .18s ease;
+        transform .2s ease,
+        background .2s ease,
+        box-shadow .2s ease;
     }
 
     .header-cta:hover {
@@ -204,23 +285,37 @@
       transform: translateY(-1px);
 
       box-shadow:
-        0 8px 20px rgba(36, 33, 29, .10);
+        0 8px 22px rgba(36, 33, 29, .11);
+    }
+
+    .cta-arrow {
+      font-size: 1rem;
+      line-height: 1;
+
+      transition:
+        transform .2s ease;
+    }
+
+    .header-cta:hover .cta-arrow {
+      transform: translate(2px, -2px);
     }
 
     /* =====================================================
-       MOBILE MENU BUTTON
+       MOBILE MENU TRIGGER
        ===================================================== */
 
     .mobile-menu {
       display: none;
 
       position: relative;
+      z-index: 110;
+
       flex-shrink: 0;
     }
 
     .mobile-menu summary {
-      width: 42px;
-      height: 42px;
+      width: 46px;
+      height: 46px;
 
       display: flex;
       align-items: center;
@@ -232,16 +327,29 @@
       cursor: pointer;
       list-style: none;
 
-      color: var(--color-text);
+      border: 1px solid
+        color-mix(
+          in srgb,
+          var(--color-border) 90%,
+          transparent
+        );
 
-      border-radius: 10px;
+      border-radius: 14px;
 
-      background: var(--color-surface);
+      background:
+        color-mix(
+          in srgb,
+          var(--color-surface) 92%,
+          transparent
+        );
+
+      box-shadow:
+        0 2px 10px rgba(36, 33, 29, .04);
 
       transition:
+        transform .18s ease,
         background .18s ease,
-        border-color .18s ease,
-        transform .18s ease;
+        border-color .18s ease;
     }
 
     .mobile-menu summary::-webkit-details-marker {
@@ -250,64 +358,132 @@
 
     .mobile-menu summary:hover {
       background: var(--color-bg);
-      border-color: var(--color-primary);
+
+      border-color:
+        color-mix(
+          in srgb,
+          var(--color-primary) 45%,
+          var(--color-border)
+        );
     }
 
     .mobile-menu summary:active {
-      transform: scale(.96);
-    }
-
-    .menu-icon {
-      display: block;
-
-      width: 20px;
-      height: 20px;
-
-      margin: 0;
-      padding: 0;
-
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.7;
-      stroke-linecap: round;
+      transform: scale(.95);
     }
 
     /* =====================================================
-       MOBILE DROPDOWN
+       HAMBURGER / CLOSE ICON
+       ===================================================== */
+
+    .menu-icon {
+      position: relative;
+
+      width: 20px;
+      height: 16px;
+
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+
+      transition:
+        transform .25s ease;
+    }
+
+    .menu-icon span {
+      display: block;
+
+      width: 100%;
+      height: 1.7px;
+
+      border-radius: 999px;
+
+      background: currentColor;
+
+      transform-origin: center;
+
+      transition:
+        transform .25s ease,
+        opacity .2s ease;
+    }
+
+    .mobile-menu[open] .menu-icon {
+      transform: rotate(45deg);
+    }
+
+    .mobile-menu[open] .menu-icon span:first-child {
+      transform:
+        translateY(7px)
+        rotate(90deg);
+    }
+
+    .mobile-menu[open] .menu-icon span:last-child {
+      transform:
+        translateY(-7px)
+        rotate(0deg);
+    }
+
+    /* =====================================================
+       MOBILE PANEL
        ===================================================== */
 
     .mobile-nav {
-      position: absolute;
+      position: fixed;
 
-      top: calc(100% + 10px);
-      right: 0;
+      top: calc(
+        var(--jurio-header-height) +
+        env(safe-area-inset-top, 0px) +
+        10px
+      );
 
-      width: min(340px, calc(100vw - 28px));
+      left: 12px;
+      right: 12px;
+
+      width: auto;
+      max-width: 520px;
+
+      margin-left: auto;
 
       display: flex;
       flex-direction: column;
 
-      padding: .55rem;
+      padding: .7rem;
 
-      background: var(--color-surface);
+      background:
+        color-mix(
+          in srgb,
+          var(--color-surface) 97%,
+          transparent
+        );
 
-      border: 1px solid var(--color-border);
-      border-radius: 16px;
+      border: 1px solid
+        color-mix(
+          in srgb,
+          var(--color-border) 90%,
+          transparent
+        );
 
-      box-shadow: var(--shadow-soft);
+      border-radius: 22px;
+
+      box-shadow:
+        0 24px 70px rgba(25, 23, 20, .16),
+        0 6px 22px rgba(25, 23, 20, .08);
+
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
 
       transform-origin: top right;
 
       animation:
-        jurio-menu-in .2s var(--ease-smooth, ease-out);
+        jurio-menu-in .24s
+        cubic-bezier(.22, 1, .36, 1);
     }
 
     @keyframes jurio-menu-in {
       from {
         opacity: 0;
         transform:
-          translateY(-8px)
-          scale(.98);
+          translateY(-10px)
+          scale(.97);
       }
 
       to {
@@ -318,74 +494,285 @@
       }
     }
 
-    .mobile-nav a {
+    /* =====================================================
+       MOBILE MENU HEADER
+       ===================================================== */
+
+    .mobile-nav-header {
       display: flex;
       align-items: center;
+      justify-content: space-between;
 
-      min-height: 46px;
+      padding: .65rem .75rem .7rem;
 
-      padding: .65rem .85rem;
+      color: var(--color-muted);
+
+      font-family: var(--font-sans);
+      font-size: .68rem;
+      font-weight: 800;
+
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .mobile-nav-label {
+      opacity: .45;
+    }
+
+    /* =====================================================
+       MOBILE LINKS
+       ===================================================== */
+
+    .mobile-links {
+      display: flex;
+      flex-direction: column;
+
+      gap: 2px;
+    }
+
+    .mobile-links a {
+      min-height: 54px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      gap: 1rem;
+
+      padding: .8rem .85rem;
 
       color: var(--color-text);
 
       font-family: var(--font-sans);
-      font-size: .86rem;
+      font-size: .98rem;
       font-weight: 650;
 
-      line-height: 1.3;
+      line-height: 1.2;
 
       text-decoration: none;
 
-      border-radius: 9px;
+      border-radius: 14px;
 
       transition:
-        background .16s ease,
-        color .16s ease,
-        padding-left .16s ease;
+        background .18s ease,
+        color .18s ease,
+        transform .18s ease;
     }
 
-    .mobile-nav a:hover {
-      background: color-mix(
-        in srgb,
-        var(--color-bg) 70%,
-        transparent
-      );
-
+    .mobile-links a:hover {
       color: var(--color-primary);
 
-      padding-left: 1rem;
+      background:
+        color-mix(
+          in srgb,
+          var(--color-bg) 82%,
+          transparent
+        );
     }
 
-    /* Separatore */
-    .mobile-divider {
-      height: 1px;
-
-      margin: .45rem .65rem;
-
-      background: var(--color-border);
+    .mobile-links a:active {
+      transform: scale(.985);
     }
 
-    /* Bottone Accedi mobile */
-    .mobile-login {
+    .mobile-arrow {
+      flex-shrink: 0;
+
+      width: 30px;
+      height: 30px;
+
+      display: flex;
+      align-items: center;
       justify-content: center;
 
-      margin-top: .15rem;
+      border-radius: 50%;
 
-      background: var(--button-bg) !important;
-      color: var(--button-text) !important;
+      background:
+        color-mix(
+          in srgb,
+          var(--color-bg) 80%,
+          transparent
+        );
 
-      font-weight: 750 !important;
+      color: var(--color-muted);
+
+      font-size: .9rem;
+
+      transition:
+        transform .18s ease,
+        background .18s ease,
+        color .18s ease;
     }
 
-    .mobile-login:hover {
-      background: var(--button-bg-hover) !important;
-      color: var(--button-text) !important;
+    .mobile-links a:hover .mobile-arrow {
+      color: var(--color-primary);
 
-      padding-left: .85rem !important;
+      background:
+        color-mix(
+          in srgb,
+          var(--color-primary) 10%,
+          transparent
+        );
+
+      transform: translate(2px, -2px);
     }
 
     /* =====================================================
-       BREAKPOINT
+       FEATURED LINK
+       ===================================================== */
+
+    .mobile-featured {
+      position: relative;
+
+      overflow: hidden;
+
+      min-height: 68px !important;
+
+      padding:
+        .9rem
+        .85rem
+        .9rem
+        1rem !important;
+
+      margin-top: .2rem;
+
+      background:
+        linear-gradient(
+          135deg,
+          color-mix(
+            in srgb,
+            var(--color-primary) 11%,
+            var(--color-surface)
+          ),
+          color-mix(
+            in srgb,
+            var(--color-primary) 4%,
+            var(--color-surface)
+          )
+        );
+
+      border: 1px solid
+        color-mix(
+          in srgb,
+          var(--color-primary) 14%,
+          transparent
+        );
+    }
+
+    .mobile-featured::before {
+      content: "";
+
+      position: absolute;
+
+      width: 110px;
+      height: 110px;
+
+      top: -65px;
+      right: -35px;
+
+      border-radius: 50%;
+
+      background:
+        color-mix(
+          in srgb,
+          var(--color-primary) 12%,
+          transparent
+        );
+
+      pointer-events: none;
+    }
+
+    .mobile-featured span:first-child {
+      position: relative;
+      z-index: 1;
+
+      display: flex;
+      flex-direction: column;
+
+      gap: .22rem;
+    }
+
+    .mobile-featured small {
+      font-size: .6rem;
+      font-weight: 850;
+
+      letter-spacing: .14em;
+
+      color: var(--color-primary);
+    }
+
+    .mobile-featured > .mobile-arrow {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* =====================================================
+       DIVIDER
+       ===================================================== */
+
+    .mobile-divider {
+      height: 1px;
+
+      margin: .65rem .55rem;
+
+      background:
+        color-mix(
+          in srgb,
+          var(--color-border) 90%,
+          transparent
+        );
+    }
+
+    /* =====================================================
+       MOBILE LOGIN
+       ===================================================== */
+
+    .mobile-login {
+      min-height: 54px;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      padding: .8rem .95rem;
+
+      border-radius: 14px;
+
+      background: var(--button-bg);
+      color: var(--button-text);
+
+      font-family: var(--font-sans);
+      font-size: .92rem;
+      font-weight: 750;
+
+      text-decoration: none;
+
+      transition:
+        transform .18s ease,
+        background .18s ease;
+    }
+
+    .mobile-login:hover {
+      background: var(--button-bg-hover);
+    }
+
+    .mobile-login:active {
+      transform: scale(.985);
+    }
+
+    .mobile-login-arrow {
+      font-size: 1.1rem;
+      line-height: 1;
+
+      transition:
+        transform .18s ease;
+    }
+
+    .mobile-login:hover .mobile-login-arrow {
+      transform: translateX(3px);
+    }
+
+    /* =====================================================
+       TABLET / MOBILE BREAKPOINT
        ===================================================== */
 
     @media (max-width: 900px) {
@@ -400,25 +787,102 @@
     }
 
     /* =====================================================
-       MOBILE
+       SMARTPHONE
        ===================================================== */
 
     @media (max-width: 720px) {
+      .site-header {
+        --jurio-header-height: 68px;
+
+        min-height:
+          calc(
+            var(--jurio-header-height) +
+            env(safe-area-inset-top, 0px)
+          );
+
+        padding-top: env(safe-area-inset-top, 0px);
+      }
+
       .header-inner {
-        min-height: 70px;
+        min-height: var(--jurio-header-height);
+
+        gap: .75rem;
       }
 
       .brand {
         font-size: 1.8rem;
       }
 
+      .mobile-menu summary {
+        width: 44px;
+        height: 44px;
+
+        border-radius: 13px;
+      }
+
       .mobile-nav {
-        width: min(340px, calc(100vw - 28px));
+        top:
+          calc(
+            var(--jurio-header-height) +
+            env(safe-area-inset-top, 0px) +
+            8px
+          );
+
+        left: 10px;
+        right: 10px;
+
+        max-width: none;
+
+        padding: .65rem;
+
+        border-radius: 20px;
+      }
+
+      .mobile-nav-header {
+        padding:
+          .55rem
+          .7rem
+          .6rem;
+      }
+
+      .mobile-links a {
+        min-height: 56px;
+
+        font-size: .97rem;
+
+        padding-inline: .8rem;
+      }
+
+      .mobile-featured {
+        min-height: 72px !important;
+      }
+
+      .mobile-login {
+        min-height: 56px;
       }
     }
 
     /* =====================================================
-       ACCESSIBILITÀ
+       VERY SMALL PHONES
+       ===================================================== */
+
+    @media (max-width: 380px) {
+      .mobile-nav {
+        left: 8px;
+        right: 8px;
+      }
+
+      .mobile-links a {
+        font-size: .92rem;
+      }
+
+      .mobile-featured small {
+        font-size: .56rem;
+      }
+    }
+
+    /* =====================================================
+       ACCESSIBILITY
        ===================================================== */
 
     .brand:focus-visible,
@@ -426,7 +890,14 @@
     .header-cta:focus-visible,
     .mobile-menu summary:focus-visible,
     .mobile-nav a:focus-visible {
-      outline: 3px solid rgba(154, 107, 37, .55);
+      outline:
+        3px solid
+        color-mix(
+          in srgb,
+          var(--color-primary) 50%,
+          transparent
+        );
+
       outline-offset: 3px;
     }
 
@@ -439,12 +910,14 @@
       .nav a,
       .header-cta,
       .mobile-menu summary,
-      .mobile-nav a {
-        transition: none;
-      }
-
-      .mobile-nav {
-        animation: none;
+      .mobile-menu summary *,
+      .mobile-nav,
+      .mobile-nav a,
+      .mobile-arrow,
+      .mobile-login,
+      .mobile-login-arrow {
+        transition: none !important;
+        animation: none !important;
       }
     }
   </style>

@@ -1349,7 +1349,7 @@ export async function handleEmbeddingCreation(
   const docId = event.params.docId;
 
   // Selezione del testo
-  let textToEmbed = data.summary || data.massima;
+  let textToEmbed = data.summary || data.massima || data.sintesi;
   if (!textToEmbed) {
     textToEmbed = data.tipo_documento === "documento_giurisprudenza_generico" 
       ? (data.nucleo || data.sintesi) 

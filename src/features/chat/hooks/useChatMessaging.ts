@@ -53,7 +53,11 @@ export const useChatMessaging = ({
 
   const handleSendMessage = async () => {
     if (!LEGAL_AGENT_ENDPOINT || ((!inputValue.trim() && attachedDocs.length === 0 && (!activeQuote || activeQuote.length === 0)) || isStreaming)) return;
-    if (activeFiltersCount > 2) { toast.error("Puoi attivare al massimo 2 filtri contemporaneamente."); setShowFilters(true); return; }
+    if (activeFiltersCount > 2) { 
+      toast.error("Puoi attivare al massimo 2 filtri contemporaneamente."); 
+      setShowFilters(true); 
+      return; 
+    }
 
     const genkitFilters = buildGenkitFilters(filterState);
     const userText = inputValue;
@@ -97,8 +101,8 @@ export const useChatMessaging = ({
       if (appCheckToken) headers["X-Firebase-AppCheck"] = appCheckToken;
 
       const response = await fetch(LEGAL_AGENT_ENDPOINT, { method: "POST", headers, body: JSON.stringify(payload) });
-      if (response.status === 403) { setDenyOpen(true); throw new Error("Accesso negato."); }
-      if (!response.ok || !response.body) throw new Error(`Errore API: ${response.status}`);
+      if (response.status === 403) { setDenyOpen(true); throw new Error("Accesso negato o piano scaduto."); }
+      if (!response.ok || !response.body) throw new Error(`Errore Server: ${response.status}`);
 
       setAgentState("streaming");
       const reader = response.body.getReader();
@@ -109,46 +113,93 @@ export const useChatMessaging = ({
         const { done, value } = await reader.read();
         if (done) break;
         buffer += decoder.decode(value, { stream: true });
+        
         let boundary = buffer.indexOf("\n\n");
         while (boundary !== -1) {
-          const chunkStr = buffer.slice(0, boundary);
+          const chunkStr = buffer.slice(0, boundary).trim();
           buffer = buffer.slice(boundary + 2);
-          if (chunkStr.startsWith("data: ")) {
-            const dataStr = chunkStr.slice(6);
-            if (dataStr === "[DONE]") { setAgentState("idle"); return; }
-            try {
-              const parsed = JSON.parse(dataStr);
-              if (parsed.error) throw new Error(parsed.error.message);
-              
-              if (parsed.message) {
-                if (typeof parsed.message === "object" && parsed.message.status) setAgentStatusText(parsed.message.status);
-                else {
-                  const textChunk = typeof parsed.message === "string" ? parsed.message : (parsed.message.text || "");
-                  if (textChunk) setMessages(prev => prev.map(msg => msg.id === agentMsgId ? { ...msg, content: (msg.content || "") + textChunk } : msg));
-                }
-              }
+          
+          if (chunkStr.startsWith("data:")) {
+            const dataStr = chunkStr.slice(5).trim();
+            
+            if (dataStr === "[DONE]") { 
+              setAgentState("idle"); 
+              return; 
+            }
+            if (!dataStr) {
+              boundary = buffer.indexOf("\n\n");
+              continue;
+            }
 
-              if (parsed.result) {
-                if (parsed.result.titoloGenerato) {
-                  if (sessionType === "temporanea") setSessionTitle(parsed.result.titoloGenerato);
-                  else if (sessionType === "fascicolo") {
-                    setThreadTitle(parsed.result.titoloGenerato);
-                    setThreads(prev => prev.map(t => t.id === (threadId || activeThreadId) ? { ...t, title: parsed.result.titoloGenerato } : t));
-                  }
+            // Isola il parsing JSON per evitare che blocchi gli errori di logica
+            let parsed;
+            try {
+              parsed = JSON.parse(dataStr);
+            } catch (err) {
+              console.error("Errore parsing chunk JSON ignorato:", err);
+              boundary = buffer.indexOf("\n\n");
+              continue; // Salta il chunk se è corrotto ma prosegue il ciclo
+            }
+
+            // 1. SE IL SERVER CI NOTIFICA UN ERRORE, LO LANCIAMO VERSO IL CATCH ESTERNO
+            if (parsed.error) {
+              throw new Error(parsed.error.message || "Errore imprevisto durante l'analisi giuridica.");
+            }
+              
+            // 2. Intercetta gli status di Root (es: Avvio dell'agente legale...)
+            if (parsed.status) {
+              setAgentStatusText(parsed.status);
+            }
+
+            // 3. Flusso di messaggi Genkit (testo parziale)
+            if (parsed.message) {
+              if (typeof parsed.message === "object") {
+                if (parsed.message.status) setAgentStatusText(parsed.message.status);
+                if (parsed.message.text) {
+                  setMessages(prev => prev.map(msg => msg.id === agentMsgId ? { ...msg, content: (msg.content || "") + parsed.message.text } : msg));
                 }
-                setMessages(prev => prev.map(msg => msg.id === agentMsgId ? { ...msg, content: parsed.result.risposta || msg.content, sources: parsed.result.fonti || [] } : msg));
+              } else if (typeof parsed.message === "string") {
+                setMessages(prev => prev.map(msg => msg.id === agentMsgId ? { ...msg, content: (msg.content || "") + parsed.message } : msg));
               }
-            } catch (error) { console.error("Errore parsing chunk:", error); }
+            }
+
+            // 4. Risultato finale
+            if (parsed.result) {
+              if (parsed.result.titoloGenerato) {
+                if (sessionType === "temporanea") setSessionTitle(parsed.result.titoloGenerato);
+                else if (sessionType === "fascicolo") {
+                  setThreadTitle(parsed.result.titoloGenerato);
+                  setThreads(prev => prev.map(t => t.id === (threadId || activeThreadId) ? { ...t, title: parsed.result.titoloGenerato } : t));
+                }
+              }
+              setMessages(prev => prev.map(msg => msg.id === agentMsgId ? { 
+                ...msg, 
+                content: parsed.result.risposta || msg.content, 
+                sources: parsed.result.fonti || [] 
+              } : msg));
+            }
           }
           boundary = buffer.indexOf("\n\n");
         }
       }
     } catch (error: unknown) {
       console.error("🚨 ERRORE CHAT:", error);
+      
+      const errorMessage = error instanceof Error ? error.message : "Connessione fallita o errore sconosciuto.";
+      
+      // 👈 MOSTRA IL TOAST VISIBILE IN ALTO
+      toast.error(errorMessage);
+      
       setAgentState("error");
-      setMessages(prev => prev.map(msg => msg.id === agentMsgId ? { ...msg, content: `⚠️ Si è verificato un errore: ${error instanceof Error ? error.message : "Connessione fallita."}` } : msg));
+      setMessages(prev => prev.map(msg => msg.id === agentMsgId ? { 
+        ...msg, 
+        content: `⚠️ Si è verificato un errore:\n\n*${errorMessage}*` 
+      } : msg));
+      
       setTimeout(() => setAgentState("idle"), 5000);
-    } finally { setAgentStatusText(""); }
+    } finally { 
+      setAgentStatusText(""); 
+    }
   };
 
   return { handleSendMessage };

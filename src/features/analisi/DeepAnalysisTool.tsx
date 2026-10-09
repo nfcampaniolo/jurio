@@ -40,8 +40,6 @@ export const ApprofondimentoGiurisprudenziale: React.FC = () => {
     confidenceLevel: 80,
     sourceWeb: true,
     sourceInternalDB: true,
-    temperature: 0.2,
-    topK: 10,
   });
 
   const logicaChat = useLegalChat();

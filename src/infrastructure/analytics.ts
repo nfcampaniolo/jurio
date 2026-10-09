@@ -22,6 +22,7 @@ export type AnalyticsEvent =
   | "sentence_saved"
   | "saved_sentence_opened"
   | "profile_updated"
+  | "doctrine_processed"
   | "analytics_error";
 
 export type EventParamsMap = {
@@ -151,6 +152,12 @@ export type EventParamsMap = {
       | "video"
       | "csv"
       | "ppt";
+    success: boolean;
+    processing_time_ms?: number;
+    error_type?: string;
+  };
+
+  doctrine_processed: {
     success: boolean;
     processing_time_ms?: number;
     error_type?: string;

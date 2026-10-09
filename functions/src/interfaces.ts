@@ -164,18 +164,16 @@ export interface DeepAnalysisConfig {
   confidenceLevel: number;
   sourceWeb: boolean;
   sourceInternalDB: boolean;
-  temperature: number;
-  topK: number;
   webLimit: number;
+  sourceDoctrine: boolean;
 }
 
 export const DEFAULT_CONFIG: DeepAnalysisConfig = {
   confidenceLevel: 80,
   sourceWeb: true,
   sourceInternalDB: true,
-  temperature: 0.2,
-  topK: 10,
   webLimit: 5,
+  sourceDoctrine: true,
 };
 
 export interface DeepAnalysisRequestBody {
@@ -237,16 +235,6 @@ export interface CheckoutSessionRequestBody {
 export interface CheckoutSessionResponse {
   url: string | null;
   sessionId: string;
-}
-
-export interface SyncUserSessionResponse {
-  success: boolean;
-  sessionId: string;
-}
-
-export interface ForceTakeoverSessionResponse {
-  success: boolean;
-  newSessionId: string;
 }
 
 export interface AssignTeamSeatRequestBody {

@@ -297,9 +297,17 @@ export const LegalChatPage = () => {
         <Header />
         
         <main className="flex-1 relative flex overflow-hidden w-full">
-          <AnimatePresence mode="wait">
+          {/* initial={false} disattiva l'animazione di fade-in al primo mount */}
+          <AnimatePresence mode="wait" initial={false}>
             {sessionType === 'seleziona' && (
-              <motion.div key="seleziona" className="w-full h-full" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.div 
+                key="seleziona" 
+                className="w-full h-full" 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+              >
                 <SelectionScreen 
                   startTempChat={startTempChat}
                   startFascicoloSetup={startFascicoloSetup}
@@ -308,7 +316,14 @@ export const LegalChatPage = () => {
               </motion.div>
             )}
             {(sessionType === 'temporanea' || sessionType === 'fascicolo') && (
-              <motion.div key="chat" className="w-full h-full" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <motion.div 
+                key="chat" 
+                className="w-full h-full" 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }} 
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
+              >
                 {renderChatInterface()}
               </motion.div>
             )}

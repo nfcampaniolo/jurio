@@ -6,8 +6,6 @@ export interface DeepAnalysisConfig {
   confidenceLevel: number;
   sourceWeb: boolean;
   sourceInternalDB: boolean;
-  temperature: number;
-  topK: number;
 }
 
 export interface PrecedenteReperito {

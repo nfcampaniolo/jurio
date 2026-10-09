@@ -6,11 +6,21 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ConfirmModal } from "@/shared/components/ConfirmModal";
 import { HeaderProfile } from "@/features/profile/components/HeaderProfile";
 import type { Action } from "@/interfaces/interfaces";
-import { FiHome, FiSearch, FiDatabase, FiTag, FiUploadCloud, FiEdit3, FiBell } from "react-icons/fi";
+import { 
+  FiHome, 
+  FiSearch, 
+  FiDatabase, 
+  FiTag, 
+  FiUploadCloud, 
+  FiEdit3, 
+  FiBell,
+  FiBookOpen
+} from "react-icons/fi";
 import { navigateItem } from "@/routes/navigation";
 
 // --- COMPONENTI ADMIN ---
 import { UploadMaxima } from "@/features/admin/components/UploadMaxima";
+import { UploadDoctrine } from "@/features/admin/components/UploadDoctrine"; // <-- Import del nuovo componente
 import { AdminMaintenanceSection } from "@/features/admin/components/AdminMaintenanceSection";
 import { AdminTaxonomySection } from "@/features/admin/components/AdminTaxonomySection";
 import FirebaseManual from "@/features/admin/components/FirebaseManual";
@@ -24,8 +34,8 @@ import {
   type MaintenanceProgressData 
 } from "./hooks/admin"; 
 
-// Tipi per i Tab
-type AdminTab = "upload" | "content" | "taxonomy" | "maintenance" | "notifications";
+// Tipi per i Tab (Aggiunto "doctrine")
+type AdminTab = "upload" | "doctrine" | "content" | "taxonomy" | "maintenance" | "notifications";
 
 export const Admin: React.FC = () => {
   const navigate = useNavigate();
@@ -46,14 +56,14 @@ export const Admin: React.FC = () => {
   });
 
   // --- STATI: UNIFICAZIONE CATEGORIA ---
-    const [isMerging, setIsMerging] = useState(false);
-    const [mergeParams, setMergeParams] = useState<{
-      vecchiaCategoria: string;
-      nuovaCategoria: string | null;
-    }>({ 
-      vecchiaCategoria: "", 
-      nuovaCategoria: "" 
-    });
+  const [isMerging, setIsMerging] = useState(false);
+  const [mergeParams, setMergeParams] = useState<{
+    vecchiaCategoria: string;
+    nuovaCategoria: string | null;
+  }>({ 
+    vecchiaCategoria: "", 
+    nuovaCategoria: "" 
+  });
 
   if (loading || !user || !userData) {
     return (
@@ -121,6 +131,7 @@ export const Admin: React.FC = () => {
   // --- CONFIGURAZIONE TAB ---
   const TABS = [
     { id: "upload", label: "Upload Massivo", icon: <FiUploadCloud className="mb-1 text-lg" /> },
+    { id: "doctrine", label: "Dottrina", icon: <FiBookOpen className="mb-1 text-lg" /> }, // <-- Nuovo Tab
     { id: "content", label: "Contenuti & Prompt", icon: <FiEdit3 className="mb-1 text-lg" /> },
     { id: "taxonomy", label: "Tassonomia", icon: <FiTag className="mb-1 text-lg" /> },
     { id: "maintenance", label: "Manutenzione DB", icon: <FiDatabase className="mb-1 text-lg" /> },
@@ -169,21 +180,28 @@ export const Admin: React.FC = () => {
                 transition={{ duration: 0.2 }}
                 className="flex flex-col gap-8"
               >
-                {/* 1. Upload Massivo */}
+                {/* 1. Upload Massivo Sentenze */}
                 {activeTab === "upload" && (
                   <section className="bg-bg text-text flex flex-col items-center text-center gap-6 py-4">
                     <UploadMaxima />
                   </section>
                 )}
 
-                {/* 2. Contenuti Manuali & Prompts */}
+                {/* 2. Upload Singolo Dottrina */}
+                {activeTab === "doctrine" && (
+                  <section className="bg-bg text-text flex flex-col items-center text-center gap-6 py-4">
+                    <UploadDoctrine />
+                  </section>
+                )}
+
+                {/* 3. Contenuti Manuali & Prompts */}
                 {activeTab === "content" && (
                   <div className="grid grid-cols-1 gap-8">
                     <FirebaseManual />
                   </div>
                 )}
 
-                {/* 3. Tassonomia */}
+                {/* 4. Tassonomia */}
                 {activeTab === "taxonomy" && (
                   <AdminTaxonomySection
                     mergeParams={mergeParams}
@@ -193,7 +211,7 @@ export const Admin: React.FC = () => {
                   />
                 )}
 
-                {/* 4. Manutenzione Database */}
+                {/* 5. Manutenzione Database */}
                 {activeTab === "maintenance" && (
                   <AdminMaintenanceSection
                     maintenanceParams={maintenanceParams}
@@ -203,6 +221,8 @@ export const Admin: React.FC = () => {
                     onMaintenanceSubmit={handleMaintenance}
                   />
                 )}
+                
+                {/* 6. Notifiche */}
                 {activeTab === "notifications" && (
                   <AdminNotificationsSection />
                 )}
@@ -221,7 +241,7 @@ export const Admin: React.FC = () => {
           onConfirm={async () => {
             await deleteAccount();
             toast.success("Profilo eliminato");
-            void void navigate("/registrati", { replace: true });
+            void navigate("/registrati", { replace: true });
             setConfirmOpen(false);
           }}
         />

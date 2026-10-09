@@ -90,34 +90,6 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .container { width: min(var(--container), calc(100% - 40px)); margin-inline: auto; }
 .serif { font-family: var(--font-serif); }
 
-.site-header {
-    position: sticky; top: 0; z-index: 50;
-    background: color-mix(in srgb, var(--color-surface) 88%, transparent);
-    border-bottom: 1px solid var(--color-border);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-}
-.header-inner {
-    min-height: 78px; display: flex; align-items: center; justify-content: space-between; gap: 2rem;
-}
-.brand {
-    font-family: var(--font-serif); font-size: clamp(1.75rem, 3vw, 2.25rem); font-weight: 700;
-    text-decoration: none; letter-spacing: -.03em;
-}
-.nav { display: flex; align-items: center; gap: 1.7rem; }
-.nav a {
-    text-decoration: none; color: var(--color-muted); font-size: .72rem; font-weight: 800;
-    text-transform: uppercase; letter-spacing: .14em; transition: color .18s ease;
-}
-.nav a:hover { color: var(--color-text); }
-.header-cta {
-    display: inline-flex; align-items: center; justify-content: center;
-    min-height: 44px; padding: 0 1.1rem; border-radius: 10px;
-    background: var(--button-bg); color: var(--button-text); text-decoration: none; font-size: .9rem; font-weight: 750;
-    transition: transform .18s ease, background .18s ease;
-}
-.header-cta:hover { background: var(--button-bg-hover); transform: translateY(-1px); }
-
 main { overflow: clip; }
 .section { padding: clamp(4.5rem, 8vw, 7rem) 0; }
 .hero { padding: clamp(3.2rem, 6vw, 5.5rem) 0 3.8rem; }
@@ -156,6 +128,7 @@ main { overflow: clip; }
 .demo-card {
     position: relative; overflow: hidden; border: 1px solid var(--color-border);
     border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-soft);
+    border-radius: 0 !important;
 }
 .demo-card::before, .accent::before {
     content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--color-primary);
@@ -225,7 +198,7 @@ border-top: 1px solid var(--color-border);
 summary {
 list-style: none; 
 cursor: pointer; 
-padding: 1.35rem 1.5rem; 
+padding: 1.35rem 2rem;
 font-weight: 700;
 display: flex; 
 align-items: center; 
@@ -259,31 +232,6 @@ transform: translateY(25%) rotate(225deg);
 border-color: var(--color-text);
 }
 
-/* --- Animazione del Contenuto --- */
-details > p {
-margin: 0; 
-padding: 0 1.5rem; 
-color: var(--color-muted); 
-line-height: 1.75;
-display: block; 
-max-height: 0; 
-opacity: 0; 
-transform: translateY(-10px);
-/* Gestione dello stato chiuso (il max-height non si animerà per via del comportamento nativo, ma l'impostazione è corretta) */
-transition: max-height 0.3s ease, opacity 0.2s ease, transform 0.2s ease, padding-bottom 0.3s ease;
-}
-
-details[open] > p {
-padding-bottom: 1.35rem;
-max-height: 20rem; /* Limite per far funzionare l'animazione di altezza in puro CSS */
-opacity: 1; 
-transform: translateY(0); 
-/* Curve bezier per un'apertura morbida che decelera progressivamente */
-transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), 
-            opacity 0.35s ease 0.05s, 
-            transform 0.35s ease 0.05s, 
-            padding-bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
 .cta { padding-top: 1rem; }
 .cta-box { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 2rem; align-items: center; padding: clamp(2rem, 5vw, 4.5rem); background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 24px; box-shadow: var(--shadow-soft); }
 .cta-box h2 { margin: 0; font-family: var(--font-serif); font-size: clamp(2.4rem, 4.6vw, 4.3rem); line-height: 1; letter-spacing: -.045em; font-weight: 500; }
@@ -311,9 +259,6 @@ footer { margin-top: 4rem; padding: 4rem 0 2rem; border-top: 1px solid var(--col
 
 @media (max-width: 720px) {
     .container { width: min(var(--container), calc(100% - 28px)); }
-    .site-header { position: static; }
-    .header-inner { min-height: 70px; }
-    .nav { display: none; }
     .hero { padding-top: 2.4rem; }
     .hero h1 { font-size: clamp(2.8rem, 14vw, 4rem); }
     .hero-actions, .hero-actions .button { width: 100%; }
@@ -342,53 +287,6 @@ body {
 ::selection {
     background: rgba(224, 163, 46, .18);
     color: var(--color-text);
-}
-
-.site-header {
-    transition: box-shadow .35s var(--ease-smooth), background-color .35s ease, border-color .35s ease;
-}
-
-.site-header.is-scrolled {
-    box-shadow: 0 8px 28px rgba(0, 0, 0, .06);
-}
-
-.header-inner {
-    transition: min-height .35s var(--ease-smooth);
-}
-
-.site-header.is-scrolled .header-inner {
-    min-height: 68px;
-}
-
-.brand {
-    transition: transform .35s var(--ease-smooth), opacity .2s ease;
-}
-
-.brand:hover {
-    transform: translateY(-1px);
-}
-
-.nav a {
-    position: relative;
-}
-
-.nav a::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -.45rem;
-    height: 1px;
-    background: var(--color-primary);
-    transform: scaleX(0);
-    transform-origin: right;
-    transition: transform .35s var(--ease-smooth);
-}
-
-.nav a:hover::after,
-.nav a:focus-visible::after {
-    transform: scaleX(1);
-    transform-origin: left;
 }
 
 .hero {
@@ -657,6 +555,7 @@ summary::before {
 
 details[open] summary::before {
     width: calc(100% - 3rem);
+    
 }
 
 .cta-box {
@@ -1064,7 +963,7 @@ summary {
 
 details > div.faq-content-inner {
   margin: 0;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
   color: var(--color-muted);
   line-height: 1.75;
   display: block;
@@ -1074,7 +973,7 @@ details > div.faq-content-inner {
 }
 
 details[open] > div.faq-content-inner {
-  padding-bottom: 1.35rem;
+  padding: 1.35rem;
   max-height: 800px;
   opacity: 1;
   transform: translateY(0);
@@ -1464,6 +1363,11 @@ details[open] > div.faq-content-inner {
     width: 100%;
     min-height: 50px;
   }
+
+       .demo-card {
+                border-radius: 0 !important;
+                padding: 40px
+            }
 
   /* Nasconde decorazione non necessaria su mobile */
   .hero-copy::before {
@@ -3372,4 +3276,15 @@ details[open] > div.faq-content-inner {
 .integration-mcp .integration-copy h3,
 .integration-mcp .integration-copy h3 span {
   font-family: var(--font-serif);
+}
+
+.mobile-menu > summary::before,
+.mobile-menu > summary::after {
+    content: none !important;
+    display: none !important;
+}
+
+.faq details {
+    margin-left: 20px;
+    margin-right: 20px;
 }

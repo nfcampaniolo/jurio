@@ -1,6 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import React, { useEffect, useState, memo } from "react";
+import {
+  useForm,
+  useFieldArray,
+  useWatch,
+  type Control,
+  type UseFormRegister,
+} from "react-hook-form";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FaPlus,
   FaTrash,
@@ -24,12 +30,153 @@ interface PromptCreatorProps {
   template?: PromptBuilderForm;
 }
 
+interface FieldRowProps {
+  index: number;
+  control: Control<PromptBuilderForm>;
+  register: UseFormRegister<PromptBuilderForm>;
+  onRemove: (index: number) => void;
+  canRemove: boolean;
+}
+
+const FieldRow: React.FC<FieldRowProps> = memo(
+  ({ index, control, register, onRemove, canRemove }) => {
+    const fieldType = useWatch({
+      control,
+      name: `fields.${index}.type` as const,
+    });
+
+    return (
+      <div className="p-4 sm:p-5 rounded-xl border border-(--color-border) bg-(--color-bg)">
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <span className="flex items-center justify-center w-6 h-6 rounded-md bg-(--color-surface) border border-(--color-border) text-[10px] font-semibold text-(--color-muted)">
+              {index + 1}
+            </span>
+            <span className="text-sm font-medium text-(--color-text)">
+              Informazione da estrarre
+            </span>
+          </div>
+          {canRemove && (
+            <button
+              type="button"
+              onClick={() => onRemove(index)}
+              className="inline-flex items-center gap-1.5 text-xs text-(--color-muted) hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
+            >
+              <FaTrash className="w-2.5 h-2.5" />
+              Rimuovi
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
+          <div className="sm:col-span-7 space-y-2">
+            <div>
+              <label className="text-xs font-medium text-(--color-text)">
+                Nome del dato
+              </label>
+              <p className="mt-0.5 text-[11px] text-(--color-muted)">
+                La chiave che userai nel risultato.
+              </p>
+            </div>
+            <input
+              {...register(`fields.${index}.name` as const, {
+                required: true,
+              })}
+              placeholder="Es. canone_annuo"
+              className="w-full px-3 py-2.5 rounded-lg border border-(--color-border) bg-(--color-surface) text-sm font-mono text-(--color-text) outline-none focus:border-(--color-text) focus:ring-1 focus:ring-(--color-text) transition-all placeholder:text-(--color-muted)/50"
+            />
+          </div>
+
+          <div className="sm:col-span-5 space-y-2">
+            <div>
+              <label className="text-xs font-medium text-(--color-text)">
+                Tipo di risultato
+              </label>
+              <p className="mt-0.5 text-[11px] text-(--color-muted)">
+                Come vuoi ricevere il dato.
+              </p>
+            </div>
+            <select
+              {...register(`fields.${index}.type` as const)}
+              className="w-full px-3 py-2.5 rounded-lg border border-(--color-border) bg-(--color-surface) text-sm text-(--color-text) outline-none focus:border-(--color-text) focus:ring-1 focus:ring-(--color-text) cursor-pointer"
+            >
+              <option value="string">Testo</option>
+              <option value="number">Numero / Importo</option>
+              <option value="boolean">Sì / No</option>
+              <option value="array">Elenco</option>
+              <option value="enum">Scelta predefinita</option>
+            </select>
+          </div>
+
+          {fieldType === "enum" && (
+            <div className="sm:col-span-12 space-y-2">
+              <div>
+                <label className="text-xs font-medium text-(--color-text)">
+                  Valori possibili
+                </label>
+                <p className="mt-0.5 text-[11px] text-(--color-muted)">
+                  Inserisci le opzioni separate da virgola.
+                </p>
+              </div>
+              <input
+                {...register(`fields.${index}.enumValues` as const, {
+                  required: "Definisci almeno due valori",
+                })}
+                placeholder="Es. Confermato, Sospeso, Risolto"
+                className="w-full px-3 py-2.5 rounded-lg border border-(--color-border) bg-(--color-surface) text-sm text-(--color-text) outline-none focus:border-(--color-text) focus:ring-1 focus:ring-(--color-text) transition-all placeholder:text-(--color-muted)/50"
+              />
+            </div>
+          )}
+
+          <div className="sm:col-span-12 space-y-2">
+            <div>
+              <label className="text-xs font-medium text-(--color-text)">
+                Come deve trovarlo?
+              </label>
+              <p className="mt-0.5 text-[11px] text-(--color-muted)">
+                Descrivi in modo semplice cosa deve cercare.
+              </p>
+            </div>
+            <input
+              {...register(`fields.${index}.description` as const, {
+                required: true,
+              })}
+              placeholder="Es. Individua la clausola che indica il tribunale competente"
+              className="w-full px-3 py-2.5 rounded-lg border border-(--color-border) bg-(--color-surface) text-sm text-(--color-text) outline-none focus:border-(--color-text) focus:ring-1 focus:ring-(--color-text) transition-all placeholder:text-(--color-muted)/50"
+            />
+          </div>
+
+          <div className="sm:col-span-12">
+            <label
+              htmlFor={`req-${index}`}
+              className="inline-flex items-center gap-2 cursor-pointer select-none"
+            >
+              <input
+                type="checkbox"
+                id={`req-${index}`}
+                {...register(`fields.${index}.isRequired` as const)}
+                className="w-4 h-4 rounded border-(--color-border) accent-(--color-text) cursor-pointer"
+              />
+              <span className="text-xs text-(--color-text)">
+                Questo dato è importante
+              </span>
+              <span className="text-[11px] text-(--color-muted)">
+                L'AI segnalerà se non riesce a trovarlo.
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+    );
+  }
+);
+
+FieldRow.displayName = "FieldRow";
+
 export const PromptCreator: React.FC<PromptCreatorProps> = ({
   onBack,
   template,
 }) => {
-  const shouldReduceMotion = useReducedMotion();
-
   const {
     generatedPrompt,
     isGenerating,
@@ -41,26 +188,42 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
 
   const [activeHint, setActiveHint] = useState<string | null>(null);
 
+  const defaultValues: PromptBuilderForm = {
+    title: "",
+    objective: "",
+    notes: "",
+    fields: [
+      {
+        name: "",
+        type: "string",
+        description: "",
+        isRequired: true,
+      },
+    ],
+  };
+
+  const formValues: PromptBuilderForm = template
+    ? {
+        title: template.title || "",
+        objective: template.objective || "",
+        notes: template.notes || "",
+        fields:
+          template.fields && template.fields.length > 0
+            ? template.fields
+            : [{ name: "", type: "string", description: "", isRequired: true }],
+      }
+    : defaultValues;
+
   const {
     register,
     control,
     handleSubmit,
-    watch,
-    reset,
     formState: { errors },
   } = useForm<PromptBuilderForm>({
-    defaultValues: {
-      title: "",
-      objective: "",
-      notes: "",
-      fields: [
-        {
-          name: "",
-          type: "string",
-          description: "",
-          isRequired: true,
-        },
-      ],
+    defaultValues,
+    values: formValues,
+    resetOptions: {
+      keepDefaultValues: true,
     },
   });
 
@@ -69,28 +232,12 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
     name: "fields",
   });
 
-  const watchFields = watch("fields");
-
-  // PRECOMPILAZIONE DEL MODULO (Fix "Crea da Modello")
+  // Torna in alto all'inizio del caricamento
   useEffect(() => {
-    if (template) {
-      reset({
-        title: template.title || "",
-        objective: template.objective || "",
-        notes: template.notes || "",
-        fields: template.fields && template.fields.length > 0
-          ? template.fields
-          : [{ name: "", type: "string", description: "", isRequired: true }],
-      });
-    } else {
-      reset({
-        title: "",
-        objective: "",
-        notes: "",
-        fields: [{ name: "", type: "string", description: "", isRequired: true }],
-      });
+    if (isGenerating) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
-  }, [template, reset]);
+  }, [isGenerating]);
 
   useEffect(() => {
     const handlePopState = () => {
@@ -149,14 +296,13 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
           </h1>
 
           <p className="mt-3 text-sm sm:text-base text-(--color-muted) leading-relaxed max-w-2xl">
-            Decidi cosa deve cercare l'AI nei tuoi documenti.
-            Una volta creato, potrai riutilizzare lo stesso modello su
-            tutti i fascicoli che vuoi.
+            Decidi cosa deve cercare l'AI nei tuoi documenti. Una volta creato,
+            potrai riutilizzare lo stesso modello su tutti i fascicoli che vuoi.
           </p>
         </div>
       </div>
 
-      {/* SIMPLE 3-STEP GUIDE */}
+      {/* GUIDA IN 3 PASSI */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
         <div className="flex items-start gap-3 p-4 bg-(--color-surface) border border-(--color-border) rounded-xl">
           <div className="w-8 h-8 shrink-0 rounded-lg bg-(--color-bg) border border-(--color-border) flex items-center justify-center">
@@ -201,82 +347,88 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
         </div>
       </div>
 
-      {/* MAIN CARD */}
+      {/* SCHEDA PRINCIPALE */}
       <div className="relative bg-(--color-surface) border border-(--color-border) rounded-2xl shadow-(--shadow-soft) overflow-hidden">
         <div className="h-1 bg-(--color-primary)" />
 
-        {/* OVERLAY PROFESSIONALE: CARICAMENTO & ERRORE */}
+        {/* OVERLAY PULITO E ATOMICO (ZERO SFARFALLIO) */}
         <AnimatePresence>
           {(isGenerating || generatedPrompt || error) && (
             <motion.div
+              key="status-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-50 bg-(--color-surface)/95 backdrop-blur-md flex items-center justify-center p-6 border-t border-(--color-border)"
+              transition={{ duration: 0.12, ease: "linear" }}
+              className="absolute inset-0 z-50 bg-(--color-surface) flex items-center justify-center p-6 border-t border-(--color-border)"
             >
               {isGenerating ? (
                 <div className="text-center max-w-sm">
                   <div className="w-16 h-16 rounded-2xl bg-(--color-bg) border border-(--color-border) flex items-center justify-center mx-auto mb-6 shadow-xs relative overflow-hidden">
                     <div className="absolute inset-0 bg-linear-to-tr from-transparent via-(--color-text)/5 to-transparent animate-pulse" />
-                    <Loader2 size={26} className="animate-spin text-(--color-text) opacity-90" />
+                    <Loader2
+                      size={26}
+                      className="animate-spin text-(--color-text) opacity-90"
+                    />
                   </div>
-                  <h3 className="text-xl font-medium text-(--color-text) tracking-tight mb-2" style={{ fontFamily: "var(--font-serif)" }}>
+                  <h3
+                    className="text-xl font-medium text-(--color-text) tracking-tight mb-2"
+                    style={{ fontFamily: "var(--font-serif)" }}
+                  >
                     Elaborazione Regole in Corso
                   </h3>
                   <p className="text-sm text-(--color-muted) leading-relaxed">
-                    I nostri sistemi stanno strutturando e validando le istruzioni per il motore AI. L'operazione richiede pochi istanti.
+                    I nostri sistemi stanno strutturando e validando le
+                    istruzioni per il motore AI. L'operazione richiede pochi
+                    istanti.
                   </p>
                 </div>
               ) : error ? (
-                <motion.div
-                  initial={shouldReduceMotion ? {} : { scale: 0.96, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  className="text-center max-w-sm"
-                >
+                <div className="text-center max-w-sm">
                   <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6 text-red-600 dark:text-red-400">
                     <FaExclamationTriangle size={24} />
                   </div>
-                  <h3 className="text-xl font-medium text-(--color-text) tracking-tight mb-2" style={{ fontFamily: "var(--font-serif)" }}>
+                  <h3
+                    className="text-xl font-medium text-(--color-text) tracking-tight mb-2"
+                    style={{ fontFamily: "var(--font-serif)" }}
+                  >
                     Impossibile Generare il Modello
                   </h3>
                   <p className="text-sm text-(--color-muted) leading-relaxed mb-6">
                     {error}
                   </p>
                   <button
+                    type="button"
                     onClick={clearError}
                     className="px-5 py-2.5 bg-(--color-bg) border border-(--color-border) hover:border-(--color-text) text-(--color-text) rounded-xl text-sm font-medium transition-all shadow-xs cursor-pointer"
                   >
                     Torna all'Editor
                   </button>
-                </motion.div>
+                </div>
               ) : (
-                <motion.div
-                  initial={shouldReduceMotion ? {} : { scale: 0.96, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ duration: 0.25 }}
-                  className="text-center max-w-sm"
-                >
+                <div className="text-center max-w-sm">
                   <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-6 text-emerald-600 dark:text-emerald-400 shadow-xs">
                     <FaCheckCircle size={26} />
                   </div>
-                  <h3 className="text-xl font-medium text-(--color-text) tracking-tight mb-2" style={{ fontFamily: "var(--font-serif)" }}>
+                  <h3
+                    className="text-xl font-medium text-(--color-text) tracking-tight mb-2"
+                    style={{ fontFamily: "var(--font-serif)" }}
+                  >
                     Modello Creato e Verificato
                   </h3>
                   <p className="text-sm text-(--color-muted) leading-relaxed">
-                    Il prompt è stato salvato in sicurezza nell'archivio. Reindirizzamento in corso...
+                    Il prompt è stato salvato in sicurezza nell'archivio.
+                    Reindirizzamento in corso...
                   </p>
-                </motion.div>
+                </div>
               )}
             </motion.div>
           )}
         </AnimatePresence>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="p-5 sm:p-8 lg:p-10"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="p-5 sm:p-8 lg:p-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-            {/* LEFT */}
+            {/* SINISTRA */}
             <div className="lg:col-span-5">
               <div className="mb-7">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-(--color-muted)">
@@ -291,13 +443,12 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
                 </h2>
 
                 <p className="mt-2 text-sm text-(--color-muted) leading-relaxed">
-                  Bastano poche indicazioni per spiegare all'AI
-                  cosa analizzare e come comportarsi.
+                  Bastano poche indicazioni per spiegare all'AI cosa analizzare
+                  e come comportarsi.
                 </p>
               </div>
 
               <div className="space-y-6">
-                {/* TITLE */}
                 <div className="space-y-2">
                   <div>
                     <label className="text-sm font-medium text-(--color-text)">
@@ -321,7 +472,6 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
                   )}
                 </div>
 
-                {/* OBJECTIVE */}
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -364,7 +514,6 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
                   )}
                 </div>
 
-                {/* NOTES */}
                 <div className="space-y-2">
                   <div>
                     <div className="flex items-center justify-between">
@@ -388,7 +537,7 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
               </div>
             </div>
 
-            {/* RIGHT */}
+            {/* DESTRA */}
             <div className="lg:col-span-7">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
                 <div>
@@ -425,146 +574,14 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
 
               <div className="space-y-3 max-h-162.5 overflow-y-auto pr-1">
                 {fields.map((field, index) => (
-                  <motion.div
+                  <FieldRow
                     key={field.id}
-                    initial={{ opacity: 0, y: -6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="p-4 sm:p-5 rounded-xl border border-(--color-border) bg-(--color-bg)"
-                  >
-                    <div className="flex items-center justify-between gap-4 mb-4">
-                      <div className="flex items-center gap-2">
-                        <span className="flex items-center justify-center w-6 h-6 rounded-md bg-(--color-surface) border border-(--color-border) text-[10px] font-semibold text-(--color-muted)">
-                          {index + 1}
-                        </span>
-                        <span className="text-sm font-medium text-(--color-text)">
-                          Informazione da estrarre
-                        </span>
-                      </div>
-                      {fields.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => remove(index)}
-                          className="inline-flex items-center gap-1.5 text-xs text-(--color-muted) hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer"
-                        >
-                          <FaTrash className="w-2.5 h-2.5" />
-                          Rimuovi
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-                      {/* FIELD NAME */}
-                      <div className="sm:col-span-7 space-y-2">
-                        <div>
-                          <label className="text-xs font-medium text-(--color-text)">
-                            Nome del dato
-                          </label>
-                          <p className="mt-0.5 text-[11px] text-(--color-muted)">
-                            La chiave che userai nel risultato.
-                          </p>
-                        </div>
-                        <input
-                          {...register(`fields.${index}.name` as const, {
-                            required: true,
-                          })}
-                          placeholder="Es. canone_annuo"
-                          className="w-full px-3 py-2.5 rounded-lg border border-(--color-border) bg-(--color-surface) text-sm font-mono text-(--color-text) outline-none focus:border-(--color-text) focus:ring-1 focus:ring-(--color-text) transition-all placeholder:text-(--color-muted)/50"
-                        />
-                      </div>
-
-                      {/* TYPE */}
-                      <div className="sm:col-span-5 space-y-2">
-                        <div>
-                          <label className="text-xs font-medium text-(--color-text)">
-                            Tipo di risultato
-                          </label>
-                          <p className="mt-0.5 text-[11px] text-(--color-muted)">
-                            Come vuoi ricevere il dato.
-                          </p>
-                        </div>
-                        <select
-                          {...register(`fields.${index}.type` as const)}
-                          className="w-full px-3 py-2.5 rounded-lg border border-(--color-border) bg-(--color-surface) text-sm text-(--color-text) outline-none focus:border-(--color-text) focus:ring-1 focus:ring-(--color-text) cursor-pointer"
-                        >
-                          <option value="string">Testo</option>
-                          <option value="number">Numero / Importo</option>
-                          <option value="boolean">Sì / No</option>
-                          <option value="array">Elenco</option>
-                          <option value="enum">Scelta predefinita</option>
-                        </select>
-                      </div>
-
-                      {/* ENUM */}
-                      {watchFields[index]?.type === "enum" && (
-                        <div className="sm:col-span-12 space-y-2">
-                          <div>
-                            <label className="text-xs font-medium text-(--color-text)">
-                              Valori possibili
-                            </label>
-                            <p className="mt-0.5 text-[11px] text-(--color-muted)">
-                              Inserisci le opzioni separate da virgola.
-                            </p>
-                          </div>
-                          <input
-                            {...register(
-                              `fields.${index}.enumValues` as const,
-                              {
-                                required: "Definisci almeno due valori",
-                              }
-                            )}
-                            placeholder="Es. Confermato, Sospeso, Risolto"
-                            className="w-full px-3 py-2.5 rounded-lg border border-(--color-border) bg-(--color-surface) text-sm text-(--color-text) outline-none focus:border-(--color-text) focus:ring-1 focus:ring-(--color-text) transition-all placeholder:text-(--color-muted)/50"
-                          />
-                        </div>
-                      )}
-
-                      {/* DESCRIPTION */}
-                      <div className="sm:col-span-12 space-y-2">
-                        <div>
-                          <label className="text-xs font-medium text-(--color-text)">
-                            Come deve trovarlo?
-                          </label>
-                          <p className="mt-0.5 text-[11px] text-(--color-muted)">
-                            Descrivi in modo semplice cosa deve cercare.
-                          </p>
-                        </div>
-                        <input
-                          {...register(
-                            `fields.${index}.description` as const,
-                            {
-                              required: true,
-                            }
-                          )}
-                          placeholder="Es. Individua la clausola che indica il tribunale competente"
-                          className="w-full px-3 py-2.5 rounded-lg border border-(--color-border) bg-(--color-surface) text-sm text-(--color-text) outline-none focus:border-(--color-text) focus:ring-1 focus:ring-(--color-text) transition-all placeholder:text-(--color-muted)/50"
-                        />
-                      </div>
-
-                      {/* REQUIRED */}
-                      <div className="sm:col-span-12">
-                        <label
-                          htmlFor={`req-${index}`}
-                          className="inline-flex items-center gap-2 cursor-pointer select-none"
-                        >
-                          <input
-                            type="checkbox"
-                            id={`req-${index}`}
-                            {...register(
-                              `fields.${index}.isRequired` as const
-                            )}
-                            className="w-4 h-4 rounded border-(--color-border) accent-(--color-text) cursor-pointer"
-                          />
-                          <span className="text-xs text-(--color-text)">
-                            Questo dato è importante
-                          </span>
-                          <span className="text-[11px] text-(--color-muted)">
-                            L'AI segnalerà se non riesce a trovarlo.
-                          </span>
-                        </label>
-                      </div>
-                    </div>
-                  </motion.div>
+                    index={index}
+                    control={control}
+                    register={register}
+                    onRemove={remove}
+                    canRemove={fields.length > 1}
+                  />
                 ))}
               </div>
             </div>

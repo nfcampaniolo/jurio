@@ -1,1093 +1,1333 @@
 <!doctype html>
 <html lang="it">
-<head>
-  <script type="text/javascript" src="https://embeds.iubenda.com/widgets/7f06adba-d6ba-41a7-9758-69f5297af96e.js"></script>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="application-name" content="Jurio">
-  <meta name="theme-color" content="#f7f5f1" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#171614" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="Jurio è la piattaforma di ricerca giuridica con intelligenza artificiale pensata per avvocati e professionisti del diritto. Cerca precedenti, analizza documenti e collega i tuoi fascicoli alla giurisprudenza rilevante.">
-  <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
-  <link rel="canonical" href="https://jurio.it/">
-  <link rel="icon" href="/favicon.ico">
-
-  <meta property="og:type" content="website">
-  <meta property="og:title" content="Jurio — Ricerca giuridica con intelligenza artificiale">
-  <meta property="og:description" content="Ricerca giurisprudenziale, analisi dei documenti e intelligenza artificiale in un unico ambiente per il lavoro legale.">
-  <meta property="og:url" content="https://jurio.it/">
-  <meta property="og:image" content="https://jurio.it/logo.webp">
-  <meta property="og:locale" content="it_IT">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Jurio — Ricerca giuridica con intelligenza artificiale">
-  <meta name="twitter:description" content="Ricerca giurisprudenziale, analisi dei documenti e intelligenza artificiale in un unico ambiente per il lavoro legale.">
-  <meta name="twitter:image" content="https://jurio.it/logo.webp">
-
-  <link
-    rel="preload"
-    as="image"
-    href="/demo.webp"
-    type="image/webp"
-    fetchpriority="high"
-  >
-
-  <link rel="stylesheet" href="/styles.css">
-  <title>Jurio — Ricerca giuridica con intelligenza artificiale</title>
-
-  <script type="application/ld+json">
-  {
-    "@context":"https://schema.org",
-    "@type":"SoftwareApplication",
-    "name":"Jurio",
-    "url":"https://jurio.it/",
-    "applicationCategory":"BusinessApplication",
-    "operatingSystem":"Web",
-    "description":"Piattaforma di ricerca giuridica con intelligenza artificiale per avvocati e professionisti del diritto.",
-    "inLanguage":"it-IT"
-  }
-  </script>
-
-  <style>
-    /* Custom Styles for Interactive Demo */
-    #interactive-demo {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 16 / 10;
-      background: radial-gradient(circle at center, #262420 0%, #171614 100%);
-      overflow: hidden;
-      cursor: none;
-      border-radius: 0; /* Bordo squadrato */
-      box-shadow: inset 0 0 60px rgba(0,0,0,0.6);
-      border: 1px solid rgba(226, 185, 111, 0.15);
-    }
-
-    .demo-card {
-      border-radius: 0 !important;
-    }
-
-    /* Grid background */
-    #interactive-demo::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background-image: 
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      pointer-events: none;
-    }
-
-    .doc-mockup {
-      position: absolute;
-      width: 120px;
-      height: 160px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 0; /* Bordo squadrato */
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      backdrop-filter: blur(8px);
-      transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      cursor: none;
-    }
-
-    .doc-mockup.scanning {
-      background: rgba(226, 185, 111, 0.08);
-      border-color: rgba(226, 185, 111, 0.6);
-      box-shadow: 0 15px 40px rgba(226, 185, 111, 0.15), 0 0 20px rgba(226, 185, 111, 0.1);
-      transform: scale(1.05) translateY(-5px) !important;
-      z-index: 10;
-    }
-
-    .doc-mockup .doc-line {
-      height: 4px;
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 0; /* Linee squadrate */
-      width: 100%;
-      transition: background 0.3s ease;
-    }
-
-    .doc-mockup .doc-line.title {
-      height: 8px;
-      width: 60%;
-      margin-bottom: 4px;
-      background: rgba(255, 255, 255, 0.3);
-      border-radius: 0;
-    }
-
-    .doc-mockup .doc-line.short { width: 40%; }
-    .doc-mockup .doc-line.med { width: 80%; }
-
-    .doc-mockup.scanning .doc-line {
-      background: rgba(226, 185, 111, 0.35);
-    }
-    .doc-mockup.scanning .doc-line.title {
-      background: rgba(226, 185, 111, 0.7);
-    }
-
-    .crosshair-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 80px;
-      height: 80px;
-      pointer-events: none;
-      z-index: 50;
-      will-change: transform;
-    }
-
-    .crosshair {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-    }
-
-    .crosshair.scanning {
-      transform: scale(0.8) rotate(45deg);
-    }
-
-    .crosshair-j {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      color: #fff;
-      font-size: 28px;
-      font-family: var(--font-serif, "Lora", serif);
-      font-weight: 600;
-      letter-spacing: -.04em;
-      text-shadow: 0 0 10px rgba(255,255,255,0.3);
-      transition: all 0.3s ease;
-    }
-
-    .crosshair.scanning .crosshair-j {
-      color: #e2b96f;
-      text-shadow: 0 0 15px rgba(226, 185, 111, 0.6);
-      transform: translate(-50%, -50%) rotate(-45deg);
-    }
-
-    .bracket {
-      position: absolute;
-      width: 16px;
-      height: 16px;
-      border: 2px solid rgba(255, 255, 255, 0.6);
-      transition: all 0.3s ease;
-    }
-
-    .crosshair.scanning .bracket {
-      border-color: #e2b96f;
-    }
-
-    .bracket-tl { top: 0; left: 0; border-right: none; border-bottom: none; }
-    .bracket-tr { top: 0; right: 0; border-left: none; border-bottom: none; }
-    .bracket-bl { bottom: 0; left: 0; border-right: none; border-top: none; }
-    .bracket-br { bottom: 0; right: 0; border-left: none; border-top: none; }
-
-    .scanner-line-fx {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 120px;
-      height: 2px;
-      background: #e2b96f;
-      box-shadow: 0 0 10px #e2b96f;
-      opacity: 0;
-      transform: translate(-50%, -50%) rotate(-45deg);
-      transition: opacity 0.3s ease;
-    }
-
-    .crosshair.scanning .scanner-line-fx {
-      opacity: 1;
-      animation: scan-anim 1.5s ease-in-out infinite alternate;
-    }
-
-    @keyframes scan-anim {
-      0% { transform: translate(-50%, -50%) rotate(-45deg) translateY(-35px); }
-      100% { transform: translate(-50%, -50%) rotate(-45deg) translateY(35px); }
-    }
-    
-    @media (max-width: 768px) {
-      #interactive-demo {
-        cursor: default;
-        aspect-ratio: 4 / 3;
-      }
-      .crosshair-container {
-        display: block; /* Mantiene visibile il mirino in auto-patrol */
-      }
-      .doc-mockup {
-        width: 95px;
-        height: 130px;
-        padding: 10px;
-      }
-    }
-  </style>
-</head>
-<body>
-  <a class="skip-link" href="#contenuto">Salta al contenuto</a>
-
-  <div class="scroll-progress" aria-hidden="true"></div>
-  
-  <div id="header"></div>
-
-  <main id="contenuto">
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="container hero-grid">
-        <div class="hero-copy reveal reveal-left">
-          <span class="eyebrow">Ricerca giuridica · AI</span>
-      <h1 id="hero-title">L’essenziale per la <em>ricerca giuridica.</em></h1>
-      <p class="hero-lead">
-        <strong>Jurio è la piattaforma di ricerca giuridica basata sull’intelligenza artificiale</strong>
-        progettata per aiutare avvocati e professionisti del diritto a trovare, analizzare e mettere in relazione precedenti, principi di diritto e documenti rilevanti per i propri casi.
-      </p>
-      <p class="hero-support">
-        <strong>Ogni risposta, inferenza e deduzione è saldamente ancorata alle fonti giurisprudenziali.</strong>
-        Jurio non si limita a indicarti una possibile conclusione: collega l’analisi alle decisioni e ai documenti da cui deriva, così puoi verificare rapidamente la base giuridica di ciò che stai leggendo.
-      </p>
-
-      <div class="hero-actions">
-        <a class="button button-primary" href="/login">
-          Inizia una prova gratuita senza carta
-          <span aria-hidden="true">→</span>
-        </a>
-        <a class="button button-secondary" href="/ricerca">
-          Esplora la ricerca giuridica
-        </a>
-        <a class="button button-secondary" href="/fonti">
-          Scopri le fonti
-        </a>
-      </div>
-    </div>
-
-    <div>
-      <div class="demo-card reveal reveal-scale" aria-label="Anteprima interattiva della piattaforma Jurio">
-        <div class="demo-media" id="interactive-demo">
-          
-          <!-- Abstract Legal Documents -->
-          <div class="doc-mockup" style="top: 15%; left: 15%; transform: rotate(-6deg);">
-            <div class="doc-line title"></div>
-            <div class="doc-line"></div>
-            <div class="doc-line"></div>
-            <div class="doc-line short"></div>
-            <div class="doc-line med" style="margin-top: 12px;"></div>
-            <div class="doc-line"></div>
-            <div class="doc-line short"></div>
-          </div>
-          
-          <div class="doc-mockup" style="top: 40%; right: 10%; transform: rotate(8deg);">
-            <div class="doc-line title"></div>
-            <div class="doc-line"></div>
-            <div class="doc-line med"></div>
-            <div class="doc-line"></div>
-            <div class="doc-line short" style="margin-top: 12px;"></div>
-            <div class="doc-line"></div>
-          </div>
-
-          <div class="doc-mockup" style="bottom: 10%; left: 40%; transform: rotate(-2deg);">
-            <div class="doc-line title"></div>
-            <div class="doc-line med"></div>
-            <div class="doc-line"></div>
-            <div class="doc-line short"></div>
-            <div class="doc-line"></div>
-            <div class="doc-line"></div>
-            <div class="doc-line med"></div>
-          </div>
-
-          <!-- Targeting Crosshair -->
-          <div class="crosshair-container" id="crosshair-tracker">
-            <div class="crosshair" id="crosshair-ui">
-              <div class="bracket bracket-tl"></div>
-              <div class="bracket bracket-tr"></div>
-              <div class="bracket bracket-bl"></div>
-              <div class="bracket bracket-br"></div>
-              <div class="crosshair-j">J</div>
-              <div class="scanner-line-fx"></div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <ul class="feature-list" aria-label="Funzionalità principali" data-stagger>
-        <li class="feature-item reveal reveal-right">
-          <h2>Giurisprudenza rilevante, con le fonti in primo piano</h2>
-          <p>
-            Cassazione, Consiglio di Stato e Corte costituzionale, organizzati per aiutarti
-            a individuare rapidamente precedenti, principi di diritto e orientamenti pertinenti,
-            <strong>sempre collegati alle relative fonti giurisprudenziali.</strong>
-          </p>
-        </li>
-
-        <li class="feature-item reveal reveal-right">
-          <h2>Ricerca giuridica intelligente, fondata sulle fonti</h2>
-          <p>
-            Cerca per questione giuridica, fattispecie e significato, non soltanto per parole chiave.
-            L’AI individua le informazioni rilevanti e costruisce le proprie inferenze
-            <strong>a partire dalla giurisprudenza sottostante, non da conclusioni prive di riscontro.</strong>
-          </p>
-        </li>
-
-        <li class="feature-item reveal reveal-right">
-          <h2>Ogni analisi resta verificabile</h2>
-          <p>
-            Analizza i fascicoli selezionati e mettili in relazione con la giurisprudenza.
-            <strong>Ricerca, inferenze e deduzioni restano ancorate alle fonti</strong>,
-            così puoi risalire rapidamente ai documenti che supportano l’analisi e valutarne direttamente la rilevanza.
-          </p>
-        </li>
-      </ul>
-    </div>
-
-      </div>
-    </section>
-
-    <section class="section integrations-section" aria-labelledby="integrazioni-title">
-      <div class="container">
-
-        <!-- HEADER -->
-        <div class="integrations-header reveal">
-          <div class="integrations-header-main">
-            <span class="eyebrow">Un ecosistema connesso</span>
-
-            <h2 id="integrazioni-title">
-              Il tuo lavoro legale.
-              <span>Dentro il tuo flusso.</span>
-            </h2>
-          </div>
-
-          <p class="integrations-intro">
-            Jurio porta ricerca giuridica, documenti e AI
-            direttamente negli strumenti che utilizzi ogni giorno.
-            Senza interrompere il tuo lavoro.
-          </p>
-        </div>
-
-
-        <!-- INTEGRATIONS -->
-        <div class="integrations-showcase">
-
-
-          <!-- GOOGLE DRIVE -->
-          <article class="integration-card integration-drive reveal reveal-scale">
-
-            <div class="integration-copy">
-
-              <div class="integration-meta">
-                <span class="integration-number">01</span>
-                <span class="integration-label">Google Drive</span>
-              </div>
-
-              <h3>
-                I tuoi documenti.
-                <span>Quando servono.</span>
-              </h3>
-
-              <p>
-                Seleziona i documenti dal tuo Google Drive e utilizzali
-                direttamente all'interno della ricerca giuridica.
-                Analizza file e fonti nello stesso contesto.
-              </p>
-
-              <a class="integration-link" href="/privacy">
-                <span>Privacy &amp; sicurezza</span>
-                <span class="integration-arrow" aria-hidden="true">↗</span>
-              </a>
-
-            </div>
-
-
-            <div class="integration-visual integration-visual-drive" aria-hidden="true">
-
-              <div class="drive-window">
-
-                <div class="drive-topbar">
-                  <div class="drive-brand">
-                    <span class="drive-logo"></span>
-                    <span>My Drive</span>
-                  </div>
-
-                  <div class="drive-dots">
-                    <i></i>
-                    <i></i>
-                    <i></i>
-                  </div>
-                </div>
-
-                <div class="drive-files">
-
-                  <div class="drive-file active">
-                    <span class="file-icon pdf">PDF</span>
-                    <span class="file-name">Parere_legale.pdf</span>
-                    <span class="file-check">✓</span>
-                  </div>
-
-                  <div class="drive-file">
-                    <span class="file-icon doc">DOC</span>
-                    <span class="file-name">Contratto.docx</span>
-                  </div>
-
-                  <div class="drive-file">
-                    <span class="file-icon pdf">PDF</span>
-                    <span class="file-name">Sentenza_Cassazione.pdf</span>
-                  </div>
-
-                  <div class="drive-file">
-                    <span class="file-icon doc">DOC</span>
-                    <span class="file-name">Note_cliente.docx</span>
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </article>
-
-
-          <!-- WORD -->
-          <article class="integration-card integration-word reveal reveal-scale">
-
-            <div class="integration-copy">
-
-              <div class="integration-meta">
-                <span class="integration-number">02</span>
-                <span class="integration-label">Microsoft Word Add-in</span>
-              </div>
-
-              <h3>
-                La ricerca giuridica.
-                <span>Dove stai già scrivendo.</span>
-              </h3>
-
-              <p>
-                Cerca precedenti, consulta il database di Jurio e genera
-                citazioni e approfondimenti direttamente dentro Word.
-                Nessun cambio di finestra.
-              </p>
-
-              <a class="integration-link" href="/supporto-word">
-                <span>Scopri l'Add-in</span>
-                <span class="integration-arrow" aria-hidden="true">↗</span>
-              </a>
-
-            </div>
-
-
-            <div class="integration-visual integration-visual-word" aria-hidden="true">
-
-              <div class="word-window">
-
-                <div class="word-toolbar">
-
-                  <div class="word-toolbar-brand">
-                    <span class="word-logo">W</span>
-                  </div>
-
-                  <div class="word-toolbar-lines">
-                    <i></i>
-                    <i></i>
-                    <i></i>
-                  </div>
-
-                </div>
-
-                <div class="word-document">
-
-                  <div class="document-title"></div>
-
-                  <div class="document-line long"></div>
-                  <div class="document-line medium"></div>
-                  <div class="document-line short"></div>
-
-                  <div class="document-highlight">
-                    <span></span>
-                    <span></span>
-                  </div>
-
-                  <div class="document-line long"></div>
-                  <div class="document-line medium"></div>
-
-                </div>
-
-                <div class="word-sidebar">
-
-                  <div class="sidebar-header">
-                    Jurio
-                  </div>
-
-                  <div class="sidebar-search">
-                    <span></span>
-                  </div>
-
-                  <div class="sidebar-result">
-                    <span></span>
-                    <i></i>
-                    <i></i>
-                  </div>
-
-                  <div class="sidebar-result">
-                    <span></span>
-                    <i></i>
-                    <i></i>
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </article>
-
-
-          <!-- MCP -->
-          <article class="integration-card integration-mcp reveal reveal-scale">
-
-            <div class="integration-copy">
-
-              <div class="integration-meta">
-                <span class="integration-number">03</span>
-                <span class="integration-label">MCP · AI Integrations</span>
-              </div>
-
-              <h3>
-                La ricerca giuridica.
-                <span>Direttamente dentro la tua AI.</span>
-              </h3>
-
-              <p>
-                Con il Model Context Protocol, Jurio diventa il layer giuridico
-                dei tuoi assistenti AI. Ricerca avanzata, fonti e precedenti
-                entrano direttamente nel tuo workflow.
-              </p>
-
-              <div class="integration-actions">
-
-                <a class="integration-link" href="/guida/mcp-vibe">
-                  <span>Guida Vibe</span>
-                  <span class="integration-arrow" aria-hidden="true">↗</span>
-                </a>
-
-                <a class="integration-link" href="/guida/mcp-claude">
-                  <span>Guida Claude</span>
-                  <span class="integration-arrow" aria-hidden="true">↗</span>
-                </a>
-
-              </div>
-
-            </div>
-
-
-            <div class="integration-visual integration-visual-mcp" aria-hidden="true">
-
-              <div class="mcp-visual">
-
-                <div class="mcp-ring mcp-ring-1"></div>
-                <div class="mcp-ring mcp-ring-2"></div>
-                <div class="mcp-ring mcp-ring-3"></div>
-
-                <div class="mcp-node node-top">
-                  <span>AI</span>
-                </div>
-
-                <div class="mcp-node node-left">
-                  <span>Normativa</span>
-                </div>
-
-                <div class="mcp-node node-right">
-                  <span>Diritto</span>
-                </div>
-
-                <div class="mcp-node node-bottom">
-                  <span>Documenti</span>
-                </div>
-
-                <div class="mcp-center">
-                  <span>J</span>
-                </div>
-
-              </div>
-
-            </div>
-
-          </article>
-
-        </div>
-
-
-        <!-- FOOTER -->
-        <div class="integrations-footer reveal">
-
-          <span class="footer-caption">
-            Un unico ecosistema
-          </span>
-
-          <span class="footer-line"></span>
-
-          <strong>
-            Ricerca <span>→</span> documenti <span>→</span> AI
-          </strong>
-
-        </div>
-
-      </div>
-    </section>
-
-    <section id="come-funziona" class="section" aria-labelledby="come-funziona-title">
-      <div class="container">
-        <div class="section-heading reveal">
-          <h2 id="come-funziona-title">Come funziona <span style="color: var(--color-primary); font-style: italic;">Jurio</span></h2>
-          <p>Unisce giurisprudenza delle Corti Supreme già analizzata, una base dati personale riservata e un agente AI. Il risultato è una ricerca più essenziale, sicura e veloce.</p>
-        </div>
-        <ol class="steps" data-stagger>
-          <li class="step reveal reveal-left">
-            <span class="step-num">01</span>
-            <h3>Fonti ufficiali già elaborate</h3>
-            <p>Accedi alla giurisprudenza delle Corti Supreme — Cassazione Civile, Cassazione Penale, Consiglio di Stato e Corte Costituzionale — già massimizzata e indicizzata per la ricerca semantica.</p>
-          </li>
-          <li class="step reveal reveal-left">
-            <span class="step-num">02</span>
-            <h3>Base dati personale e sicura</h3>
-            <p>Carica atti e fascicoli in un ambiente riservato. I documenti restano interrogabili insieme alla giurisprudenza, senza confonderli con fonti esterne.</p>
-          </li>
-          <li class="step reveal reveal-left">
-            <span class="step-num">03</span>
-            <h3>Agente AI per ricerca e sintesi</h3>
-            <p>L’Agente AI collega fatti, precedenti e norme, mette in evidenza la ratio decidendi e aiuta a concentrarti solo su ciò che conta.</p>
-          </li>
-        </ol>
-      </div>
-    </section>
-
-    <section id="prezzi" class="section" aria-labelledby="prezzi-title">
-      <div class="container">
-        <div class="pricing-banner accent reveal reveal-scale">
-          <div>
-            <span class="eyebrow" style="color:#e2b96f;">Piani e tariffe</span>
-            <h2 id="prezzi-title">Scegli il piano adatto al tuo <em>modo di lavorare.</em></h2>
-            <p>Essential per la ricerca avanzata. Business per elaborazione e redazione automatica dei documenti. Per studi e team sono disponibili configurazioni dedicate.</p>
-            <ul class="pricing-points">
-              <li>Confronta piani e funzionalità in un'unica pagina.</li>
-              <li>Scopri disponibilità, condizioni e prova gratuita.</li>
-              <li>Soluzioni Team ed Enterprise per studi legali.</li>
-            </ul>
-          </div>
-          <div class="pricing-cta">
-            <a class="button button-primary" href="/prezzi">Vai alla pagina prezzi <span aria-hidden="true">↗</span></a>
-            <small>Prezzi, dettagli e attivazione</small>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="faq" class="section" aria-labelledby="faq-title">
-      <div class="container">
-
-        <div class="section-heading reveal">
-          <span class="eyebrow">Fonti, sicurezza e AI</span>
-          <h2 id="faq-title">La ricerca giuridica, con la sicurezza che ti aspetti.</h2>
-          <p>
-            Fonti di massimo livello, infrastruttura europea e Intelligenza Artificiale
-            progettata per aiutarti a lavorare meglio, senza rinunciare al controllo
-            sulle informazioni.
-          </p>
-        </div>
-
-        <div class="faq reveal reveal-scale">
-
-          <details open>
-            <summary>Quali fonti posso trovare su Jurio?</summary>
-            <p>
-              Jurio è fortemente focalizzato sulla giurisprudenza di massimo livello,
-              con un patrimonio che comprende in particolare <strong>Corte di Cassazione,
-              Consiglio di Stato e Corte costituzionale</strong>.
-              Le fonti sono al centro della piattaforma: puoi cercare, esplorare e
-              verificare rapidamente i precedenti più rilevanti per il tuo lavoro.
-            </p>
-          </details>
-
-          <details>
-            <summary>Perché le fonti di Jurio sono importanti per un avvocato?</summary>
-            <p>
-              Perché una buona risposta vale quanto la fonte che la sostiene.
-              Jurio nasce per portarti più rapidamente dalla questione giuridica
-              al precedente rilevante, riducendo il tempo speso tra banche dati,
-              ricerche e verifiche.
-            </p>
-          </details>
-
-          <details>
-            <summary>Le fonti sono verificabili?</summary>
-            <p>
-              Sì. Jurio mantiene la fonte al centro della ricerca: il risultato
-              non è pensato per essere accettato sulla fiducia, ma per essere
-              approfondito e verificato sul documento di riferimento.
-              L'AI ti aiuta a trovare e comprendere le informazioni; la fonte
-              resta il punto di riferimento.
-            </p>
-          </details>
-
-          <details>
-            <summary>Jurio usa l'Intelligenza Artificiale?</summary>
-            <p>
-              Sì. L'AI è integrata nella ricerca e nell'analisi per aiutarti a
-              individuare più velocemente i contenuti pertinenti, comprendere
-              documenti complessi e lavorare in modo più naturale con le fonti.
-              Il risultato è un'esperienza più semplice, senza trasformare la
-              ricerca giuridica in una semplice conversazione con un chatbot.
-            </p>
-          </details>
-
-          <details>
-            <summary>Posso fidarmi delle risposte dell'AI?</summary>
-            <p>
-              Jurio è progettato per aiutarti a lavorare sulle fonti, non per
-              chiederti di fidarti ciecamente dell'AI.
-              Come qualsiasi sistema generativo, l'AI può commettere errori:
-              per questo il valore di Jurio sta nell'unire l'efficienza dell'AI
-              alla possibilità di risalire alla documentazione di riferimento.
-            </p>
-          </details>
-
-          <details>
-            <summary>I miei documenti vengono utilizzati per addestrare l'AI?</summary>
-            <p>
-              <strong>No. In nessun caso.</strong>
-              I dati e i documenti degli utenti <strong>non vengono utilizzati
-              per addestrare, riaddestrare o migliorare i modelli di Intelligenza
-              Artificiale</strong>.
-              I tuoi contenuti vengono utilizzati esclusivamente nell'ambito
-              dell'erogazione del servizio secondo le condizioni applicabili.
-            </p>
-          </details>
-
-          <details>
-            <summary>Dove vengono conservati i miei dati?</summary>
-            <p>
-              <strong>Tutti i dati e tutte le funzionalità di Jurio risiedono
-              su infrastrutture server localizzate in Europa.</strong>
-              Questo significa che la piattaforma è progettata per offrire
-              un ambiente coerente con le esigenze di sicurezza e protezione
-              dei dati tipiche del lavoro professionale in ambito europeo.
-            </p>
-          </details>
-
-          <details>
-            <summary>Posso lavorare con documenti riservati?</summary>
-            <p>
-              Sì. Jurio è pensato anche per lavorare con la documentazione
-              professionale dell'utente. La gestione dei documenti avviene
-              all'interno dell'infrastruttura europea del servizio e secondo
-              le misure e condizioni descritte nella documentazione privacy
-              e di sicurezza di Jurio.
-            </p>
-          </details>
-
-          <details>
-            <summary>I miei dati restano separati dai dati utilizzati per l'AI?</summary>
-            <p>
-              Sì. I dati e i documenti caricati dagli utenti <strong>non entrano
-              nel processo di addestramento dei modelli</strong>.
-              In questo modo puoi utilizzare le funzionalità AI di Jurio senza
-              trasformare i tuoi documenti in materiale di training.
-            </p>
-          </details>
-
-          <details>
-            <summary>Jurio è pensato per l'utilizzo professionale da parte degli avvocati?</summary>
-            <p>
-              Sì. L'intera esperienza è costruita attorno alle esigenze della
-              ricerca giuridica professionale: fonti di massimo livello, ricerca
-              semantica, documenti, AI e strumenti di integrazione riuniti in
-              un unico ambiente di lavoro.
-            </p>
-          </details>
-
-          <details>
-            <summary>Posso integrare Jurio con altri strumenti AI?</summary>
-            <p>
-              Sì. Il patrimonio documentale di Jurio può essere reso disponibile
-              anche tramite <strong>endpoint</strong>, permettendo di collegare
-              la ricerca giuridica ad applicazioni, automazioni e workflow
-              basati sull'AI.
-            </p>
-          </details>
-
-          <details>
-            <summary>Jurio può essere utilizzato tramite MCP?</summary>
-            <p>
-              Sì. Gli endpoint di Jurio possono essere utilizzati come
-              <strong>connettore tramite Model Context Protocol (MCP)</strong>,
-              permettendo ad agenti e applicazioni AI compatibili di interrogare
-              il patrimonio documentale di Jurio.
-              In pratica, le fonti giuridiche di Jurio possono entrare
-              direttamente nel workflow tecnologico del tuo studio o della tua
-              organizzazione.
-            </p>
-          </details>
-
-          <details>
-            <summary>Perché collegare Jurio a un agente AI?</summary>
-            <p>
-              Perché un modello AI è molto più utile quando può lavorare con
-              fonti specialistiche e aggiornate.
-              Collegando Jurio al tuo workflow, puoi mettere a disposizione
-              dell'AI un patrimonio giuridico focalizzato sulla giurisprudenza
-              di vertice, invece di affidarti esclusivamente alle conoscenze
-              interne del modello.
-            </p>
-          </details>
-
-          <details>
-            <summary>Jurio sostituisce il lavoro dell'avvocato?</summary>
-            <p>
-              No. Jurio riduce il tempo necessario per cercare, comprendere
-              e collegare le informazioni, lasciando al professionista il
-              controllo della valutazione giuridica e delle decisioni.
-              L'obiettivo è semplice: <strong>meno tempo nella ricerca,
-              più tempo nell'attività professionale.</strong>
-            </p>
-          </details>
-
-          <details>
-            <summary>Perché scegliere Jurio invece di un chatbot AI generalista?</summary>
-            <p>
-              Perché Jurio non nasce semplicemente per generare testo.
-              Nasce per la <strong>ricerca giuridica</strong>.
-              Il valore sta nell'unire un patrimonio di fonti specialistiche,
-              ricerca semantica, AI e possibilità di integrazione in un unico
-              ambiente, con la fonte sempre al centro.
-            </p>
-          </details>
-
-        </div>
-
-      </div>
-    </section>
-    
-    <section class="section cta" aria-labelledby="cta-title">
-      <div class="container">
-        <div class="cta-box reveal reveal-scale">
-          <div>
-            <h2 id="cta-title">L’essenziale della <em>ricerca giuridica.</em></h2>
-            <p>Giurisprudenza delle Corti Supreme già analizzata, documenti e ricerca semantica in un ambiente essenziale e sicuro.</p>
-          </div>
-          <a class="button button-primary" href="/login">Prova Jurio <span aria-hidden="true">→</span></a>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <div id="footer"></div>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-      const components = [
-        {
-          selector: "#header",
-          file: "/header.html"
-        },
-        {
-          selector: "#footer",
-          file: "/footer.html"
-        }
-      ];
-      await Promise.all(
-        components.map(async ({ selector, file }) => {
-          const element = document.querySelector(selector);
-
-          if (!element) return;
-
-          try {
-            const response = await fetch(file);
-
-            if (!response.ok) {
-              throw new Error(`HTTP ${response.status}`);
+    <head>
+        <script
+            type="text/javascript"
+            src="https://embeds.iubenda.com/widgets/7f06adba-d6ba-41a7-9758-69f5297af96e.js"
+        ></script>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <meta name="application-name" content="Jurio" />
+        <meta name="theme-color" content="#f7f5f1" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#171614" media="(prefers-color-scheme: dark)" />
+        <meta
+            name="description"
+            content="Jurio è la piattaforma di ricerca giuridica con intelligenza artificiale pensata per avvocati e professionisti del diritto. Cerca precedenti, analizza documenti e collega i tuoi fascicoli alla giurisprudenza rilevante."
+        />
+        <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+        <link rel="canonical" href="https://jurio.it/" />
+        <link rel="icon" href="/favicon.ico" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Jurio — Ricerca giuridica con intelligenza artificiale" />
+        <meta
+            property="og:description"
+            content="Ricerca giurisprudenziale, analisi dei documenti e intelligenza artificiale in un unico ambiente per il lavoro legale."
+        />
+        <meta property="og:url" content="https://jurio.it/" />
+        <meta property="og:image" content="https://jurio.it/logo.webp" />
+        <meta property="og:locale" content="it_IT" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Jurio — Ricerca giuridica con intelligenza artificiale" />
+        <meta
+            name="twitter:description"
+            content="Ricerca giurisprudenziale, analisi dei documenti e intelligenza artificiale in un unico ambiente per il lavoro legale."
+        />
+        <meta name="twitter:image" content="https://jurio.it/logo.webp" />
+        <link rel="preload" as="image" href="/demo.webp" type="image/webp" fetchpriority="high" />
+        <link rel="stylesheet" href="/styles.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+        <title>Jurio — Ricerca giuridica con intelligenza artificiale</title>
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "name": "Jurio",
+                "url": "https://jurio.it/",
+                "applicationCategory": "BusinessApplication",
+                "operatingSystem": "Web",
+                "description": "Piattaforma di ricerca giuridica con intelligenza artificiale per avvocati e professionisti del diritto.",
+                "inLanguage": "it-IT"
             }
-
-            element.innerHTML = await response.text();
-          } catch (error) {
-            console.error(`Errore nel caricamento di ${file}:`, error);
-          }
-        })
-      );
-    });
-  </script>
-  
-  <script>
-    (() => {
-      const header = document.querySelector('.site-header');
-      const progress = document.querySelector('.scroll-progress');
-      const revealItems = document.querySelectorAll('.reveal');
-
-      const updateScrollUI = () => {
-        const scrollTop = window.scrollY || document.documentElement.scrollTop;
-        const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-        const progressValue = maxScroll > 0 ? scrollTop / maxScroll : 0;
-
-        if (progress) progress.style.transform = `scaleX(${Math.min(1, Math.max(0, progressValue))})`;
-        if (header) header.classList.toggle('is-scrolled', scrollTop > 16);
-      };
-
-      if ('IntersectionObserver' in window && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        const observer = new IntersectionObserver((entries, obs) => {
-          entries.forEach(entry => {
-            if (!entry.isIntersecting) return;
-            entry.target.classList.add('is-visible');
-            obs.unobserve(entry.target);
-          });
-        }, {
-          threshold: 0.12,
-          rootMargin: '0px 0px -8% 0px'
-        });
-
-        revealItems.forEach((item, index) => {
-          if (item.closest('.feature-list, .integration-grid, .steps')) {
-            const parent = item.parentElement;
-            if (parent?.hasAttribute('data-stagger')) {
-              item.style.transitionDelay = `${Math.min(index * 70, 350)}ms`;
+        </script>
+        <style>
+            #interactive-demo {
+                position: relative;
+                width: 100%;
+                aspect-ratio: 16/10;
+                background: radial-gradient(circle at center, #262420 0, #171614 100%);
+                overflow: hidden;
+                cursor: none;
+                border-radius: 0;
+                box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.6);
+                border: 1px solid rgba(226, 185, 111, 0.15);
             }
-          }
-          observer.observe(item);
-        });
-      } else {
-        revealItems.forEach(item => item.classList.add('is-visible'));
-      }
+            .demo-card {
+                border-radius: 0 !important;
+            }
+            #interactive-demo::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                left: 0;
+                background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+                background-size: 40px 40px;
+                pointer-events: none;
+            }
+            .doc-mockup {
+                position: absolute;
+                width: 120px;
+                height: 160px;
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 0;
+                padding: 16px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                backdrop-filter: blur(8px);
+                transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                cursor: none;
+            }
+            .doc-mockup.scanning {
+                background: rgba(226, 185, 111, 0.08);
+                border-color: rgba(226, 185, 111, 0.6);
+                box-shadow:
+                    0 15px 40px rgba(226, 185, 111, 0.15),
+                    0 0 20px rgba(226, 185, 111, 0.1);
+                transform: scale(1.05) translateY(-5px) !important;
+                z-index: 10;
+            }
+            .doc-mockup .doc-line {
+                height: 4px;
+                background: rgba(255, 255, 255, 0.15);
+                border-radius: 0;
+                width: 100%;
+                transition: background 0.3s ease;
+            }
+            .doc-mockup .doc-line.title {
+                height: 8px;
+                width: 60%;
+                margin-bottom: 4px;
+                background: rgba(255, 255, 255, 0.3);
+                border-radius: 0;
+            }
+            .doc-mockup .doc-line.short {
+                width: 40%;
+            }
+            .doc-mockup .doc-line.med {
+                width: 80%;
+            }
+            .doc-mockup.scanning .doc-line {
+                background: rgba(226, 185, 111, 0.35);
+            }
+            .doc-mockup.scanning .doc-line.title {
+                background: rgba(226, 185, 111, 0.7);
+            }
+            .crosshair-container {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 80px;
+                height: 80px;
+                pointer-events: none;
+                z-index: 50;
+                will-change: transform;
+            }
+            .crosshair {
+                position: relative;
+                width: 100%;
+                height: 100%;
+                transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            }
+            .crosshair.scanning {
+                transform: scale(0.8) rotate(45deg);
+            }
+            .crosshair-j {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: #fff;
+                font-size: 28px;
+                font-family: var(--font-serif, "Lora", serif);
+                font-weight: 600;
+                letter-spacing: -0.04em;
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+                transition: all 0.3s ease;
+            }
+            .crosshair.scanning .crosshair-j {
+                color: #e2b96f;
+                text-shadow: 0 0 15px rgba(226, 185, 111, 0.6);
+                transform: translate(-50%, -50%) rotate(-45deg);
+            }
+            .bracket {
+                position: absolute;
+                width: 16px;
+                height: 16px;
+                border: 2px solid rgba(255, 255, 255, 0.6);
+                transition: all 0.3s ease;
+            }
+            .crosshair.scanning .bracket {
+                border-color: #e2b96f;
+            }
+            .bracket-tl {
+                top: 0;
+                left: 0;
+                border-right: none;
+                border-bottom: none;
+            }
+            .bracket-tr {
+                top: 0;
+                right: 0;
+                border-left: none;
+                border-bottom: none;
+            }
+            .bracket-bl {
+                bottom: 0;
+                left: 0;
+                border-right: none;
+                border-top: none;
+            }
+            .bracket-br {
+                bottom: 0;
+                right: 0;
+                border-left: none;
+                border-top: none;
+            }
+            .scanner-line-fx {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 120px;
+                height: 2px;
+                background: #e2b96f;
+                box-shadow: 0 0 10px #e2b96f;
+                opacity: 0;
+                transform: translate(-50%, -50%) rotate(-45deg);
+                transition: opacity 0.3s ease;
+            }
+            .crosshair.scanning .scanner-line-fx {
+                opacity: 1;
+                animation: scan-anim 1.5s ease-in-out infinite alternate;
+            }
+            @keyframes scan-anim {
+                0% {
+                    transform: translate(-50%, -50%) rotate(-45deg) translateY(-35px);
+                }
+                100% {
+                    transform: translate(-50%, -50%) rotate(-45deg) translateY(35px);
+                }
+            }
+            .hero-value {
+                margin: 28px 0 26px;
+            }
+            .hero-value-price {
+                position: relative;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                padding: 18px 19px;
+                margin-bottom: 11px;
+                border: 1px solid rgba(0, 0, 0, 0.09);
+                border-radius: 17px;
+                background: rgba(255, 255, 255, 0.72);
+                overflow: hidden;
+            }
+            .hero-value-price::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                left: -120%;
+                width: 65%;
+                background: linear-gradient(105deg, transparent 0, rgba(255, 255, 255, 0.7) 50%, transparent 100%);
+                transform: skewX(-18deg);
+                animation: hero-value-shimmer 4.5s ease-in-out infinite;
+                pointer-events: none;
+            }
+            @keyframes hero-value-shimmer {
+                0%,
+                58% {
+                    left: -120%;
+                }
+                100%,
+                78% {
+                    left: 150%;
+                }
+            }
+            .hero-value-price-visual {
+                position: relative;
+                z-index: 1;
+                display: grid;
+                place-items: center;
+                width: 45px;
+                height: 45px;
+                flex: 0 0 45px;
+                border-radius: 13px;
+                background: rgba(0, 0, 0, 0.055);
+                overflow: hidden;
+            }
+            .hero-value-price-visual i {
+                font-size: 1.45rem;
+                opacity: 0;
+                transform: translateY(6px) scale(0.72);
+                animation: hero-value-icon-in 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) 0.12s forwards;
+            }
+            .hero-value-price-copy {
+                position: relative;
+                z-index: 1;
+                display: flex;
+                flex-direction: column;
+                gap: 3px;
+            }
+            .hero-value-price-copy span {
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                opacity: 0.5;
+            }
+            .hero-value-price-copy strong {
+                font-size: clamp(1.05rem, 2vw, 1.38rem);
+                line-height: 1.15;
+                letter-spacing: -0.025em;
+                text-wrap: balance;
+            }
+            .hero-value-grid {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 10px;
+            }
+            .hero-value-card {
+                padding: 17px;
+                border: 1px solid rgba(0, 0, 0, 0.075);
+                border-radius: 16px;
+                background: rgba(255, 255, 255, 0.58);
+                opacity: 0;
+                transform: translateY(18px);
+                animation: hero-value-card-in 0.6s cubic-bezier(0.2, 0.75, 0.25, 1) forwards;
+            }
+            .hero-value-card:nth-child(1) {
+                animation-delay: 0.1s;
+            }
+            .hero-value-card:nth-child(2) {
+                animation-delay: 0.22s;
+            }
+            .hero-value-card:nth-child(3) {
+                animation-delay: 0.34s;
+            }
+            @keyframes hero-value-card-in {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .hero-value-icon {
+                display: grid;
+                place-items: center;
+                width: 40px;
+                height: 40px;
+                margin-bottom: 11px;
+                border-radius: 11px;
+                background: rgba(0, 0, 0, 0.045);
+            }
+            .hero-value-icon i {
+                font-size: 1.1rem;
+                opacity: 0;
+                transform: translateY(5px) scale(0.74);
+                animation: hero-value-icon-in 0.58s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            }
+            .hero-value-card:nth-child(1) .hero-value-icon i {
+                animation-delay: 0.2s;
+            }
+            .hero-value-card:nth-child(2) .hero-value-icon i {
+                animation-delay: 0.32s;
+            }
+            .hero-value-card:nth-child(3) .hero-value-icon i {
+                animation-delay: 0.44s;
+            }
+            @keyframes hero-value-icon-in {
+                0% {
+                    opacity: 0;
+                    transform: translateY(6px) scale(0.72);
+                }
+                70% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1.08);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+            .hero-value-card:hover .hero-value-icon i {
+                transform: translateY(-1px) scale(1.08);
+                transition: transform 0.25s ease;
+            }
+            .hero-value-card strong {
+                display: block;
+                margin-bottom: 4px;
+                font-size: 1.3rem;
+                line-height: 1;
+                letter-spacing: -0.035em;
+            }
+            .hero-value-card span {
+                display: block;
+                max-width: 180px;
+                font-size: 0.72rem;
+                line-height: 1.35;
+                opacity: 0.62;
+            }
+            .hero-value-icon i,
+            .hero-value-mark i,
+            .hero-value-price-visual i {
+                color: currentColor;
+            }
+            .hero-value-icon,
+            .hero-value-price-visual {
+                color: var(--color-text, #171614);
+            }
+            .hero-value-mark {
+                color: var(--color-primary, #e2b96f);
+            }
+            @media (prefers-color-scheme: dark) {
+                .hero-value-icon,
+                .hero-value-price-visual {
+                    color: #e2b96f;
+                }
+                .hero-value-mark {
+                    color: #e2b96f;
+                }
+            }
+            .hero-value-icon,
+            .hero-value-price-visual {
+                background: rgba(0, 0, 0, 0.045);
+            }
+            @media (prefers-color-scheme: dark) {
+                .hero-value-icon,
+                .hero-value-price-visual {
+                    background: rgba(226, 185, 111, 0.1);
+                }
+            }
+            @media (prefers-color-scheme: dark) {
+                .hero-value-price {
+                    background: #181818;
+                    border-color: #2e2e2e;
+                    box-shadow: none;
+                }
+                .hero-value-price::after {
+                    background: linear-gradient(
+                        105deg,
+                        transparent 0,
+                        rgba(255, 255, 255, 0.055) 50%,
+                        transparent 100%
+                    );
+                }
+                .hero-value-price-visual {
+                    background: rgba(224, 163, 46, 0.09);
+                    color: #e0a32e;
+                }
+                .hero-value-price-copy span {
+                    color: #a1a7b0;
+                }
+                .hero-value-price-copy strong {
+                    color: #e6e7ea;
+                }
+                .hero-value-card {
+                    background: #181818;
+                    border-color: #2e2e2e;
+                    box-shadow: none;
+                }
+                .hero-value-card:hover {
+                    background: #1c1c1c;
+                    border-color: rgba(224, 163, 46, 0.28);
+                }
+                .hero-value-icon {
+                    background: rgba(224, 163, 46, 0.09);
+                    color: #e0a32e;
+                }
+                .hero-value-icon i,
+                .hero-value-price-visual i {
+                    color: #e0a32e;
+                }
+                .hero-value-card strong {
+                    color: #e6e7ea;
+                }
+                .hero-value-card span {
+                    color: #a1a7b0;
+                }
+                .hero-value-proof {
+                    color: #c8cbd0;
+                }
+                .hero-value-mark {
+                    color: #e0a32e;
+                }
+            }
+            .hero-value-proof {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-top: 14px;
+                font-size: 0.79rem;
+            }
+            .hero-value-mark {
+                display: grid;
+                place-items: center;
+                width: 20px;
+                height: 20px;
+            }
+            .hero-value-mark i {
+                font-size: 0.82rem;
+                opacity: 0.65;
+                animation: hero-value-proof-pulse 2s ease-in-out infinite;
+            }
+            @keyframes hero-value-proof-pulse {
+                0%,
+                100% {
+                    transform: scale(1);
+                    opacity: 0.5;
+                }
+                50% {
+                    transform: scale(1.1);
+                    opacity: 0.95;
+                }
+            }
+            @media (prefers-reduced-motion: reduce) {
+                .crosshair.scanning .scanner-line-fx,
+                .hero-value-card,
+                .hero-value-icon i,
+                .hero-value-mark i,
+                .hero-value-price-visual i,
+                .hero-value-price::after {
+                    animation: none !important;
+                }
+                .hero-value-card {
+                    opacity: 1;
+                    transform: none;
+                }
+                .hero-value-icon i,
+                .hero-value-price-visual i {
+                    opacity: 1;
+                    transform: none;
+                }
+            }
+            @media (max-width: 768px) {
+                #interactive-demo {
+                    cursor: default;
+                    aspect-ratio: 4/3;
+                }
+                .crosshair-container {
+                    display: block;
+                }
+                .doc-mockup {
+                    width: 95px;
+                    height: 130px;
+                    padding: 10px;
+                }
+                .hero-value-grid {
+                    grid-template-columns: 1fr;
+                }
+                .hero-value-card span {
+                    max-width: none;
+                }
+                .hero-value-price {
+                    padding: 17px;
+                }
+                .hero-value-price-copy strong {
+                    font-size: 1rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <a class="skip-link" href="#contenuto">Salta al contenuto</a>
+        <div class="scroll-progress" aria-hidden="true"></div>
+        <div id="header"></div>
+        <main id="contenuto">
+            <section class="hero" aria-labelledby="hero-title">
+                <div class="container hero-grid">
+                    <div class="hero-copy reveal reveal-left">
+                        <span class="eyebrow">Ricerca giuridica · AI</span>
+                        <h1 id="hero-title">L’essenziale per la <em>ricerca giuridica.</em></h1>
+                        <div class="hero-value" aria-label="Punti di forza di Jurio">
+                            <div class="hero-value-price">
+                                <div class="hero-value-price-visual" aria-hidden="true">
+                                    <i class="fa-solid fa-scale-balanced"></i>
+                                </div>
+                                <div class="hero-value-price-copy">
+                                    <span>Jurio</span><strong>La tecnologia più avanzata, al miglior prezzo.</strong>
+                                </div>
+                            </div>
+                            <div class="hero-value-grid" aria-label="Tecnologia e patrimonio documentale">
+                                <div class="hero-value-card">
+                                    <div class="hero-value-icon" aria-hidden="true">
+                                        <i class="fa-solid fa-folder-open"></i>
+                                    </div>
+                                    <strong>400K+</strong><span>documenti giuridici elaborati e indicizzati</span>
+                                </div>
+                                <div class="hero-value-card">
+                                    <div class="hero-value-icon" aria-hidden="true">
+                                        <i class="fa-solid fa-magnifying-glass"></i>
+                                    </div>
+                                    <strong>RAG</strong><span>AI collegata alle fonti giuridiche</span>
+                                </div>
+                                <div class="hero-value-card">
+                                    <div class="hero-value-icon" aria-hidden="true">
+                                        <i class="fa-solid fa-plug"></i>
+                                    </div>
+                                    <strong>MCP</strong><span>integrazione con strumenti e workflow AI</span>
+                                </div>
+                            </div>
+                            <div class="hero-value-proof">
+                                <span class="hero-value-mark" aria-hidden="true"
+                                    ><i class="fa-solid fa-shield-halved"></i></span
+                                ><strong>Tecnologia premium. Prezzo competitivo.</strong>
+                            </div>
+                        </div>
+                        <div class="hero-actions">
+                            <a class="button button-primary" href="/login"
+                                >Inizia una prova gratuita senza carta<span aria-hidden="true">→</span></a
+                            ><a class="button button-secondary" href="/ricerca">Esplora la ricerca giuridica</a
+                            ><a class="button button-secondary" href="/fonti">Scopri le fonti</a>
+                        </div>
+                    </div>
+                    <div>
+                        <div
+                            class="demo-card reveal reveal-scale"
+                            aria-label="Anteprima interattiva della piattaforma Jurio"
+                        >
+                            <div class="demo-media" id="interactive-demo">
+                                <div class="doc-mockup" style="top: 15%; left: 15%; transform: rotate(-6deg)">
+                                    <div class="doc-line title"></div>
+                                    <div class="doc-line"></div>
+                                    <div class="doc-line"></div>
+                                    <div class="doc-line short"></div>
+                                    <div class="doc-line med" style="margin-top: 12px"></div>
+                                    <div class="doc-line"></div>
+                                    <div class="doc-line short"></div>
+                                </div>
+                                <div class="doc-mockup" style="top: 40%; right: 10%; transform: rotate(8deg)">
+                                    <div class="doc-line title"></div>
+                                    <div class="doc-line"></div>
+                                    <div class="doc-line med"></div>
+                                    <div class="doc-line"></div>
+                                    <div class="doc-line short" style="margin-top: 12px"></div>
+                                    <div class="doc-line"></div>
+                                </div>
+                                <div class="doc-mockup" style="bottom: 10%; left: 40%; transform: rotate(-2deg)">
+                                    <div class="doc-line title"></div>
+                                    <div class="doc-line med"></div>
+                                    <div class="doc-line"></div>
+                                    <div class="doc-line short"></div>
+                                    <div class="doc-line"></div>
+                                    <div class="doc-line"></div>
+                                    <div class="doc-line med"></div>
+                                </div>
+                                <div class="crosshair-container" id="crosshair-tracker">
+                                    <div class="crosshair" id="crosshair-ui">
+                                        <div class="bracket bracket-tl"></div>
+                                        <div class="bracket bracket-tr"></div>
+                                        <div class="bracket bracket-bl"></div>
+                                        <div class="bracket bracket-br"></div>
+                                        <div class="crosshair-j">J</div>
+                                        <div class="scanner-line-fx"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <ul class="feature-list" aria-label="Funzionalità principali" data-stagger>
+                            <li class="feature-item reveal reveal-right">
+                                <h2>Giurisprudenza rilevante, con le fonti in primo piano</h2>
+                                <p>
+                                    Cassazione, Consiglio di Stato e Corte costituzionale, organizzati per aiutarti a
+                                    individuare rapidamente precedenti, principi di diritto e orientamenti
+                                    pertinenti,<strong>sempre collegati alle relative fonti giurisprudenziali.</strong>
+                                </p>
+                            </li>
+                            <li class="feature-item reveal reveal-right">
+                                <h2>Ricerca giuridica intelligente, fondata sulle fonti</h2>
+                                <p>
+                                    Cerca per questione giuridica, fattispecie e significato, non soltanto per parole
+                                    chiave. L’AI individua le informazioni rilevanti e costruisce le proprie
+                                    inferenze<strong
+                                        >a partire dalla giurisprudenza sottostante, non da conclusioni prive di
+                                        riscontro.</strong
+                                    >
+                                </p>
+                            </li>
+                            <li class="feature-item reveal reveal-right">
+                                <h2>Ogni analisi resta verificabile</h2>
+                                <p>
+                                    Analizza i fascicoli selezionati e mettili in relazione con la
+                                    giurisprudenza.<strong
+                                        >Ricerca, inferenze e deduzioni restano ancorate alle fonti</strong
+                                    >, così puoi risalire rapidamente ai documenti che supportano l’analisi e valutarne
+                                    direttamente la rilevanza.
+                                </p>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            <section class="section integrations-section" aria-labelledby="integrazioni-title">
+                <div class="container">
+                    <div class="integrations-header reveal">
+                        <div class="integrations-header-main">
+                            <span class="eyebrow">Un ecosistema connesso</span>
+                            <h2 id="integrazioni-title">Il tuo lavoro legale.<span>Dentro il tuo flusso.</span></h2>
+                        </div>
+                        <p class="integrations-intro">
+                            Jurio porta ricerca giuridica, documenti e AI direttamente negli strumenti che utilizzi ogni
+                            giorno. Senza interrompere il tuo lavoro.
+                        </p>
+                    </div>
+                    <div class="integrations-showcase">
+                        <article class="integration-card integration-drive reveal reveal-scale">
+                            <div class="integration-copy">
+                                <div class="integration-meta">
+                                    <span class="integration-number">01</span
+                                    ><span class="integration-label">Google Drive</span>
+                                </div>
+                                <h3>I tuoi documenti.<span>Quando servono.</span></h3>
+                                <p>
+                                    Seleziona i documenti dal tuo Google Drive e utilizzali direttamente all'interno
+                                    della ricerca giuridica. Analizza file e fonti nello stesso contesto.
+                                </p>
+                                <a class="integration-link" href="/privacy"
+                                    ><span>Privacy &amp; sicurezza</span
+                                    ><span class="integration-arrow" aria-hidden="true">↗</span></a
+                                >
+                            </div>
+                            <div class="integration-visual integration-visual-drive" aria-hidden="true">
+                                <div class="drive-window">
+                                    <div class="drive-topbar">
+                                        <div class="drive-brand">
+                                            <span class="drive-logo"></span><span>My Drive</span>
+                                        </div>
+                                        <div class="drive-dots"><i></i><i></i><i></i></div>
+                                    </div>
+                                    <div class="drive-files">
+                                        <div class="drive-file active">
+                                            <span class="file-icon pdf">PDF</span
+                                            ><span class="file-name">Parere_legale.pdf</span
+                                            ><span class="file-check">✓</span>
+                                        </div>
+                                        <div class="drive-file">
+                                            <span class="file-icon doc">DOC</span
+                                            ><span class="file-name">Contratto.docx</span>
+                                        </div>
+                                        <div class="drive-file">
+                                            <span class="file-icon pdf">PDF</span
+                                            ><span class="file-name">Sentenza_Cassazione.pdf</span>
+                                        </div>
+                                        <div class="drive-file">
+                                            <span class="file-icon doc">DOC</span
+                                            ><span class="file-name">Note_cliente.docx</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                        <article class="integration-card integration-word reveal reveal-scale">
+                            <div class="integration-copy">
+                                <div class="integration-meta">
+                                    <span class="integration-number">02</span
+                                    ><span class="integration-label">Microsoft Word Add-in</span>
+                                </div>
+                                <h3>La ricerca giuridica.<span>Dove stai già scrivendo.</span></h3>
+                                <p>
+                                    Cerca precedenti, consulta il database di Jurio e genera citazioni e approfondimenti
+                                    direttamente dentro Word. Nessun cambio di finestra.
+                                </p>
+                                <a class="integration-link" href="/supporto-word"
+                                    ><span>Scopri l'Add-in</span
+                                    ><span class="integration-arrow" aria-hidden="true">↗</span></a
+                                >
+                            </div>
+                            <div class="integration-visual integration-visual-word" aria-hidden="true">
+                                <div class="word-window">
+                                    <div class="word-toolbar">
+                                        <div class="word-toolbar-brand"><span class="word-logo">W</span></div>
+                                        <div class="word-toolbar-lines"><i></i><i></i><i></i></div>
+                                    </div>
+                                    <div class="word-document">
+                                        <div class="document-title"></div>
+                                        <div class="document-line long"></div>
+                                        <div class="document-line medium"></div>
+                                        <div class="document-line short"></div>
+                                        <div class="document-highlight"><span></span><span></span></div>
+                                        <div class="document-line long"></div>
+                                        <div class="document-line medium"></div>
+                                    </div>
+                                    <div class="word-sidebar">
+                                        <div class="sidebar-header">Jurio</div>
+                                        <div class="sidebar-search"><span></span></div>
+                                        <div class="sidebar-result"><span></span><i></i><i></i></div>
+                                        <div class="sidebar-result"><span></span><i></i><i></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                        <article class="integration-card integration-mcp reveal reveal-scale">
+                            <div class="integration-copy">
+                                <div class="integration-meta">
+                                    <span class="integration-number">03</span
+                                    ><span class="integration-label">MCP · AI Integrations</span>
+                                </div>
+                                <h3>La ricerca giuridica.<span>Direttamente dentro la tua AI.</span></h3>
+                                <p>
+                                    Con il Model Context Protocol, Jurio diventa il layer giuridico dei tuoi assistenti
+                                    AI. Ricerca avanzata, fonti e precedenti entrano direttamente nel tuo workflow.
+                                </p>
+                                <div class="integration-actions">
+                                    <a class="integration-link" href="/guida/mcp-vibe"
+                                        ><span>Guida Vibe</span
+                                        ><span class="integration-arrow" aria-hidden="true">↗</span></a
+                                    ><a class="integration-link" href="/guida/mcp-claude"
+                                        ><span>Guida Claude</span
+                                        ><span class="integration-arrow" aria-hidden="true">↗</span></a
+                                    >
+                                </div>
+                            </div>
+                            <div class="integration-visual integration-visual-mcp" aria-hidden="true">
+                                <div class="mcp-visual">
+                                    <div class="mcp-ring mcp-ring-1"></div>
+                                    <div class="mcp-ring mcp-ring-2"></div>
+                                    <div class="mcp-ring mcp-ring-3"></div>
+                                    <div class="mcp-node node-top"><span>AI</span></div>
+                                    <div class="mcp-node node-left"><span>Normativa</span></div>
+                                    <div class="mcp-node node-right"><span>Diritto</span></div>
+                                    <div class="mcp-node node-bottom"><span>Documenti</span></div>
+                                    <div class="mcp-center"><span>J</span></div>
+                                </div>
+                            </div>
+                        </article>
+                    </div>
+                    <div class="integrations-footer reveal">
+                        <span class="footer-caption">Un unico ecosistema</span><span class="footer-line"></span
+                        ><strong>Ricerca<span>→</span>documenti<span>→</span>AI</strong>
+                    </div>
+                </div>
+            </section>
+            <section id="come-funziona" class="section" aria-labelledby="come-funziona-title">
+                <div class="container">
+                    <div class="section-heading reveal">
+                        <h2 id="come-funziona-title">
+                            Come funziona <span style="color: var(--color-primary); font-style: italic">Jurio</span>
+                        </h2>
+                        <p>
+                            Unisce giurisprudenza delle Corti Supreme già analizzata, una base dati personale riservata
+                            e un agente AI. Il risultato è una ricerca più essenziale, sicura e veloce.
+                        </p>
+                    </div>
+                    <ol class="steps" data-stagger>
+                        <li class="step reveal reveal-left">
+                            <span class="step-num">01</span>
+                            <h3>Fonti ufficiali già elaborate</h3>
+                            <p>
+                                Accedi alla giurisprudenza delle Corti Supreme — Cassazione Civile, Cassazione Penale,
+                                Consiglio di Stato e Corte Costituzionale — già massimizzata e indicizzata per la
+                                ricerca semantica.
+                            </p>
+                        </li>
+                        <li class="step reveal reveal-left">
+                            <span class="step-num">02</span>
+                            <h3>Base dati personale e sicura</h3>
+                            <p>
+                                Carica atti e fascicoli in un ambiente riservato. I documenti restano interrogabili
+                                insieme alla giurisprudenza, senza confonderli con fonti esterne.
+                            </p>
+                        </li>
+                        <li class="step reveal reveal-left">
+                            <span class="step-num">03</span>
+                            <h3>Agente AI per ricerca e sintesi</h3>
+                            <p>
+                                L’Agente AI collega fatti, precedenti e norme, mette in evidenza la ratio decidendi e
+                                aiuta a concentrarti solo su ciò che conta.
+                            </p>
+                        </li>
+                    </ol>
+                </div>
+            </section>
+            <section id="prezzi" class="section" aria-labelledby="prezzi-title">
+                <div class="container">
+                    <div class="pricing-banner accent reveal reveal-scale">
+                        <div>
+                            <span class="eyebrow" style="color: #e2b96f">Piani e tariffe</span>
+                            <h2 id="prezzi-title">Scegli il piano adatto al tuo <em>modo di lavorare.</em></h2>
+                            <p>
+                                Essential per la ricerca avanzata. Business per elaborazione e redazione automatica dei
+                                documenti. Per studi e team sono disponibili configurazioni dedicate.
+                            </p>
+                            <ul class="pricing-points">
+                                <li>Confronta piani e funzionalità in un'unica pagina.</li>
+                                <li>Scopri disponibilità, condizioni e prova gratuita.</li>
+                                <li>Soluzioni Team ed Enterprise per studi legali.</li>
+                            </ul>
+                        </div>
+                        <div class="pricing-cta">
+                            <a class="button button-primary" href="/prezzi"
+                                >Vai alla pagina prezzi<span aria-hidden="true">↗</span></a
+                            ><small>Prezzi, dettagli e attivazione</small>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section id="faq" class="section" aria-labelledby="faq-title">
+                <div class="container">
+                    <div class="section-heading reveal">
+                        <span class="eyebrow">Fonti, sicurezza e AI</span>
+                        <h2 id="faq-title">La ricerca giuridica, con la sicurezza che ti aspetti.</h2>
+                        <p>
+                            Fonti di massimo livello, infrastruttura europea e Intelligenza Artificiale progettata per
+                            aiutarti a lavorare meglio, senza rinunciare al controllo sulle informazioni.
+                        </p>
+                    </div>
+                    <div class="faq reveal reveal-scale">
+                        <details open>
+                            <summary>Quali fonti posso trovare su Jurio?</summary>
+                            <p>
+                                Jurio è fortemente focalizzato sulla giurisprudenza di massimo livello, con un
+                                patrimonio che comprende in particolare<strong
+                                    >Corte di Cassazione, Consiglio di Stato e Corte costituzionale</strong
+                                >. Le fonti sono al centro della piattaforma: puoi cercare, esplorare e verificare
+                                rapidamente i precedenti più rilevanti per il tuo lavoro.
+                            </p>
+                        </details>
+                        <details>
+                            <summary>Perché le fonti di Jurio sono importanti per un avvocato?</summary>
+                            <p>
+                                Perché una buona risposta vale quanto la fonte che la sostiene. Jurio nasce per portarti
+                                più rapidamente dalla questione giuridica al precedente rilevante, riducendo il tempo
+                                speso tra banche dati, ricerche e verifiche.
+                            </p>
+                        </details>
+                        <details>
+                            <summary>Le fonti sono verificabili?</summary>
+                            <p>
+                                Sì. Jurio mantiene la fonte al centro della ricerca: il risultato non è pensato per
+                                essere accettato sulla fiducia, ma per essere approfondito e verificato sul documento di
+                                riferimento. L'AI ti aiuta a trovare e comprendere le informazioni; la fonte resta il
+                                punto di riferimento.
+                            </p>
+                        </details>
+                        <details>
+                            <summary>Jurio usa l'Intelligenza Artificiale?</summary>
+                            <p>
+                                Sì. L'AI è integrata nella ricerca e nell'analisi per aiutarti a individuare più
+                                velocemente i contenuti pertinenti, comprendere documenti complessi e lavorare in modo
+                                più naturale con le fonti. Il risultato è un'esperienza più semplice, senza trasformare
+                                la ricerca giuridica in una semplice conversazione con un chatbot.
+                            </p>
+                        </details>
+                        <details>
+                            <summary>Posso fidarmi delle risposte dell'AI?</summary>
+                            <p>
+                                Jurio è progettato per aiutarti a lavorare sulle fonti, non per chiederti di fidarti
+                                ciecamente dell'AI. Come qualsiasi sistema generativo, l'AI può commettere errori: per
+                                questo il valore di Jurio sta nell'unire l'efficienza dell'AI alla possibilità di
+                                risalire alla documentazione di riferimento.
+                            </p>
+                        </details>
+                        <details>
+                            <summary>I miei documenti vengono utilizzati per addestrare l'AI?</summary>
+                            <p>
+                                <strong>No. In nessun caso.</strong>I dati e i documenti degli utenti<strong
+                                    >non vengono utilizzati per addestrare, riaddestrare o migliorare i modelli di
+                                    Intelligenza Artificiale</strong
+                                >. I tuoi contenuti vengono utilizzati esclusivamente nell'ambito dell'erogazione del
+                                servizio secondo le condizioni applicabili.
+                            </p>
+                        </details>
+                        <details>
+                            <summary>Dove vengono conservati i miei dati?</summary>
+                            <p>
+                                <strong
+                                    >Tutti i dati e tutte le funzionalità di Jurio risiedono su infrastrutture server
+                                    localizzate in Europa.</strong
+                                >Questo significa che la piattaforma è progettata per offrire un ambiente coerente con
+                                le esigenze di sicurezza e protezione dei dati tipiche del lavoro professionale in
+                                ambito europeo.
+                            </p>
+                        </details>
+                        <details>
+                            <summary>Posso lavorare con documenti riservati?</summary>
+                            <p>
+                                Sì. Jurio è pensato anche per lavorare con la documentazione professionale dell'utente.
+                                La gestione dei documenti avviene all'interno dell'infrastruttura europea del servizio e
+                                secondo le misure e condizioni descritte nella documentazione privacy e di sicurezza di
+                                Jurio.
+                            </p>
+                        </details>
+                        <details>
+                            <summary>I miei dati restano separati dai dati utilizzati per l'AI?</summary>
+                            <p>
+                                Sì. I dati e i documenti caricati dagli utenti<strong
+                                    >non entrano nel processo di addestramento dei modelli</strong
+                                >. In questo modo puoi utilizzare le funzionalità AI di Jurio senza trasformare i tuoi
+                                documenti in materiale di training.
+                            </p>
+                        </details>
+                        <details>
+                            <summary>Jurio è pensato per l'utilizzo professionale da parte degli avvocati?</summary>
+                            <p>
+                                Sì. L'intera esperienza è costruita attorno alle esigenze della ricerca giuridica
+                                professionale: fonti di massimo livello, ricerca semantica, documenti, AI e strumenti di
+                                integrazione riuniti in un unico ambiente di lavoro.
+                            </p>
+                        </details>
+                        <details>
+                            <summary>Posso integrare Jurio con altri strumenti AI?</summary>
+                            <p>
+                                Sì. Il patrimonio documentale di Jurio può essere reso disponibile anche
+                                tramite<strong>endpoint</strong>, permettendo di collegare la ricerca giuridica ad
+                                applicazioni, automazioni e workflow basati sull'AI.
+                            </p>
+                        </details>
+                        <details>
+                            <summary>Jurio può essere utilizzato tramite MCP?</summary>
+                            <p>
+                                Sì. Gli endpoint di Jurio possono essere utilizzati come<strong
+                                    >connettore tramite Model Context Protocol (MCP)</strong
+                                >, permettendo ad agenti e applicazioni AI compatibili di interrogare il patrimonio
+                                documentale di Jurio. In pratica, le fonti giuridiche di Jurio possono entrare
+                                direttamente nel workflow tecnologico del tuo studio o della tua organizzazione.
+                            </p>
+                        </details>
+                        <details>
+                            <summary>Perché collegare Jurio a un agente AI?</summary>
+                            <p>
+                                Perché un modello AI è molto più utile quando può lavorare con fonti specialistiche e
+                                aggiornate. Collegando Jurio al tuo workflow, puoi mettere a disposizione dell'AI un
+                                patrimonio giuridico focalizzato sulla giurisprudenza di vertice, invece di affidarti
+                                esclusivamente alle conoscenze interne del modello.
+                            </p>
+                        </details>
+                        <details>
+                            <summary>Jurio sostituisce il lavoro dell'avvocato?</summary>
+                            <p>
+                                No. Jurio riduce il tempo necessario per cercare, comprendere e collegare le
+                                informazioni, lasciando al professionista il controllo della valutazione giuridica e
+                                delle decisioni. L'obiettivo è semplice:<strong
+                                    >meno tempo nella ricerca, più tempo nell'attività professionale.</strong
+                                >
+                            </p>
+                        </details>
+                        <details>
+                            <summary>Perché scegliere Jurio invece di un chatbot AI generalista?</summary>
+                            <p>
+                                Perché Jurio non nasce semplicemente per generare testo. Nasce per la<strong
+                                    >ricerca giuridica</strong
+                                >. Il valore sta nell'unire un patrimonio di fonti specialistiche, ricerca semantica, AI
+                                e possibilità di integrazione in un unico ambiente, con la fonte sempre al centro.
+                            </p>
+                        </details>
+                    </div>
+                </div>
+            </section>
+            <section class="section cta" aria-labelledby="cta-title">
+                <div class="container">
+                    <div class="cta-box reveal reveal-scale">
+                        <div>
+                            <h2 id="cta-title">L’essenziale per la <em>ricerca giuridica.</em></h2>
+                            <p>
+                                Giurisprudenza delle Corti Supreme già analizzata, documenti e ricerca semantica in un
+                                ambiente essenziale e sicuro.
+                            </p>
+                        </div>
+                        <a class="button button-primary" href="/login">Prova Jurio<span aria-hidden="true">→</span></a>
+                    </div>
+                </div>
+            </section>
+        </main>
+        <div id="footer"></div>
+        <script>
+            document.addEventListener("DOMContentLoaded", async () => {
+                const components = [
+                    {
+                        selector: "#header",
+                        file: "/header.html",
+                    },
+                    {
+                        selector: "#footer",
+                        file: "/footer.html",
+                    },
+                ];
 
-      updateScrollUI();
-      window.addEventListener('scroll', updateScrollUI, { passive: true });
-      window.addEventListener('resize', updateScrollUI, { passive: true });
-    })();
-  </script>
+                await Promise.all(
+                    components.map(async ({ selector, file }) => {
+                        const element = document.querySelector(selector);
 
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const demoContainer = document.getElementById('interactive-demo');
-      const tracker = document.getElementById('crosshair-tracker');
-      const ui = document.getElementById('crosshair-ui');
-      const mockups = Array.from(document.querySelectorAll('.doc-mockup'));
+                        if (!element) return;
 
-      if (!demoContainer || !tracker || !ui || mockups.length === 0) return;
+                        try {
+                            const response = await fetch(file);
 
-      const isTouchOrMobile = () => {
-        return window.matchMedia("(hover: none)").matches || window.innerWidth <= 768;
-      };
+                            if (!response.ok) {
+                                throw new Error(`HTTP ${response.status}`);
+                            }
 
-      let currentX = demoContainer.clientWidth / 2;
-      let currentY = demoContainer.clientHeight / 2;
-      let targetX = currentX;
-      let targetY = currentY;
+                            element.innerHTML = await response.text();
+                        } catch (error) {
+                            console.error(`Errore nel caricamento di ${file}:`, error);
+                        }
+                    })
+                );
+            });
+        </script>
+        <script>
+            (() => {
+                const header = document.querySelector(".site-header");
 
-      // --- AUTONOMOUS MOBILE / TOUCH LOOP ---
-      let autoTargetIndex = 0;
-      let isDwelling = false;
+                const progress = document.querySelector(".scroll-progress");
 
-      const getDocCenter = (el) => {
-        return {
-          x: el.offsetLeft + el.offsetWidth / 2,
-          y: el.offsetTop + el.offsetHeight / 2
-        };
-      };
+                const revealItems = document.querySelectorAll(".reveal");
 
-      const setAutoTarget = (index) => {
-        const doc = mockups[index];
-        if (!doc) return;
-        const center = getDocCenter(doc);
-        targetX = center.x;
-        targetY = center.y;
-      };
+                const updateScrollUI = () => {
+                    const scrollTop = window.scrollY || document.documentElement.scrollTop;
 
-      const advanceAutoPatrol = () => {
-        isDwelling = false;
-        ui.classList.remove('scanning');
-        mockups.forEach(m => m.classList.remove('scanning'));
+                    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
 
-        autoTargetIndex = (autoTargetIndex + 1) % mockups.length;
-        setAutoTarget(autoTargetIndex);
-      };
+                    const progressValue = maxScroll > 0 ? scrollTop / maxScroll : 0;
 
-      // Inizializza target mobile
-      if (isTouchOrMobile()) {
-        setAutoTarget(0);
-      }
+                    if (progress) {
+                        progress.style.transform = `scaleX(${Math.min(1, Math.max(0, progressValue))})`;
+                    }
 
-      // --- DESKTOP MOUSE EVENTS ---
-      let isInside = false;
+                    if (header) {
+                        header.classList.toggle("is-scrolled", scrollTop > 16);
+                    }
+                };
 
-      demoContainer.addEventListener('mousemove', (e) => {
-        if (isTouchOrMobile()) return;
-        const rect = demoContainer.getBoundingClientRect();
-        targetX = e.clientX - rect.left;
-        targetY = e.clientY - rect.top;
-        isInside = true;
-      });
+                if (
+                    "IntersectionObserver" in window &&
+                    !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+                ) {
+                    const observer = new IntersectionObserver(
+                        (entries, obs) => {
+                            entries.forEach((entry) => {
+                                if (!entry.isIntersecting) {
+                                    return;
+                                }
 
-      demoContainer.addEventListener('mouseleave', () => {
-        if (isTouchOrMobile()) return;
-        isInside = false;
-      });
+                                entry.target.classList.add("is-visible");
 
-      demoContainer.addEventListener('mouseenter', () => {
-        if (isTouchOrMobile()) return;
-        isInside = true;
-      });
+                                obs.unobserve(entry.target);
+                            });
+                        },
+                        {
+                            threshold: 0.12,
+                            rootMargin: "0px 0px -8% 0px",
+                        }
+                    );
 
-      mockups.forEach((doc) => {
-        doc.addEventListener('mouseenter', () => {
-          if (isTouchOrMobile()) return;
-          ui.classList.add('scanning');
-          doc.classList.add('scanning');
-        });
+                    revealItems.forEach((item, index) => {
+                        if (item.closest(".feature-list, .integration-grid, .steps")) {
+                            const parent = item.parentElement;
 
-        doc.addEventListener('mouseleave', () => {
-          if (isTouchOrMobile()) return;
-          ui.classList.remove('scanning');
-          doc.classList.remove('scanning');
-        });
-      });
+                            if (parent?.hasAttribute("data-stagger")) {
+                                item.style.transitionDelay = `${Math.min(index * 70, 350)}ms`;
+                            }
+                        }
 
-      window.addEventListener('resize', () => {
-        if (isTouchOrMobile() && !isDwelling) {
-          setAutoTarget(autoTargetIndex);
-        }
-      });
+                        observer.observe(item);
+                    });
+                } else {
+                    revealItems.forEach((item) => item.classList.add("is-visible"));
+                }
 
-      // --- MAIN ANIMATION LOOP ---
-      const updateFrame = () => {
-        const onMobile = isTouchOrMobile();
-        const lerpFactor = onMobile ? 0.045 : 0.15; // Movimento più fluido e cadenzato su mobile
+                updateScrollUI();
 
-        currentX += (targetX - currentX) * lerpFactor;
-        currentY += (targetY - currentY) * lerpFactor;
+                window.addEventListener("scroll", updateScrollUI, { passive: true });
 
-        tracker.style.transform = `translate(calc(${currentX}px - 50%), calc(${currentY}px - 50%))`;
+                window.addEventListener("resize", updateScrollUI, { passive: true });
+            })();
+        </script>
+        <script>
+            document.addEventListener("DOMContentLoaded", () => {
+                const demoContainer = document.getElementById("interactive-demo");
 
-        // Logica waypoint mobile
-        if (onMobile && !isDwelling) {
-          const dist = Math.hypot(targetX - currentX, targetY - currentY);
-          if (dist < 6) {
-            // Agganciato al documento: avvia scansione per 1.8 secondi
-            isDwelling = true;
-            const currentDoc = mockups[autoTargetIndex];
-            ui.classList.add('scanning');
-            if (currentDoc) currentDoc.classList.add('scanning');
+                const tracker = document.getElementById("crosshair-tracker");
 
-            setTimeout(() => {
-              advanceAutoPatrol();
-            }, 1800);
-          }
-        }
+                const ui = document.getElementById("crosshair-ui");
 
-        requestAnimationFrame(updateFrame);
-      };
+                const mockups = Array.from(document.querySelectorAll(".doc-mockup"));
 
-      requestAnimationFrame(updateFrame);
-    });
-  </script>
+                if (!demoContainer || !tracker || !ui || mockups.length === 0) {
+                    return;
+                }
 
-</body>
+                const isTouchOrMobile = () => {
+                    return window.matchMedia("(hover: none)").matches || window.innerWidth <= 768;
+                };
+
+                let currentX = demoContainer.clientWidth / 2;
+
+                let currentY = demoContainer.clientHeight / 2;
+
+                let targetX = currentX;
+
+                let targetY = currentY;
+
+                /* =====================================================
+           AUTONOMOUS MOBILE LOOP
+           ===================================================== */
+
+                let autoTargetIndex = 0;
+                let isDwelling = false;
+
+                const getDocCenter = (el) => {
+                    return {
+                        x: el.offsetLeft + el.offsetWidth / 2,
+
+                        y: el.offsetTop + el.offsetHeight / 2,
+                    };
+                };
+
+                const setAutoTarget = (index) => {
+                    const doc = mockups[index];
+
+                    if (!doc) return;
+
+                    const center = getDocCenter(doc);
+
+                    targetX = center.x;
+
+                    targetY = center.y;
+                };
+
+                const advanceAutoPatrol = () => {
+                    isDwelling = false;
+
+                    ui.classList.remove("scanning");
+
+                    mockups.forEach((m) => m.classList.remove("scanning"));
+
+                    autoTargetIndex = (autoTargetIndex + 1) % mockups.length;
+
+                    setAutoTarget(autoTargetIndex);
+                };
+
+                if (isTouchOrMobile()) {
+                    setAutoTarget(0);
+                }
+
+                /* =====================================================
+           DESKTOP MOUSE
+           ===================================================== */
+
+                let isInside = false;
+
+                demoContainer.addEventListener("mousemove", (e) => {
+                    if (isTouchOrMobile()) {
+                        return;
+                    }
+
+                    const rect = demoContainer.getBoundingClientRect();
+
+                    targetX = e.clientX - rect.left;
+
+                    targetY = e.clientY - rect.top;
+
+                    isInside = true;
+                });
+
+                demoContainer.addEventListener("mouseleave", () => {
+                    if (isTouchOrMobile()) {
+                        return;
+                    }
+
+                    isInside = false;
+                });
+
+                demoContainer.addEventListener("mouseenter", () => {
+                    if (isTouchOrMobile()) {
+                        return;
+                    }
+
+                    isInside = true;
+                });
+
+                mockups.forEach((doc) => {
+                    doc.addEventListener("mouseenter", () => {
+                        if (isTouchOrMobile()) {
+                            return;
+                        }
+
+                        ui.classList.add("scanning");
+
+                        doc.classList.add("scanning");
+                    });
+
+                    doc.addEventListener("mouseleave", () => {
+                        if (isTouchOrMobile()) {
+                            return;
+                        }
+
+                        ui.classList.remove("scanning");
+
+                        doc.classList.remove("scanning");
+                    });
+                });
+
+                window.addEventListener(
+                    "resize",
+                    () => {
+                        if (isTouchOrMobile() && !isDwelling) {
+                            setAutoTarget(autoTargetIndex);
+                        }
+                    },
+                    { passive: true }
+                );
+
+                /* =====================================================
+           MAIN ANIMATION LOOP
+           ===================================================== */
+
+                const updateFrame = () => {
+                    const onMobile = isTouchOrMobile();
+
+                    const lerpFactor = onMobile ? 0.045 : 0.15;
+
+                    currentX += (targetX - currentX) * lerpFactor;
+
+                    currentY += (targetY - currentY) * lerpFactor;
+
+                    tracker.style.transform = `translate(
+                calc(${currentX}px - 50%),
+                calc(${currentY}px - 50%)
+              )`;
+
+                    /* Mobile waypoint */
+
+                    if (onMobile && !isDwelling) {
+                        const dist = Math.hypot(targetX - currentX, targetY - currentY);
+
+                        if (dist < 6) {
+                            isDwelling = true;
+
+                            const currentDoc = mockups[autoTargetIndex];
+
+                            ui.classList.add("scanning");
+
+                            if (currentDoc) {
+                                currentDoc.classList.add("scanning");
+                            }
+
+                            setTimeout(() => {
+                                advanceAutoPatrol();
+                            }, 1800);
+                        }
+                    }
+
+                    requestAnimationFrame(updateFrame);
+                };
+
+                requestAnimationFrame(updateFrame);
+            });
+        </script>
+    </body>
 </html>

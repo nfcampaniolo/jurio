@@ -19,8 +19,6 @@ describe("Deep Analysis Types and Constants Suite", () => {
       confidenceLevel: 85,
       sourceWeb: true,
       sourceInternalDB: true,
-      temperature: 0.2,
-      topK: 5,
     };
 
     const precedente: PrecedenteReperito = {

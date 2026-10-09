@@ -25,6 +25,7 @@ vi.mock("react-icons/fi", () => ({
   FiUploadCloud: () => <svg data-testid="icon-upload-cloud" />,
   FiEdit3: () => <svg data-testid="icon-edit3" />,
   FiBell: () => <svg data-testid="icon-bell" />,
+  FiBookOpen: () => <svg data-testid="icon-book-open" />,
 }));
 
 /* ---------- mock framer-motion ---------- */
@@ -98,6 +99,10 @@ vi.mock("@/features/profile/components/HeaderProfile", () => ({
 
 vi.mock("@/features/admin/components/UploadMaxima", () => ({
   UploadMaxima: () => <div data-testid="upload-maxima-section">Upload Maxima Content</div>,
+}));
+
+vi.mock("@/features/admin/components/UploadDoctrine", () => ({
+  UploadDoctrine: () => <div data-testid="upload-doctrine-section">Upload Doctrine Content</div>,
 }));
 
 vi.mock("@/features/admin/components/FirebaseManual", () => ({
@@ -249,10 +254,11 @@ describe("Admin Dashboard Component Suite", () => {
     );
   });
 
-  test("renderizza la barra dei tab per gli utenti admin con Upload Massivo attivo di default e il tab Comunicazioni", () => {
+  test("renderizza la barra dei tab per gli utenti admin con Upload Massivo attivo di default, Dottrina e Comunicazioni", () => {
     render(<Admin />);
 
     expect(screen.getByRole("button", { name: /Upload Massivo/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Dottrina/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Contenuti & Prompt/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Tassonomia/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Manutenzione DB/i })).toBeInTheDocument();
@@ -269,8 +275,11 @@ describe("Admin Dashboard Component Suite", () => {
     expect(screen.queryByTestId("upload-maxima-section")).not.toBeInTheDocument();
   });
 
-  test("consente il passaggio da un tab all'altro visualizzando i componenti corrispondenti (incluso Comunicazioni)", () => {
+  test("consente il passaggio da un tab all'altro visualizzando i componenti corrispondenti (inclusi Dottrina e Comunicazioni)", () => {
     render(<Admin />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Dottrina/i }));
+    expect(screen.getByTestId("upload-doctrine-section")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /Contenuti & Prompt/i }));
     expect(screen.getByTestId("firebase-manual-section")).toBeInTheDocument();

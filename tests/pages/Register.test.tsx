@@ -6,9 +6,7 @@ import React from "react";
 const {
   mockSetName,
   mockSetSurname,
-  mockSetOtpCode,
-  mockSendOtp,
-  mockVerifyOtp,
+  mockSetIsAdult,
   mockHandleConsentChange,
   mockSaveToDb,
   mockSetRole,
@@ -18,24 +16,16 @@ const {
   const state = {
     name: "",
     surname: "",
-    phoneNumber: "",
-    otpCode: "",
-    isOtpSent: false,
-    isPhoneVerified: false,
-    isSendingOtp: false,
-    isVerifyingOtp: false,
+    isAdult: false,
     consents: { privacy: false, terms: false, comms: false, marketing: false },
     role: "avvocato",
     roleOther: "",
     isSaving: false,
-    countdown: 0,
   };
   return {
     mockSetName: vi.fn((val) => { state.name = val; }),
     mockSetSurname: vi.fn((val) => { state.surname = val; }),
-    mockSetOtpCode: vi.fn((val) => { state.otpCode = val; }),
-    mockSendOtp: vi.fn(),
-    mockVerifyOtp: vi.fn(),
+    mockSetIsAdult: vi.fn((val) => { state.isAdult = val; }),
     mockHandleConsentChange: vi.fn(),
     mockSaveToDb: vi.fn(),
     mockSetRole: vi.fn((val) => { state.role = val; }),
@@ -77,16 +67,8 @@ vi.mock("@/features/auth/hooks/useRegisterPageLogic", () => ({
     setName: mockSetName,
     surname: hookState.surname,
     setSurname: mockSetSurname,
-    phoneNumber: hookState.phoneNumber,
-    handlePhoneChange: vi.fn(),
-    otpCode: hookState.otpCode,
-    setOtpCode: mockSetOtpCode,
-    isOtpSent: hookState.isOtpSent,
-    isPhoneVerified: hookState.isPhoneVerified,
-    isSendingOtp: hookState.isSendingOtp,
-    isVerifyingOtp: hookState.isVerifyingOtp,
-    sendOtp: mockSendOtp,
-    verifyOtp: mockVerifyOtp,
+    isAdult: hookState.isAdult,
+    setIsAdult: mockSetIsAdult,
     consents: hookState.consents,
     handleConsentChange: mockHandleConsentChange,
     saveToDb: mockSaveToDb,
@@ -95,7 +77,6 @@ vi.mock("@/features/auth/hooks/useRegisterPageLogic", () => ({
     roleOther: hookState.roleOther,
     setRoleOther: mockSetRoleOther,
     isSaving: hookState.isSaving,
-    countdown: hookState.countdown,
   }),
 }));
 
@@ -120,17 +101,11 @@ describe("Register Component Suite", () => {
     vi.clearAllMocks();
     hookState.name = "";
     hookState.surname = "";
-    hookState.phoneNumber = "";
-    hookState.otpCode = "";
-    hookState.isOtpSent = false;
-    hookState.isPhoneVerified = false;
-    hookState.isSendingOtp = false;
-    hookState.isVerifyingOtp = false;
+    hookState.isAdult = false;
     hookState.consents = { privacy: false, terms: false, comms: false, marketing: false };
     hookState.role = "avvocato";
     hookState.roleOther = "";
     hookState.isSaving = false;
-    hookState.countdown = 0;
   });
 
   test("renderizza correttamente la struttura principale della registrazione", () => {
@@ -139,7 +114,8 @@ describe("Register Component Suite", () => {
     expect(screen.getByRole("heading", { name: "Registrazione Utente" })).toBeInTheDocument();
     expect(screen.getByLabelText("Nome")).toBeInTheDocument();
     expect(screen.getByLabelText("Cognome")).toBeInTheDocument();
-    expect(screen.getByLabelText("Numero di Telefono")).toBeInTheDocument();
+    expect(screen.getByLabelText("Categoria professionale (opzionale)")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Dichiaro di avere più di 18 anni/i)).toBeInTheDocument();
   });
 
   test("aggiorna i campi di input anagrafici", () => {
@@ -154,22 +130,12 @@ describe("Register Component Suite", () => {
     expect(mockSetSurname).toHaveBeenCalledWith("Campaniolo");
   });
 
-  test("gestisce il flusso di inserimento telefono e invio OTP", () => {
-    hookState.phoneNumber = "3331234567";
+  test("gestisce la spunta sulla maggiore età", () => {
     render(<Register />);
 
-    const sendOtpButton = screen.getByRole("button", { name: "Verifica numero" });
-    expect(sendOtpButton).toBeInTheDocument();
-
-    fireEvent.click(sendOtpButton);
-    expect(mockSendOtp).toHaveBeenCalledTimes(1);
-  });
-
-  test("mostra lo stato verificato per il numero di telefono", () => {
-    hookState.isPhoneVerified = true;
-    render(<Register />);
-
-    expect(screen.getByText("✓ Verificato")).toBeInTheDocument();
+    const isAdultCheckbox = screen.getByLabelText(/Dichiaro di avere più di 18 anni/i);
+    fireEvent.click(isAdultCheckbox);
+    expect(mockSetIsAdult).toHaveBeenCalledWith(true);
   });
 
   test("gestisce la selezione della categoria e mostra l'input 'Altro' se selezionato", () => {
@@ -194,16 +160,26 @@ describe("Register Component Suite", () => {
     expect(mockHandleConsentChange).toHaveBeenCalledWith("privacy");
   });
 
-  test("disabilita il pulsante di salvataggio se il telefono non è verificato o è in corso il salvataggio", () => {
-    hookState.isPhoneVerified = false;
-    render(<Register />);
+  test("disabilita il pulsante di salvataggio se l'utente non è maggiorenne o se è in corso il salvataggio", () => {
+    hookState.isAdult = false;
+    hookState.isSaving = false;
+    const { rerender } = render(<Register />);
 
-    const saveButton = screen.getByRole("button", { name: "Verifica il numero per iniziare" });
+    const saveButton = screen.getByRole("button", { name: "Inizia la tua settimana di prova gratuita" });
     expect(saveButton).toBeDisabled();
+
+    // Rerender in stato di salvataggio
+    hookState.isAdult = true;
+    hookState.isSaving = true;
+    rerender(<Register />);
+
+    const savingButton = screen.getByRole("button", { name: "Salvataggio in corso..." });
+    expect(savingButton).toBeDisabled();
   });
 
-  test("abilita ed esegue il salvataggio quando il telefono è verificato", () => {
-    hookState.isPhoneVerified = true;
+  test("abilita ed esegue il salvataggio quando l'utente è maggiorenne e non in fase di salvataggio", () => {
+    hookState.isAdult = true;
+    hookState.isSaving = false;
     render(<Register />);
 
     const saveButton = screen.getByRole("button", { name: "Inizia la tua settimana di prova gratuita" });

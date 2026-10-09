@@ -74,19 +74,7 @@
 
 <body>
 
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand" aria-label="Jurio — home" style="font-family: var(--font-serif); text-decoration: none; color: inherit;">Jurio</a>
-      <nav class="nav" aria-label="Navigazione principale">
-        <a href="/#come-funziona">Come funziona</a>
-        <a href="/prezzi">Prezzi</a>
-        <a href="/#faq">FAQ</a>
-        <a href="/ricerca">Ricerca giurisprudenza</a>
-        <a href="/chat">Consulente legale</a>
-      </nav>
-      <a class="header-cta" href="/profilo">Accedi</a>
-    </div>
-  </header>
+  <div id="header"></div>
 
   <main id="contenuto">
     <section class="terms-hero">
@@ -279,12 +267,7 @@
     </section>
   </main>
 
-  <footer style="padding: 10px">
-    Documento v.<span data-config="document.version"></span>
-    · Ultimo aggiornamento <span data-config="document.lastUpdated"></span>
-    · <a data-link="links.terms">Termini di servizio</a>
-  </footer>
-    <div id="footer"></div>
+  <div id="footer"></div>
 
   <script>
     document.addEventListener("DOMContentLoaded", async () => {

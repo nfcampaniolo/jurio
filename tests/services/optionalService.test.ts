@@ -2,6 +2,30 @@ import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Analytics } from "firebase/analytics";
 import type { FirebasePerformance } from "firebase/performance";
 
+// --- TIPIZZAZIONE IUBENDA PER I TEST ---
+interface IubendaPreferences {
+  purposes?: Record<number, boolean>;
+}
+interface IubendaObject {
+  cs?: {
+    api?: {
+      getPreferences: () => IubendaPreferences;
+    };
+  };
+  csConfiguration?: {
+    callback?: {
+      onPreferenceExpressedOrNotNeeded?: (preference: IubendaPreferences) => void;
+    };
+  };
+}
+
+declare global {
+  interface Window {
+    _iub?: IubendaObject;
+  }
+}
+// --------------------------------------
+
 /* ---------- hoisted mocks ---------- */
 const {
   mockFirebaseApp,
@@ -32,7 +56,7 @@ vi.mock("firebase/performance", () => ({
   getPerformance: mockGetPerformance,
 }));
 
-describe("Optional Services Suite (Analytics & Performance)", () => {
+describe("Optional Services Suite (Analytics & Performance - Iubenda)", () => {
   const fakeAnalytics = { app: mockFirebaseApp } as unknown as Analytics;
   const fakePerformance = { app: mockFirebaseApp } as unknown as FirebasePerformance;
 
@@ -46,18 +70,18 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
     mockGetAnalytics.mockReturnValue(fakeAnalytics);
     mockGetPerformance.mockReturnValue(fakePerformance);
 
-    delete (window as unknown as { Cookiebot?: unknown }).Cookiebot;
+    delete window._iub;
   });
 
   afterEach(() => {
-    delete (window as unknown as { Cookiebot?: unknown }).Cookiebot;
+    delete window._iub;
   });
 
   /* -------------------------------------------------------------------------- */
   /* SSR ENVIRONMENT                                                            */
   /* -------------------------------------------------------------------------- */
   describe("Ambiente Server-Side (SSR)", () => {
-    test("restituisce subito undefined e non attiva alcun listener o servizio se window non esiste", async () => {
+    test("restituisce subito undefined e non attiva alcun servizio se window non esiste", async () => {
       const originalWindow = globalThis.window;
       // @ts-expect-error simulazione SSR
       delete globalThis.window;
@@ -117,12 +141,16 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
   });
 
   /* -------------------------------------------------------------------------- */
-  /* COOKIEBOT CONSENT & ANALYTICS INITIALIZATION                               */
+  /* IUBENDA CONSENT & ANALYTICS INITIALIZATION                                 */
   /* -------------------------------------------------------------------------- */
-  describe("Consenso Cookiebot e Inizializzazione Analytics", () => {
-    test("inizializza Analytics se Cookiebot è già caricato con statistics: true", async () => {
-      (window as unknown as { Cookiebot: { consent: { statistics: boolean } } }).Cookiebot = {
-        consent: { statistics: true },
+  describe("Consenso Iubenda e Inizializzazione Analytics", () => {
+    test("inizializza Analytics se Iubenda restituisce il consenso per purposes[4] (Statistiche)", async () => {
+      window._iub = {
+        cs: {
+          api: {
+            getPreferences: () => ({ purposes: { 4: true } }),
+          },
+        },
       };
 
       const { initializeOptionalServices, getAnalyticsInstance } = await import(
@@ -138,9 +166,13 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
       });
     });
 
-    test("non inizializza Analytics se Cookiebot ha statistics: false", async () => {
-      (window as unknown as { Cookiebot: { consent: { statistics: boolean } } }).Cookiebot = {
-        consent: { statistics: false },
+    test("non inizializza Analytics se Iubenda riporta purposes[4] false o mancante", async () => {
+      window._iub = {
+        cs: {
+          api: {
+            getPreferences: () => ({ purposes: { 1: true, 4: false } }),
+          },
+        },
       };
 
       const { initializeOptionalServices, getAnalyticsInstance } = await import(
@@ -158,26 +190,24 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
       expect(getAnalyticsInstance()).toBeNull();
     });
 
-    test("attende l'evento CookiebotOnAccept se Cookiebot non è ancora pronto", async () => {
-      const addEventListenerSpy = vi.spyOn(window, "addEventListener");
-
+    test("attende il callback di Iubenda se l'utente non ha ancora interagito col banner", async () => {
       const { initializeOptionalServices, getAnalyticsInstance } = await import(
         "@/infrastructure/optionalService"
       );
 
       await initializeOptionalServices();
 
-      expect(addEventListenerSpy).toHaveBeenCalledWith(
-        "CookiebotOnAccept",
-        expect.any(Function)
-      );
+      // Verifica che Analytics non sia stato chiamato
       expect(getAnalyticsInstance()).toBeNull();
 
-      // L'utente accetta i cookie statistici in un secondo momento
-      (window as unknown as { Cookiebot: { consent: { statistics: boolean } } }).Cookiebot = {
-        consent: { statistics: true },
-      };
-      window.dispatchEvent(new Event("CookiebotOnAccept"));
+      // Verifica che la funzione di callback sia stata iniettata
+      const iubCallback = window._iub?.csConfiguration?.callback?.onPreferenceExpressedOrNotNeeded;
+      expect(typeof iubCallback).toBe("function");
+
+      // Simuliamo l'utente che clicca su "Accetta Statistiche" sul banner
+      if (iubCallback) {
+        iubCallback({ purposes: { 4: true } });
+      }
 
       await vi.waitFor(() => {
         expect(mockGetAnalytics).toHaveBeenCalledWith(mockFirebaseApp);
@@ -185,9 +215,40 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
       });
     });
 
+    test("preserva ed esegue un eventuale callback preesistente su window._iub", async () => {
+      const originalCallbackMock = vi.fn();
+      window._iub = {
+        csConfiguration: {
+          callback: {
+            onPreferenceExpressedOrNotNeeded: originalCallbackMock,
+          },
+        },
+      };
+
+      const { initializeOptionalServices } = await import(
+        "@/infrastructure/optionalService"
+      );
+
+      await initializeOptionalServices();
+
+      const newCallback = window._iub?.csConfiguration?.callback?.onPreferenceExpressedOrNotNeeded;
+      const fakePreference = { purposes: { 4: true } };
+      
+      if (newCallback) {
+        newCallback(fakePreference);
+      }
+
+      // Verifica che il callback originale (che avevamo salvato) sia stato comunque invocato
+      expect(originalCallbackMock).toHaveBeenCalledWith(fakePreference);
+    });
+
     test("non inizializza Analytics se isSupported() restituisce false", async () => {
-      (window as unknown as { Cookiebot: { consent: { statistics: boolean } } }).Cookiebot = {
-        consent: { statistics: true },
+      window._iub = {
+        cs: {
+          api: {
+            getPreferences: () => ({ purposes: { 4: true } }),
+          },
+        },
       };
       mockIsSupported.mockResolvedValueOnce(false);
 
@@ -206,8 +267,12 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
     });
 
     test("intercetta eccezioni di inizializzazione Analytics registrandole su console.error", async () => {
-      (window as unknown as { Cookiebot: { consent: { statistics: boolean } } }).Cookiebot = {
-        consent: { statistics: true },
+      window._iub = {
+        cs: {
+          api: {
+            getPreferences: () => ({ purposes: { 4: true } }),
+          },
+        },
       };
       mockGetAnalytics.mockImplementationOnce(() => {
         throw new Error("IndexedDB bloccato dal browser");
@@ -228,9 +293,13 @@ describe("Optional Services Suite (Analytics & Performance)", () => {
       });
     });
 
-    test("evita inizializzazioni multiple consecutive dei servizi opzionali", async () => {
-      (window as unknown as { Cookiebot: { consent: { statistics: boolean } } }).Cookiebot = {
-        consent: { statistics: true },
+    test("evita inizializzazioni multiple consecutive di Analytics", async () => {
+      window._iub = {
+        cs: {
+          api: {
+            getPreferences: () => ({ purposes: { 4: true } }),
+          },
+        },
       };
 
       const { initializeOptionalServices } = await import(
