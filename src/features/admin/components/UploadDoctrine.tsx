@@ -22,6 +22,19 @@ export const UploadDoctrine: React.FC = () => {
     validateAndSubmit,
   } = useSingleDocumentUpload();
 
+  const handleContainerClick = () => {
+    if (loading || isExtracting) return;
+    inputRef.current?.click();
+  };
+
+  const handleContainerKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (loading || isExtracting) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      inputRef.current?.click();
+    }
+  };
+
   return (
     <div className="w-full mx-auto max-w-5xl text-start px-4 md:px-0">
       {/* HEADER */}
@@ -44,6 +57,7 @@ export const UploadDoctrine: React.FC = () => {
           <div
             role="button"
             tabIndex={loading || isExtracting ? -1 : 0}
+            aria-disabled={loading || isExtracting}
             className={`relative w-full overflow-hidden rounded-lg border-2 border-dashed p-8 text-left transition-all outline-none h-70 flex flex-col items-center justify-center
               ${
                 dragActive
@@ -81,10 +95,8 @@ export const UploadDoctrine: React.FC = () => {
                 void handleFileSelect(e.dataTransfer.files[0]);
               }
             }}
-            onClick={() => {
-              if (loading || isExtracting) return;
-              inputRef.current?.click();
-            }}
+            onClick={handleContainerClick}
+            onKeyDown={handleContainerKeyDown}
           >
             <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
 
@@ -115,6 +127,8 @@ export const UploadDoctrine: React.FC = () => {
               <div
                 className="w-full flex flex-col items-center text-center relative z-10"
                 onClick={(e) => e.stopPropagation()}
+                onKeyDown={(e) => e.stopPropagation()}
+                role="presentation"
               >
                 <div className="mb-4 grid h-14 w-14 place-items-center rounded-md border border-emerald-500/30 bg-emerald-500/10 text-emerald-600">
                   <FiFileText size={26} />
@@ -132,7 +146,7 @@ export const UploadDoctrine: React.FC = () => {
                     onClick={() => {
                       void removeFile();
                     }}
-                    className="mt-4 inline-flex items-center gap-2 rounded-md border border-red-500/20 bg-(--color-bg) px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors outline-none"
+                    className="mt-4 inline-flex items-center gap-2 rounded-md border border-red-500/20 bg-(--color-bg) px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-red-600 dark:text-red-400 hover:bg-red-500/10 transition-colors outline-none cursor-pointer"
                   >
                     <FiX size={12} /> Rimuovi
                   </button>
@@ -160,10 +174,11 @@ export const UploadDoctrine: React.FC = () => {
         {/* COLONNA DESTRA: URL E TESTO */}
         <section className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <label className="text-xs font-bold uppercase tracking-widest text-(--color-muted) flex items-center gap-2">
+            <label htmlFor="source-url" className="text-xs font-bold uppercase tracking-widest text-(--color-muted) flex items-center gap-2">
               <FiLink size={14} /> URL Fonte Originale *
             </label>
             <input
+              id="source-url"
               type="url"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
@@ -174,7 +189,7 @@ export const UploadDoctrine: React.FC = () => {
           </div>
 
           <div className="flex flex-col gap-2 flex-1">
-            <label className="text-xs font-bold uppercase tracking-widest text-(--color-muted) flex items-center justify-between">
+            <label htmlFor="extracted-text" className="text-xs font-bold uppercase tracking-widest text-(--color-muted) flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <FiFileText size={14} /> Testo Estratto *
               </div>
@@ -187,6 +202,7 @@ export const UploadDoctrine: React.FC = () => {
               )}
             </label>
             <textarea
+              id="extracted-text"
               value={extractedText}
               onChange={(e) => setExtractedText(e.target.value)}
               disabled={loading || isExtracting}
@@ -215,7 +231,7 @@ export const UploadDoctrine: React.FC = () => {
             void resetForm();
           }}
           disabled={loading || isExtracting}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md border border-(--color-border) bg-(--color-bg) text-(--color-text) text-xs font-bold uppercase tracking-widest hover:bg-(--color-border)/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed outline-none"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-md border border-(--color-border) bg-(--color-bg) text-(--color-text) text-xs font-bold uppercase tracking-widest hover:bg-(--color-border)/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed outline-none cursor-pointer"
         >
           <FiTrash2 size={14} /> Svuota Campi
         </button>
@@ -226,7 +242,7 @@ export const UploadDoctrine: React.FC = () => {
             void validateAndSubmit();
           }}
           disabled={loading || isExtracting || !file || !url || !extractedText}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-md bg-(--color-text) text-(--color-surface) text-xs font-bold uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed outline-none"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-md bg-(--color-text) text-(--color-surface) text-xs font-bold uppercase tracking-widest hover:opacity-95 transition-all disabled:opacity-30 disabled:cursor-not-allowed outline-none cursor-pointer"
         >
           {loading ? (
             <div className="animate-spin rounded-full h-4 w-4 border-2 border-(--color-surface) border-t-transparent" />

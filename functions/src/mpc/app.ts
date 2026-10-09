@@ -4,11 +4,10 @@ import { randomBytes, createHash } from "crypto";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import { getDb, getAdminAuth } from "../deps"; // getAuth deve restituire l'istanza Firebase Admin Auth
+import { getDb } from "../deps"; // getAuth deve restituire l'istanza Firebase Admin Auth
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
 
 const db = getDb();
-const auth = getAdminAuth();
 
 // ============================================================================
 // MCP SERVER (EXPRESS)
@@ -24,7 +23,8 @@ app.use(express.json({ limit: "10kb" }));
 const ALLOWED_ORIGINS = [
   "https://jurio.it",
   "https://claude.ai",
-  "https://chat.openai.com"
+  "https://chat.openai.com",
+  "https://chat.mistral.ai"
 ];
 
 app.use(
@@ -442,6 +442,14 @@ app.use(async (req, res) => {
 
   try {
     // 1. Verifica la presenza del token Opaque nel DB
+
+    if (!/^[a-f0-9]{64}$/.test(token)) {
+      res.set("WWW-Authenticate", 'Bearer realm="jurio", error="invalid_token"');
+      res.status(401).json({ error: "unauthorized", message: "Token non valido." });
+      return;
+    }
+
+    // 2. Verifica il token OAuth in Firestore.
     const tokenSnap = await db.collection("oauth_tokens").doc(token).get();
 
     if (!tokenSnap.exists) {
@@ -451,37 +459,31 @@ app.use(async (req, res) => {
     }
 
     const tokenData = tokenSnap.data();
-    if (!tokenData || !tokenData?.expiresAt) {
-         throw new Error("Token data non valido o mancante");
-    }
-    if (tokenData.expiresAt.toDate() <= new Date()) {
-         await tokenSnap.ref.delete().catch(() => {});
-        res.set(
-            "WWW-Authenticate",
-            'Bearer realm="jurio", error="invalid_token"'
-        );
-        res.status(401).json({
-            error: "unauthorized",
-            message: "Token di accesso scaduto."
-        });
-        return;
-    }
-
+    const expiresAt = tokenData?.expiresAt;
     const uid = tokenData?.uid;
-    // 2. Controllo scadenza token
-    if (tokenData?.expiresAt && tokenData.expiresAt.toDate() < new Date()) {
-      await db.collection("oauth_tokens").doc(token).delete().catch(() => {}); // cleanup silent
-      res.set("WWW-Authenticate", 'Bearer realm="jurio", error="invalid_token"');
-      res.status(401).json({ error: "unauthorized", message: "Token di accesso scaduto." });
+
+    if (
+      typeof uid !== "string" ||
+      !uid ||
+      !expiresAt ||
+      typeof expiresAt.toDate !== "function"
+    ) {
+      res.status(401).json({ error: "unauthorized", message: "Dati del token non validi." });
       return;
     }
 
-    // 3. Generazione Custom Token per Firebase Auth (Bridge verso la logica interna del server MCP)
-    const customToken = await auth.createCustomToken(uid);
-    const mcpAuthHeader = `Bearer ${customToken}`;
+    if (expiresAt.toDate() <= new Date()) {
+      await tokenSnap.ref.delete().catch(() => {});
+      res.set("WWW-Authenticate", 'Bearer realm="jurio", error="invalid_token"');
+      res.status(401).json({ error: "unauthorized", message: "Token scaduto." });
+      return;
+    }
 
-    // 4. Istanziazione server MCP con Header autenticato
+    // 3. Passa ai tool il token OAuth originale, già verificato.
+    // Non generare un Firebase custom token.
+    const mcpAuthHeader = `Bearer ${token}`;
     const server = createMcpServer(mcpAuthHeader);
+
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
       enableJsonResponse: true,

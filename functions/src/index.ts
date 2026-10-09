@@ -95,33 +95,60 @@ export const vectorSearchJurio = onRequest(
         let minRequiredKeywords = Math.max(1, Math.ceil(totalKeywords * 0.8));
 
         // 4) AUTH BASE CON SEGREGAZIONE ERRORI
-        let uid: string = "";
-        const authHeader = req.headers.authorization || "";
-        const token = authHeader.replace("Bearer ", "").trim();
+
+        // 4) AUTENTICAZIONE OAUTH / B2B
+        let uid = "";
+        const authHeader =
+          typeof req.headers.authorization === "string"
+            ? req.headers.authorization
+            : "";
+
+        const token = authHeader.startsWith("Bearer ")
+          ? authHeader.slice("Bearer ".length).trim()
+          : "";
+
         let isOAuthRequest = false;
 
-        if (token) {
-          const [tokenSnap, directUserSnap] = await Promise.all([
-            db.collection("oauth_tokens").doc(token).get(),
-            db.collection("register").doc(token).get()
-          ]);
+        // I token OAuth di Jurio sono generati con randomBytes(32).toString("hex").
+        const isOpaqueOAuthToken = /^[a-f0-9]{64}$/i.test(token);
 
-          if (tokenSnap.exists) {
-            uid = String(tokenSnap.data()?.uid || "");
-            isOAuthRequest = true;
-          } else if (directUserSnap.exists) {
-            uid = token;
-            isOAuthRequest = true;
+        if (isOpaqueOAuthToken) {
+          const tokenSnap = await db
+            .collection("oauth_tokens")
+            .doc(token)
+            .get();
+
+          // Un token OAuth inesistente è revocato o non valido.
+          if (!tokenSnap.exists) {
+            return res.status(401).json({ error: "Unauthorized" });
           }
-        }
 
-        // Se non è OAuth (B2B), esigiamo App Check (Anti-Fraud) e Auth Header Standard
-        if (!isOAuthRequest || !uid) {
+          const tokenData = tokenSnap.data();
+          const expiresAt = tokenData?.expiresAt;
+
+          // Fail closed: uid e scadenza devono essere validi.
+          if (
+            typeof tokenData?.uid !== "string" ||
+            !tokenData.uid ||
+            !expiresAt ||
+            typeof expiresAt.toDate !== "function"
+          ) {
+            return res.status(401).json({ error: "Unauthorized" });
+          }
+
+          if (expiresAt.toDate() <= new Date()) {
+            await tokenSnap.ref.delete().catch(() => {});
+            return res.status(401).json({ error: "Unauthorized" });
+          }
+
+          uid = tokenData.uid;
+          isOAuthRequest = true;
+        } else {
+          // Percorso B2B: richiede sia App Check sia Firebase Auth.
           try {
             await requireAppCheck(req);
             uid = await requireUidFromAuthHeader(req);
-          } catch (authError) {
-            console.warn(`[JURIO-SEARCH] Fallimento AppCheck/Auth per IP: ${req.ip}`);
+          } catch {
             return res.status(401).json({ error: "Unauthorized" });
           }
         }
@@ -410,36 +437,64 @@ export const vectorSearchDoctrine = onRequest(
         const collectionName = "doctrine";
 
         // 2) AUTH E SICUREZZA
-        let uid: string = "";
-        const authHeader = req.headers.authorization || "";
-        const token = authHeader.replace("Bearer ", "").trim();
-        let isOAuthRequest = false;
 
-        if (token) {
-          const [tokenSnap, directUserSnap] = await Promise.all([
-            db.collection("oauth_tokens").doc(token).get(),
-            db.collection("register").doc(token).get()
-          ]);
+        // 4) AUTENTICAZIONE OAUTH / B2B
+        let uid = "";
+        const authHeader =
+          typeof req.headers.authorization === "string"
+            ? req.headers.authorization
+            : "";
 
-          if (tokenSnap.exists) {
-            uid = String(tokenSnap.data()?.uid || "");
-            isOAuthRequest = true;
-          } else if (directUserSnap.exists) {
-            uid = token;
-            isOAuthRequest = true;
+        const token = authHeader.startsWith("Bearer ")
+          ? authHeader.slice("Bearer ".length).trim()
+          : "";
+
+        // I token OAuth di Jurio sono generati con randomBytes(32).toString("hex").
+        const isOpaqueOAuthToken = /^[a-f0-9]{64}$/i.test(token);
+
+        if (isOpaqueOAuthToken) {
+          const tokenSnap = await db
+            .collection("oauth_tokens")
+            .doc(token)
+            .get();
+
+          // Un token OAuth inesistente è revocato o non valido.
+          if (!tokenSnap.exists) {
+            return res.status(401).json({ error: "Unauthorized" });
           }
-        }
 
-        if (!isOAuthRequest || !uid) {
+          const tokenData = tokenSnap.data();
+          const expiresAt = tokenData?.expiresAt;
+
+          // Fail closed: uid e scadenza devono essere validi.
+          if (
+            typeof tokenData?.uid !== "string" ||
+            !tokenData.uid ||
+            !expiresAt ||
+            typeof expiresAt.toDate !== "function"
+          ) {
+            return res.status(401).json({ error: "Unauthorized" });
+          }
+
+          if (expiresAt.toDate() <= new Date()) {
+            await tokenSnap.ref.delete().catch(() => {});
+            return res.status(401).json({ error: "Unauthorized" });
+          }
+
+          uid = tokenData.uid;
+        } else {
+          // Percorso B2B: richiede sia App Check sia Firebase Auth.
           try {
             await requireAppCheck(req);
             uid = await requireUidFromAuthHeader(req);
-          } catch (authError) {
+          } catch {
             return res.status(401).json({ error: "Unauthorized" });
           }
         }
 
-        if (!uid) return res.status(401).json({ error: "Unauthorized" });
+        if (!uid) {
+          return res.status(401).json({ error: "Unauthorized" });
+        }
 
         // 3) ESECUZIONE PARALLELA (Embedding + Rate Limits)
         const limits = { perMinute: 20, perDay: 200 };
@@ -3507,50 +3562,76 @@ export const extractDocumentText = onRequest(
         }
 
         // 3. LOGICA AUTH CONDIVISA (OAuth token o Bearer standard)
-        let uid: string = "";
-        const authHeader = req.headers.authorization || "";
-        const token = authHeader.replace("Bearer ", "").trim();
-        let isOAuthRequest = false;
+        let uid = "";
 
-        if (token) {
-          const [tokenSnap, directUserSnap] = await Promise.all([
-            db.collection("oauth_tokens").doc(token).get(),
-            db.collection("register").doc(token).get()
-          ]);
+        const authHeader =
+          typeof req.headers.authorization === "string"
+            ? req.headers.authorization
+            : "";
 
-          if (tokenSnap.exists) {
-            uid = typeof tokenSnap.data()?.uid === "string" ? tokenSnap.data()!.uid : "";
-            isOAuthRequest = true;
-          } else if (directUserSnap.exists) {
-            uid = token;
-            isOAuthRequest = true;
+        const token = authHeader.startsWith("Bearer ")
+          ? authHeader.slice("Bearer ".length).trim()
+          : "";
+
+        // I token OAuth Jurio sono generati con
+        // randomBytes(32).toString("hex"): 64 caratteri esadecimali.
+        const isOpaqueOAuthToken = /^[a-f0-9]{64}$/.test(token);
+
+        if (isOpaqueOAuthToken) {
+          const tokenSnap = await db
+            .collection("oauth_tokens")
+            .doc(token)
+            .get();
+
+          // Un token OAuth inesistente è invalido o revocato.
+          if (!tokenSnap.exists) {
+            res.status(401).json({ error: "Unauthorized" });
+            return;
           }
-        }
 
-        if (!isOAuthRequest || !uid) {
+          const tokenData = tokenSnap.data();
+          const expiresAt = tokenData?.expiresAt;
+
+          // Verifica obbligatoria di utente e scadenza.
+          if (
+            typeof tokenData?.uid !== "string" ||
+            !tokenData.uid ||
+            !expiresAt ||
+            typeof expiresAt.toDate !== "function"
+          ) {
+            res.status(401).json({ error: "Unauthorized" });
+            return;
+          }
+
+          if (expiresAt.toDate() <= new Date()) {
+            await tokenSnap.ref.delete().catch(() => {});
+            res.status(401).json({ error: "Unauthorized" });
+            return;
+          }
+
+          uid = tokenData.uid;
+        } else {
+          // Percorso B2B: richiede App Check e Firebase Auth.
+          // Non accettare un UID come credenziale.
           try {
             await requireAppCheck(req);
             uid = await requireUidFromAuthHeader(req);
-          } catch (authErr) {
-            console.warn(`[JURIO-EXTRACT] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          } catch {
+            console.warn(
+              `[JURIO-EXTRACT] Fallimento Auth/AppCheck per IP: ${req.ip}`
+            );
             res.status(401).json({ error: "Unauthorized" });
             return;
           }
         }
 
         if (!uid) {
-          res.status(401).json({ error: "Unauthorized: Access denied" });
+          res.status(401).json({ error: "Unauthorized" });
           return;
         }
 
         // 4. PATH TRAVERSAL PROTECTION (Sicurezza Storage)
         const safeStoragePath = storagePathRaw.replace(/\.\./g, "");
-        
-        if (!safeStoragePath.includes(uid) && !safeStoragePath.startsWith("public/")) {
-           console.warn(`[JURIO-EXTRACT] Tentativo di accesso non autorizzato al file '${safeStoragePath}' da parte dell'utente ${uid}`);
-           res.status(403).json({ error: "Forbidden: Accesso al file non consentito." });
-           return;
-        }
 
         // 5. VERIFICA PIANO E LIMITI
         const limits = { perMinute: 20, perDay: 200 };

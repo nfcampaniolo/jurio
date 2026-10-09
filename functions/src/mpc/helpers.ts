@@ -70,28 +70,31 @@ export async function verifyPlanAndLimits(
     };
   }
 
+
   let uid: string | null = null;
 
-  // Sicurezza: Firestore non accetta '/' nei document ID. Query diretta eseguita solo per stringhe prive di slash.
-  if (!token.includes("/")) {
-    try {
-      const [tokenSnap, directUserSnap] = await Promise.all([
-        db.collection("oauth_tokens").doc(token).get(),
-        db.collection("register").doc(token).get(),
-      ]);
+  const tokenSnap = await db.collection("oauth_tokens").doc(token).get();
 
-      if (tokenSnap.exists) {
-        uid = (tokenSnap.data()?.uid as string) || null;
-      } else if (directUserSnap.exists) {
-        uid = token;
-      }
-    } catch (dbErr) {
-      console.error("[MCP Auth] Errore verifica token da Firestore:", dbErr);
+  if (tokenSnap.exists) {
+    const tokenData = tokenSnap.data();
+    const expiresAt = tokenData?.expiresAt;
+
+    if (
+      !tokenData?.uid ||
+      !expiresAt ||
+      typeof expiresAt.toDate !== "function" ||
+      expiresAt.toDate() <= new Date()
+    ) {
+      return {
+        ok: false,
+        isError: true,
+        text: "Token OAuth non valido o scaduto. Ricollega il connettore Jurio.",
+      };
     }
-  }
 
-  // Fallback alla verifica del JWT tramite Firebase Admin Auth
-  if (!uid) {
+    uid = String(tokenData.uid);
+  } else {
+    // Compatibilità con richieste autenticate mediante Firebase ID token.
     try {
       const decodedToken = await getAuth().verifyIdToken(token);
       uid = decodedToken.uid;
@@ -99,7 +102,7 @@ export async function verifyPlanAndLimits(
       return {
         ok: false,
         isError: true,
-        text: "Token di autenticazione scaduto o non autorizzato. Ricollega il tuo account Jurio dalle impostazioni del client MCP.",
+        text: "Token di autenticazione non valido o scaduto.",
       };
     }
   }
@@ -108,7 +111,7 @@ export async function verifyPlanAndLimits(
     return {
       ok: false,
       isError: true,
-      text: "Accesso negato: Impossibile identificare l'utente.",
+      text: "Accesso negato: impossibile identificare l'utente.",
     };
   }
 
