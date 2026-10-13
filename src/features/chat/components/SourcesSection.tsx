@@ -54,7 +54,7 @@ export const SourcesSection: React.FC<SourcesSectionProps> = ({
       <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90" />
 
       <div className="p-4 border-b border-(--color-border) bg-(--color-bg) shrink-0 mt-1">
-        <h2 className="font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 text-(--color-muted)">
+        <h2 className="font-bold text-[10px] tracking-widest flex items-center gap-2 text-(--color-muted)">
           <BookOpen size={14} className="opacity-70" /> Fonti Citate
         </h2>
       </div>

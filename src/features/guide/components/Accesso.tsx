@@ -110,15 +110,6 @@ export default function Accesso() {
 
             <div className="relative p-4 rounded-lg border border-(--color-border) bg-(--color-surface) shadow-xs space-y-1 overflow-hidden">
               <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-70" />
-              <span className="inline-block text-[9px] font-bold text-(--color-text) uppercase tracking-widest bg-(--color-bg) border border-(--color-border) px-2 py-0.5 rounded-sm shadow-xs mt-0.5">Obbligatorio</span>
-              <h4 className="font-medium text-(--color-text) text-md  tracking-tight" >Numero di Telefono</h4>
-              <p className="text-md text-(--color-muted) font-light leading-relaxed">
-                Richiesto a fini esclusivi di sicurezza informatica, verifica d'identità e prevenzione della duplicazione degli account (non ceduto a terzi né usato per fini commerciali, ai sensi del GDPR).
-              </p>
-            </div>
-
-            <div className="relative p-4 rounded-lg border border-(--color-border) bg-(--color-surface) shadow-xs space-y-1 overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-70" />
               <span className="inline-block text-[9px] font-bold text-(--color-muted) uppercase tracking-widest bg-(--color-bg) border border-(--color-border) px-2 py-0.5 rounded-sm shadow-xs mt-0.5">Opzionale</span>
               <h4 className="font-medium text-(--color-text) text-md  tracking-tight" >Categoria Professionale</h4>
               <p className="text-md text-(--color-muted) font-light leading-relaxed">
@@ -136,7 +127,7 @@ export default function Accesso() {
             <li className="flex items-start">
               <span className="text-(--color-text) mr-2 font-bold">•</span>
               <span>
-                <strong className="font-semibold text-(--color-text)">Termini di Servizio e Privacy Policy (Obbligatorio):</strong> presa visione e accettazione delle condizioni contrattuali (<Link to="/termini" className="font-bold underline underline-offset-2 text-(--color-text)">/termini</Link>) e dell'informativa sul trattamento dei dati (<Link to="/privacy" className="font-bold underline underline-offset-2 text-(--color-text)">/privacy</Link> - <Link to="/gdpr" className="font-bold underline underline-offset-2 text-(--color-text)">/gdpr</Link>), indispensabile per attivare il profilo.
+                <strong className="font-semibold text-(--color-text)">Termini di Servizio e Privacy Policy (Obbligatorio):</strong> presa visione e accettazione delle condizioni contrattuali (<Link to="https://jurio.it/termini" className="font-bold underline underline-offset-2 text-(--color-text)">/termini</Link>) e dell'informativa sul trattamento dei dati (<Link to="https://jurio.it/privacy" className="font-bold underline underline-offset-2 text-(--color-text)">/privacy</Link> - <Link to="https://jurio.it/gdpr" className="font-bold underline underline-offset-2 text-(--color-text)">/gdpr</Link>), indispensabile per attivare il profilo.
               </span>
             </li>
             <li className="flex items-start">

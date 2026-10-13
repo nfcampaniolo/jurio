@@ -71,9 +71,9 @@ describe("Guida - Introduzione Component Suite", () => {
       })
     ).toBeInTheDocument();
 
-    const linkFonti = screen.getByRole("link", { name: "/fonti" });
+    const linkFonti = screen.getByRole("link", { name: /\/fonti/i });
     expect(linkFonti).toBeInTheDocument();
-    expect(linkFonti).toHaveAttribute("href", "/fonti");
+    expect(linkFonti).toHaveAttribute("href", "https://jurio.it/fonti");
   });
 
   test("renderizza le quattro funzionalità operative nella sezione 'Cosa puoi fare con Jurio'", () => {

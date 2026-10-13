@@ -131,7 +131,7 @@ export default function InterfacceNavigazione() {
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-70" />
             <h3 className="font-medium text-(--color-text) text-md  tracking-tight mt-0.5" >Canali & Prodotto</h3>
             <p className="text-md text-(--color-muted) font-light leading-relaxed">
-              Link ai canali social ufficiali (LinkedIn e Instagram) e accesso diretto alle sezioni informative e alla pagina dedicata alle fonti consultate dal sistema (<Link to="/fonti" className="font-bold underline underline-offset-2 text-(--color-text)">/fonti</Link>).
+              Link ai canali social ufficiali (LinkedIn e Instagram) e accesso diretto alle sezioni informative e alla pagina dedicata alle fonti consultate dal sistema (<Link to="https://jurio.it/fonti" className="font-bold underline underline-offset-2 text-(--color-text)">/fonti</Link>).
             </p>
           </div>
 
@@ -140,7 +140,7 @@ export default function InterfacceNavigazione() {
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-70" />
             <h3 className="font-medium text-(--color-text) text-md  tracking-tight mt-0.5" >Supporto & Risorse</h3>
             <p className="text-md text-(--color-muted) font-light leading-relaxed">
-              Canali di assistenza tecnica (<Link to="/contatti" className="font-bold underline underline-offset-2 text-(--color-text)">/contatti</Link>) e sezione dedicata ai casi studio applicativi (<Link to="/casi-studio" className="font-bold underline underline-offset-2 text-(--color-text)">/casi-studio</Link>).
+              Canali di assistenza tecnica (<Link to="/contatti" className="font-bold underline underline-offset-2 text-(--color-text)">/contatti</Link>) e sezione dedicata ai casi studio applicativi (<Link to="https://jurio.it/casi-studio" className="font-bold underline underline-offset-2 text-(--color-text)">/casi-studio</Link>).
             </p>
           </div>
 
@@ -149,7 +149,7 @@ export default function InterfacceNavigazione() {
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-70" />
             <h3 className="font-medium text-(--color-text) text-md  tracking-tight mt-0.5" >Area Legale</h3>
             <p className="text-md text-(--color-muted) font-light leading-relaxed">
-              Informativa completa su <Link to="/privacy" className="font-bold underline underline-offset-2 text-(--color-text)">Privacy Policy (/privacy)</Link>, <Link to="/termini" className="font-bold underline underline-offset-2 text-(--color-text)">Termini di Servizio (/termini)</Link> e conformità al trattamento dei dati personali (<Link to="/gdpr" className="font-bold underline underline-offset-2 text-(--color-text)">/gdpr</Link>).
+              Informativa completa su <Link to="https://jurio.it/privacy" className="font-bold underline underline-offset-2 text-(--color-text)">Privacy Policy (/privacy)</Link>, <Link to="https://jurio.it/termini" className="font-bold underline underline-offset-2 text-(--color-text)">Termini di Servizio (/termini)</Link> e conformità al trattamento dei dati personali (<Link to="https://jurio.it/gdpr" className="font-bold underline underline-offset-2 text-(--color-text)">/gdpr</Link>).
             </p>
           </div>
         </div>

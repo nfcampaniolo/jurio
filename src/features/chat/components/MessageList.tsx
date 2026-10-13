@@ -31,25 +31,22 @@ export const MessageList = ({
   };
 
   return (
-    // Aggiunto "flex flex-col" per permettere ai figli di gestire lo spazio interno
-    // Rimosso lo "space-y" da qui, lo spostiamo nel contenitore della lista
-    <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:pr-16 scroll-smooth w-full custom-scrollbar">
+    <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:pr-12 scroll-smooth w-full custom-scrollbar">
       
       {messages.length === 0 ? (
-        // Sostituito "h-full" con "flex-1" in modo che occupi lo spazio rimanente senza generare overflow
-        <div className="flex-1 flex flex-col items-center justify-center text-center text-neutral-400 space-y-3">
-          <Scale size={48} className="opacity-20" />
-          <p className="text-sm md:text-base px-4 max-w-sm mx-auto">
-            Inizia descrivendo la fattispecie o ponendo una domanda giuridica.
+        <div className="flex-1 flex flex-col items-center justify-center text-center text-neutral-400 dark:text-neutral-500 space-y-3 my-auto">
+          <div className="p-4 rounded-full bg-neutral-100 dark:bg-neutral-800/50 border border-neutral-200/60 dark:border-neutral-800">
+            <Scale size={40} className="text-[#e0a32e] opacity-80" />
+          </div>
+          <p className="text-sm md:text-base px-4 max-w-sm mx-auto font-medium text-neutral-600 dark:text-neutral-400">
+            Inizia descrivendo la fattispecie o ponendo un quesito giuridico.
           </p>
         </div>
       ) : (
-        // Contenitore dedicato solo ai messaggi, ripristiniamo qui lo space-y
-        <div className="flex flex-col space-y-4 md:space-y-6">
+        <div className="flex flex-col space-y-5 md:space-y-6">
           {messages.map((msg, index) => {
             const isLastMessage = index === messages.length - 1;
             const shouldAnimate = isLastMessage && !msg.isHistorical;
-
             const isFullyDisplayed = !shouldAnimate || (!isStreaming && completedMessages[msg.id]);
             
             const sourceIds = msg.sources 
@@ -60,27 +57,31 @@ export const MessageList = ({
               <motion.div 
                 key={msg.id} 
                 id={`msg-${msg.id}`}
-                initial={{ opacity: 0, y: 10 }} 
+                initial={{ opacity: 0, y: 8 }} 
                 animate={{ opacity: 1, y: 0 }} 
+                transition={{ duration: 0.25, ease: "easeOut" }}
                 className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
-                <div className={`max-w-[95%] md:max-w-[90%] min-w-0 flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                <div className={`max-w-[95%] md:max-w-[88%] min-w-0 flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                  
+                  {/* BUBBLE MESSAGGIO */}
                   <div 
-                    className={`p-4 text-[15px] md:text-base wrap-break-word min-w-0 w-full ${
+                    className={`p-4 md:p-5 text-[15px] md:text-base wrap-break-word min-w-0 w-full transition-shadow ${
                       msg.role === 'user' 
-                        ? 'bg-stone-700 text-white rounded-2xl rounded-br-sm antialiased font-normal tracking-tight shadow-sm md:shadow-md transition-shadow' 
-                        : 'bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 rounded-2xl rounded-bl-sm'
+                        ? 'bg-neutral-800 dark:bg-neutral-200 text-white dark:text-neutral-900 rounded-2xl rounded-br-xs antialiased font-normal shadow-sm' 
+                        : 'bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-100 rounded-2xl rounded-bl-xs border border-neutral-200/70 dark:border-neutral-800/80 shadow-xs'
                     }`}
                   >                            
+                    {/* STATO DI ATTESA INIZIALE (PULSATING DOTS) */}
                     {msg.role === 'model' && !msg.content && isStreaming ? (
                       <div className="flex items-center gap-3 py-1">
                         <div className="flex gap-1.5">
-                          <span className="w-2 h-2 bg-stone-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                          <span className="w-2 h-2 bg-stone-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                          <span className="w-2 h-2 bg-stone-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          <span className="w-2 h-2 bg-[#e0a32e] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <span className="w-2 h-2 bg-[#e0a32e] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <span className="w-2 h-2 bg-[#e0a32e] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
                         <span className="text-sm font-medium text-neutral-500 dark:text-neutral-400 animate-pulse">
-                          {agentStatusText || "Elaborazione in corso..."}
+                          {agentStatusText || "Consultazione archivi in corso..."}
                         </span>
                       </div>
                     ) : msg.role === 'model' ? (
@@ -89,6 +90,7 @@ export const MessageList = ({
                         text={msg.content} 
                         speed={5} 
                         animate={shouldAnimate}
+                        isStreaming={isStreaming && isLastMessage} // FIX FONDAMENTALE PASSATO AL TYPEWRITER
                         onComplete={() => handleTypingComplete(msg.id)}
                       />
                     ) : (
@@ -96,53 +98,55 @@ export const MessageList = ({
                     )}
                   </div>
                   
-                  {/* FONTI INLINE */}
+                  {/* FONTI INLINE (PILLOLE ELEGANTE) */}
                   {msg.sources && msg.sources.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-1 max-w-full">
+                    <div className="flex flex-wrap gap-1.5 mt-0.5 max-w-full">
                       {msg.sources.map((s: Source, idx: number) => {
                         const isWeb = s._type === 'web_search';
                         const sId = s.documento_id || s._id_interno || s.url_riferimento || s.link || `inline-src-${idx}`;
                         const organoPrefix = s.organo_giudicante ? `${s.organo_giudicante}: ` : '';
 
                         const sTitle = isWeb 
-                          ? (s.fonte_web || s.fonte || 'Web') 
+                          ? (s.fonte_web || s.fonte || 'Fonte Web') 
                           : (s.identificativo 
-                              ? `${organoPrefix} ${s.identificativo}`.trim() 
+                              ? `${organoPrefix}${s.identificativo}`.trim() 
                               : (s.numero_sentenza 
                                   ? `${organoPrefix || 'Sent.'} n. ${s.numero_sentenza}`.trim() 
-                                  : '')
-                            );
+                                  : 'Documento'));
+                        
+                        const isActive = activeSourceId === sId;
+
                         return (
                           <button 
                             key={`${sId}-${idx}`} 
                             onClick={(e) => handleSourceClick(e, s)}
                             onMouseEnter={() => setActiveSourceId(sId)} 
                             onMouseLeave={() => setActiveSourceId(null)} 
-                            className={`text-[10px] md:text-xs font-semibold px-2.5 py-1.5 sm:px-2 sm:py-1 rounded-md transition-all border flex items-center gap-1 max-w-full ${
-                              activeSourceId === sId 
-                                ? 'bg-stone-100 border-yellow-300 text-yellow-800 dark:bg-stone-900/60 dark:border-yellow-500/50 dark:text-yellow-300 scale-105 shadow-sm' 
-                                : 'bg-white border-neutral-200 text-neutral-500 dark:bg-neutral-900 dark:border-neutral-700 dark:text-neutral-400 hover:border-yellow-200 dark:hover:border-yellow-800'
+                            className={`text-xs font-medium px-2.5 py-1 rounded-lg transition-all border flex items-center gap-1.5 max-w-full cursor-pointer ${
+                              isActive 
+                                ? 'bg-amber-50 border-[#e0a32e] text-amber-900 dark:bg-amber-950/40 dark:border-[#e0a32e]/80 dark:text-amber-200 shadow-xs scale-[1.02]' 
+                                : 'bg-neutral-50/80 border-neutral-200/80 text-neutral-600 dark:bg-neutral-900 dark:border-neutral-800 dark:text-neutral-400 hover:border-[#e0a32e]/50 dark:hover:border-[#e0a32e]/50 hover:text-neutral-900 dark:hover:text-neutral-200'
                             }`}
                           >
-                            <span className="shrink-0">
-                              {isWeb ? <Globe size={10} className="opacity-70" /> : <BookOpen size={10} className="opacity-70" />}
+                            <span className="shrink-0 text-[#e0a32e]">
+                              {isWeb ? <Globe size={11} /> : <BookOpen size={11} />}
                             </span>
-                            <span className="truncate flex-1 min-w-0 max-w-30 sm:max-w-37.5">{sTitle}</span>
+                            <span className="truncate flex-1 min-w-0 max-w-35 sm:max-w-45">{sTitle}</span>
                           </button>
                         );
                       })}
                     </div>
                   )}
 
-                  {/* --- COMPONENTE FEEDBACK --- */}
+                  {/* COMPONENTE FEEDBACK */}
                   {msg.role === 'model' && msg.content && isFullyDisplayed && (
                     <motion.div 
-                      initial={{ opacity: 0, y: 4 }}
+                      initial={{ opacity: 0, y: 3 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.2 }}
-                      className="self-end flex items-center gap-2 mt-1"
+                      className="self-end flex items-center gap-2 mt-1 px-1"
                     >
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-neutral-400 dark:text-neutral-500 font-normal">
                         Valuta questa risposta
                       </span>
                       <FeedbackComponent sourceIds={sourceIds} />
@@ -154,8 +158,6 @@ export const MessageList = ({
             );
           })}
           
-          {/* Spostato QUI DENTRO: div spaziatore finale renderizzato solo se ci sono messaggi.
-              Aggiunto shrink-0 per evitare che flexbox lo comprima */}
           <div ref={messagesEndRef} className="h-2 shrink-0" />
         </div>
       )}

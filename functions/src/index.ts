@@ -4,7 +4,7 @@ import { Timestamp, FieldValue, Query, WriteBatch } from "firebase-admin/firesto
 import { getAdmin, getDb, getAdminAuth, getAdminStorage, sanitize } from "./deps";
 import { MAX_INPUT_CHARS, PROMPT_MASSIMAZIONE } from "./params";
 import { enqueueWelcomeEmail, enqueueTrialEmail, queuePurchaseEmailOnceStripe, enqueueDowngradeEmail, enqueueContactEmail, enqueueVoucherEmail, enqueueWelcomeTeamEmail, enqueueRemoveTeamEmail, enqueueCloseTeamEmail, dispatchMailAndNotification, NotificationType } from "./email";
-import { corsHandlerDomain, requireAppCheck, requireUidFromAuthHeader, consumePerMinuteFeature, consumeDailyFeature, getKeywordStems, calculateMatchScore, applyHighlightWithRegex, generateHighlightRegex, runUpdateFonte, runUpdateMetadata, runCleanupDuplicates, processFascicoloDocs, processSubscriptionInTx, tryScheduleDowngradeTask, updateUserDocuments, removeUserVisibilityFromDocuments, incrementRagCounter, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, PlanDoc, getStripe, getWebhookSecret,normalizePlanId, handleEmbeddingCreation, handleEmbeddingDocumentCreation, handleFascicoloCreation, handleEmbeddingManualCreation} from "./utils";
+import { corsHandlerDomain, requireAppCheck, requireUidFromAuthHeader, consumePerMinuteFeature, consumeDailyFeature, JURIO_USAGE_LIMITS, getKeywordStems, calculateMatchScore, applyHighlightWithRegex, generateHighlightRegex, runUpdateFonte, runUpdateMetadata, runCleanupDuplicates, processFascicoloDocs, processSubscriptionInTx, tryScheduleDowngradeTask, updateUserDocuments, removeUserVisibilityFromDocuments, incrementRagCounter, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, PlanDoc, getStripe, getWebhookSecret,normalizePlanId, handleEmbeddingCreation, handleEmbeddingDocumentCreation, handleFascicoloCreation, handleEmbeddingManualCreation} from "./utils";
 import { scheduleDowngradeTask, DowngradeTxResult, computeAndSaveWeeklyStats, computeAndSaveMonthlyUsage } from "./tasks";
 import {FilterInput, SearchRequestBody, ScoredJurioItem, JurioSentenceDoc, MessageDoc, FascicoloDoc, ExtractedMetadataItem, EstraiMetadatiResult, SupportRequestBody, ReasoningRequestBody, ReasoningFlowOutput, PromptFieldInput, PromptAgentRequestBody, EnhancePromptMessage, EnhancePromptRequestBody, MaintenanceTaskBody, ProgressCallback, MergeCategoryRequestBody, ReasoningAdminResponse, ReasoningAdminRequestBody, ManualContentRequestBody, SubmitFeedbackRequestBody, DeepAnalysisRequestBody, DeepAnalysisConfig, DEFAULT_CONFIG, AdminNotificationRequestBody, GenerateEmbeddingRequestBody, GenerateEmbeddingResponse, ExtractDocumentRequestBody, GetRegisterResponse, GetPriceRequestBody, GetPriceResponse, CheckoutSessionRequestBody, AssignTeamSeatRequestBody, AssignTeamSeatResponse, SendTeamInviteEmailResponse, SendTeamInviteEmailRequestBody, ShareAllTeamDocumentsResponse, ShareAllTeamDocumentsRequestBody, VerifyVoucherRequestBody, VerifyVoucherResponse, RemoveTeamMemberRequestBody, RemoveTeamMemberResponse, ApplyCouponRequestBody, ApplyCouponResponse, DeleteTeamResponse, DeleteTeamRequestBody, CloudFileDownloadRequestBody, CloudFilesListRequestBody} from "./interfaces";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
@@ -35,6 +35,9 @@ setGlobalOptions({
   invoker: "public"
 });
 
+// ============================================================================
+// MCP
+// ============================================================================
 
 export const jurioMcpServer = onRequest(
   { timeoutSeconds: 300, memory: "512MiB" },
@@ -42,7 +45,7 @@ export const jurioMcpServer = onRequest(
 );
 
 // ============================================================================
-// AI ENDPOINTS
+// RESEARCH
 // ============================================================================
 
 export const vectorSearchJurio = onRequest(
@@ -157,37 +160,57 @@ export const vectorSearchJurio = onRequest(
           return res.status(401).json({ error: "Unauthorized" });
         }
         
-        const limits = { perMinute: 20, perDay: 200 };
-         
-        // 5) ESECUZIONE PARALLELA SICURA (OpenAI + Firebase Auth/Rate Limits)
-        const [embeddingPromiseResult, userSnap] = await Promise.all([
+        // VERIFICA PIANO UTENTE
+        const [userSnap, embeddingPromiseResult] = await Promise.all([
+          db.collection("register").doc(uid).get(),
           oaClient.embeddings.create({
             model: "text-embedding-3-small",
-            input: `Contesto giuridico italiano: ${queryText}`,
+            input: `Contesto giuridico italiano dottrinale: ${queryText}`,
             dimensions: 1536,
           }),
-          db.collection("register").doc(uid).get(),
-          consumePerMinuteFeature(uid, "research", limits.perMinute),
-          consumeDailyFeature(uid, "research", limits.perDay)
         ]);
 
-        // VERIFICA PIANO UTENTE
+        // 2) VERIFICA UTENTE E PIANO (Sincrona e veloce)
         if (!userSnap.exists) {
-          return res.status(404).json({ error: "Not Found" }); // Non riveliamo dettagli sull'assenza dell'utente
+          return res.status(404).json({ error: "Not Found" });
         }
-        
+
         const planId = String(userSnap.data()?.planId ?? "");
         const allowedPlans = new Set([
-          "prova", "admin", "business", "personale", "business_m", "personale_m",
+          "prova",
+          "admin",
+          "business",
+          "personale",
+          "business_m",
+          "personale_m",
         ]);
 
         if (!allowedPlans.has(planId)) {
-          return res.status(403).json({ 
-            error: "Forbidden", 
-            message: "Piano non abilitato alla ricerca." 
-          });
+          return res
+            .status(403)
+            .json({ error: "Forbidden", message: "Piano non abilitato." });
         }
-        
+
+        // 3) RECUPERO LIMITI DINAMICI DAL TUO CONFIG
+        const limits = (
+          JURIO_USAGE_LIMITS.research as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId] ?? { perMinute: 0, perDay: 0 };
+
+        // 4) CONSUMO RATE LIMIT (Solo dopo la validazione positiva)
+        try {
+        await Promise.all([
+          consumePerMinuteFeature(uid, "research", limits.perMinute),
+          consumeDailyFeature(uid, "research", limits.perDay),
+        ]);
+        } catch (error) {
+          console.warn(`[research] Rate limit superato per utente ${uid}`);
+          res.status(429).json({ error: "Too Many Requests", details: "Limite di utilizzo superato." });
+          return;
+        }
+
         const queryVector = embeddingPromiseResult.data[0].embedding;
 
         // 6) COSTRUZIONE QUERY TYPE-SAFE
@@ -495,31 +518,58 @@ export const vectorSearchDoctrine = onRequest(
         if (!uid) {
           return res.status(401).json({ error: "Unauthorized" });
         }
-
-        // 3) ESECUZIONE PARALLELA (Embedding + Rate Limits)
-        const limits = { perMinute: 20, perDay: 200 };
-        const [embeddingPromiseResult, userSnap] = await Promise.all([
+        // 1) ESECUZIONE PARALLELA INIZIALE (Fetch utente + Embedding OpenAI)
+       
+        const [userSnap, embeddingPromiseResult] = await Promise.all([
+          db.collection("register").doc(uid).get(),
           oaClient.embeddings.create({
             model: "text-embedding-3-small",
             input: `Contesto giuridico italiano dottrinale: ${queryText}`,
             dimensions: 1536,
           }),
-          db.collection("register").doc(uid).get(),
-          consumePerMinuteFeature(uid, "research", limits.perMinute),
-          consumeDailyFeature(uid, "research", limits.perDay)
         ]);
 
+        // 2) VERIFICA UTENTE E PIANO (Sincrona e veloce)
         if (!userSnap.exists) {
-          return res.status(404).json({ error: "Not Found" }); 
+          return res.status(404).json({ error: "Not Found" });
         }
-        
+
         const planId = String(userSnap.data()?.planId ?? "");
-        const allowedPlans = new Set(["prova", "admin", "business", "personale", "business_m", "personale_m"]);
+        const allowedPlans = new Set([
+          "prova",
+          "admin",
+          "business",
+          "personale",
+          "business_m",
+          "personale_m",
+        ]);
 
         if (!allowedPlans.has(planId)) {
-          return res.status(403).json({ error: "Forbidden", message: "Piano non abilitato." });
+          return res
+            .status(403)
+            .json({ error: "Forbidden", message: "Piano non abilitato." });
         }
-        
+
+        // 3) RECUPERO LIMITI DINAMICI DAL TUO CONFIG
+        const limits = (
+          JURIO_USAGE_LIMITS.research as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId] ?? { perMinute: 0, perDay: 0 };
+
+        // 4) CONSUMO RATE LIMIT (Solo dopo la validazione positiva)
+        try {
+        await Promise.all([
+          consumePerMinuteFeature(uid, "research", limits.perMinute),
+          consumeDailyFeature(uid, "research", limits.perDay),
+        ]);
+        } catch (error) {
+          console.warn(`[research] Rate limit superato per utente ${uid}`);
+          res.status(429).json({ error: "Too Many Requests", details: "Limite di utilizzo superato." });
+          return;
+        }
+
         const queryVector = embeddingPromiseResult.data[0].embedding;
 
         // 4) COSTRUZIONE QUERY
@@ -592,6 +642,10 @@ export const vectorSearchDoctrine = onRequest(
     });
   }
 );
+
+// ============================================================================
+// GENAI 
+// ============================================================================
 
 export const legalAgent = onRequest(
   {
@@ -824,10 +878,10 @@ export const legalAgent = onRequest(
 // ─────────────────────────────────────────────
 function getLegalAgentLimits(planId: string): { perMinute: number; perDay: number } | null {
   switch (planId) {
-    case "prova": return { perMinute: 20, perDay: 200 };
+    case "prova": return { perMinute: 20, perDay: 20 };
     case "business":
-    case "business_m": return { perMinute: 20, perDay: 200 };
-    case "admin": return { perMinute: 60, perDay: 10_000 };
+    case "business_m": return { perMinute: 20, perDay: 50 };
+    case "admin": return { perMinute: 20, perDay: 100 };
     default: return null;
   }
 }
@@ -1046,15 +1100,9 @@ export const deepAnalysisAgent = onRequest(
         }
 
         const planId = String(userSnap.data()?.planId ?? "");
-        if (
-          ![
-            "admin",
-            "personale",
-            "personale_m",
-            "business",
-            "business_m",
-          ].includes(planId)
-        ) {
+        const limits = getDeepAnalysisLimits(planId);
+
+        if (!limits) {
           res.status(403).json({ error: "Access denied." });
           return;
         }
@@ -1081,7 +1129,17 @@ export const deepAnalysisAgent = onRequest(
           const normalizedDocs = normalizeDeepAnalysisDocs(docs);
           const resolvedConfig = resolveDeepAnalysisConfig(config);
 
-          await consumeDeepAnalysisQuota(uid);
+          // --- SICUREZZA: Controllo Rate Limit Bloccante ---
+          try {
+            await consumeDeepAnalysisQuota(uid, limits);
+          } catch (error) {
+            console.warn(`[DeepAnalysisAgent] Rate limit superato per utente ${uid} (start_research)`);
+            res.status(429).json({
+              error: "Too Many Requests",
+              details: "Limite di utilizzo superato.",
+            });
+            return;
+          }
 
           const output = await researchAnalysisFlow({
             prompt: normalizedPrompt,
@@ -1128,18 +1186,7 @@ export const deepAnalysisAgent = onRequest(
         }
 
         if (action === "refine_research") {
-          if (!sessionSnap.exists) {
-            res.status(404).json({
-              success: false,
-              error: "Sessione non trovata",
-            });
-            return;
-          }
-
-          // Da questo punto in poi sessionData è sicuramente non-null.
           const sessionData = sessionSnap.data()!;
-
-          // Verifica ownership prima di leggere/modificare la sessione.
           assertDeepAnalysisSessionOwner(sessionData, uid);
 
           const normalizedHitl =
@@ -1147,10 +1194,18 @@ export const deepAnalysisAgent = onRequest(
               ? direttivaHitl.trim()
               : "Ricerca approfondimenti";
 
-          // Quota per la fase di refinement.
-          await consumeDeepAnalysisQuota(uid);
+          // --- SICUREZZA: Controllo Rate Limit Bloccante ---
+          try {
+            await consumeDeepAnalysisQuota(uid, limits);
+          } catch (error) {
+            console.warn(`[DeepAnalysisAgent] Rate limit superato per utente ${uid} (refine_research)`);
+            res.status(429).json({
+              error: "Too Many Requests",
+              details: "Limite di utilizzo superato.",
+            });
+            return;
+          }
 
-          // Recupera la configurazione persistita.
           const savedConfig =
             sessionData.configurazione &&
             typeof sessionData.configurazione === "object"
@@ -1167,26 +1222,19 @@ export const deepAnalysisAgent = onRequest(
               typeof sessionData.promptOriginale === "string"
                 ? sessionData.promptOriginale
                 : "",
-
             direttivaHitl: normalizedHitl,
-
             currentInquadramento: InquadramentoSchema.parse(
               sessionData.inquadramento ?? {}
             ),
-
             currentMappaDialettica: MappaDialetticaSchema.parse(
               sessionData.mappaDialettica ?? {}
             ),
-
             currentMappaConcettuale:
               sessionData.mappaConcettuale ?? null,
-
             docs: Array.isArray(sessionData.documentiAllegati)
               ? sessionData.documentiAllegati
               : [],
-
             userId: uid,
-
             config: resolvedConfig,
           });
 
@@ -1219,8 +1267,17 @@ export const deepAnalysisAgent = onRequest(
         }
 
         if (action === "generate_synthesis") {
-
-          await consumeDeepAnalysisQuota(uid);
+          // --- SICUREZZA: Controllo Rate Limit Bloccante ---
+          try {
+            await consumeDeepAnalysisQuota(uid, limits);
+          } catch (error) {
+            console.warn(`[DeepAnalysisAgent] Rate limit superato per utente ${uid} (generate_synthesis)`);
+            res.status(429).json({
+              error: "Too Many Requests",
+              details: "Limite di utilizzo superato.",
+            });
+            return;
+          }
 
           const output = await generateSynthesisReportFlow({
             quesitoOriginale: String(sessionData?.promptOriginale ?? ""),
@@ -1254,8 +1311,8 @@ export const deepAnalysisAgent = onRequest(
 
         if (msg.includes("quota_exceeded")) {
           res.status(429).json({
-            error: "Quota Exceeded",
-            details: msg,
+            error: "Too Many Requests",
+            details: "Limite di utilizzo superato.",
           });
           return;
         }
@@ -1285,11 +1342,32 @@ export const deepAnalysisAgent = onRequest(
   }
 );
 
-async function consumeDeepAnalysisQuota(uid: string): Promise<void> {
+async function consumeDeepAnalysisQuota(
+  uid: string,
+  limits: { perMinute: number; perDay: number }
+): Promise<void> {
   await Promise.all([
-    consumePerMinuteFeature(uid, "deep_analysis" as any, 10),
-    consumeDailyFeature(uid, "deep_analysis" as any, 30),
+    consumePerMinuteFeature(uid, "deep_analysis", limits.perMinute),
+    consumeDailyFeature(uid, "deep_analysis", limits.perDay),
   ]);
+}
+
+function getDeepAnalysisLimits(
+  planId: string
+): { perMinute: number; perDay: number } | null {
+  const limits = (
+    JURIO_USAGE_LIMITS.deep_analysis as Record<
+      string,
+      { perMinute: number; perDay: number }
+    >
+  )[planId];
+
+  // Se il piano non esiste o ha quote pari a 0 (es. "prova"), neghiamo l'accesso
+  if (!limits || limits.perDay === 0 || limits.perMinute === 0) {
+    return null;
+  }
+
+  return limits;
 }
 
 function assertDeepAnalysisSessionOwner(
@@ -1384,232 +1462,6 @@ function createDeepAnalysisTitle(prompt: string): string {
   return `${clean.slice(0, 57)}...`;
 }
 
-export const wordAgent = onRequest(
-  { 
-    secrets: ["GOOGLE_GENAI_API_KEY", "OPENAI_API_KEY", "TAVILY_API_KEY"],
-    timeoutSeconds: 300,
-    memory: "1GiB"
-  }, 
-  async (req, res) => {
-    return corsHandlerDomain(req, res, async (): Promise<void> => {
-      // 1. GESTIONE CORS E METODO
-      
-      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
-
-      try {
-        // 2. AUTH, SICUREZZA E LIMITI
-        await requireAppCheck(req);
-        const uid = await requireUidFromAuthHeader(req);
-
-        const userSnap = await db.collection("register").doc(uid).get();
-        if (!userSnap.exists) { res.status(404).json({ error: "User not found" }); return; }
-
-        const planId = String(userSnap.data()?.planId ?? "");
-        if (!["prova", "admin", "business", "business_m"].includes(planId)) { 
-          res.status(403).json({ error: "Access denied" }); 
-          return; 
-        }
-
-        const limits = planId === "prova" ? { perMinute: 5, perDay: 20 }
-                     : planId === "business" ? { perMinute: 20, perDay: 200 }
-                     : planId === "business_m" ? { perMinute: 20, perDay: 200 }
-                     : { perMinute: 60, perDay: 10_000 };
-        
-        await Promise.all([
-          consumePerMinuteFeature(uid, req.body.action+"_agent" as any, limits.perMinute),
-          consumeDailyFeature(uid, req.body.action+"_agent" as any, limits.perDay)
-        ]);
-
-        // 3. ESTRAZIONE AZIONE
-        const action = req.body.action;
-        if (!action) {
-          res.status(400).json({ error: "Bad Request", details: "Parametro 'action' mancante." });
-          return;
-        }
-
-        // 4. PREPARAZIONE SSE (Essendo tutte funzioni generative, lo prepariamo a monte)
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-
-        // 5. ROUTING DELLE AZIONI
-        if (action === "research") {
-          // --- AZIONE 1: RICERCA E INSERIMENTO (Il modulo che abbiamo appena costruito) ---
-          const { contesto, promptIndirizzamento, filters } = req.body;
-
-          if (!contesto) throw new Error("Il parametro 'contesto' è obbligatorio per l'azione quote.");
-
-          const flowStream = wordQuoteFlow.stream({
-            contesto,
-            promptIndirizzamento: promptIndirizzamento || "",
-            filters: filters || {},
-            userId: uid
-          });
-
-          for await (const chunk of flowStream.stream) {
-            res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
-          }
-
-          const finalOutput = await flowStream.output;
-          const sanitizedResult = sanitize(finalOutput);
-
-          res.write(`data: ${JSON.stringify({ result: sanitizedResult })}\n\n`);
-          res.write(`data: [DONE]\n\n`);
-          res.end();
-          return;
-
-        } 
-        else if (action === "review") {
-          const { promptIndirizzamento, chunks } = req.body;
-          
-          if (!chunks || !Array.isArray(chunks)) {
-            res.status(400).json({ error: "Per la review serve un array di chunks." });
-            return;
-          }
-
-          try {
-            // Avvio dello stream passando userId corretto
-            const flowStream = wordReviewFlow.stream({ 
-              chunks, 
-              promptIndirizzamento: promptIndirizzamento || "", 
-              userId: uid 
-            });
-
-            // 1. Invio dei chunk di stato in tempo reale al frontend
-            for await (const chunk of flowStream.stream) {
-              res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
-            }
-
-            // 2. Attesa della risoluzione del JSON strutturato (Semafori)
-            const finalOutput = await flowStream.output;
-            const sanitizedResult = sanitize(finalOutput); // Opzionale: usa la tua funzione di pulizia se serve
-
-            // 3. Invio del risultato finale e chiusura
-            res.write(`data: ${JSON.stringify({ result: sanitizedResult })}\n\n`);
-            res.write("data: [DONE]\n\n");
-            res.end();
-
-          } catch (err: any) {
-            console.error("Errore wordReviewFlow streaming:", err);
-            res.write(`data: ${JSON.stringify({ error: { message: err.message } })}\n\n`);
-            res.end();
-          }
-        }
-        else if (action === "drafting") {
-          // --- AZIONE 3: RE-DRAFTING / RISCRITTURA - DA IMPLEMENTARE IN FUTURO ---
-          /*
-          const { testoOriginale, istruzioniRiscrittura } = req.body;
-          const flowStream = wordDraftingFlow.stream({ testo: testoOriginale, istruzioni: istruzioniRiscrittura, userId: uid });
-          // ... logica di streaming analoga ...
-          */
-          throw new Error("Azione 'drafting' in fase di sviluppo.");
-        } 
-        else {
-          // --- FALLBACK AZIONE SCONOSCIUTA ---
-          throw new Error(`Azione '${action}' non supportata da wordAgent.`);
-        }
-
-      } catch (err: any) {
-        const msg = err instanceof Error ? err.message : "Internal error";
-        console.error("ERRORE CRITICO WORD AGENT:", err);
-
-        if (res.headersSent) {
-          res.write(`data: ${JSON.stringify({ error: { message: msg } })}\n\n`);
-          res.end();
-        } else {
-          res.status(500).json({ error: "Process failed", details: msg });
-        }
-      }
-    });
-  }
-);
-
-export const aggiornaMetadatiDaChat = onDocumentCreated(
-  {
-    document: "fascicoli/{fascicoloId}/threads/{threadId}/messages/{messageId}",
-    timeoutSeconds: 60,
-    memory: "512MiB",
-    secrets: ["GOOGLE_GENAI_API_KEY"],
-  },
-  async (event) => {
-    const snapshot = event.data;
-    if (!snapshot) return;
-
-    const messageData = snapshot.data() as Partial<MessageDoc>;
-    
-    // Evita loop e risparmia token: analizziamo solo i messaggi dell'utente
-    if (messageData.role === "model") return; 
-
-    const fascicoloId = event.params.fascicoloId;
-    const threadId = event.params.threadId;
-
-    try {
-      const messagesRef = db.collection("fascicoli").doc(fascicoloId)
-                            .collection("threads").doc(threadId)
-                            .collection("messages");
-      
-      const historySnap = await messagesRef
-        .orderBy("timestamp", "desc")
-        .limit(4) 
-        .get();
-
-      const chatContext = historySnap.docs
-        .map(doc => {
-          const data = doc.data() as MessageDoc;
-          const safeContent = typeof data.content === "string" ? data.content.trim() : "";
-          const ruolo = data.role === "model" ? "IA" : "UTENTE";
-          return `${ruolo}: ${safeContent}`;
-        })
-        .reverse()
-        .join("\n\n");
-
-      // Protezione da costi eccessivi: blocco contesto anomalo
-      if (!chatContext || chatContext.length > 5000) return;
-
-      const fascicoloRef = db.collection("fascicoli").doc(fascicoloId);
-      const fascicoloSnap = await fascicoloRef.get();
-      if (!fascicoloSnap.exists) return;
-      
-      const fascicoloData = fascicoloSnap.data() as FascicoloDoc;
-      const metadatiAttuali = fascicoloData.metadati || {};
-
-      const result = (await estraiMetadatiFlow({
-        chatContext,
-        metadatiAttuali
-      })) as EstraiMetadatiResult;
-
-      const estratti = result.dati_nuovi_o_aggiornati || [];
-      if (!Array.isArray(estratti) || estratti.length === 0) return;
-
-      const updatePayload: Record<string, string> = {};
-      let hasUpdates = false;
-
-      // Sanitizzazione input IA prima della scrittura DB
-      estratti.forEach((item: ExtractedMetadataItem) => {
-        if (typeof item.chiave === "string" && typeof item.valore === "string") {
-          const safeKey = item.chiave.replace(/[^a-zA-Z0-9_]/g, '').trim().substring(0, 50);
-          const safeValue = item.valore.trim().substring(0, 500); 
-
-          if (safeKey && safeValue) {
-            updatePayload[`metadati.${safeKey}`] = safeValue;
-            hasUpdates = true;
-          }
-        }
-      });
-
-      if (!hasUpdates) return;
-
-      await fascicoloRef.update(updatePayload);
-      
-      // Privacy-by-design: loggati solo conteggi, mai dati PII
-      console.log(`[JURIO-METADATA] Aggiornate ${Object.keys(updatePayload).length} chiavi per fascicolo ${fascicoloId}`);
-
-    } catch (error) {
-      console.error(`[JURIO-METADATA] Errore estrazione metadati per fascicolo ${fascicoloId}`);
-    }
-  }
-);
-
 const hashIpForRateLimiting = (ip: string): string => {
   const dateSalt = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
   return createHash("sha256").update(`${ip}-${dateSalt}`).digest("hex");
@@ -1642,15 +1494,16 @@ export const support = onRequest(
           return;
         }
        
-        // 2. RATE LIMITING COMPLIANT (GDPR)
+        // 2. RATE LIMITING COMPLIANT (GDPR) - Preso da JURIO_USAGE_LIMITS centrale
         const clientIp = typeof req.headers["x-forwarded-for"] === "string" 
           ? req.headers["x-forwarded-for"].split(",")[0].trim() 
           : req.ip || req.socket.remoteAddress || "unknown_ip";
 
-        // Anonimizzazione obbligatoria IP
         const hashedIp = hashIpForRateLimiting(clientIp);
         const ipIdentifier = `ip_${hashedIp}`;
-        const publicLimits = { perMinute: 5, perDay: 30 };
+        
+        // Lettura centralizzata dei limiti pubblici
+        const publicLimits = JURIO_USAGE_LIMITS.support_public.global ?? { perMinute: 5, perDay: 30 };
 
         try {
           await Promise.all([
@@ -1658,12 +1511,9 @@ export const support = onRequest(
             consumeDailyFeature(ipIdentifier, "support_public", publicLimits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError; // Rilancia per gestire nel catch generico
+           console.warn(`[JURIO-SUPPORT] Rate limit superato per IP anonimizzato: ${ipIdentifier}`);
+           res.status(429).json({ error: "Too Many Requests" });
+           return;
         }
 
         // 3. ADEGUAMENTO E VALIDAZIONE INPUT (Prevenzione DoS)
@@ -1675,7 +1525,6 @@ export const support = onRequest(
           return;
         }
 
-        // Prevenzione saturazione token: Limite al numero di messaggi e alla lunghezza del contesto
         if (messages.length > 20) {
           res.status(400).json({ error: "Bad Request: Conversation history too long." });
           return;
@@ -1689,14 +1538,14 @@ export const support = onRequest(
            return;
         }
 
-        const safePrompt = lastMessage.content.trim().substring(0, 1000); // Max 1000 chars per il prompt corrente
+        const safePrompt = lastMessage.content.trim().substring(0, 1000);
 
         const historyRaw = messages.slice(0, -1);
         const safeHistory = historyRaw
           .filter(m => m && typeof m.content === "string")
           .map(m => ({
              role: (m.role === 'assistant' || m.role === 'model') ? 'model' as const : 'user' as const,
-             content: m.content.substring(0, 2000) // Tronca messaggi vecchi enormi
+             content: m.content.substring(0, 2000)
           }));
 
         const flowInput = {
@@ -1704,24 +1553,34 @@ export const support = onRequest(
           history: safeHistory
         };
 
-        // 5. CONFIGURAZIONE HEADER SSE
+        // 5. INIZIALIZZAZIONE FLOW PRIMA DEGLI HEADER (Intercetta errori di configurazione GenAI)
+        const flowStream = legalAgentSupport.stream(flowInput);
+
+        // 6. CONFIGURAZIONE HEADER SSE E FLUSH
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
         res.flushHeaders(); 
 
-        // 6. ESECUZIONE DEL FLOW STREAMING
-        const flowStream = legalAgentSupport.stream(flowInput);
+        // Gestione chiusura socket da parte del client
+        req.on('close', () => {
+          if (!res.writableEnded) {
+            res.end();
+          }
+        });
 
+        // 7. ESECUZIONE DEL FLOW STREAMING
         for await (const chunk of flowStream.stream) {
+          if (res.writableEnded) break;
           res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
         }
 
-        const finalOutput = await flowStream.output; 
-        res.write(`data: ${JSON.stringify({ result: finalOutput })}\n\n`);
-        
-        res.write(`data: [DONE]\n\n`);
-        res.end();
+        if (!res.writableEnded) {
+          const finalOutput = await flowStream.output; 
+          res.write(`data: ${JSON.stringify({ result: finalOutput })}\n\n`);
+          res.write(`data: [DONE]\n\n`);
+          res.end();
+        }
         return;
 
       } catch (err: unknown) {
@@ -1732,9 +1591,11 @@ export const support = onRequest(
         const clientErrorMessage = "Si è verificato un errore durante l'elaborazione della richiesta.";
 
         if (res.headersSent) {
-          res.write(`data: ${JSON.stringify({ error: clientErrorMessage })}\n\n`);
-          res.write(`data: [DONE]\n\n`);
-          res.end();
+          if (!res.writableEnded) {
+            res.write(`data: ${JSON.stringify({ error: clientErrorMessage })}\n\n`);
+            res.write(`data: [DONE]\n\n`);
+            res.end();
+          }
         } else {
           res.status(500).json({ error: "Internal Server Error" });
         }
@@ -1789,7 +1650,7 @@ export const reasoning = onRequest(
           return; 
         }
 
-        // 4. CONTROLLO UTENTE E PIANI
+// 4. CONTROLLO UTENTE E PIANI
         const snap = await db.collection("register").doc(uid).get();
         if (!snap.exists) { 
           res.status(404).json({ error: "Not Found" }); 
@@ -1797,9 +1658,14 @@ export const reasoning = onRequest(
         }
 
         const planId = String(snap.data()?.planId ?? "");
-        const allowedPlans = new Set(["prova", "admin", "business", "business_m"]);
+        const limits = (
+          JURIO_USAGE_LIMITS.reasoning as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId];
 
-        if (!allowedPlans.has(planId)) {
+        if (!limits) {
           res.status(403).json({ 
             error: "Forbidden", 
             details: "Il tuo piano non consente questa operazione." 
@@ -1823,26 +1689,18 @@ export const reasoning = onRequest(
           }
         } catch (dbErr) {
           console.error(`[JURIO-REASONING] Errore conteggio documenti per utente ${uid}`);
-          // Scegliamo di non bloccare il fallback reasoning se il count fallisce per timeout interno
         }
 
         // 6. GESTIONE RATE LIMITS TRAMITE FEATURE
-        const limits = planId === "prova" ? { perMinute: 5, perDay: 20 }
-                     : allowedPlans.has(planId) && planId !== "admin" ? { perMinute: 20, perDay: 200 }
-                     : { perMinute: 120, perDay: 10_000 };
-
         try {
           await Promise.all([
             consumePerMinuteFeature(uid, "reasoning", limits.perMinute),
             consumeDailyFeature(uid, "reasoning", limits.perDay)
           ]);
         } catch (rateError: unknown) {
-          const msg = rateError instanceof Error ? rateError.message : String(rateError);
-          if (msg === "rate_limited" || msg === "quota_exceeded") {
-            res.status(429).json({ error: "Too Many Requests" });
-            return;
-          }
-          throw rateError;
+          console.warn(`[JURIO-REASONING] Rate limit superato per utente ${uid}`);
+          res.status(429).json({ error: "Too Many Requests" });
+          return;
         }
 
         // 7. RECUPERO DEL PROMPT CUSTOM DA FIRESTORE (Privacy Segregation)
@@ -1906,6 +1764,286 @@ export const reasoning = onRequest(
   }
 );
 
+export const promptAgent = onRequest(
+  { 
+    secrets: ["GOOGLE_GENAI_API_KEY", "OPENAI_API_KEY"],
+    timeoutSeconds: 300,
+    memory: "1GiB",
+  }, 
+  async (req, res) => {
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. CORS & Metodo
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
+
+      try {
+        // 2. AUTH E APP CHECK
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-PROMPT] Fallimento AppCheck/Auth per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" }); 
+          return;
+        }
+
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" }); 
+          return; 
+        }
+
+        // 3. CONTROLLO UTENTE E PIANI
+        const userSnap = await db.collection("register").doc(uid).get();
+        if (!userSnap.exists) { 
+          res.status(404).json({ error: "Not Found" }); 
+          return; 
+        }
+
+        const planId = String(userSnap.data()?.planId ?? "");
+        const limits = (
+          JURIO_USAGE_LIMITS.prompting as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId];
+
+        if (!limits) { 
+          res.status(403).json({ error: "Forbidden", details: "Piano non abilitato alla generazione di prompt." }); 
+          return; 
+        }
+
+        // 4. RATE LIMITING TRAMITE FEATURE
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "prompting", limits.perMinute),
+            consumeDailyFeature(uid, "prompting", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           console.warn(`[JURIO-PROMPT] Rate limit superato per utente ${uid}`);
+           res.status(429).json({ error: "Too Many Requests" });
+           return;
+        }
+
+        // 5. SANITIZZAZIONE INPUT (Prevenzione DoS e Storage Abuse)
+        const body = (req.body ?? {}) as PromptAgentRequestBody;
+        
+        // Estrazione sicura con limiti massimi di caratteri
+        const title = typeof body.title === "string" ? body.title.trim().substring(0, 150) : "";
+        const objective = typeof body.objective === "string" ? body.objective.trim().substring(0, 3000) : "";
+        const notes = typeof body.notes === "string" ? body.notes.trim().substring(0, 2000) : "";
+        const fieldsRaw = Array.isArray(body.fields) ? body.fields : [];
+
+        if (!title || !objective || fieldsRaw.length === 0) {
+          res.status(400).json({ error: "Bad Request: Dati mancanti (title, objective o fields)." });
+          return;
+        }
+
+        // Limite al numero di parametri richiesti (Prevenzione Token Exhaustion e DB bloat)
+        if (fieldsRaw.length > 30) {
+          res.status(400).json({ error: "Bad Request: Troppi campi definiti (Max 30)." });
+          return;
+        }
+
+        // Sanitizzazione array dei campi (Ora include il mapping esatto del tuo snapshot Firestore)
+        const safeFields: PromptFieldInput[] = fieldsRaw.map((f: any) => ({
+          name: typeof f?.name === "string" ? f.name.replace(/[^a-zA-Z0-9_ -]/g, '').trim().substring(0, 50) : "Campo_Sconosciuto",
+          type: typeof f?.type === "string" ? f.type.trim().substring(0, 20) : "string",
+          description: typeof f?.description === "string" ? f.description.trim().substring(0, 300) : "",
+          isRequired: typeof f?.isRequired === "boolean" ? f.isRequired : false // Estrazione boolean dal payload
+        }));
+
+        // 6. PREPARAZIONE STREAMING (SSE)
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.flushHeaders(); 
+
+        // 7. ESECUZIONE DEL FLOW IN STREAMING
+        const flowStream = promptBuilderFlow.stream({
+          objective,
+          notes,
+          fields: safeFields,
+          userId: uid
+        });
+
+        for await (const chunk of flowStream.stream) {
+          res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
+        }
+
+        const finalOutput = await flowStream.output;
+        // Tipizzazione basata sull'output di promptBuilderFlow
+        const generatedContent = typeof finalOutput.result === "string" ? finalOutput.result : "";
+        
+        // 8. SALVATAGGIO IN FIRESTORE (con mapping allineato al tuo snapshot)
+        if (generatedContent.trim()) {
+           const safeContent = generatedContent.trim().substring(0, 20000); // Max 20k chars per Firestore field
+           
+           const promptRef = await db.collection("register").doc(uid).collection("prompts").add({
+             title,
+             objective,
+             notes,
+             fields: safeFields, // Ora questo array mapperà perfettamente lo snapshot che mi hai mostrato
+             content: safeContent,
+             createdAt: FieldValue.serverTimestamp() // Sfrutta il FieldValue per timestamp omogenei
+           });
+           
+           // Invio risultato finale e ID documento creato
+           res.write(`data: ${JSON.stringify({ 
+             result: safeContent,
+             promptId: promptRef.id
+           })}\n\n`);
+        } else {
+           res.write(`data: ${JSON.stringify({ error: { message: "Errore durante la generazione del prompt: output vuoto." } })}\n\n`);
+        }
+        
+        res.write(`data: [DONE]\n\n`);
+        res.end();
+
+      } catch (err: unknown) {
+        // 9. ANTI INFORMATION DISCLOSURE IN SSE
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-PROMPT] Errore Prompt Agent per UID ${req.headers.authorization ? "AuthPresent" : "NoAuth"}:`, msg);
+        
+        const clientErrorMessage = "Si è verificato un errore durante la stesura del prompt.";
+
+        if (res.headersSent) {
+          // Stream aperto, chiudiamola notificando l'errore senza dump stacktrace
+          res.write(`data: ${JSON.stringify({ error: { message: clientErrorMessage } })}\n\n`);
+          res.write(`data: [DONE]\n\n`);
+          res.end();
+        } else {
+          // Stream chiuso, rispondiamo con codice HTTP pulito
+          res.status(500).json({ error: "Internal Server Error" });
+        }
+      }
+    });
+  }
+);
+
+export const enhancePromptAgent = onRequest(
+  { 
+    secrets: ["GOOGLE_GENAI_API_KEY"],
+    timeoutSeconds: 60,
+    memory: "512MiB",
+  }, 
+  async (req, res) => {
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. Gestione preflight (OPTIONS) e metodo (POST)
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
+
+      try {
+        // 2. AUTH E APP CHECK
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-ENHANCE] Fallimento AppCheck/Auth per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+        
+        // 3. CONTROLLO PIANI UTENTE
+        const userSnap = await db.collection("register").doc(uid).get();
+        if (!userSnap.exists) { 
+          res.status(404).json({ error: "Not Found" }); 
+          return; 
+        }
+
+        const planId = String(userSnap.data()?.planId ?? "");
+        const limits = (
+          JURIO_USAGE_LIMITS.prompt_enhancer as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId];
+
+        if (!limits) { 
+          res.status(403).json({ error: "Forbidden", details: "Piano non abilitato all'ottimizzazione prompt." }); 
+          return; 
+        }
+
+        // 4. RATE LIMITING
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "prompt_enhancer", limits.perMinute),
+            consumeDailyFeature(uid, "prompt_enhancer", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           console.warn(`[JURIO-ENHANCE] Rate limit superato per utente ${uid}`);
+           res.status(429).json({ error: "Too Many Requests" });
+           return;
+        }
+
+        // 5. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as EnhancePromptRequestBody;
+        
+        const promptRaw = typeof body.prompt === "string" ? body.prompt.trim() : "";
+        const typeRaw = typeof body.type === "string" ? body.type.trim() : "";
+        const historyRaw = Array.isArray(body.history) ? body.history : [];
+
+        // Validazione Prompt
+        if (!promptRaw) {
+          res.status(400).json({ error: "Bad Request: Prompt mancante o invalido." });
+          return;
+        }
+
+        // Limite drastico: evitiamo che un utente incolli 100 pagine di PDF nell'enhancer 
+        // e mandi in esaurimento i token Gemini.
+        const safePrompt = promptRaw.substring(0, 3000); 
+
+        // Validazione Tipo
+        if (typeRaw !== "chat" && typeRaw !== "approfondimento") {
+          res.status(400).json({ error: "Bad Request: Tipo di ottimizzazione non valido." });
+          return;
+        }
+
+        // Sanitizzazione Cronologia (Prendiamo al max gli ultimi 10 scambi)
+        const safeHistory: EnhancePromptMessage[] = historyRaw
+          .filter((m: any) => m && typeof m.content === "string")
+          .slice(-10) 
+          .map((m: any) => ({
+            role: (m.role === "model" || m.role === "assistant") ? "model" : "user",
+            content: m.content.substring(0, 2000) // Troncamento sicureza per ogni messaggio
+          }));
+
+        // 6. CHIAMATA AL FLOW GENKIT
+        const output = await enhancePromptFlow({
+          prompt: safePrompt,
+          type: typeRaw as "chat" | "approfondimento",
+          history: safeHistory
+        });
+        
+        // 7. RISPOSTA JSON AL FRONTEND
+        res.status(200).json({ 
+          enhancedPrompt: typeof output?.enhancedPrompt === "string" ? output.enhancedPrompt : "" 
+        });
+
+      } catch (err: unknown) {
+        // 8. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-ENHANCE] Errore Prompt Enhancer per UID ${req.headers.authorization ? "AuthPresent" : "NoAuth"}:`, msg);
+        
+        // Risposta blindata senza stacktrace e dettagli
+        res.status(500).json({ 
+          error: "Internal Server Error"
+        });
+      }
+    });
+  }
+);
+
+// ============================================================================
+// SUPPORT
+// ============================================================================
+
 export const speechToTextAgent = onRequest(
   {
     timeoutSeconds: 300,
@@ -1951,9 +2089,14 @@ export const speechToTextAgent = onRequest(
         }
 
         const planId = String(userSnap.data()?.planId ?? "");
-        const allowedPlans = new Set(["prova", "admin", "business", "business_m"]);
+        const limits = (
+          JURIO_USAGE_LIMITS.speech_to_text as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId];
 
-        if (!allowedPlans.has(planId)) {
+        if (!limits) {
           res.status(403).json({
             error: "Forbidden",
             details: "Piano non abilitato alla trascrizione.",
@@ -1961,18 +2104,17 @@ export const speechToTextAgent = onRequest(
           return;
         }
 
-        // 3. LIMITS 
-        const limits =
-          planId === "prova"
-            ? { perMinute: 5, perDay: 20 }
-            : allowedPlans.has(planId) && planId !== "admin"
-              ? { perMinute: 20, perDay: 200 }
-              : { perMinute: 60, perDay: 10_000 }; 
-
-        await Promise.all([
-          consumePerMinuteFeature(uid, "speech_to_text", limits.perMinute),
-          consumeDailyFeature(uid, "speech_to_text", limits.perDay),
-        ]);
+        // 3. LIMITS & RATE LIMITING
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "speech_to_text", limits.perMinute),
+            consumeDailyFeature(uid, "speech_to_text", limits.perDay),
+          ]);
+        } catch (rateError: unknown) {
+          console.warn(`[JURIO-STT] Rate limit superato per utente ${uid}`);
+          res.status(429).json({ error: "Too Many Requests" });
+          return;
+        }
 
         // 4. MULTIPART PARSING SICURO
         const reqContentType = req.headers["content-type"] || req.header("content-type");
@@ -2125,279 +2267,450 @@ export const speechToTextAgent = onRequest(
   }
 );
 
-export const promptAgent = onRequest(
+export const extractDocumentText = onRequest(
   { 
-    secrets: ["GOOGLE_GENAI_API_KEY", "OPENAI_API_KEY"],
-    timeoutSeconds: 300,
+    timeoutSeconds: 120,
     memory: "1GiB",
   }, 
   async (req, res) => {
     return corsHandlerDomain(req, res, async (): Promise<void> => {
-      // 1. CORS & Metodo
+      // 1. CORS E METODO
       if (req.method === "OPTIONS") { res.status(204).end(); return; }
       if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
 
       try {
-        // 2. AUTH E APP CHECK
-        let uid: string;
-        try {
-          await requireAppCheck(req);
-          uid = await requireUidFromAuthHeader(req);
-        } catch (authError) {
-          console.warn(`[JURIO-PROMPT] Fallimento AppCheck/Auth per IP: ${req.ip}`);
-          res.status(401).json({ error: "Unauthorized" }); 
+        // 2. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as ExtractDocumentRequestBody;
+        const storagePathRaw = typeof body.storagePath === "string" ? body.storagePath.trim() : "";
+        
+        if (!storagePathRaw) {
+          res.status(400).json({ error: "Bad Request: Percorso del file (storagePath) mancante o invalido." });
           return;
         }
 
-        if (!uid) {
-          res.status(401).json({ error: "Unauthorized" }); 
-          return; 
-        }
+        // 3. LOGICA AUTH CONDIVISA (OAuth token o Bearer standard)
+        let uid = "";
 
-        // 3. CONTROLLO UTENTE E PIANI
-        const userSnap = await db.collection("register").doc(uid).get();
-        if (!userSnap.exists) { 
-          res.status(404).json({ error: "Not Found" }); 
-          return; 
-        }
+        const authHeader =
+          typeof req.headers.authorization === "string"
+            ? req.headers.authorization
+            : "";
 
-        const planId = String(userSnap.data()?.planId ?? "");
-        const allowedPlans = new Set(["prova", "admin", "business", "business_m"]);
+        const token = authHeader.startsWith("Bearer ")
+          ? authHeader.slice("Bearer ".length).trim()
+          : "";
 
-        if (!allowedPlans.has(planId)) { 
-          res.status(403).json({ error: "Forbidden", details: "Piano non abilitato alla generazione di prompt." }); 
-          return; 
-        }
+        // I token OAuth Jurio sono generati con
+        // randomBytes(32).toString("hex"): 64 caratteri esadecimali.
+        const isOpaqueOAuthToken = /^[a-f0-9]{64}$/.test(token);
 
-        // 4. RATE LIMITING TRAMITE FEATURE
-        const limits = planId === "prova" ? { perMinute: 5, perDay: 20 }
-                     : allowedPlans.has(planId) && planId !== "admin" ? { perMinute: 20, perDay: 200 }
-                     : { perMinute: 60, perDay: 10_000 };
-        
-        try {
-          await Promise.all([
-            consumePerMinuteFeature(uid, "prompting", limits.perMinute),
-            consumeDailyFeature(uid, "prompting", limits.perDay)
-          ]);
-        } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
-        }
+        if (isOpaqueOAuthToken) {
+          const tokenSnap = await db
+            .collection("oauth_tokens")
+            .doc(token)
+            .get();
 
-        // 5. SANITIZZAZIONE INPUT (Prevenzione DoS e Storage Abuse)
-        const body = (req.body ?? {}) as PromptAgentRequestBody;
-        
-        // Estrazione sicura con limiti massimi di caratteri
-        const title = typeof body.title === "string" ? body.title.trim().substring(0, 150) : "";
-        const objective = typeof body.objective === "string" ? body.objective.trim().substring(0, 3000) : "";
-        const notes = typeof body.notes === "string" ? body.notes.trim().substring(0, 2000) : "";
-        const fieldsRaw = Array.isArray(body.fields) ? body.fields : [];
+          // Un token OAuth inesistente è invalido o revocato.
+          if (!tokenSnap.exists) {
+            res.status(401).json({ error: "Unauthorized" });
+            return;
+          }
 
-        if (!title || !objective || fieldsRaw.length === 0) {
-          res.status(400).json({ error: "Bad Request: Dati mancanti (title, objective o fields)." });
-          return;
-        }
+          const tokenData = tokenSnap.data();
+          const expiresAt = tokenData?.expiresAt;
 
-        // Limite al numero di parametri richiesti (Prevenzione Token Exhaustion e DB bloat)
-        if (fieldsRaw.length > 30) {
-          res.status(400).json({ error: "Bad Request: Troppi campi definiti (Max 30)." });
-          return;
-        }
+          // Verifica obbligatoria di utente e scadenza.
+          if (
+            typeof tokenData?.uid !== "string" ||
+            !tokenData.uid ||
+            !expiresAt ||
+            typeof expiresAt.toDate !== "function"
+          ) {
+            res.status(401).json({ error: "Unauthorized" });
+            return;
+          }
 
-        // Sanitizzazione array dei campi (Ora include il mapping esatto del tuo snapshot Firestore)
-        const safeFields: PromptFieldInput[] = fieldsRaw.map((f: any) => ({
-          name: typeof f?.name === "string" ? f.name.replace(/[^a-zA-Z0-9_ -]/g, '').trim().substring(0, 50) : "Campo_Sconosciuto",
-          type: typeof f?.type === "string" ? f.type.trim().substring(0, 20) : "string",
-          description: typeof f?.description === "string" ? f.description.trim().substring(0, 300) : "",
-          isRequired: typeof f?.isRequired === "boolean" ? f.isRequired : false // Estrazione boolean dal payload
-        }));
+          if (expiresAt.toDate() <= new Date()) {
+            await tokenSnap.ref.delete().catch(() => {});
+            res.status(401).json({ error: "Unauthorized" });
+            return;
+          }
 
-        // 6. PREPARAZIONE STREAMING (SSE)
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.flushHeaders(); 
-
-        // 7. ESECUZIONE DEL FLOW IN STREAMING
-        const flowStream = promptBuilderFlow.stream({
-          objective,
-          notes,
-          fields: safeFields,
-          userId: uid
-        });
-
-        for await (const chunk of flowStream.stream) {
-          res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
-        }
-
-        const finalOutput = await flowStream.output;
-        // Tipizzazione basata sull'output di promptBuilderFlow
-        const generatedContent = typeof finalOutput.result === "string" ? finalOutput.result : "";
-        
-        // 8. SALVATAGGIO IN FIRESTORE (con mapping allineato al tuo snapshot)
-        if (generatedContent.trim()) {
-           const safeContent = generatedContent.trim().substring(0, 20000); // Max 20k chars per Firestore field
-           
-           const promptRef = await db.collection("register").doc(uid).collection("prompts").add({
-             title,
-             objective,
-             notes,
-             fields: safeFields, // Ora questo array mapperà perfettamente lo snapshot che mi hai mostrato
-             content: safeContent,
-             createdAt: FieldValue.serverTimestamp() // Sfrutta il FieldValue per timestamp omogenei
-           });
-           
-           // Invio risultato finale e ID documento creato
-           res.write(`data: ${JSON.stringify({ 
-             result: safeContent,
-             promptId: promptRef.id
-           })}\n\n`);
+          uid = tokenData.uid;
         } else {
-           res.write(`data: ${JSON.stringify({ error: { message: "Errore durante la generazione del prompt: output vuoto." } })}\n\n`);
-        }
-        
-        res.write(`data: [DONE]\n\n`);
-        res.end();
-
-      } catch (err: unknown) {
-        // 9. ANTI INFORMATION DISCLOSURE IN SSE
-        const msg = err instanceof Error ? err.message : "Internal error";
-        console.error(`[JURIO-PROMPT] Errore Prompt Agent per UID ${req.headers.authorization ? "AuthPresent" : "NoAuth"}:`, msg);
-        
-        const clientErrorMessage = "Si è verificato un errore durante la stesura del prompt.";
-
-        if (res.headersSent) {
-          // Stream aperto, chiudiamola notificando l'errore senza dump stacktrace
-          res.write(`data: ${JSON.stringify({ error: { message: clientErrorMessage } })}\n\n`);
-          res.write(`data: [DONE]\n\n`);
-          res.end();
-        } else {
-          // Stream chiuso, rispondiamo con codice HTTP pulito
-          res.status(500).json({ error: "Internal Server Error" });
-        }
-      }
-    });
-  }
-);
-
-export const enhancePromptAgent = onRequest(
-  { 
-    secrets: ["GOOGLE_GENAI_API_KEY"],
-    timeoutSeconds: 60,
-    memory: "512MiB",
-  }, 
-  async (req, res) => {
-    return corsHandlerDomain(req, res, async (): Promise<void> => {
-      // 1. Gestione preflight (OPTIONS) e metodo (POST)
-      if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
-
-      try {
-        // 2. AUTH E APP CHECK
-        let uid: string;
-        try {
-          await requireAppCheck(req);
-          uid = await requireUidFromAuthHeader(req);
-        } catch (authError) {
-          console.warn(`[JURIO-ENHANCE] Fallimento AppCheck/Auth per IP: ${req.ip}`);
-          res.status(401).json({ error: "Unauthorized" });
-          return;
+          // Percorso B2B: richiede App Check e Firebase Auth.
+          // Non accettare un UID come credenziale.
+          try {
+            await requireAppCheck(req);
+            uid = await requireUidFromAuthHeader(req);
+          } catch {
+            console.warn(
+              `[JURIO-EXTRACT] Fallimento Auth/AppCheck per IP: ${req.ip}`
+            );
+            res.status(401).json({ error: "Unauthorized" });
+            return;
+          }
         }
 
         if (!uid) {
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-        
-        // 3. CONTROLLO PIANI UTENTE
+
+        // 4. PATH TRAVERSAL PROTECTION (Sicurezza Storage)
+        const safeStoragePath = storagePathRaw.replace(/\.\./g, "");
+
+        // 5. VERIFICA PIANO E LIMITI CENTRALIZZATI
         const userSnap = await db.collection("register").doc(uid).get();
-        if (!userSnap.exists) { 
-          res.status(404).json({ error: "Not Found" }); 
-          return; 
+
+        if (!userSnap.exists) {
+          res.status(404).json({ error: "Not Found" });
+          return;
         }
 
         const planId = String(userSnap.data()?.planId ?? "");
-        const allowedPlans = new Set(["prova", "admin", "business", "business_m"]);
+        const limits = (
+          JURIO_USAGE_LIMITS.extract_document as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId];
 
-        if (!allowedPlans.has(planId)) { 
-          res.status(403).json({ error: "Forbidden", details: "Piano non abilitato all'ottimizzazione prompt." }); 
-          return; 
+        if (!limits) {
+          res.status(403).json({ 
+            error: "Forbidden", 
+            message: "È richiesto un piano attivo per utilizzare l'estrazione." 
+          });
+          return;
         }
 
-        // 4. RATE LIMITING
-        const limits = { perMinute: 5, perDay: 20 };
-        
         try {
           await Promise.all([
-            consumePerMinuteFeature(uid, "prompt_enhancer", limits.perMinute),
-            consumeDailyFeature(uid, "prompt_enhancer", limits.perDay)
+            consumePerMinuteFeature(uid, "extract_document", limits.perMinute),
+            consumeDailyFeature(uid, "extract_document", limits.perDay)
           ]);
-        } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
+        } catch (limitErr: unknown) {
+          const msg = limitErr instanceof Error ? limitErr.message : String(limitErr);
+          if (msg === "rate_limited" || msg === "quota_exceeded") {
+            res.status(429).json({ error: "Too Many Requests", details: "Hai raggiunto il limite massimo di richieste." });
+            return;
+          }
+          throw limitErr;
         }
 
-        // 5. SANITIZZAZIONE E TYPE-SAFETY INPUT
-        const body = (req.body ?? {}) as EnhancePromptRequestBody;
-        
-        const promptRaw = typeof body.prompt === "string" ? body.prompt.trim() : "";
-        const typeRaw = typeof body.type === "string" ? body.type.trim() : "";
-        const historyRaw = Array.isArray(body.history) ? body.history : [];
+        // 6. ESTRAZIONE DOCUMENTO DA STORAGE
+        const admin = getAdmin();
+        const bucket = admin.storage().bucket();
+        const file = bucket.file(safeStoragePath);
 
-        // Validazione Prompt
-        if (!promptRaw) {
-          res.status(400).json({ error: "Bad Request: Prompt mancante o invalido." });
+        const [exists] = await file.exists();
+        if (!exists) {
+          res.status(404).json({ error: "Not Found: Il file non esiste nello storage." });
           return;
         }
 
-        // Limite drastico: evitiamo che un utente incolli 100 pagine di PDF nell'enhancer 
-        // e mandi in esaurimento i token Gemini.
-        const safePrompt = promptRaw.substring(0, 3000); 
-
-        // Validazione Tipo
-        if (typeRaw !== "chat" && typeRaw !== "approfondimento") {
-          res.status(400).json({ error: "Bad Request: Tipo di ottimizzazione non valido." });
+        // Limite di sicurezza sulla dimensione del file scaricabile (es. max 30MB)
+        const [metadata] = await file.getMetadata();
+        const fileSize = Number(metadata.size || 0);
+        
+        if (fileSize > 30 * 1024 * 1024) {
+          res.status(413).json({ error: "Payload Too Large: Il file supera la dimensione massima consentita di 30MB." });
           return;
         }
 
-        // Sanitizzazione Cronologia (Prendiamo al max gli ultimi 10 scambi)
-        const safeHistory: EnhancePromptMessage[] = historyRaw
-          .filter((m: any) => m && typeof m.content === "string")
-          .slice(-10) 
-          .map((m: any) => ({
-            role: (m.role === "model" || m.role === "assistant") ? "model" : "user",
-            content: m.content.substring(0, 2000) // Troncamento sicureza per ogni messaggio
-          }));
-
-        // 6. CHIAMATA AL FLOW GENKIT
-        const output = await enhancePromptFlow({
-          prompt: safePrompt,
-          type: typeRaw as "chat" | "approfondimento",
-          history: safeHistory
-        });
+        const [buffer] = await file.download();
         
-        // 7. RISPOSTA JSON AL FRONTEND
+        // Estrazione testo tramite pdf-extraction
+        const pdfData = await pdfExtract(buffer);
+        let cleanedText = typeof pdfData?.text === "string" ? pdfData.text : "";
+
+        // Pulizia testuale standardizzata
+        cleanedText = cleanedText
+          .replace(/([^\n])\n(?=[^\n])/g, "$1 ")
+          .replace(/[ \t]+/g, " ")
+          .replace(/\n\s*\n\s*\n/g, "\n\n")
+          .trim();
+
+        // 7. RISPOSTA AL CLIENT
         res.status(200).json({ 
-          enhancedPrompt: typeof output?.enhancedPrompt === "string" ? output.enhancedPrompt : "" 
+          success: true,
+          text: cleanedText,
+          pages: typeof pdfData?.numpages === "number" ? pdfData.numpages : 1
         });
 
       } catch (err: unknown) {
         // 8. ANTI INFORMATION DISCLOSURE
         const msg = err instanceof Error ? err.message : "Internal error";
-        console.error(`[JURIO-ENHANCE] Errore Prompt Enhancer per UID ${req.headers.authorization ? "AuthPresent" : "NoAuth"}:`, msg);
+        console.error(`[JURIO-EXTRACT] Errore estrazione testo (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
         
-        // Risposta blindata senza stacktrace e dettagli
         res.status(500).json({ 
           error: "Internal Server Error"
         });
+      }
+    });
+  }
+);
+
+export const generateEmbedding = onRequest(
+  { 
+    secrets: ["OPENAI_API_KEY"],
+    timeoutSeconds: 60,
+    memory: "512MiB",
+  },
+  async (req, res) => {
+    // Restituzione esplicita della Promise per evitare timeout anomali di Express
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. CORS E METODO
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
+
+      try {
+        // 2. SICUREZZA: APP CHECK E AUTH
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-EMBEDDING] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        if (!uid) { 
+          res.status(401).json({ error: "Unauthorized" }); 
+          return; 
+        }
+
+        // 3. VERIFICA UTENTE NEL DB
+        const snap = await db.collection("register").doc(uid).get();
+        if (!snap.exists) { 
+          res.status(404).json({ error: "Not Found" }); 
+          return; 
+        }
+
+        const planId = String(snap.data()?.planId ?? "");
+        const limits = (
+          JURIO_USAGE_LIMITS.embedding as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId];
+
+        if (!limits) {
+          res.status(403).json({ error: "Forbidden", details: "Piano non abilitato." });
+          return;
+        }
+
+        // 4. RATE LIMITING (Protezione da loop di generazione massiva vettori)
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "embedding", limits.perMinute),
+            consumeDailyFeature(uid, "embedding", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           console.warn(`[JURIO-EMBEDDING] Rate limit superato per utente ${uid}`);
+           res.status(429).json({ error: "Too Many Requests" });
+           return;
+        }
+
+        // 5. VALIDAZIONE E SANITIZZAZIONE INPUT
+        const body = (req.body ?? {}) as GenerateEmbeddingRequestBody;
+        const textRaw = typeof body.text === "string" ? body.text : "";
+
+        if (!textRaw.trim()) {
+          res.status(400).json({ error: "Bad Request: Invalid or missing 'text' field" });
+          return;
+        }
+
+        // Troncamento di sicurezza per prevenire token exhaustion / DoS sull'API OpenAI
+        const textToEmbed = textRaw.trim().substring(0, 10000); // Max 10k caratteri per embedding
+
+        // 6. CHIAMATA A OPENAI PER L'EMBEDDING
+        const oaApiKey = process.env.OPENAI_API_KEY;
+        if (!oaApiKey) {
+          console.error("[JURIO-EMBEDDING] OPENAI_API_KEY non configurata nei secrets.");
+          res.status(500).json({ error: "Internal Server Error" });
+          return;
+        }
+
+        const oaClient = new OpenAI({ apiKey: oaApiKey });
+        const embeddingResponse = await oaClient.embeddings.create({
+          model: "text-embedding-3-small", 
+          input: textToEmbed,
+          dimensions: 1536 // Manteniamo la coerenza con i 1536 attuali per Firestore
+        });
+
+        const vectorArray = embeddingResponse.data[0]?.embedding;
+        
+        if (!Array.isArray(vectorArray) || vectorArray.length === 0) {
+           res.status(500).json({ error: "Failed to generate embedding vector." });
+           return;
+        }
+
+        // 7. RISPOSTA AL CLIENT
+        const responsePayload: GenerateEmbeddingResponse = {
+          vector: vectorArray,
+          status: "SUCCESS"
+        };
+
+        res.status(200).json(responsePayload);
+
+      } catch (err: unknown) {
+        // 8. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-EMBEDDING] Errore critico (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+        
+        // Rimuoviamo `details: msg` per evitare di esporre chiavi scadute o errori di OpenAI al client
+        res.status(500).json({ 
+          error: "Internal Server Error" 
+        });
+      }
+    });
+  }
+);
+
+export const submitFeedback = onRequest(
+  { 
+    timeoutSeconds: 60,
+    memory: "512MiB",
+  },
+  async (req, res) => {
+    // Nota: Aggiunto return per assicurare la risoluzione della promise
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. CORS E METODO
+      if (req.method === "OPTIONS") { res.status(204).end(); return; }
+      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
+
+      try {
+        // 2. AUTH E APP CHECK
+        let uid: string;
+        try {
+          await requireAppCheck(req);
+          uid = await requireUidFromAuthHeader(req);
+        } catch (authError) {
+          console.warn(`[JURIO-FEEDBACK] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        if (!uid) {
+          res.status(401).json({ error: "Unauthorized" });
+          return;
+        }
+
+        // 3. RATE LIMITING (Protezione da Spam Database)
+        const limits = JURIO_USAGE_LIMITS.feedback.global ?? { perMinute: 15, perDay: 100 };
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "feedback", limits.perMinute),
+            consumeDailyFeature(uid, "feedback", limits.perDay)
+          ]);
+        } catch (rateLimitError: unknown) {
+           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
+           if (msg === "rate_limited" || msg === "quota_exceeded") {
+              res.status(429).json({ error: "Too Many Requests" });
+              return;
+           }
+           throw rateLimitError;
+        }
+        
+        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
+        const body = (req.body ?? {}) as SubmitFeedbackRequestBody;
+        
+        const isThumbsUp = typeof body.isThumbsUp === "boolean" ? body.isThumbsUp : null;
+        if (isThumbsUp === null) {
+           res.status(400).json({ error: "Bad Request: Missing or invalid 'isThumbsUp'" });
+           return;
+        }
+
+        // Troncamento delle note per evitare storage abuse nei reclami
+        const rawNotes = typeof body.notes === "string" ? body.notes.trim() : "";
+        const MAX_SAFE_NOTES = typeof MAX_NOTES_CHARS === "number" ? MAX_NOTES_CHARS : 2000;
+        
+        if (rawNotes.length > MAX_SAFE_NOTES) {
+           res.status(413).json({ error: "Payload Too Large: Notes length exceeds maximum limit" });
+           return;
+        }
+        // Evitiamo injection di codice base (pulizia molto light)
+        const notes = rawNotes.substring(0, MAX_SAFE_NOTES); 
+        
+        // Pulizia degli ID in arrivo
+        const rawIds = Array.isArray(body.ids) ? body.ids : [];
+        
+        // Protezione DB: max 30 ID processabili in una singola richiesta
+        if (rawIds.length > 30) {
+           res.status(400).json({ error: "Bad Request: Too many IDs provided in a single request (Max 30)." });
+           return;
+        }
+
+        // Sanitizziamo gli ID (max 300 caratteri in caso siano URL completi)
+        const ids = rawIds
+          .filter(id => typeof id === "string")
+          .map(id => (id as string).trim().substring(0, 300))
+          .filter(id => id.length > 0);
+        
+        if (ids.length === 0) {
+          res.status(200).json({ success: true, message: "Nessun ID valido fornito." });
+          return;
+        }
+
+        // ==========================================
+        // 5. LOGICA FEEDBACK POSITIVO
+        // ==========================================
+        if (isThumbsUp) {
+          // Scartiamo i link web esterni. Accettiamo solo ID alfanumerici standard di Firestore.
+          // Filtriamo via anche path traverse tipo "../" 
+          const validDbIds = ids.filter(id => !id.includes("/") && /^[a-zA-Z0-9_-]+$/.test(id));
+          
+          if (validDbIds.length === 0) {
+             res.status(200).json({ success: true, message: "Feedback ignorato: IDs non validi o link esterni." });
+             return;
+          }
+
+          const refs = validDbIds.map(id => db.collection("sentences").doc(id));
+          const snaps = await db.getAll(...refs);
+          const batch = db.batch();
+          
+          let updatedCount = 0;
+          snaps.forEach(snap => {
+            if (snap.exists) {
+              batch.update(snap.ref, { feedbacks: FieldValue.increment(1) });
+              updatedCount++;
+            }
+          });
+
+          if (updatedCount > 0) {
+             await batch.commit();
+          }
+
+          res.status(200).json({ success: true, message: `Feedback positivo registrato per ${updatedCount} documenti.` });
+          return;
+        } 
+        
+        // ==========================================
+        // 6. LOGICA FEEDBACK NEGATIVO (RECLAMO)
+        // ==========================================
+        else {
+          // Salviamo tutto, inclusi gli URL web lunghi passati nell'array ids
+          await db.collection("complaints").add({
+            uid: uid,
+            urls: ids, 
+            reason: notes,    
+            status: "pending",  
+            createdAt: FieldValue.serverTimestamp()
+          });
+
+          res.status(200).json({ success: true, message: "Reclamo registrato con successo." });
+          return;
+        }
+
+      } catch (err: unknown) {
+        // 7. ANTI INFORMATION DISCLOSURE
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error(`[JURIO-FEEDBACK] Errore (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
+        
+        // Fallback silenzioso per non rompere la UI utente, ma rimuoviamo `details: msg` per sicurezza
+        res.status(200).json({ success: false, message: "Impossibile registrare il feedback in questo momento." });
       }
     });
   }
@@ -2443,27 +2756,30 @@ export const adminMaintenanceTask = onRequest(
         }
 
         const planId = String(userSnap.data()?.planId ?? "");
+        const limits = (
+          JURIO_USAGE_LIMITS.admin as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId];
+
         // Sicurezza critica: solo l'admin può avviare questo task massivo
-        if (planId !== "admin") { 
+        if (planId !== "admin" || !limits) { 
           console.warn(`[JURIO-ADMIN] Tentativo bloccato di avvio task da utente non admin: ${uid}`);
           res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti." }); 
           return; 
         }
 
         // 4. RATE LIMITING PER ADMIN (Protezione Anti-Abuse)
-        const limits = { perMinute: 60, perDay: 10_000 };
         try {
           await Promise.all([
             consumePerMinuteFeature(uid, "admin", limits.perMinute),
             consumeDailyFeature(uid, "admin", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
+           console.warn(`[JURIO-ADMIN] Rate limit superato per utente admin ${uid}`);
+           res.status(429).json({ error: "Too Many Requests" });
+           return;
         }
 
         // 5. PREPARAZIONE SERVER-SENT EVENTS (SSE)
@@ -2567,33 +2883,37 @@ export const adminMergeCategoryTask = onRequest(
           return;
         }
 
-        // 2. VERIFICA PRIVILEGI ADMIN
+        // 2. VERIFICA PRIVILEGI ADMIN E RECUPERO LIMITI
         const userSnap = await db.collection("register").doc(uid).get();
         if (!userSnap.exists) { 
           res.status(404).json({ error: "Not Found" }); 
           return; 
         }
 
-        if (String(userSnap.data()?.planId ?? "") !== "admin") { 
+        const planId = String(userSnap.data()?.planId ?? "");
+        const limits = (
+          JURIO_USAGE_LIMITS.admin as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId];
+
+        if (planId !== "admin" || !limits) { 
           console.warn(`[JURIO-MERGE] Tentativo bloccato da utente non admin: ${uid}`);
           res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti." }); 
           return; 
         }
 
-        // 3. RATE LIMITING (Anti-Abuse su operazioni di Bulk)
-        const limits = { perMinute: 30, perDay: 1000 };
+        // 3. RATE LIMITING (Sempre basato su JURIO_USAGE_LIMITS.admin)
         try {
           await Promise.all([
             consumePerMinuteFeature(uid, "admin", limits.perMinute),
             consumeDailyFeature(uid, "admin", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
+           console.warn(`[JURIO-MERGE] Rate limit superato per utente admin ${uid}`);
+           res.status(429).json({ error: "Too Many Requests" });
+           return;
         }
 
         // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
@@ -2732,9 +3052,14 @@ export const reasoningAdmin = onRequest(
         }
 
         const planId = String(snap.data()?.planId ?? "");
-        const allowedPlans = new Set(["prova", "admin", "business", "business_m"]);
+        const limits = (
+          JURIO_USAGE_LIMITS.admin as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId];
 
-        if (!allowedPlans.has(planId)) { 
+        if (!limits) { 
           res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti." }); 
           return; 
         }
@@ -2753,23 +3078,16 @@ export const reasoningAdmin = onRequest(
           return;
         }
         
-        // 4. RATE LIMITING
-        const limits = planId === "prova" ? { perMinute: 5, perDay: 20 }
-                     : allowedPlans.has(planId) && planId !== "admin" ? { perMinute: 20, perDay: 200 }
-                     : { perMinute: 120, perDay: 10_000 };
-
+        // 4. RATE LIMITING TRAMITE FEATURE
         try {
           await Promise.all([
-            consumePerMinuteFeature(uid, "reasoning", limits.perMinute),
-            consumeDailyFeature(uid, "reasoning", limits.perDay)
+            consumePerMinuteFeature(uid, "admin", limits.perMinute),
+            consumeDailyFeature(uid, "admin", limits.perDay)
           ]);
         } catch (rateError: unknown) {
-          const msg = rateError instanceof Error ? rateError.message : String(rateError);
-          if (msg === "rate_limited" || msg === "quota_exceeded") {
-            res.status(429).json({ error: "Too Many Requests" });
-            return;
-          }
-          throw rateError;
+          console.warn(`[JURIO-REASONING-ADMIN] Rate limit superato per utente ${uid}`);
+          res.status(429).json({ error: "Too Many Requests" });
+          return;
         }
 
         let parsedJson: Record<string, unknown> | null = null;
@@ -2894,33 +3212,37 @@ export const adminUploadManualContentTask = onRequest(
           return;
         }
 
-        // 3. CONTROLLO PRIVILEGI (SOLO ADMIN)
+        // 3. CONTROLLO PRIVILEGI (SOLO ADMIN) E RECUPERO LIMITI
         const userSnap = await db.collection("register").doc(uid).get();
         if (!userSnap.exists) { 
           res.status(404).json({ error: "Not Found" }); 
           return; 
         }
-        
-        if (String(userSnap.data()?.planId ?? "") !== "admin") { 
+
+        const planId = String(userSnap.data()?.planId ?? "");
+        const limits = (
+          JURIO_USAGE_LIMITS.admin as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId];
+
+        if (planId !== "admin" || !limits) { 
           console.warn(`[JURIO-MANUAL] Tentativo bloccato da utente non admin: ${uid}`);
           res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti." }); 
           return; 
         }
 
-        // 4. RATE LIMITING (Anti-Abuse)
-        const limits = { perMinute: 30, perDay: 1000 };
+        // 4. RATE LIMITING (Sempre basato su JURIO_USAGE_LIMITS.admin)
         try {
           await Promise.all([
             consumePerMinuteFeature(uid, "admin", limits.perMinute),
             consumeDailyFeature(uid, "admin", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
+           console.warn(`[JURIO-MANUAL] Rate limit superato per utente admin ${uid}`);
+           res.status(429).json({ error: "Too Many Requests" });
+           return;
         }
 
         // 5. ESTRAZIONE E SANITIZZAZIONE PAYLOAD
@@ -3030,33 +3352,37 @@ export const sendAdminNotification = onRequest(
           return;
         }
 
-        // 3. VERIFICA RUOLO NEL DATABASE (SOLO ADMIN)
+        // 3. VERIFICA RUOLO NEL DATABASE (SOLO ADMIN) E RECUPERO LIMITI
         const userSnap = await db.collection("register").doc(adminUid).get();
         if (!userSnap.exists) { 
           res.status(404).json({ error: "Not Found" }); 
           return; 
         }
 
-        if (String(userSnap.data()?.planId ?? "") !== "admin") { 
+        const planId = String(userSnap.data()?.planId ?? "");
+        const limits = (
+          JURIO_USAGE_LIMITS.admin as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId];
+
+        if (planId !== "admin" || !limits) { 
           console.warn(`[JURIO-NOTIF] Tentativo bloccato da utente non admin: ${adminUid}`);
           res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti" }); 
           return; 
         }
 
-        // 4. RATE LIMITING (Anti-Abuse Admin)
-        const limits = { perMinute: 20, perDay: 500 };
+        // 4. RATE LIMITING (Anti-Abuse Admin basato su JURIO_USAGE_LIMITS.admin_notif)
         try {
           await Promise.all([
-            consumePerMinuteFeature(adminUid, "admin_notif", limits.perMinute),
-            consumeDailyFeature(adminUid, "admin_notif", limits.perDay)
+            consumePerMinuteFeature(adminUid, "admin", limits.perMinute),
+            consumeDailyFeature(adminUid, "admin", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
+           console.warn(`[JURIO-NOTIF] Rate limit superato per admin: ${adminUid}`);
+           res.status(429).json({ error: "Too Many Requests" });
+           return;
         }
 
         // 5. SANITIZZAZIONE E TYPE-SAFETY DEL PAYLOAD
@@ -3236,12 +3562,19 @@ export const adminDoctrineUpload = onRequest(
         }
 
         // ─────────────────────────────────────────────
-        // 2. CONTROLLO PRIVILEGI
+        // 2. CONTROLLO PRIVILEGI E RATE LIMITING
         // ─────────────────────────────────────────────
         const userSnap = await db.collection("register").doc(uid).get();
-        const planId = userSnap.data()?.planId;
+        const planId = String(userSnap.data()?.planId ?? "");
+        
+        const limits = (
+          JURIO_USAGE_LIMITS.admin as Record<
+            string,
+            { perMinute: number; perDay: number }
+          >
+        )[planId];
 
-        if (!userSnap.exists || planId !== "admin") {
+        if (!userSnap.exists || planId !== "admin" || !limits) {
           console.warn(
             `[DOCTRINE-${reqId}] Accesso negato per UID ${uid}. PlanId: ${planId}`
           );
@@ -3255,6 +3588,17 @@ export const adminDoctrineUpload = onRequest(
         console.log(
           `[DOCTRINE-${reqId}] Auth superata per admin UID: ${uid}`
         );
+
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(uid, "admin", limits.perMinute),
+            consumeDailyFeature(uid, "admin", limits.perDay)
+          ]);
+        } catch (rateError: unknown) {
+          console.warn(`[DOCTRINE-${reqId}] Rate limit superato per admin UID: ${uid}`);
+          res.status(429).json({ error: "Too Many Requests" });
+          return;
+        }
 
         // ─────────────────────────────────────────────
         // 3. LETTURA PAYLOAD
@@ -3285,12 +3629,7 @@ export const adminDoctrineUpload = onRequest(
         );
 
         // ─────────────────────────────────────────────
-        // 4. GENERAZIONE ID DOCUMENTO
-        // ─────────────────────────────────────────────
-        const documentBaseId = randomUUID();
-
-        // ─────────────────────────────────────────────
-        // 5. ESECUZIONE FLOW AI
+        // 4. ESECUZIONE FLOW AI
         // ─────────────────────────────────────────────
         console.log(
           `[DOCTRINE-${reqId}] Invocazione doctrineFlow...`
@@ -3321,13 +3660,53 @@ export const adminDoctrineUpload = onRequest(
         );
 
         // ─────────────────────────────────────────────
-        // 6. SALVATAGGIO FIRESTORE
+        // 5. RIMOZIONE DOCUMENTI ESISTENTI (STESSO sourceUrl)
         // ─────────────────────────────────────────────
+        console.log(
+          `[DOCTRINE-${reqId}] Ricerca documenti esistenti con sourceUrl: ${sourceUrl}`
+        );
+
+        const existingDocsSnap = await db
+          .collection("doctrine")
+          .where("sourceUrl", "==", sourceUrl)
+          .get();
+
+        if (!existingDocsSnap.empty) {
+          console.log(
+            `[DOCTRINE-${reqId}] Trovati ${existingDocsSnap.size} documenti esistenti da eliminare.`
+          );
+
+          const DELETE_BATCH_SIZE = 450;
+          let deletedCount = 0;
+
+          for (let i = 0; i < existingDocsSnap.docs.length; i += DELETE_BATCH_SIZE) {
+            const deleteBatch = db.batch();
+            const chunk = existingDocsSnap.docs.slice(i, i + DELETE_BATCH_SIZE);
+
+            chunk.forEach((docSnap) => {
+              deleteBatch.delete(docSnap.ref);
+            });
+
+            await deleteBatch.commit();
+            deletedCount += chunk.length;
+          }
+
+          console.log(
+            `[DOCTRINE-${reqId}] Eliminazione completata. Rimossi ${deletedCount} vecchi documenti.`
+          );
+        } else {
+          console.log(
+            `[DOCTRINE-${reqId}] Nessun documento esistente trovato per il sourceUrl specificato.`
+          );
+        }
+
+        // ─────────────────────────────────────────────
+        // 6. GENERAZIONE ID DOCUMENTO E SALVATAGGIO FIRESTORE
+        // ─────────────────────────────────────────────
+        const documentBaseId = randomUUID();
         const doctrineCollection = db.collection("doctrine");
 
-        // Firestore: massimo 500 writes per batch.
         const BATCH_SIZE = 450;
-
         let savedCount = 0;
 
         for (
@@ -3420,309 +3799,9 @@ export const adminDoctrineUpload = onRequest(
 );
 
 // ============================================================================
-// EMBEDDING FUNCTIONS
+// STORAGE FUNCTIONS
 // ============================================================================
 
-export const generateEmbedding = onRequest(
-  { 
-    secrets: ["OPENAI_API_KEY"],
-    timeoutSeconds: 60,
-    memory: "512MiB",
-  },
-  async (req, res) => {
-    // Restituzione esplicita della Promise per evitare timeout anomali di Express
-    return corsHandlerDomain(req, res, async (): Promise<void> => {
-      // 1. CORS E METODO
-      if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
-
-      try {
-        // 2. SICUREZZA: APP CHECK E AUTH
-        let uid: string;
-        try {
-          await requireAppCheck(req);
-          uid = await requireUidFromAuthHeader(req);
-        } catch (authError) {
-          console.warn(`[JURIO-EMBEDDING] Fallimento Auth/AppCheck per IP: ${req.ip}`);
-          res.status(401).json({ error: "Unauthorized" });
-          return;
-        }
-
-        if (!uid) { 
-          res.status(401).json({ error: "Unauthorized" }); 
-          return; 
-        }
-
-        // 3. VERIFICA UTENTE NEL DB
-        const snap = await db.collection("register").doc(uid).get();
-        if (!snap.exists) { 
-          res.status(404).json({ error: "Not Found" }); 
-          return; 
-        }
-
-        const planId = String(snap.data()?.planId ?? "");
-        const allowedPlans = new Set(["prova", "admin", "business", "business_m"]);
-
-        if (!allowedPlans.has(planId)) {
-          res.status(403).json({ error: "Forbidden", details: "Piano non abilitato." });
-          return;
-        }
-
-        // 4. RATE LIMITING (Protezione da loop di generazione massiva vettori)
-        const limits = { perMinute: 30, perDay: 500 };
-        try {
-          await Promise.all([
-            consumePerMinuteFeature(uid, "embedding", limits.perMinute),
-            consumeDailyFeature(uid, "embedding", limits.perDay)
-          ]);
-        } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
-        }
-
-        // 5. VALIDAZIONE E SANITIZZAZIONE INPUT
-        const body = (req.body ?? {}) as GenerateEmbeddingRequestBody;
-        const textRaw = typeof body.text === "string" ? body.text : "";
-
-        if (!textRaw.trim()) {
-          res.status(400).json({ error: "Bad Request: Invalid or missing 'text' field" });
-          return;
-        }
-
-        // Troncamento di sicurezza per prevenire token exhaustion / DoS sull'API OpenAI
-        const textToEmbed = textRaw.trim().substring(0, 10000); // Max 10k caratteri per embedding
-
-        // 6. CHIAMATA A OPENAI PER L'EMBEDDING
-        const oaApiKey = process.env.OPENAI_API_KEY;
-        if (!oaApiKey) {
-          console.error("[JURIO-EMBEDDING] OPENAI_API_KEY non configurata nei secrets.");
-          res.status(500).json({ error: "Internal Server Error" });
-          return;
-        }
-
-        const oaClient = new OpenAI({ apiKey: oaApiKey });
-        const embeddingResponse = await oaClient.embeddings.create({
-          model: "text-embedding-3-small", 
-          input: textToEmbed,
-          dimensions: 1536 // Manteniamo la coerenza con i 1536 attuali per Firestore
-        });
-
-        const vectorArray = embeddingResponse.data[0]?.embedding;
-        
-        if (!Array.isArray(vectorArray) || vectorArray.length === 0) {
-           res.status(500).json({ error: "Failed to generate embedding vector." });
-           return;
-        }
-
-        // 7. RISPOSTA AL CLIENT
-        const responsePayload: GenerateEmbeddingResponse = {
-          vector: vectorArray,
-          status: "SUCCESS"
-        };
-
-        res.status(200).json(responsePayload);
-
-      } catch (err: unknown) {
-        // 8. ANTI INFORMATION DISCLOSURE
-        const msg = err instanceof Error ? err.message : "Internal error";
-        console.error(`[JURIO-EMBEDDING] Errore critico (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
-        
-        // Rimuoviamo `details: msg` per evitare di esporre chiavi scadute o errori di OpenAI al client
-        res.status(500).json({ 
-          error: "Internal Server Error" 
-        });
-      }
-    });
-  }
-);
-
-export const extractDocumentText = onRequest(
-  { 
-    timeoutSeconds: 120,
-    memory: "1GiB",
-  }, 
-  async (req, res) => {
-    return corsHandlerDomain(req, res, async (): Promise<void> => {
-      // 1. CORS E METODO
-      if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
-
-      try {
-        // 2. SANITIZZAZIONE E TYPE-SAFETY INPUT
-        const body = (req.body ?? {}) as ExtractDocumentRequestBody;
-        const storagePathRaw = typeof body.storagePath === "string" ? body.storagePath.trim() : "";
-        
-        if (!storagePathRaw) {
-          res.status(400).json({ error: "Bad Request: Percorso del file (storagePath) mancante o invalido." });
-          return;
-        }
-
-        // 3. LOGICA AUTH CONDIVISA (OAuth token o Bearer standard)
-        let uid = "";
-
-        const authHeader =
-          typeof req.headers.authorization === "string"
-            ? req.headers.authorization
-            : "";
-
-        const token = authHeader.startsWith("Bearer ")
-          ? authHeader.slice("Bearer ".length).trim()
-          : "";
-
-        // I token OAuth Jurio sono generati con
-        // randomBytes(32).toString("hex"): 64 caratteri esadecimali.
-        const isOpaqueOAuthToken = /^[a-f0-9]{64}$/.test(token);
-
-        if (isOpaqueOAuthToken) {
-          const tokenSnap = await db
-            .collection("oauth_tokens")
-            .doc(token)
-            .get();
-
-          // Un token OAuth inesistente è invalido o revocato.
-          if (!tokenSnap.exists) {
-            res.status(401).json({ error: "Unauthorized" });
-            return;
-          }
-
-          const tokenData = tokenSnap.data();
-          const expiresAt = tokenData?.expiresAt;
-
-          // Verifica obbligatoria di utente e scadenza.
-          if (
-            typeof tokenData?.uid !== "string" ||
-            !tokenData.uid ||
-            !expiresAt ||
-            typeof expiresAt.toDate !== "function"
-          ) {
-            res.status(401).json({ error: "Unauthorized" });
-            return;
-          }
-
-          if (expiresAt.toDate() <= new Date()) {
-            await tokenSnap.ref.delete().catch(() => {});
-            res.status(401).json({ error: "Unauthorized" });
-            return;
-          }
-
-          uid = tokenData.uid;
-        } else {
-          // Percorso B2B: richiede App Check e Firebase Auth.
-          // Non accettare un UID come credenziale.
-          try {
-            await requireAppCheck(req);
-            uid = await requireUidFromAuthHeader(req);
-          } catch {
-            console.warn(
-              `[JURIO-EXTRACT] Fallimento Auth/AppCheck per IP: ${req.ip}`
-            );
-            res.status(401).json({ error: "Unauthorized" });
-            return;
-          }
-        }
-
-        if (!uid) {
-          res.status(401).json({ error: "Unauthorized" });
-          return;
-        }
-
-        // 4. PATH TRAVERSAL PROTECTION (Sicurezza Storage)
-        const safeStoragePath = storagePathRaw.replace(/\.\./g, "");
-
-        // 5. VERIFICA PIANO E LIMITI
-        const limits = { perMinute: 20, perDay: 200 };
-        let userSnap;
-        
-        try {
-          const results = await Promise.all([
-            db.collection("register").doc(uid).get(),
-            consumePerMinuteFeature(uid, "research", limits.perMinute),
-            consumeDailyFeature(uid, "research", limits.perDay)
-          ]);
-          userSnap = results[0];
-        } catch (limitErr: unknown) {
-          const msg = limitErr instanceof Error ? limitErr.message : String(limitErr);
-          if (msg === "rate_limited" || msg === "quota_exceeded") {
-             res.status(429).json({ error: "Too Many Requests", details: "Hai raggiunto il limite massimo di richieste." });
-             return;
-          }
-          throw limitErr;
-        }
-
-        if (!userSnap.exists) {
-          res.status(404).json({ error: "Not Found" });
-          return;
-        }
-
-        const planId = String(userSnap.data()?.planId ?? "");
-        const allowedPlans = new Set([
-          "prova", "admin", "business", "personale", "business_m", "personale_m",
-        ]);
-
-        if (!allowedPlans.has(planId)) {
-          res.status(403).json({ 
-            error: "Forbidden", 
-            message: "È richiesto un piano attivo per utilizzare l'estrazione." 
-          });
-          return;
-        }
-
-        // 6. ESTRAZIONE DOCUMENTO DA STORAGE
-        const admin = getAdmin();
-        const bucket = admin.storage().bucket();
-        const file = bucket.file(safeStoragePath);
-
-        const [exists] = await file.exists();
-        if (!exists) {
-          res.status(404).json({ error: "Not Found: Il file non esiste nello storage." });
-          return;
-        }
-
-        // Limite di sicurezza sulla dimensione del file scaricabile (es. max 30MB)
-        const [metadata] = await file.getMetadata();
-        const fileSize = Number(metadata.size || 0);
-        
-        if (fileSize > 30 * 1024 * 1024) {
-           res.status(413).json({ error: "Payload Too Large: Il file supera la dimensione massima consentita di 30MB." });
-           return;
-        }
-
-        const [buffer] = await file.download();
-        
-        // Estrazione testo tramite pdf-extraction
-        const pdfData = await pdfExtract(buffer);
-        let cleanedText = typeof pdfData?.text === "string" ? pdfData.text : "";
-
-        // Pulizia testuale standardizzata
-        cleanedText = cleanedText
-          .replace(/([^\n])\n(?=[^\n])/g, "$1 ")
-          .replace(/[ \t]+/g, " ")
-          .replace(/\n\s*\n\s*\n/g, "\n\n")
-          .trim();
-
-        // 7. RISPOSTA AL CLIENT
-        res.status(200).json({ 
-          success: true,
-          text: cleanedText,
-          pages: typeof pdfData?.numpages === "number" ? pdfData.numpages : 1
-        });
-
-      } catch (err: unknown) {
-        // 8. ANTI INFORMATION DISCLOSURE
-        const msg = err instanceof Error ? err.message : "Internal error";
-        console.error(`[JURIO-EXTRACT] Errore estrazione testo (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
-        
-        res.status(500).json({ 
-          error: "Internal Server Error"
-        });
-      }
-    });
-  }
-);
 
 export const processDocumentEmbedding = onDocumentCreated(
   {
@@ -3777,23 +3856,37 @@ export const generateStaticStatsJson = onDocumentCreated("metadocument/{docId}",
   const snapshot = event.data;
   if (!snapshot) return;
   const data = snapshot.data();
+
   // 1. Filtriamo solo i documenti che ci interessano
   if (data.type !== "weekly_sentences_stats") {
     console.log(`Documento ${event.params.docId} ignorato: non è una statistica settimanale.`);
     return;
   }
+
   console.log(`Elaborazione nuove statistiche dal documento: ${event.params.docId}`);
+
   // 2. Formattiamo la data per il frontend (es: "31 Maggio 2026")
   const createdAtDate = data.createdAt ? data.createdAt.toDate() : new Date();
   const dateFormatter = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
   const dataAggiornamento = dateFormatter.format(createdAtDate);
-  // 3. Mappiamo il documento Firestore nella struttura esatta attesa dal file HTML
+
+  // 3. Ordiniamo esplicitamente gli anni per evitare il riordinamento automatico numerico di V8
+  // - Usa (a, b) => Number(a) - Number(b) per ordine crescente (es. 2016 -> 2026)
+  // - Usa (a, b) => Number(b) - Number(a) per ordine decrescente (es. 2026 -> 2016)
+  const sortedPerAnno = Object.keys(data.per_anno || {})
+    .sort((a, b) => Number(a) - Number(b)) 
+    .reduce((acc, key) => {
+      acc[key] = data.per_anno[key];
+      return acc;
+    }, {} as Record<string, number>);
+
+  // 4. Mappiamo il documento Firestore nella struttura esatta attesa dal file HTML
   const configJson = {
     meta: {
       totale_documenti: data.totale_documenti || 0,
       data_aggiornamento: dataAggiornamento
     },
-    per_anno: data.per_anno || {},
+    per_anno: sortedPerAnno,
     per_organo: {
       "Cassazione": data.per_organo?.corte_di_cassazione || 0,
       "Consiglio di Stato": data.per_organo?.consiglio_di_stato || 0,
@@ -3808,26 +3901,115 @@ export const generateStaticStatsJson = onDocumentCreated("metadocument/{docId}",
       "civile": data.per_materia?.civile || 0,
       "penale": data.per_materia?.penale || 0,
     },
-    // Le sezioni sono già oggetti mappati, le passiamo direttamente
+    // Le sezioni mantengono l'ordine rigoroso definito a monte
     per_sezione_cassazione: data.per_sezione_cassazione || { civili: {}, penali: {} }
   };
-  // 4. Scriviamo il file su Firebase Cloud Storage
+
+  // 5. Scriviamo il file su Firebase Cloud Storage
   try {
     const storage = getAdminStorage();
     const bucket = storage.bucket();
     const file = bucket.file("dataConfig.json");
+
     await file.save(JSON.stringify(configJson, null, 2), {
       contentType: "application/json",
       metadata: {
         cacheControl: "public, max-age=3600", 
       }
     });
+
     await file.makePublic();
     console.log(`Successo! dataConfig.json sovrascritto e reso pubblico: ${file.publicUrl()}`);
   } catch (error) {
     console.error("Errore durante il salvataggio su Cloud Storage:", error);
   }
 });
+
+export const updateMetadataFromChat = onDocumentCreated(
+  {
+    document: "fascicoli/{fascicoloId}/threads/{threadId}/messages/{messageId}",
+    timeoutSeconds: 60,
+    memory: "512MiB",
+    secrets: ["GOOGLE_GENAI_API_KEY"],
+  },
+  async (event) => {
+    const snapshot = event.data;
+    if (!snapshot) return;
+
+    const messageData = snapshot.data() as Partial<MessageDoc>;
+    
+    // Evita loop e risparmia token: analizziamo solo i messaggi dell'utente
+    if (messageData.role === "model") return; 
+
+    const fascicoloId = event.params.fascicoloId;
+    const threadId = event.params.threadId;
+
+    try {
+      const messagesRef = db.collection("fascicoli").doc(fascicoloId)
+                            .collection("threads").doc(threadId)
+                            .collection("messages");
+      
+      const historySnap = await messagesRef
+        .orderBy("timestamp", "desc")
+        .limit(4) 
+        .get();
+
+      const chatContext = historySnap.docs
+        .map(doc => {
+          const data = doc.data() as MessageDoc;
+          const safeContent = typeof data.content === "string" ? data.content.trim() : "";
+          const ruolo = data.role === "model" ? "IA" : "UTENTE";
+          return `${ruolo}: ${safeContent}`;
+        })
+        .reverse()
+        .join("\n\n");
+
+      // Protezione da costi eccessivi: blocco contesto anomalo
+      if (!chatContext || chatContext.length > 5000) return;
+
+      const fascicoloRef = db.collection("fascicoli").doc(fascicoloId);
+      const fascicoloSnap = await fascicoloRef.get();
+      if (!fascicoloSnap.exists) return;
+      
+      const fascicoloData = fascicoloSnap.data() as FascicoloDoc;
+      const metadatiAttuali = fascicoloData.metadati || {};
+
+      const result = (await estraiMetadatiFlow({
+        chatContext,
+        metadatiAttuali
+      })) as EstraiMetadatiResult;
+
+      const estratti = result.dati_nuovi_o_aggiornati || [];
+      if (!Array.isArray(estratti) || estratti.length === 0) return;
+
+      const updatePayload: Record<string, string> = {};
+      let hasUpdates = false;
+
+      // Sanitizzazione input IA prima della scrittura DB
+      estratti.forEach((item: ExtractedMetadataItem) => {
+        if (typeof item.chiave === "string" && typeof item.valore === "string") {
+          const safeKey = item.chiave.replace(/[^a-zA-Z0-9_]/g, '').trim().substring(0, 50);
+          const safeValue = item.valore.trim().substring(0, 500); 
+
+          if (safeKey && safeValue) {
+            updatePayload[`metadati.${safeKey}`] = safeValue;
+            hasUpdates = true;
+          }
+        }
+      });
+
+      if (!hasUpdates) return;
+
+      await fascicoloRef.update(updatePayload);
+      
+      // Privacy-by-design: loggati solo conteggi, mai dati PII
+      console.log(`[JURIO-METADATA] Aggiornate ${Object.keys(updatePayload).length} chiavi per fascicolo ${fascicoloId}`);
+
+    } catch (error) {
+      console.error(`[JURIO-METADATA] Errore estrazione metadati per fascicolo ${fascicoloId}`);
+    }
+  }
+);
 
 // ============================================================================
 // SCHEDULAZIONI
@@ -3874,7 +4056,7 @@ export const monthlyUsageStatsCron = onSchedule(
 );
 
 // ============================================================================
-// SUBSCRIPTIONS AND PAYMENTS
+// SUBSCRIPTION
 // ============================================================================
 
 export const getRegister = onRequest(
@@ -3905,8 +4087,8 @@ export const getRegister = onRequest(
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-
-        const limits = { perMinute: 5, perDay: 20 };
+        
+        const limits = JURIO_USAGE_LIMITS.register.global ?? { perMinute: 5, perDay: 20 };
         try {
           await Promise.all([
             consumePerMinuteFeature(uid, "register", limits.perMinute),
@@ -3920,7 +4102,7 @@ export const getRegister = onRequest(
            }
            throw rateLimitError;
         }
-        // 4. CREAZIONE / LETTURA ATOMICA (TRANSAZIONE)
+
         const ref = db.collection("register").doc(uid);
         
         const out = await db.runTransaction(async (tx) => {
@@ -4039,6 +4221,21 @@ export const getPrice = onRequest(
           return;
         }
 
+        // 2.1 RATE LIMITING BASATO SU IP (Protezione Anti-Scraping / DoS)
+        const clientIp = (req.ip || req.socket?.remoteAddress || "unknown").replace(/[^a-fA-F0-9:.]/g, "");
+        const limits = JURIO_USAGE_LIMITS.stripe_checkout.global ?? { perMinute: 5, perDay: 100 };
+
+        try {
+          await Promise.all([
+            consumePerMinuteFeature(`ip_${clientIp}`, "stripe_checkout", limits.perMinute),
+            consumeDailyFeature(`ip_${clientIp}`, "stripe_checkout", limits.perDay),
+          ]);
+        } catch (rateLimitError: unknown) {
+          console.warn(`[JURIO-PRICE] Rate limit superato per IP: ${clientIp}`);
+          res.status(429).json({ error: "Too Many Requests" });
+          return;
+        }
+
         // 3. SANITIZZAZIONE E TYPE-SAFETY INPUT
         const body = (req.body ?? {}) as GetPriceRequestBody;
         const rawId = typeof body.id === "string" ? body.id : "";
@@ -4102,6 +4299,10 @@ export const getPrice = onRequest(
   }
 );
 
+// ============================================================================
+// PAYMENTS
+// ============================================================================
+
 export const payWithStripeCreateCheckoutSession = onRequest(
   { 
     invoker: "public", 
@@ -4133,19 +4334,16 @@ export const payWithStripeCreateCheckoutSession = onRequest(
         }
 
         // 2. RATE LIMITING (Prevenzione DoS / Generazione massiva sessioni Stripe)
-        const limits = { perMinute: 10, perDay: 50 };
+        const limits = JURIO_USAGE_LIMITS.stripe_checkout.global ?? { perMinute: 5, perDay: 100 };
         try {
           await Promise.all([
             consumePerMinuteFeature(uid, "stripe_checkout", limits.perMinute),
             consumeDailyFeature(uid, "stripe_checkout", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
+           console.warn(`[JURIO-STRIPE] Rate limit superato per utente ${uid}`);
+           res.status(429).json({ error: "Too Many Requests" });
+           return;
         }
 
         // 3. VALIDAZIONE INPUT E NORMALIZZAZIONE PLAN ID
@@ -4458,19 +4656,16 @@ export const applyDiscountCoupon = onRequest(
         }
 
         // 3. RATE LIMITING (Fondamentale: protegge da attacchi di brute-force / enumerazione codici coupon)
-        const limits = { perMinute: 10, perDay: 30 };
+        const limits = JURIO_USAGE_LIMITS.apply_coupon.global ?? { perMinute: 10, perDay: 30 };
         try {
           await Promise.all([
-            consumePerMinuteFeature(uid, "apply_coupon" as any, limits.perMinute),
-            consumeDailyFeature(uid, "apply_coupon" as any, limits.perDay)
+            consumePerMinuteFeature(uid, "apply_coupon", limits.perMinute),
+            consumeDailyFeature(uid, "apply_coupon", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests", details: "Troppi tentativi. Riprova più tardi." });
-              return;
-           }
-           throw rateLimitError;
+           console.warn(`[JURIO-COUPON] Rate limit o abuso coupon per utente ${uid}`);
+           res.status(429).json({ error: "Too Many Requests", details: "Troppi tentativi. Riprova più tardi." });
+           return;
         }
 
         // 4. VALIDAZIONE E SANITIZZAZIONE INPUT
@@ -4584,152 +4779,6 @@ export const applyDiscountCoupon = onRequest(
   }
 );
 
-export const submitFeedback = onRequest(
-  { 
-    timeoutSeconds: 60,
-    memory: "512MiB",
-  },
-  async (req, res) => {
-    // Nota: Aggiunto return per assicurare la risoluzione della promise
-    return corsHandlerDomain(req, res, async (): Promise<void> => {
-      // 1. CORS E METODO
-      if (req.method === "OPTIONS") { res.status(204).end(); return; }
-      if (req.method !== "POST") { res.status(405).json({ error: "Method Not Allowed" }); return; }
-
-      try {
-        // 2. AUTH E APP CHECK
-        let uid: string;
-        try {
-          await requireAppCheck(req);
-          uid = await requireUidFromAuthHeader(req);
-        } catch (authError) {
-          console.warn(`[JURIO-FEEDBACK] Fallimento Auth/AppCheck per IP: ${req.ip}`);
-          res.status(401).json({ error: "Unauthorized" });
-          return;
-        }
-
-        if (!uid) {
-          res.status(401).json({ error: "Unauthorized" });
-          return;
-        }
-
-        // 3. RATE LIMITING (Protezione da Spam Database)
-        const limits = { perMinute: 15, perDay: 100 };
-        try {
-          await Promise.all([
-            consumePerMinuteFeature(uid, "feedback", limits.perMinute),
-            consumeDailyFeature(uid, "feedback", limits.perDay)
-          ]);
-        } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
-        }
-        
-        // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
-        const body = (req.body ?? {}) as SubmitFeedbackRequestBody;
-        
-        const isThumbsUp = typeof body.isThumbsUp === "boolean" ? body.isThumbsUp : null;
-        if (isThumbsUp === null) {
-           res.status(400).json({ error: "Bad Request: Missing or invalid 'isThumbsUp'" });
-           return;
-        }
-
-        // Troncamento delle note per evitare storage abuse nei reclami
-        const rawNotes = typeof body.notes === "string" ? body.notes.trim() : "";
-        const MAX_SAFE_NOTES = typeof MAX_NOTES_CHARS === "number" ? MAX_NOTES_CHARS : 2000;
-        
-        if (rawNotes.length > MAX_SAFE_NOTES) {
-           res.status(413).json({ error: "Payload Too Large: Notes length exceeds maximum limit" });
-           return;
-        }
-        // Evitiamo injection di codice base (pulizia molto light)
-        const notes = rawNotes.substring(0, MAX_SAFE_NOTES); 
-        
-        // Pulizia degli ID in arrivo
-        const rawIds = Array.isArray(body.ids) ? body.ids : [];
-        
-        // Protezione DB: max 30 ID processabili in una singola richiesta
-        if (rawIds.length > 30) {
-           res.status(400).json({ error: "Bad Request: Too many IDs provided in a single request (Max 30)." });
-           return;
-        }
-
-        // Sanitizziamo gli ID (max 300 caratteri in caso siano URL completi)
-        const ids = rawIds
-          .filter(id => typeof id === "string")
-          .map(id => (id as string).trim().substring(0, 300))
-          .filter(id => id.length > 0);
-        
-        if (ids.length === 0) {
-          res.status(200).json({ success: true, message: "Nessun ID valido fornito." });
-          return;
-        }
-
-        // ==========================================
-        // 5. LOGICA FEEDBACK POSITIVO
-        // ==========================================
-        if (isThumbsUp) {
-          // Scartiamo i link web esterni. Accettiamo solo ID alfanumerici standard di Firestore.
-          // Filtriamo via anche path traverse tipo "../" 
-          const validDbIds = ids.filter(id => !id.includes("/") && /^[a-zA-Z0-9_-]+$/.test(id));
-          
-          if (validDbIds.length === 0) {
-             res.status(200).json({ success: true, message: "Feedback ignorato: IDs non validi o link esterni." });
-             return;
-          }
-
-          const refs = validDbIds.map(id => db.collection("sentences").doc(id));
-          const snaps = await db.getAll(...refs);
-          const batch = db.batch();
-          
-          let updatedCount = 0;
-          snaps.forEach(snap => {
-            if (snap.exists) {
-              batch.update(snap.ref, { feedbacks: FieldValue.increment(1) });
-              updatedCount++;
-            }
-          });
-
-          if (updatedCount > 0) {
-             await batch.commit();
-          }
-
-          res.status(200).json({ success: true, message: `Feedback positivo registrato per ${updatedCount} documenti.` });
-          return;
-        } 
-        
-        // ==========================================
-        // 6. LOGICA FEEDBACK NEGATIVO (RECLAMO)
-        // ==========================================
-        else {
-          // Salviamo tutto, inclusi gli URL web lunghi passati nell'array ids
-          await db.collection("complaints").add({
-            uid: uid,
-            urls: ids, 
-            reason: notes,    
-            status: "pending",  
-            createdAt: FieldValue.serverTimestamp()
-          });
-
-          res.status(200).json({ success: true, message: "Reclamo registrato con successo." });
-          return;
-        }
-
-      } catch (err: unknown) {
-        // 7. ANTI INFORMATION DISCLOSURE
-        const msg = err instanceof Error ? err.message : "Internal error";
-        console.error(`[JURIO-FEEDBACK] Errore (UID: ${req.headers.authorization ? "AuthPresent" : "NoAuth"}):`, msg);
-        
-        // Fallback silenzioso per non rompere la UI utente, ma rimuoviamo `details: msg` per sicurezza
-        res.status(200).json({ success: false, message: "Impossibile registrare il feedback in questo momento." });
-      }
-    });
-  }
-);
 
 // ============================================================================
 // TEAM FUNCTIONS
@@ -4765,19 +4814,16 @@ export const assignTeamSeat = onRequest(
         }
 
         // 3. RATE LIMITING (Prevenzione DoS / Tentativi massivi di assegnazione o bruteforce voucher)
-        const limits = { perMinute: 10, perDay: 50 };
+        const limits = JURIO_USAGE_LIMITS.teams?.global ?? { perMinute: 10, perDay: 50 };
         try {
           await Promise.all([
-            consumePerMinuteFeature(callerUid, "assign_seat" as any, limits.perMinute),
-            consumeDailyFeature(callerUid, "assign_seat" as any, limits.perDay)
+            consumePerMinuteFeature(callerUid, "teams", limits.perMinute),
+            consumeDailyFeature(callerUid, "teams", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
+           console.warn(`[JURIO-SEAT] Rate limit gestione team superato per UID ${callerUid}`);
+           res.status(429).json({ error: "Too Many Requests" });
+           return;
         }
 
         // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
@@ -5033,22 +5079,18 @@ export const sendTeamInviteEmail = onRequest(
           return;
         }
 
-        // 3. RATE LIMITING (Prevenzione DoS / Invio massivo di inviti spam)
-        const limits = { perMinute: 15, perDay: 60 };
+        // 3. RATE LIMITING CENTRALIZZATO PER GESTIONE TEAMS
+        const limits = JURIO_USAGE_LIMITS.teams?.global ?? { perMinute: 10, perDay: 50 };
         try {
           await Promise.all([
-            consumePerMinuteFeature(callerUid, "team_invite" as any, limits.perMinute),
-            consumeDailyFeature(callerUid, "team_invite" as any, limits.perDay)
+            consumePerMinuteFeature(callerUid, "teams", limits.perMinute),
+            consumeDailyFeature(callerUid, "teams", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
+           console.warn(`[JURIO-INVITE] Rate limit gestione team superato per UID ${callerUid}`);
+           res.status(429).json({ error: "Too Many Requests" });
+           return;
         }
-
         // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
         const body = (req.body ?? {}) as SendTeamInviteEmailRequestBody;
         
@@ -5176,20 +5218,17 @@ export const shareAllTeamDocuments = onRequest(
           return;
         }
 
-        // 3. RATE LIMITING (Fondamentale: previene abusi di esecuzione bulk massiva su Firestore)
-        const limits = { perMinute: 3, perDay: 10 };
+        // 3. RATE LIMITING CENTRALIZZATO PER GESTIONE TEAMS
+        const limits = JURIO_USAGE_LIMITS.teams?.global ?? { perMinute: 10, perDay: 50 };
         try {
           await Promise.all([
-            consumePerMinuteFeature(callerUid, "share_docs" as any, limits.perMinute),
-            consumeDailyFeature(callerUid, "share_docs" as any, limits.perDay)
+            consumePerMinuteFeature(callerUid, "teams", limits.perMinute),
+            consumeDailyFeature(callerUid, "teams", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests", details: "Operazione eseguita troppo spesso. Riprova più tardi." });
-              return;
-           }
-           throw rateLimitError;
+           console.warn(`[JURIO-SHARE-DOCS] Rate limit gestione team superato per UID ${callerUid}`);
+           res.status(429).json({ error: "Too Many Requests", details: "Operazione eseguita troppo spesso. Riprova più tardi." });
+           return;
         }
 
         // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
@@ -5326,20 +5365,17 @@ export const verifyVoucher = onRequest(
           return;
         }
 
-        // 3. RATE LIMITING (Fondamentale: previene attacchi di forza bruta / enumerazione dei codici voucher)
-        const limits = { perMinute: 10, perDay: 50 };
+        // 3. RATE LIMITING CENTRALIZZATO PER GESTIONE TEAMS
+        const limits = JURIO_USAGE_LIMITS.teams?.global ?? { perMinute: 10, perDay: 50 };
         try {
           await Promise.all([
-            consumePerMinuteFeature(uid, "verify_voucher" as any, limits.perMinute),
-            consumeDailyFeature(uid, "verify_voucher" as any, limits.perDay)
+            consumePerMinuteFeature(uid, "teams", limits.perMinute),
+            consumeDailyFeature(uid, "teams", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests", details: "Troppi tentativi di verifica. Riprova più tardi." });
-              return;
-           }
-           throw rateLimitError;
+           console.warn(`[JURIO-VERIFY-VOUCHER] Rate limit gestione team superato per UID ${uid}`);
+           res.status(429).json({ error: "Too Many Requests", details: "Troppi tentativi di verifica. Riprova più tardi." });
+           return;
         }
 
         // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
@@ -5436,21 +5472,18 @@ export const removeTeamMember = onRequest(
           res.status(401).json({ error: "Unauthorized" });
           return;
         }
-
-        // 3. RATE LIMITING (Prevenzione abusi di rimozione / spam richieste)
-        const limits = { perMinute: 15, perDay: 50 };
+        
+        // 3. RATE LIMITING CENTRALIZZATO PER GESTIONE TEAMS
+        const limits = JURIO_USAGE_LIMITS.teams?.global ?? { perMinute: 10, perDay: 50 };
         try {
           await Promise.all([
-            consumePerMinuteFeature(requesterUid, "remove_member" as any, limits.perMinute),
-            consumeDailyFeature(requesterUid, "remove_member" as any, limits.perDay)
+            consumePerMinuteFeature(requesterUid, "teams", limits.perMinute),
+            consumeDailyFeature(requesterUid, "teams", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests" });
-              return;
-           }
-           throw rateLimitError;
+           console.warn(`[JURIO-REMOVE-MEMBER] Rate limit gestione team superato per UID ${requesterUid}`);
+           res.status(429).json({ error: "Too Many Requests" });
+           return;
         }
 
         // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
@@ -5603,11 +5636,11 @@ export const deleteTeam = onRequest(
         }
 
         // 3. RATE LIMITING (Fondamentale: previene abusi di cancellazioni massive di team)
-        const limits = { perMinute: 3, perDay: 10 };
+        const limits = JURIO_USAGE_LIMITS.teams?.global ?? { perMinute: 10, perDay: 50 };
         try {
           await Promise.all([
-            consumePerMinuteFeature(requesterUid, "delete_team" as any, limits.perMinute),
-            consumeDailyFeature(requesterUid, "delete_team" as any, limits.perDay)
+            consumePerMinuteFeature(requesterUid, "teams", limits.perMinute),
+            consumeDailyFeature(requesterUid, "teams", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
            const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
@@ -5947,20 +5980,17 @@ export const listCloudFiles = onRequest(
           return;
         }
 
-        // 3. RATE LIMITING (Prevenzione DoS / Chiamate massive alle API dei Cloud Provider)
-        const limits = { perMinute: 15, perDay: 100 };
+        // 3. RATE LIMITING CENTRALIZZATO (Prevenzione DoS / Chiamate massive)
+        const limits = JURIO_USAGE_LIMITS.cloud_files?.global ?? { perMinute: 15, perDay: 100 };
         try {
           await Promise.all([
-            consumePerMinuteFeature(uid, "cloud_files" as any, limits.perMinute),
-            consumeDailyFeature(uid, "cloud_files" as any, limits.perDay)
+            consumePerMinuteFeature(uid, "cloud_files", limits.perMinute),
+            consumeDailyFeature(uid, "cloud_files", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests", details: "Troppe richieste. Riprova più tardi." });
-              return;
-           }
-           throw rateLimitError;
+           console.warn(`[JURIO-CLOUD-LIST] Rate limit superato per utente ${uid}`);
+           res.status(429).json({ error: "Too Many Requests", details: "Troppe richieste. Riprova più tardi." });
+           return;
         }
 
         // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
@@ -6067,20 +6097,17 @@ export const downloadCloudFile = onRequest(
           return;
         }
 
-        // 3. RATE LIMITING (Protezione download massivo di file binari pesanti)
-        const limits = { perMinute: 10, perDay: 50 };
+        // 3. RATE LIMITING CENTRALIZZATO (Protezione download massivo di file binari pesanti)
+        const limits = JURIO_USAGE_LIMITS.cloud_files?.global ?? { perMinute: 10, perDay: 50 };
         try {
           await Promise.all([
-            consumePerMinuteFeature(uid, "cloud_files" as any, limits.perMinute),
-            consumeDailyFeature(uid, "cloud_files" as any, limits.perDay)
+            consumePerMinuteFeature(uid, "cloud_files", limits.perMinute),
+            consumeDailyFeature(uid, "cloud_files", limits.perDay)
           ]);
         } catch (rateLimitError: unknown) {
-           const msg = rateLimitError instanceof Error ? rateLimitError.message : String(rateLimitError);
-           if (msg === "rate_limited" || msg === "quota_exceeded") {
-              res.status(429).json({ error: "Too Many Requests", details: "Troppi download simultanei. Riprova più tardi." });
-              return;
-           }
-           throw rateLimitError;
+           console.warn(`[JURIO-CLOUD-DOWNLOAD] Rate limit superato per utente ${uid}`);
+           res.status(429).json({ error: "Too Many Requests", details: "Troppi download simultanei. Riprova più tardi." });
+           return;
         }
 
         // 4. SANITIZZAZIONE E TYPE-SAFETY INPUT
@@ -6161,6 +6188,150 @@ export const downloadCloudFile = onRequest(
 
         res.status(500).json({ error: "Internal Server Error" });
         return;
+      }
+    });
+  }
+);
+
+// ============================================================================
+// WORD INTEGRATIOM
+// ============================================================================
+
+export const wordAgent = onRequest(
+  { 
+    secrets: ["GOOGLE_GENAI_API_KEY", "OPENAI_API_KEY", "TAVILY_API_KEY"],
+    timeoutSeconds: 300,
+    memory: "1GiB"
+  }, 
+  async (req, res) => {
+    return corsHandlerDomain(req, res, async (): Promise<void> => {
+      // 1. GESTIONE CORS E METODO
+      
+      if (req.method !== "POST") { res.status(405).send("Method Not Allowed"); return; }
+
+      try {
+        // 2. AUTH, SICUREZZA E LIMITI
+        await requireAppCheck(req);
+        const uid = await requireUidFromAuthHeader(req);
+
+        const userSnap = await db.collection("register").doc(uid).get();
+        if (!userSnap.exists) { res.status(404).json({ error: "User not found" }); return; }
+
+        const planId = String(userSnap.data()?.planId ?? "");
+        if (!["prova", "admin", "business", "business_m"].includes(planId)) { 
+          res.status(403).json({ error: "Access denied" }); 
+          return; 
+        }
+
+        const limits = planId === "prova" ? { perMinute: 5, perDay: 20 }
+                     : planId === "business" ? { perMinute: 20, perDay: 200 }
+                     : planId === "business_m" ? { perMinute: 20, perDay: 200 }
+                     : { perMinute: 60, perDay: 10_000 };
+        
+        await Promise.all([
+          consumePerMinuteFeature(uid, req.body.action+"_agent" as any, limits.perMinute),
+          consumeDailyFeature(uid, req.body.action+"_agent" as any, limits.perDay)
+        ]);
+
+        // 3. ESTRAZIONE AZIONE
+        const action = req.body.action;
+        if (!action) {
+          res.status(400).json({ error: "Bad Request", details: "Parametro 'action' mancante." });
+          return;
+        }
+
+        // 4. PREPARAZIONE SSE (Essendo tutte funzioni generative, lo prepariamo a monte)
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+
+        // 5. ROUTING DELLE AZIONI
+        if (action === "research") {
+          // --- AZIONE 1: RICERCA E INSERIMENTO (Il modulo che abbiamo appena costruito) ---
+          const { contesto, promptIndirizzamento, filters } = req.body;
+
+          if (!contesto) throw new Error("Il parametro 'contesto' è obbligatorio per l'azione quote.");
+
+          const flowStream = wordQuoteFlow.stream({
+            contesto,
+            promptIndirizzamento: promptIndirizzamento || "",
+            filters: filters || {},
+            userId: uid
+          });
+
+          for await (const chunk of flowStream.stream) {
+            res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
+          }
+
+          const finalOutput = await flowStream.output;
+          const sanitizedResult = sanitize(finalOutput);
+
+          res.write(`data: ${JSON.stringify({ result: sanitizedResult })}\n\n`);
+          res.write(`data: [DONE]\n\n`);
+          res.end();
+          return;
+
+        } 
+        else if (action === "review") {
+          const { promptIndirizzamento, chunks } = req.body;
+          
+          if (!chunks || !Array.isArray(chunks)) {
+            res.status(400).json({ error: "Per la review serve un array di chunks." });
+            return;
+          }
+
+          try {
+            // Avvio dello stream passando userId corretto
+            const flowStream = wordReviewFlow.stream({ 
+              chunks, 
+              promptIndirizzamento: promptIndirizzamento || "", 
+              userId: uid 
+            });
+
+            // 1. Invio dei chunk di stato in tempo reale al frontend
+            for await (const chunk of flowStream.stream) {
+              res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
+            }
+
+            // 2. Attesa della risoluzione del JSON strutturato (Semafori)
+            const finalOutput = await flowStream.output;
+            const sanitizedResult = sanitize(finalOutput); // Opzionale: usa la tua funzione di pulizia se serve
+
+            // 3. Invio del risultato finale e chiusura
+            res.write(`data: ${JSON.stringify({ result: sanitizedResult })}\n\n`);
+            res.write("data: [DONE]\n\n");
+            res.end();
+
+          } catch (err: any) {
+            console.error("Errore wordReviewFlow streaming:", err);
+            res.write(`data: ${JSON.stringify({ error: { message: err.message } })}\n\n`);
+            res.end();
+          }
+        }
+        else if (action === "drafting") {
+          // --- AZIONE 3: RE-DRAFTING / RISCRITTURA - DA IMPLEMENTARE IN FUTURO ---
+          /*
+          const { testoOriginale, istruzioniRiscrittura } = req.body;
+          const flowStream = wordDraftingFlow.stream({ testo: testoOriginale, istruzioni: istruzioniRiscrittura, userId: uid });
+          // ... logica di streaming analoga ...
+          */
+          throw new Error("Azione 'drafting' in fase di sviluppo.");
+        } 
+        else {
+          // --- FALLBACK AZIONE SCONOSCIUTA ---
+          throw new Error(`Azione '${action}' non supportata da wordAgent.`);
+        }
+
+      } catch (err: any) {
+        const msg = err instanceof Error ? err.message : "Internal error";
+        console.error("ERRORE CRITICO WORD AGENT:", err);
+
+        if (res.headersSent) {
+          res.write(`data: ${JSON.stringify({ error: { message: msg } })}\n\n`);
+          res.end();
+        } else {
+          res.status(500).json({ error: "Process failed", details: msg });
+        }
       }
     });
   }

@@ -40,7 +40,7 @@ export default function ConsulenteLegale() {
             </div>
             <h3 className="text-sm sm:text-base font-medium text-(--color-text) tracking-tight" >Chat Temporanea</h3>
             <p className="text-md text-(--color-muted) font-light leading-relaxed">
-              Per avviare una sessione rapida di ricerca ed elaborazione giurisprudenziale senza salvare dati o cronologia nel cloud.
+               Per avviare un'elaborazione rapida e rispondere in modo rapido a un quesito legale.
             </p>
           </div>
 

@@ -112,10 +112,10 @@ export default function PianiLicenze() {
       {/* SEZIONE 2: Durata e Tariffe */}
       <section className="space-y-4">
         <div>
-          <h2 className="text-base sm:text-lg font-medium text-(--color-text) tracking-tight mb-1.5" >
+          <h2 className="text-base sm:text-lg font-medium text-(--color-text) tracking-tight mb-1.5">
             Durata e Tariffe
           </h2>
-          <p className="text-md  text-(--color-muted) font-light leading-relaxed">
+          <p className="text-md text-(--color-muted) font-light leading-relaxed">
             Tutti i prezzi sono indicati con <strong className="font-semibold text-(--color-text)">IVA inclusa</strong>. È possibile scegliere tra licenza mensile o annuale (con sensibile risparmio sul totale).
           </p>
         </div>
@@ -136,7 +136,7 @@ export default function PianiLicenze() {
                 <td className="py-3.5 px-4 font-bold text-(--color-text)">Essential</td>
                 <td className="py-3.5 px-4">
                   <span className="font-bold text-(--color-text)">12,20 €</span>
-                  <span className="block text-[10px] text-(--color-text) font-medium mt-0.5">Promo 1° mese: 6,10 € (-50%)</span>
+                  <span className="block text-[10px] text-(--color-text) font-medium mt-0.5">Promo lancio: 6,10 € (-50%)</span>
                 </td>
                 <td className="py-3.5 px-4">
                   <span className="font-bold text-(--color-text)">61,00 €</span>
@@ -148,7 +148,7 @@ export default function PianiLicenze() {
                 <td className="py-3.5 px-4 font-bold text-(--color-text)">Business</td>
                 <td className="py-3.5 px-4">
                   <span className="font-bold text-(--color-text)">48,80 €</span>
-                  <span className="block text-[10px] text-(--color-text) font-medium mt-0.5">Promo 1° mese: 24,40 € (-50%)</span>
+                  <span className="block text-[10px] text-(--color-text) font-medium mt-0.5">Promo lancio: 24,40 € (-50%)</span>
                 </td>
                 <td className="py-3.5 px-4">
                   <span className="font-bold text-(--color-text)">244,00 €</span>

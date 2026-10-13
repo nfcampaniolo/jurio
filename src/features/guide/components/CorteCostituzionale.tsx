@@ -90,7 +90,7 @@ export default function CorteCostituzionale() {
       <section className="space-y-2">
         <h3 className="text-base sm:text-lg font-medium text-(--color-text) tracking-tight" >Tipologia di Provvedimenti Catalogati</h3>
         <p className="text-md  text-(--color-muted) font-light leading-relaxed">
-          Il corpus include sentenze di accoglimento, sentenze di rigetto, sentenze interpretative, ordinanze di manifesta inammissibilità o infondatezza e ordinanze di restituzione atti al giudice <em>a quo</em>. Il dettaglio della copertura complessiva è disponibile alla pagina <Link to="/fonti" className="font-bold underline underline-offset-2 text-(--color-text)">/fonti</Link>.
+          Il corpus include sentenze di accoglimento, sentenze di rigetto, sentenze interpretative, ordinanze di manifesta inammissibilità o infondatezza e ordinanze di restituzione atti al giudice <em>a quo</em>. Il dettaglio della copertura complessiva è disponibile alla pagina <Link to="https://jurio.it/fonti" className="font-bold underline underline-offset-2 text-(--color-text)">/fonti</Link>.
         </p>
       </section>
     </div>

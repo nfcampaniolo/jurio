@@ -93,11 +93,11 @@ export const Footer: React.FC = () => {
               Contattaci
             </Link>
 
-            <a href="/fonti" className={linkClasses}>
+            <a href="https://jurio.it/fonti" className={linkClasses}>
               Fonti
             </a>
 
-             <a href="/casi-studio" className={linkClasses}>
+             <a href="https://jurio.it/casi-studio" className={linkClasses}>
               Casi di studio
             </a>
 
@@ -113,15 +113,15 @@ export const Footer: React.FC = () => {
             </span>
 
             {/* Modificati da <Link> ad <a> nativi per puntare ai file statici */}
-            <a href="/privacy" className={linkClasses}>
+            <a href="https://jurio.it/privacy" className={linkClasses}>
               Privacy Policy
             </a>
 
-            <a href="/termini" className={linkClasses}>
+            <a href="https://jurio.it/termini" className={linkClasses}>
               Termini di servizio
             </a>
 
-            <a href="/gdpr" className={linkClasses}>
+            <a href="https://jurio.it/gdpr" className={linkClasses}>
               Trattamento dei dati
             </a>
           </div>

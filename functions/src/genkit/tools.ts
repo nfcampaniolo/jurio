@@ -27,8 +27,7 @@ const RESEARCH_LIMITS = {
   perDay: 200,
 };
 
-const MAX_DB_LIMIT = 12;
-const MAX_DOCTRINE_LIMIT = 8;
+const MAX_DB_LIMIT = 5;
 const MAX_DISTINGUISH_LIMIT = 3;
 const MAX_MANUAL_LIMIT = 2;
 
@@ -477,7 +476,8 @@ export const ricercaFascicoloUtente = ai.defineTool(
       }
 
       const queryVector = await createResearchEmbedding(userId, finalQuery);
-      const safeLimit = getSafeLimit(context?.dbLimit, 10, MAX_DB_LIMIT);
+      
+      const safeLimit = getSafeLimit(context?.dbLimit, 3, MAX_DB_LIMIT);
 
       const ownerQueries: FirebaseFirestore.Query[] = [];
       const ownerBase = db
@@ -799,7 +799,8 @@ export const ricercaDottrina = ai.defineTool(
       }
 
       const queryVector = await createResearchEmbedding(userId, finalQuery);
-      const safeLimit = getSafeLimit(input.limit, 5, MAX_DOCTRINE_LIMIT);
+  
+      const safeLimit = getSafeLimit(input.limit, 3, 5);
 
       let doctrineQuery = db.collection("doctrine") as FirebaseFirestore.Query;
 
@@ -852,14 +853,14 @@ export const ricercaDottrina = ai.defineTool(
             ? data.sourceUrl
             : null;
 
-          const summary = String(data.summary ?? "").slice(0, 2500);
-          const orientamento = String(data.orientamento ?? "").slice(0, 2500);
-          const testo = String(data.testo ?? "").slice(0, 6000);
+          // TAGLIO RADICALE: Ci focalizziamo solo su summary e orientamento (addio al testo grezzo)
+          const summary = String(data.summary ?? "").slice(0, 1000);
+          const orientamento = String(data.orientamento ?? "").slice(0, 1000);
 
-          const contenuto = [summary, orientamento, testo]
+          const contenuto = [summary, orientamento]
             .filter(Boolean)
             .join("\n\n")
-            .slice(0, CFG.MAX_WEB_CHARS);
+            .slice(0, 2000);
 
           return {
             id: doc.id,
@@ -876,13 +877,12 @@ export const ricercaDottrina = ai.defineTool(
             numero_anno: data.numero_anno || "",
             origine: data.origine || "",
             norme_citate: Array.isArray(data.norme_citate)
-              ? data.norme_citate.slice(0, 30)
+              ? data.norme_citate.slice(0, 15)
               : [],
             precedenti_citati: normalizePrecedenti(data.precedenti_citati),
             summary,
             orientamento,
-            testo,
-            contenuto,
+            contenuto, // Contenuto leggero basato unicamente sui campi riassuntivi
             link: sourceUrl,
             url: sourceUrl,
             sourceUrl,

@@ -69,9 +69,9 @@ describe("Guida - InterfacceNavigazione Component Suite", () => {
     ).toBeInTheDocument();
 
     // Link di servizio dell'Header
-    const linkAssistenza = screen.getByRole("link", { name: "Assistenza (/contatti)" });
-    const linkNotifiche = screen.getByRole("link", { name: "Centro Notifiche (/notifiche)" });
-    const linkGuida = screen.getByRole("link", { name: "Guida Utente (/guida)" });
+    const linkAssistenza = screen.getByRole("link", { name: /Assistenza \(\/contatti\)/i });
+    const linkNotifiche = screen.getByRole("link", { name: /Centro Notifiche \(\/notifiche\)/i });
+    const linkGuida = screen.getByRole("link", { name: /Guida Utente \(\/guida\)/i });
 
     expect(linkAssistenza).toHaveAttribute("href", "/contatti");
     expect(linkNotifiche).toHaveAttribute("href", "/notifiche");
@@ -99,11 +99,11 @@ describe("Guida - InterfacceNavigazione Component Suite", () => {
     ).toBeInTheDocument();
 
     // Link nel Footer
-    expect(screen.getByRole("link", { name: "/fonti" })).toHaveAttribute("href", "/fonti");
-    expect(screen.getByRole("link", { name: "/casi-studio" })).toHaveAttribute("href", "/casi-studio");
-    expect(screen.getByRole("link", { name: "Privacy Policy (/privacy)" })).toHaveAttribute("href", "/privacy");
-    expect(screen.getByRole("link", { name: "Termini di Servizio (/termini)" })).toHaveAttribute("href", "/termini");
-    expect(screen.getByRole("link", { name: "/gdpr" })).toHaveAttribute("href", "/gdpr");
+    expect(screen.getByRole("link", { name: /\/fonti/i })).toHaveAttribute("href", "https://jurio.it/fonti");
+    expect(screen.getByRole("link", { name: /\/casi-studio/i })).toHaveAttribute("href", "https://jurio.it/casi-studio");
+    expect(screen.getByRole("link", { name: /Privacy Policy \(\/privacy\)/i })).toHaveAttribute("href", "https://jurio.it/privacy");
+    expect(screen.getByRole("link", { name: /Termini di Servizio \(\/termini\)/i })).toHaveAttribute("href", "https://jurio.it/termini");
+    expect(screen.getByRole("link", { name: /\/gdpr/i })).toHaveAttribute("href", "https://jurio.it/gdpr");
   });
 
   test("renderizza le immagini illustrative e le didascalie esplicative", () => {

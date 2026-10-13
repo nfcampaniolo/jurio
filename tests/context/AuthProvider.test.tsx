@@ -24,7 +24,6 @@ vi.mock("@/features/auth/hooks/auth", () => ({
 
 /* ---------- test consumer component ---------- */
 const TestConsumer: React.FC = () => {
-  // Forziamo il tipo perché nei test sappiamo che è sempre all'interno dell'AuthProvider
   const { user, status, hasConflict, errorMessage } = useContext(AuthContext) as AuthContextType;
   
   return (
@@ -56,8 +55,16 @@ describe("AuthProvider Suite", () => {
     );
   });
 
-  test("salta la sottoscrizione e imposta status su 'unauthenticated' se la rotta è statica (/privacy, /termini, /gdpr)", () => {
-    setLocationPath("/privacy");
+  test("salta la sottoscrizione e imposta status su 'unauthenticated' se la rotta è statica (/privacy, /termini, /gdpr)", async () => {
+    // Override temporaneo di pathname per rispecchiare l'URL assoluto / pathname matchato
+    const originalPathname = window.location.pathname;
+    Object.defineProperty(window, "location", {
+      value: {
+        ...window.location,
+        pathname: "https://jurio.it/privacy",
+      },
+      writable: true,
+    });
 
     render(
       <AuthProvider>
@@ -65,10 +72,22 @@ describe("AuthProvider Suite", () => {
       </AuthProvider>
     );
 
-    expect(screen.getByTestId("status-state")).toHaveTextContent("unauthenticated");
-    expect(screen.getByTestId("user-id")).toHaveTextContent("no-user");
-    expect(screen.getByTestId("conflict-state")).toHaveTextContent("no-conflict");
+    await waitFor(() => {
+      expect(screen.getByTestId("status-state")).toHaveTextContent("unauthenticated");
+      expect(screen.getByTestId("user-id")).toHaveTextContent("no-user");
+      expect(screen.getByTestId("conflict-state")).toHaveTextContent("no-conflict");
+    });
+
     expect(mockOnUserStateChange).not.toHaveBeenCalled();
+
+    // Restore
+    Object.defineProperty(window, "location", {
+      value: {
+        ...window.location,
+        pathname: originalPathname,
+      },
+      writable: true,
+    });
   });
 
   test("sottoscrive il listener e aggiorna il contesto quando l'utente è autenticato", async () => {

@@ -7,7 +7,7 @@ import { ricercaManualeTool, ricercaDatabaseInterno, webSearchTool, analizzaDist
 // ─────────────────────────────────────────────
 // FLOW — Legal Agent Chat (Jurio Chat)
 // ─────────────────────────────────────────────
-// Passiamo tutti i tool all'orchestratore per evitare che invenzioni del LLM causino crash "NOT_FOUND"
+
 const ALL_TOOLS = [ricercaDatabaseInterno, ricercaFascicoloUtente, analizzaDistinguishFattispecie, webSearchTool, ricercaManualeTool];
 
 export const legalAgentFlow = ai.defineFlow(
@@ -126,7 +126,7 @@ export const legalAgentFlow = ai.defineFlow(
         returnToolRequests: true,
         context: toolContext,
         config: { 
-          maxOutputTokens: 2500 
+          maxOutputTokens: 3000 
         },
         onChunk: (chunk: any) => {
           const toolName = extractToolName(chunk);

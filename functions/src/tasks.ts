@@ -75,26 +75,25 @@ export async function computeAndSaveWeeklyStats() {
     coll.where("materia", "==", "Civile").count().get(),
   ]);
 
-  // 2. Variabili per raccogliere i risultati dinamici
-  const sezioniCiviliStats: Record<string, number> = {};
-  const sezioniPenaliStats: Record<string, number> = {};
-  const yearStats: Record<string, number> = {};
-
-  // 3. Prepariamo le Promise per le Sezioni Civili
+  // 2. Prepariamo le Promise per le Sezioni Civili (restituendo coppia chiave-valore)
   const sezioniCiviliPromises = SEZIONI_CASSAZIONE_CIVILE.map(async (sezione) => {
     const snap = await coll.where("sezione", "==", sezione).count().get();
-    sezioniCiviliStats[sezione] = snap.data().count;
+    return { sezione, count: snap.data().count };
   });
 
-  // 4. Prepariamo le Promise per le Sezioni Penali
+  // 3. Prepariamo le Promise per le Sezioni Penali
   const sezioniPenaliPromises = SEZIONI_CASSAZIONE_PENALE.map(async (sezione) => {
     const snap = await coll.where("sezione", "==", sezione).count().get();
-    sezioniPenaliStats[sezione] = snap.data().count;
+    return { sezione, count: snap.data().count };
   });
 
-  // 5. Prepariamo le Promise per gli Anni (Ultimi 5)
+  // 4. Prepariamo le Promise per gli Anni (Ultimi 11 anni, coerente con l'array)
   const currentYear = new Date().getFullYear();
-  const yearsToCount = [currentYear, currentYear - 1, currentYear - 2, currentYear - 3, currentYear - 4, currentYear - 5, currentYear - 6, currentYear - 7, currentYear - 8, currentYear - 9, currentYear - 10];
+  const yearsToCount = [
+    currentYear, currentYear - 1, currentYear - 2, currentYear - 3, 
+    currentYear - 4, currentYear - 5, currentYear - 6, currentYear - 7, 
+    currentYear - 8, currentYear - 9, currentYear - 10
+  ];
 
   const yearPromises = yearsToCount.map(async (year) => {
     const startOfYear = new Date(`${year}-01-01T00:00:00Z`);
@@ -104,22 +103,38 @@ export async function computeAndSaveWeeklyStats() {
       .where("dataSentenza", "<=", endOfYear)
       .count()
       .get();
-    yearStats[year.toString()] = snap.data().count;
+    return { year: year.toString(), count: snap.data().count };
   });
 
-  // 6. Eseguiamo tutte le Promise dinamiche in un colpo solo (Massima velocità)
-  await Promise.all([
-    ...sezioniCiviliPromises,
-    ...sezioniPenaliPromises,
-    ...yearPromises,
+  // 5. Eseguiamo tutte le Promise in parallelo preservando l'ordine posizionale
+  const [sezioniCiviliResults, sezioniPenaliResults, yearResults] = await Promise.all([
+    Promise.all(sezioniCiviliPromises),
+    Promise.all(sezioniPenaliPromises),
+    Promise.all(yearPromises),
   ]);
+
+  // 6. Ricostruiamo gli oggetti finali rispettando rigorosamente l'ordine degli array originali
+  const sezioniCiviliStats: Record<string, number> = {};
+  for (const item of sezioniCiviliResults) {
+    sezioniCiviliStats[item.sezione] = item.count;
+  }
+
+  const sezioniPenaliStats: Record<string, number> = {};
+  for (const item of sezioniPenaliResults) {
+    sezioniPenaliStats[item.sezione] = item.count;
+  }
+
+  const yearStats: Record<string, number> = {};
+  for (const item of yearResults) {
+    yearStats[item.year] = item.count;
+  }
 
   // 7. Costruiamo l'oggetto finale
   const weeklyStats = {
-    type: "weekly_sentences_stats", // Utile per filtrare la collection "meta"
+    type: "weekly_sentences_stats",
     createdAt: new Date(),
     totale_documenti: totalSnap.data().count,
-    totale_completi: totalSnap.data().count, // Sostituisci se hai un flag specifico per i "completi"
+    totale_completi: totalSnap.data().count,
     per_tipo: {
       sentenza: sentenzaSnap.data().count,
       ordinanza: ordinanzaSnap.data().count,
@@ -141,7 +156,7 @@ export async function computeAndSaveWeeklyStats() {
     per_anno: yearStats,
   };
 
-  // 8. Salviamo aggiungendo un nuovo documento nella collection "meta"
+  // 8. Salviamo aggiungendo un nuovo documento nella collection "metadocument"
   await db.collection("metadocument").add(weeklyStats);
 
   return weeklyStats;

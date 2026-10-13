@@ -106,7 +106,7 @@ describe("Guida - PianiLicenze Component Suite", () => {
     // Riga Essential
     expect(screen.getByRole("cell", { name: "Essential" })).toBeInTheDocument();
     expect(screen.getByText("12,20 €")).toBeInTheDocument();
-    expect(screen.getByText("Promo 1° mese: 6,10 € (-50%)")).toBeInTheDocument();
+    expect(screen.getByText("Promo lancio: 6,10 € (-50%)")).toBeInTheDocument();
     expect(screen.getByText("61,00 €")).toBeInTheDocument();
     expect(screen.getByText("Listino 146,40 €")).toBeInTheDocument();
     expect(screen.getByText("Sconto del 58% su base annua")).toBeInTheDocument();
@@ -114,7 +114,7 @@ describe("Guida - PianiLicenze Component Suite", () => {
     // Riga Business
     expect(screen.getByRole("cell", { name: "Business" })).toBeInTheDocument();
     expect(screen.getByText("48,80 €")).toBeInTheDocument();
-    expect(screen.getByText("Promo 1° mese: 24,40 € (-50%)")).toBeInTheDocument();
+    expect(screen.getByText("Promo lancio: 24,40 € (-50%)")).toBeInTheDocument();
     expect(screen.getByText("244,00 €")).toBeInTheDocument();
     expect(screen.getByText("Listino 585,60 €")).toBeInTheDocument();
     expect(screen.getByText("Risparmio dedicato sul canone complessivo")).toBeInTheDocument();

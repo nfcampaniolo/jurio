@@ -108,9 +108,9 @@ describe("Guida - CorteCostituzionale Component Suite", () => {
       screen.getByText(/sentenze di accoglimento, sentenze di rigetto, sentenze interpretative/i)
     ).toBeInTheDocument();
 
-    const linkFonti = screen.getByRole("link", { name: "/fonti" });
+    const linkFonti = screen.getByRole("link", { name: /\/fonti/i });
     expect(linkFonti).toBeInTheDocument();
-    expect(linkFonti).toHaveAttribute("href", "/fonti");
+    expect(linkFonti).toHaveAttribute("href", "https://jurio.it/fonti");
   });
 
   test("renderizza l'immagine illustrativa e la didascalia esplicativa", () => {

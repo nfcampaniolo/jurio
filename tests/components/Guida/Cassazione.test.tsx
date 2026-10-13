@@ -68,7 +68,7 @@ describe("Guida - Cassazione Component Suite", () => {
     // Sezioni Unite
     expect(screen.getByText("Sezioni Unite Civili:")).toBeInTheDocument();
     expect(
-      screen.getByText(/Risolvono contrasti interpretativi tra le sezioni ordinarie/i)
+      screen.getByText(/Risolvono contrasti interpretativi tra le sezioni ordinarie e decidono questioni di massima/i)
     ).toBeInTheDocument();
   });
 
@@ -109,9 +109,9 @@ describe("Guida - Cassazione Component Suite", () => {
       })
     ).toBeInTheDocument();
 
-    const linkFonti = screen.getByRole("link", { name: "/fonti" });
+    const linkFonti = screen.getByRole("link", { name: /\/fonti/i });
     expect(linkFonti).toBeInTheDocument();
-    expect(linkFonti).toHaveAttribute("href", "/fonti");
+    expect(linkFonti).toHaveAttribute("href", "https://jurio.it/fonti");
   });
 
   test("renderizza l'immagine illustrativa e la didascalia esplicativa", () => {

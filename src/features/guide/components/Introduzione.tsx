@@ -79,7 +79,7 @@ export default function Introduzione() {
               <li className="flex items-start">
                 <span className="text-(--color-text) mr-2 font-bold">•</span>
                 <span>
-                  Migliaia di pronunce dalle tre principali fonti giurisprudenziali italiane (Corte di Cassazione, Consiglio di Stato e Corte Costituzionale); il dato di copertura aggiornato è indicato nella sezione <Link to="/fonti" className="font-bold underline underline-offset-2 text-(--color-text)">/fonti</Link>.
+                  Migliaia di pronunce dalle tre principali fonti giurisprudenziali italiane (Corte di Cassazione, Consiglio di Stato e Corte Costituzionale); il dato di copertura aggiornato è indicato nella sezione <Link to="https://jurio.it/fonti" className="font-bold underline underline-offset-2 text-(--color-text)">/fonti</Link>.
                 </span>
               </li>
               <li className="flex items-start">

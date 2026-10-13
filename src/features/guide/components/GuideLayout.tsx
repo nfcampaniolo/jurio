@@ -29,7 +29,7 @@ export default function GuideLayout({ children, currentSlug }: GuideLayoutProps)
         <button 
           type="button"
           onClick={() => setIsMobileMenuOpen(prev => !prev)}
-          className="px-3 py-1.5 text-md font-bold uppercase tracking-widest bg-(--color-bg) border border-(--color-border) rounded-md hover:border-(--color-text) transition-colors outline-none cursor-pointer shadow-xs"
+          className="px-3 py-1.5 tracking-widest bg-(--color-bg) border border-(--color-border) rounded-md hover:border-(--color-text) transition-colors outline-none cursor-pointer shadow-xs"
         >
           {isMobileMenuOpen ? 'Chiudi' : 'Menu'}
         </button>
@@ -41,7 +41,7 @@ export default function GuideLayout({ children, currentSlug }: GuideLayoutProps)
           role="button"
           tabIndex={0}
           aria-label="Chiudi menu"
-          className="fixed inset-0 bg-black/40 z-30 md:hidden mt-14.25 backdrop-blur-xs outline-none" 
+          className="fixed inset-0 bg-black/40 md:hidden mt-14.25 backdrop-blur-xs outline-none" 
           onClick={closeMobileMenu}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {

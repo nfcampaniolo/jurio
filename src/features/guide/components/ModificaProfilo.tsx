@@ -110,7 +110,7 @@ export default function ModificaProfilo() {
           <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
           <h3 className="text-md font-bold uppercase tracking-wider text-(--color-text) mt-1">Trasparenza e Note Legali</h3>
           <p className="text-md text-(--color-muted) font-light leading-relaxed">
-            Sono sempre consultabili a fondo pagina i collegamenti diretti alla <Link to="/privacy" className="font-bold underline underline-offset-2 text-(--color-text)">Privacy Policy</Link>, ai <Link to="/termini" className="font-bold underline underline-offset-2 text-(--color-text)">Termini di servizio</Link> e all'informativa estesa sul <Link to="/gdpr" className="font-bold underline underline-offset-2 text-(--color-text)">Trattamento dati (GDPR)</Link>.
+            Sono sempre consultabili a fondo pagina i collegamenti diretti alla <Link to="https://jurio.it/privacy" className="font-bold underline underline-offset-2 text-(--color-text)">Privacy Policy</Link>, ai <Link to="https://jurio.it/termini" className="font-bold underline underline-offset-2 text-(--color-text)">Termini di servizio</Link> e all'informativa estesa sul <Link to="https://jurio.it/gdpr" className="font-bold underline underline-offset-2 text-(--color-text)">Trattamento dati (GDPR)</Link>.
           </p>
           <div className="flex items-center gap-3 pt-1 text-md">
             <span className="font-bold uppercase tracking-wider text-(--color-text) text-[10px]">Pulsante Salva:</span>

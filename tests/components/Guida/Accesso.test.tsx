@@ -78,16 +78,15 @@ describe("Guida - Accesso Component Suite", () => {
     ).toBeInTheDocument();
 
     expect(
-      screen.getByRole("heading", { name: "Dati di Profilo Richiesti", level: 3 })
+      screen.getByText("Dati di Profilo Richiesti")
     ).toBeInTheDocument();
 
     // Campi e badge
     expect(screen.getByRole("heading", { name: "Nome e Cognome", level: 4 })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Numero di Telefono", level: 4 })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Categoria Professionale", level: 4 })).toBeInTheDocument();
 
     const requiredBadges = screen.getAllByText("Obbligatorio");
-    expect(requiredBadges).toHaveLength(2);
+    expect(requiredBadges).toHaveLength(1);
 
     expect(screen.getByText("Opzionale")).toBeInTheDocument();
   });
@@ -95,13 +94,13 @@ describe("Guida - Accesso Component Suite", () => {
   test("renderizza i link normativi e legali ai Termini di Servizio, Privacy Policy e GDPR", () => {
     render(<Accesso />);
 
-    const linkTermini = screen.getByRole("link", { name: "/termini" });
-    const linkPrivacy = screen.getByRole("link", { name: "/privacy" });
-    const linkGdpr = screen.getByRole("link", { name: "/gdpr" });
+    const linkTermini = screen.getByRole("link", { name: /\/termini/i });
+    const linkPrivacy = screen.getByRole("link", { name: /\/privacy/i });
+    const linkGdpr = screen.getByRole("link", { name: /\/gdpr/i });
 
-    expect(linkTermini).toHaveAttribute("href", "/termini");
-    expect(linkPrivacy).toHaveAttribute("href", "/privacy");
-    expect(linkGdpr).toHaveAttribute("href", "/gdpr");
+    expect(linkTermini).toHaveAttribute("href", "https://jurio.it/termini");
+    expect(linkPrivacy).toHaveAttribute("href", "https://jurio.it/privacy");
+    expect(linkGdpr).toHaveAttribute("href", "https://jurio.it/gdpr");
   });
 
   test("renderizza le immagini illustrative e le didascalie esplicative", () => {
@@ -114,10 +113,10 @@ describe("Guida - Accesso Component Suite", () => {
     expect(images[1]).toHaveAttribute("src", "https://jurio.it/guida-image/registrati.webp");
 
     expect(
-      screen.getByText(/Figura 1: Schermata di autenticazione con opzione Single Sign-On/i)
+      screen.getByText(/Figura 1: Schermata di autenticazione con opzione Single Sign-On e recupero credenziali/i)
     ).toBeInTheDocument();
     expect(
-      screen.getByText(/Figura 2: Modulo di iscrizione con campi anagrafici/i)
+      screen.getByText(/Figura 2: Modulo di iscrizione con campi anagrafici, sicurezza e consensi di legge/i)
     ).toBeInTheDocument();
   });
 });

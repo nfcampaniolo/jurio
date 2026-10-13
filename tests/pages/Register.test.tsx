@@ -88,8 +88,8 @@ vi.mock("@/interfaces/interfaces", () => ({
     { value: "altro", label: "Altro" },
   ],
   consentItems: [
-    { key: "privacy", label: "Informativa sulla Privacy", required: true, link: "/privacy" },
-    { key: "terms", label: "Termini e Condizioni", required: true, link: "/termini" },
+    { key: "privacy", label: "Informativa sulla Privacy", required: true, link: "https://jurio.it/privacy" },
+    { key: "terms", label: "Termini e Condizioni", required: true, link: "https://jurio.it/termini" },
   ],
 }));
 

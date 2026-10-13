@@ -14,19 +14,19 @@ describe("AdminFooterLinks", () => {
     // Link: Privacy
     const privacyLink = screen.getByRole("link", { name: "Privacy" });
     expect(privacyLink).toBeInTheDocument();
-    expect(privacyLink).toHaveAttribute("href", "/privacy");
+    expect(privacyLink).toHaveAttribute("href", "https://jurio.it/privacy");
     expect(privacyLink).toHaveClass("hover:underline");
 
     // Link: Termini
     const terminiLink = screen.getByRole("link", { name: "Termini" });
     expect(terminiLink).toBeInTheDocument();
-    expect(terminiLink).toHaveAttribute("href", "/termini");
+    expect(terminiLink).toHaveAttribute("href", "https://jurio.it/termini");
     expect(terminiLink).toHaveClass("hover:underline");
 
     // Link: Trattamento dati
     const gdprLink = screen.getByRole("link", { name: "Trattamento dati" });
     expect(gdprLink).toBeInTheDocument();
-    expect(gdprLink).toHaveAttribute("href", "/gdpr");
+    expect(gdprLink).toHaveAttribute("href", "https://jurio.it/gdpr");
     expect(gdprLink).toHaveClass("hover:underline");
 
     // Verifica il numero complessivo di link

@@ -187,13 +187,13 @@ export const EditProfile: React.FC = () => {
           className="mt-8 flex justify-center gap-6 text-xs text-(--color-muted) font-light uppercase tracking-widest"
           variants={fadeUp}
         >
-          <a href="/privacy" className="hover:text-(--color-text) transition-colors underline underline-offset-2">
+          <a href="https://jurio.it/privacy" className="hover:text-(--color-text) transition-colors underline underline-offset-2">
             Privacy
           </a>
-          <a href="/termini" className="hover:text-(--color-text) transition-colors underline underline-offset-2">
+          <a href="https://jurio.it/termini" className="hover:text-(--color-text) transition-colors underline underline-offset-2">
             Termini
           </a>
-          <a href="/gdpr" className="hover:text-(--color-text) transition-colors underline underline-offset-2">
+          <a href="https://jurio.it/gdpr" className="hover:text-(--color-text) transition-colors underline underline-offset-2">
             Trattamento dati
           </a>
         </motion.div>

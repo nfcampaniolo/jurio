@@ -197,9 +197,9 @@ describe("EditProfile Page Suite", () => {
     expect(screen.getByTestId("edit-profile-form")).toBeInTheDocument();
     expect(screen.getByTestId("edit-profile-consents")).toBeInTheDocument();
 
-    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");
-    expect(screen.getByRole("link", { name: "Termini" })).toHaveAttribute("href", "/termini");
-    expect(screen.getByRole("link", { name: "Trattamento dati" })).toHaveAttribute("href", "/gdpr");
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "https://jurio.it/privacy");
+    expect(screen.getByRole("link", { name: "Termini" })).toHaveAttribute("href", "https://jurio.it/termini");
+    expect(screen.getByRole("link", { name: "Trattamento dati" })).toHaveAttribute("href", "https://jurio.it/gdpr");
   });
 
   test("gestisce la navigazione indietro e il pulsante annulla", () => {

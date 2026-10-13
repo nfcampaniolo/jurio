@@ -157,7 +157,7 @@ export default function Cassazione() {
       <section className="space-y-2">
         <h3 className="text-base sm:text-lg font-medium text-(--color-text) tracking-tight" >Criteri di Indicizzazione dei Provvedimenti</h3>
         <p className="text-md  text-(--color-muted) font-light leading-relaxed">
-          Tutti i depositi vengono catalogati per <strong className="font-semibold text-(--color-text)">Organo e Sezione</strong>, <strong className="font-semibold text-(--color-text)">Tipologia di Atto</strong> (sentenza, ordinanza, decreto) e <strong className="font-semibold text-(--color-text)">Materia/Profilo Giuridico</strong>. I dati di copertura aggiornati in tempo reale sono consultabili alla pagina <Link to="/fonti" className="font-bold underline underline-offset-2 text-(--color-text)">/fonti</Link>.
+          Tutti i depositi vengono catalogati per <strong className="font-semibold text-(--color-text)">Organo e Sezione</strong>, <strong className="font-semibold text-(--color-text)">Tipologia di Atto</strong> (sentenza, ordinanza, decreto) e <strong className="font-semibold text-(--color-text)">Materia/Profilo Giuridico</strong>. I dati di copertura aggiornati in tempo reale sono consultabili alla pagina <Link to="https://jurio.it/fonti" className="font-bold underline underline-offset-2 text-(--color-text)">/fonti</Link>.
         </p>
       </section>
     </div>

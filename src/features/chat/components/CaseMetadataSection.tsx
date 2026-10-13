@@ -124,7 +124,7 @@ export const CaseMetadataSection: React.FC<CaseMetadataSectionProps> = ({
           className="flex items-center gap-1.5 hover:text-(--color-text) transition-colors text-left outline-none"
         >
           <Tag size={12} className="opacity-70" /> 
-          <span className="font-bold text-[10px] uppercase tracking-widest text-(--color-text)">Info sul caso</span>
+          <span className="font-bold text-[10px] text-(--color-text)">Info sul caso</span>
           {isReadOnly && (
             <span className="inline-flex items-center gap-1 ml-1 text-[9px] px-1.5 py-0.2 bg-(--color-surface) border border-(--color-border) rounded-sm text-(--color-muted)">
               <Lock size={9} /> Sola lettura

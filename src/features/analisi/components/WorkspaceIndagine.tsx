@@ -1,5 +1,3 @@
-// src/features/analisi/components/WorkspaceIndagine.tsx
-
 import React, { useState, useRef, useEffect } from "react";
 import { useDeepAnalysisSession } from "../hooks/useDeepAnalysis";
 import { ReportSintesi } from "./ReportSintesi";
@@ -7,6 +5,7 @@ import { ExecutionLogModal, type LogStep } from "./ExecutionLogModal";
 import { WorkspaceHeader } from "./WorkspaceHeader";
 import { DraftPhase } from "./DraftPhase";
 import { ReviewPhase } from "./ReviewPhase";
+import { AccessDenied } from "@/shared/components/AccessDenied";
 import type { AttachedDocument } from "@/interfaces/interfaces";
 import type { DeepAnalysisConfig, PrecedenteReperito } from "../hooks/types";
 
@@ -37,7 +36,8 @@ export const WorkspaceIndagine: React.FC<Props> = ({
     avviaGenerazioneSintesi,
     isLogModalOpen,
     setIsLogModalOpen,
-    isCompleted
+    isCompleted,
+    isAccessDenied
   } = useDeepAnalysisSession(sessioneId);
 
   const [titoloLocale, setTitoloLocale] = useState<string | null>(null);
@@ -158,7 +158,6 @@ export const WorkspaceIndagine: React.FC<Props> = ({
     const fontiFavOld = activeSession?.mappaDialettica?.orientamentoFavorevole?.fonti || [];
     const fontiContOld = activeSession?.mappaDialettica?.orientamentoContrario?.fonti || [];
     
-    // Creiamo un Set con gli ID già presenti prima dell'affondo
     const oldIds = new Set([
       ...fontiFavOld.map((f: { id: string }) => f.id),
       ...fontiContOld.map((f: { id: string }) => f.id)
@@ -176,7 +175,6 @@ export const WorkspaceIndagine: React.FC<Props> = ({
       const fontiFavNew = mappaAggiornata?.orientamentoFavorevole?.fonti || [];
       const fontiContNew = mappaAggiornata?.orientamentoContrario?.fonti || [];
 
-      // Calcoliamo esattamente quante nuove fonti hanno un ID inedito
       const tutteLeNuoveFonti = [...fontiFavNew, ...fontiContNew];
       const fontiEffettivamenteNuove = tutteLeNuoveFonti.filter((f: { id: string }) => !oldIds.has(f.id));
       const aggiunte = fontiEffettivamenteNuove.length;
@@ -217,6 +215,9 @@ export const WorkspaceIndagine: React.FC<Props> = ({
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden relative print:h-auto print:overflow-visible print:block">
+      {/* 🛡️ Access Gate attivabile in caso di 401/403 o permessi negati */}
+      {isAccessDenied && <AccessDenied />}
+
       <ExecutionLogModal
         isOpen={isLogModalOpen}
         title={logModalTitle}
@@ -263,9 +264,9 @@ export const WorkspaceIndagine: React.FC<Props> = ({
             />
           )}
 
-            {((activeSession?.status === "completed" || isCompleted) && activeSession?.sintesiStrategica) && (
-              <ReportSintesi session={activeSession} />
-            )}
+          {((activeSession?.status === "completed" || isCompleted) && activeSession?.sintesiStrategica) && (
+            <ReportSintesi session={activeSession} />
+          )}
         </div>
       </div>
     </div>

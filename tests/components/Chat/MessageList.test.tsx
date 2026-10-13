@@ -34,10 +34,12 @@ vi.mock("@/shared/components/Typewriter", () => ({
   Typewriter: ({
     text,
     animate,
+    isStreaming,
     onComplete,
   }: {
     text: string;
     animate: boolean;
+    isStreaming?: boolean;
     onComplete?: () => void;
   }) => {
     const onCompleteRef = React.useRef(onComplete);
@@ -48,7 +50,11 @@ vi.mock("@/shared/components/Typewriter", () => ({
     }, []);
 
     return (
-      <div data-testid="typewriter" data-animate={animate ? "true" : "false"}>
+      <div 
+        data-testid="typewriter" 
+        data-animate={animate ? "true" : "false"}
+        data-is-streaming={isStreaming ? "true" : "false"}
+      >
         {text}
       </div>
     );
@@ -88,7 +94,7 @@ describe("MessageList", () => {
 
     expect(screen.getByTestId("icon-scale")).toBeInTheDocument();
     expect(
-      screen.getByText("Inizia descrivendo la fattispecie o ponendo una domanda giuridica.")
+      screen.getByText("Inizia descrivendo la fattispecie o ponendo un quesito giuridico.")
     ).toBeInTheDocument();
   });
 
@@ -147,7 +153,7 @@ describe("MessageList", () => {
     expect(screen.getByText("Ricerca giurisprudenza in corso...")).toBeInTheDocument();
     expect(screen.queryByTestId("typewriter")).not.toBeInTheDocument();
 
-    // 2. Fallback su "Elaborazione in corso..." se agentStatusText è vuoto
+    // 2. Fallback su "Consultazione archivi in corso..." se agentStatusText è vuoto
     rerender(
       <MessageList
         {...defaultProps}
@@ -157,7 +163,7 @@ describe("MessageList", () => {
       />
     );
 
-    expect(screen.getByText("Elaborazione in corso...")).toBeInTheDocument();
+    expect(screen.getByText("Consultazione archivi in corso...")).toBeInTheDocument();
   });
 
   test("disabilita animazione Typewriter per messaggi storici o non ultimi", () => {
@@ -216,7 +222,7 @@ describe("MessageList", () => {
     expect(screen.getByTestId("icon-globe")).toBeInTheDocument();
 
     expect(
-      screen.getByText(/Cass\. Civ\.:\s*Ordinanza 1024\/2026/)
+      screen.getByText("Cass. Civ.: Ordinanza 1024/2026")
     ).toBeInTheDocument();
     expect(screen.getByTestId("icon-book-open")).toBeInTheDocument();
 
@@ -241,13 +247,13 @@ describe("MessageList", () => {
     const fallbackSources: Source[] = [
       // Web search con solo 'fonte'
       { _type: "web_search", fonte: "Altalex", _id_interno: "id-altalex" } as Source,
-      // Web search senza fonte specifica -> 'Web'
+      // Web search senza fonte specifica -> 'Fonte Web'
       { _type: "web_search", link: "https://example.com" } as Source,
-      // Giurisprudenza con solo numero_sentenza senza organo
+      // Giurisprudenza con solo numero_sentenza senza organo -> 'Sent. n. 5544/2025'
       { documento_id: "doc-sent-only", numero_sentenza: "5544/2025" } as Source,
-      // Giurisprudenza con organo_giudicante e numero_sentenza
+      // Giurisprudenza con organo_giudicante e numero_sentenza -> 'CdS: n. 123'
       { documento_id: "doc-sent-organo", organo_giudicante: "CdS", numero_sentenza: "123" } as Source,
-      // Giurisprudenza senza identificativo né numero
+      // Giurisprudenza senza identificativo né numero -> 'Documento'
       { documento_id: "doc-empty-title" } as Source,
     ];
 
@@ -261,8 +267,9 @@ describe("MessageList", () => {
     render(<MessageList {...defaultProps} messages={[message]} />);
 
     expect(screen.getByText("Altalex")).toBeInTheDocument();
-    expect(screen.getByText("Web")).toBeInTheDocument();
+    expect(screen.getByText("Fonte Web")).toBeInTheDocument();
     expect(screen.getByText("Sent. n. 5544/2025")).toBeInTheDocument();
     expect(screen.getByText("CdS: n. 123")).toBeInTheDocument();
+    expect(screen.getByText("Documento")).toBeInTheDocument();
   });
 });

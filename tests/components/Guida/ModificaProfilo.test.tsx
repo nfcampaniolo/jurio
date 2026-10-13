@@ -131,9 +131,9 @@ describe("Guida - ModificaProfilo Component Suite", () => {
     const linkTermini = screen.getByRole("link", { name: "Termini di servizio" });
     const linkGdpr = screen.getByRole("link", { name: "Trattamento dati (GDPR)" });
 
-    expect(linkPrivacy).toHaveAttribute("href", "/privacy");
-    expect(linkTermini).toHaveAttribute("href", "/termini");
-    expect(linkGdpr).toHaveAttribute("href", "/gdpr");
+    expect(linkPrivacy).toHaveAttribute("href", "https://jurio.it/privacy");
+    expect(linkTermini).toHaveAttribute("href", "https://jurio.it/termini");
+    expect(linkGdpr).toHaveAttribute("href", "https://jurio.it/gdpr");
 
     // Azioni salva / annulla
     expect(screen.getByText("Pulsante Salva:")).toBeInTheDocument();

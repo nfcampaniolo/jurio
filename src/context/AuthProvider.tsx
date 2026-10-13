@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { AuthContext } from "./AuthContext";
 
 type FirebaseUser = import("firebase/auth").User;
-const STATIC_ROUTES = new Set(["/privacy", "/termini", "/gdpr"]);
+const STATIC_ROUTES = new Set(["https://jurio.it/privacy", "https://jurio.it/termini", "https://jurio.it/gdpr"]);
 
 const isInitialStaticRoute = () => {
   if (typeof window === "undefined") return false;

@@ -239,9 +239,9 @@ describe("Profile Page Suite", () => {
     expect(screen.getByTestId("upload-sentences")).toBeInTheDocument();
     expect(screen.getByTestId("your-document")).toBeInTheDocument();
 
-    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "/privacy");
-    expect(screen.getByRole("link", { name: "Termini" })).toHaveAttribute("href", "/termini");
-    expect(screen.getByRole("link", { name: "Trattamento dati" })).toHaveAttribute("href", "/gdpr");
+    expect(screen.getByRole("link", { name: "Privacy" })).toHaveAttribute("href", "https://jurio.it/privacy");
+    expect(screen.getByRole("link", { name: "Termini" })).toHaveAttribute("href", "https://jurio.it/termini");
+    expect(screen.getByRole("link", { name: "Trattamento dati" })).toHaveAttribute("href", "https://jurio.it/gdpr");
   });
 
   test("gestisce le azioni di routing tramite navigateItem e navigate diretto", () => {

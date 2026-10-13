@@ -27,7 +27,7 @@ export const ThreadSection: React.FC<ThreadSectionProps> = ({
       <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
 
       <div className="p-4 border-b border-(--color-border) flex justify-between items-center bg-(--color-bg)">
-        <h2 className="font-bold text-[10px] uppercase tracking-widest flex items-center gap-2 text-(--color-muted)">
+        <h2 className="font-bold text-[10px] tracking-widest flex items-center gap-2 text-(--color-muted)">
           <MessageSquare size={14} className="opacity-70" /> Conversazioni
           {isReadOnly && (
             <span className="inline-flex items-center gap-1 ml-2 text-[9px] px-1.5 py-0.5 bg-(--color-surface) border border-(--color-border) rounded-sm text-(--color-muted)">

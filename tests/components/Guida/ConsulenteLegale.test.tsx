@@ -43,7 +43,7 @@ describe("Guida - ConsulenteLegale Component Suite", () => {
     expect(screen.getByText("1")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Chat Temporanea", level: 3 })).toBeInTheDocument();
     expect(
-      screen.getByText(/sessione rapida di ricerca ed elaborazione giurisprudenziale senza salvare dati/i)
+      screen.getByText(/Per avviare un'elaborazione rapida e rispondere in modo rapido a un quesito legale/i)
     ).toBeInTheDocument();
 
     expect(screen.getByText("2")).toBeInTheDocument();
@@ -80,7 +80,7 @@ describe("Guida - ConsulenteLegale Component Suite", () => {
     expect(screen.getByText(/caricare e gestire fino a 10 allegati/i)).toBeInTheDocument();
 
     // Box Fonti Citate e Zero Allucinazioni
-    expect(screen.getByText("Pannello delle Fonti Citate e Zero Allucinazioni:")).toBeInTheDocument();
+    expect(screen.getByText(/Pannello delle Fonti Citate e Zero Allucinazioni:/i)).toBeInTheDocument();
     expect(
       screen.getByText(/garantisce la totale verificabilità di ogni affermazione e azzera il rischio di allucinazioni/i)
     ).toBeInTheDocument();

@@ -117,7 +117,6 @@ export function dayKeyRome(d = new Date()): string {
 // ============================================================================
 
 export type JurioFeatureType = 
-  | "semantic" 
   | "research" 
   | "web" 
   | "speech_to_text"
@@ -127,11 +126,121 @@ export type JurioFeatureType =
   | "prompt_enhancer"
   | "admin"
   | "feedback"
-  | "admin_notif"
   | "embedding"
   | "register"
   | "stripe_checkout"
+  | "deep_analysis"
+  | "extract_document"
+  | "apply_coupon"
+  | "teams"
+  | "cloud_files"
   ;
+
+export const JURIO_USAGE_LIMITS = {
+
+  research: {
+    prova: { perMinute: 20, perDay: 100 },
+    admin: { perMinute: 20, perDay: 200 },
+    business: { perMinute: 20, perDay: 200 },
+    business_m: { perMinute: 20, perDay: 200 },
+    personale: { perMinute: 20, perDay: 200 },
+    personale_m: { perMinute: 20, perDay: 200 },
+  },
+
+  extract_document: {
+    prova: { perMinute: 20, perDay: 100 },
+    admin: { perMinute: 20, perDay: 200 },
+    business: { perMinute: 20, perDay: 200 },
+    business_m: { perMinute: 20, perDay: 200 },
+    personale: { perMinute: 20, perDay: 200 },
+    personale_m: { perMinute: 20, perDay: 200 },
+  },
+
+  web: {
+    prova: { perMinute: 10, perDay: 10 },
+    admin: { perMinute: 10, perDay: 20 },
+    business: { perMinute: 10, perDay: 20 },
+    business_m: { perMinute: 10, perDay: 20 },
+  },
+
+  deep_analysis: {
+    prova: { perMinute: 5, perDay: 15 },
+    admin: { perMinute: 5, perDay: 30 },
+    business: { perMinute: 5, perDay: 30 },
+    business_m: { perMinute: 5, perDay: 30 },
+  },
+
+  speech_to_text: {
+    prova: { perMinute: 5, perDay: 20 },
+    admin: { perMinute: 60, perDay: 200 },
+    business: { perMinute: 20, perDay: 200 },
+    business_m: { perMinute: 20, perDay: 200 },
+  },
+
+  reasoning: {
+    prova: { perMinute: 5, perDay: 20 },
+    admin: { perMinute: 120, perDay: 100 },
+    business: { perMinute: 20, perDay: 100 },
+    business_m: { perMinute: 20, perDay: 100 },
+  },
+
+  support_public: {
+    global: { perMinute: 5, perDay: 30 },
+  },
+
+  prompting: {
+    prova: { perMinute: 5, perDay: 20 },
+    admin: { perMinute: 20, perDay: 100 },
+    business: { perMinute: 20, perDay: 100 },
+    business_m: { perMinute: 20, perDay: 100 },
+  },
+
+  prompt_enhancer: {
+    prova: { perMinute: 5, perDay: 20 },
+    admin: { perMinute: 5, perDay: 20 },
+    business: { perMinute: 5, perDay: 20 },
+    business_m: { perMinute: 5, perDay: 20 },
+  },
+
+  admin: {
+    admin: { perMinute: 60, perDay: 500 },
+  },
+
+  feedback: {
+    global: { perMinute: 15, perDay: 100 },
+  },
+
+  embedding: {
+    prova: { perMinute: 30, perDay: 300 },
+    admin: { perMinute: 30, perDay: 300 },
+    business: { perMinute: 30, perDay: 300 },
+    business_m: { perMinute: 30, perDay: 300 },
+  },
+
+  register: {
+    global: { perMinute: 5, perDay: 20 },
+  },
+
+  stripe_checkout: {
+    global: { perMinute: 5, perDay: 100 },
+  },
+
+  apply_coupon: {
+    global: { perMinute: 10, perDay: 30 },
+  },
+
+  teams: {
+    global: { perMinute: 10, perDay: 50 },
+  },
+  
+  cloud_files: {
+    global: { perMinute: 10, perDay: 50 },
+  }
+
+} satisfies Record<
+  JurioFeatureType,
+  Partial<Record<string, { perMinute: number; perDay: number }>>
+>;
 
 export async function consumePerMinuteFeature(uid: string, feature: JurioFeatureType, limit: number): Promise<void> {
   // Isoliamo il contatore dei minuti unendo la chiave temporale alla feature

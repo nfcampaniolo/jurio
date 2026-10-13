@@ -72,15 +72,15 @@ test("renderizza i canali social con link sicuri a schede esterne", () => {
     expect(screen.getByText("Supporto")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Prezzi" })).toHaveAttribute("href", "/prezzi");
     expect(screen.getByRole("link", { name: "Contattaci" })).toHaveAttribute("href", "/contatti");
-    expect(screen.getByRole("link", { name: "Fonti" })).toHaveAttribute("href", "/fonti");
-    expect(screen.getByRole("link", { name: "Casi di studio" })).toHaveAttribute("href", "/casi-studio");
+    expect(screen.getByRole("link", { name: "Fonti" })).toHaveAttribute("href", "https://jurio.it/fonti");
+    expect(screen.getByRole("link", { name: "Casi di studio" })).toHaveAttribute("href", "https://jurio.it/casi-studio");
     expect(screen.getByRole("link", { name: "Guida utente" })).toHaveAttribute("href", "/guida");
 
     // Sezione Legale
     expect(screen.getByText("Legale")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "/privacy");
-    expect(screen.getByRole("link", { name: "Termini di servizio" })).toHaveAttribute("href", "/termini");
-    expect(screen.getByRole("link", { name: "Trattamento dei dati" })).toHaveAttribute("href", "/gdpr");
+    expect(screen.getByRole("link", { name: "Privacy Policy" })).toHaveAttribute("href", "https://jurio.it/privacy");
+    expect(screen.getByRole("link", { name: "Termini di servizio" })).toHaveAttribute("href", "https://jurio.it/termini");
+    expect(screen.getByRole("link", { name: "Trattamento dei dati" })).toHaveAttribute("href", "https://jurio.it/gdpr");
   });
 
   test("renderizza il disclaimer istituzionale e l'anno di copyright corrente", () => {
