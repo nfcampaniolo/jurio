@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { z } from 'genkit';
 import { ai } from "../_config";
 import { internalDatabaseSearch, webSearch } from "../tools/index";
@@ -181,7 +182,7 @@ export function estraiFontiDalRisultato(response: any) {
         items.forEach((fonte: any) => {
           if (!fonte || fonte.error || fonte.messaggio) return; 
           
-          const key = String(fonte.documento_id ?? fonte.id ?? fonte.numero_sentenza ?? Math.random());
+          const key = String(fonte.documento_id ?? fonte.id ?? fonte.numero_sentenza ?? randomUUID());
           if (!fontiUniche.has(key)) fontiUniche.set(key, fonte);
         });
       });

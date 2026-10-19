@@ -139,7 +139,7 @@ export async function executeAdminMergeCategoryTask(req: Request, res: Response)
         }
       }
 
-      bulkWriter.update(d.ref, { sottocategoria: nuovoArray });
+      void bulkWriter.update(d.ref, { sottocategoria: nuovoArray });
       updatedCount++;
     }
 
@@ -156,14 +156,14 @@ export async function executeAdminMergeCategoryTask(req: Request, res: Response)
     if (isSostituzione && updatedCount > 0) {
       const checkNuova = await taxSubcatsRef.where('nome', '==', nuovaOriginale).limit(1).get();
       if (checkNuova.empty) {
-        bulkWriter.set(taxSubcatsRef.doc(), { nome: nuovaOriginale, sentences: updatedCount });
+        void bulkWriter.set(taxSubcatsRef.doc(), { nome: nuovaOriginale, sentences: updatedCount });
       } else {
-        bulkWriter.update(checkNuova.docs[0].ref, { sentences: FieldValue.increment(updatedCount) });
+        void bulkWriter.update(checkNuova.docs[0].ref, { sentences: FieldValue.increment(updatedCount) });
       }
     }
 
     // 6. Pulizia UI e Chiusura Writer
-    bulkWriter.update(db.collection('meta').doc('taxonomy'), {
+    void bulkWriter.update(db.collection('meta').doc('taxonomy'), {
       sottocategorie_superflue: FieldValue.arrayRemove(vecchiaOriginale)
     });
 

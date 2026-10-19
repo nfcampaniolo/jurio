@@ -51,7 +51,7 @@ export async function runCleanupDuplicates(onProgress: ProgressCallback): Promis
 
       // Se abbiamo già visto l'URN o l'ECLI, è un duplicato! Coda per eliminazione
       if ((urn !== "" && seenUrns.has(urn)) || (ecli !== "" && seenEclis.has(ecli))) {
-        bulkWriter.delete(d.ref);
+        void bulkWriter.delete(d.ref);
         deletedCount++;
       } else {
         // Altrimenti, è il documento "originale", lo salviamo nella memoria
@@ -137,7 +137,7 @@ export async function runUpdateFonte(params: any, onProgress: ProgressCallback):
       if (needsUpdate) {
         // 2. Inviamo l'operazione al bulkWriter.
         // Pensa a questo come a una coda: bulkWriter accumula e invia pacchetti ottimizzati a Firestore.
-        bulkWriter.update(d.ref, docUpdateData);
+        void bulkWriter.update(d.ref, docUpdateData);
         updatedCount++;
       }
     });

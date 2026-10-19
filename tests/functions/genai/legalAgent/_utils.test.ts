@@ -15,7 +15,7 @@ import {
 
 describe("legal-agent response helpers", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
     mocks.db.batch.mockReturnValue(mocks.batch);
     mocks.batch.commit.mockResolvedValue(undefined);
   });
@@ -70,21 +70,38 @@ describe("legal-agent response helpers", () => {
     expect(mocks.batch.commit).toHaveBeenCalledOnce();
   });
 
-  it("does no writes for an empty document list and associates chunks for provided docs", async () => {
+  it("skips missing fascicoli, non-array docs, and empty document lists", async () => {
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+
     await processFascicoloDocs("", ["doc-1"]);
     await processFascicoloDocs("f1", []);
-    expect(mocks.db.batch).not.toHaveBeenCalled();
+    await processFascicoloDocs("f1", null as unknown as string[]);
 
-    const docRef = { id: "doc-1" };
-    const documents = { doc: vi.fn(() => docRef) };
+    expect(mocks.db.batch).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledTimes(3);
+  });
+
+  it("associates the fascicolo with each document and its chunks", async () => {
+    const documentRefs = [{ id: "doc-1" }, { id: "doc-2" }];
+    const documents = { doc: vi.fn((id: string) => documentRefs[id === "doc-1" ? 0 : 1]) };
     const chunks = {
       where: vi.fn().mockReturnThis(),
-      get: vi.fn().mockResolvedValue({ forEach: (callback: (doc: typeof mocks.chunkDoc) => void) => callback(mocks.chunkDoc) }),
+      get: vi.fn().mockResolvedValue({
+        forEach: (callback: (doc: typeof mocks.chunkDoc) => void) => callback(mocks.chunkDoc),
+      }),
     };
     mocks.db.collection.mockImplementation((name: string) => name === "documents" ? documents : chunks);
-    await processFascicoloDocs("f1", ["doc-1"]);
-    expect(mocks.batch.update).toHaveBeenCalledTimes(2);
-    expect(mocks.batch.commit).toHaveBeenCalledOnce();
+    const log = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await processFascicoloDocs("f1", ["doc-1", "doc-2"]);
+
+    expect(documents.doc).toHaveBeenNthCalledWith(1, "doc-1");
+    expect(documents.doc).toHaveBeenNthCalledWith(2, "doc-2");
+    expect(chunks.where).toHaveBeenNthCalledWith(1, "parentId", "==", "doc-1");
+    expect(chunks.where).toHaveBeenNthCalledWith(2, "parentId", "==", "doc-2");
+    expect(mocks.batch.update).toHaveBeenCalledTimes(4);
+    expect(mocks.batch.commit).toHaveBeenCalledTimes(2);
+    expect(log).toHaveBeenCalledOnce();
   });
 
   it("rejects attempts to migrate a chat owned by another user", async () => {

@@ -207,7 +207,7 @@ export async function executeShareAllTeamDocuments(req: Request, res: Response):
     const queueUpdates = async (query: Query) => {
       const snap = await query.get();
       snap.docs.forEach((doc) => {
-        bulkWriter.update(doc.ref, updateData);
+        void bulkWriter.update(doc.ref, updateData);
         updatedCount++;
       });
     };

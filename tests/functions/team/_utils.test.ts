@@ -10,11 +10,20 @@ const mocks = vi.hoisted(() => {
   const txUpdate = vi.fn();
   const doc = vi.fn();
   const collection = vi.fn();
+  const randomInt = vi.fn();
   const db = { collection, batch: vi.fn() };
-  return { where, get, batchUpdate, batchCommit, txGet, txSet, txUpdate, doc, collection, db };
+  return { where, get, batchUpdate, batchCommit, txGet, txSet, txUpdate, doc, collection, randomInt, db };
 });
 
 vi.mock("@functions/_deps", () => ({ getDb: () => mocks.db }));
+vi.mock("node:crypto", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:crypto")>();
+  return {
+    ...actual,
+    default: { ...actual, randomInt: mocks.randomInt },
+    randomInt: mocks.randomInt,
+  };
+});
 vi.mock("firebase-admin/firestore", () => ({
   FieldValue: {
     arrayRemove: vi.fn((value: string) => ({ remove: value })),
@@ -24,6 +33,8 @@ vi.mock("firebase-admin/firestore", () => ({
 describe("team document and creation utilities", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.randomInt.mockReset();
+    mocks.randomInt.mockReturnValue(0);
     const query = { where: mocks.where, get: mocks.get };
     mocks.where.mockReturnValue(query);
     mocks.collection.mockReturnValue(query);
@@ -156,6 +167,7 @@ describe("team document and creation utilities", () => {
     mocks.txGet
       .mockResolvedValueOnce({ data: () => ({ status: "prova" }) })
       .mockResolvedValueOnce({ empty: true, docs: [] });
+    mocks.randomInt.mockReturnValueOnce(0).mockReturnValueOnce(36 ** 6 - 1);
     const now = { constructor: { fromMillis: vi.fn(() => "expire") } };
     const tx = { get: mocks.txGet, set: mocks.txSet, update: mocks.txUpdate };
     const { handleTeamCreationInTx } = await import("@functions/team/_utils");
@@ -169,8 +181,13 @@ describe("team document and creation utilities", () => {
     expect(mocks.txSet).toHaveBeenCalledWith(teamRef, expect.objectContaining({
       owners: ["user-1"],
       member_ids: ["user-1"],
-      vouchers: expect.arrayContaining([expect.objectContaining({ used: false, duration: 365 })]),
+      vouchers: [
+        { id: "VCH-000000", duration: 365, used: false },
+        { id: "VCH-ZZZZZZ", duration: 365, used: false },
+      ],
     }));
+    expect(mocks.randomInt).toHaveBeenNthCalledWith(1, 36 ** 6);
+    expect(mocks.randomInt).toHaveBeenNthCalledWith(2, 36 ** 6);
     expect(now.constructor.fromMillis).toHaveBeenCalledWith(100000);
   });
 

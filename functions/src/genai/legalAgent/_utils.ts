@@ -195,8 +195,7 @@ export async function processFascicoloDocs(
   }
   try {
     const updatePromises = docs.map((doc) => {
-      const docId = typeof doc === 'string' ? doc : doc;
-      return addFascicoloIdToDocAndChunks(docId, fascicoloId);
+      return addFascicoloIdToDocAndChunks(doc, fascicoloId);
     });
     await Promise.all(updatePromises);
     console.log(`[Successo] FascicoloId ${fascicoloId} associato a ${docs.length} documenti e relativi chunks.`);

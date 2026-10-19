@@ -1,10 +1,18 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ generate: vi.fn() }));
+const mocks = vi.hoisted(() => ({ generate: vi.fn(), randomUUID: vi.fn() }));
 vi.mock("@functions/genai/_config", () => ({ ai: { defineFlow: (_config: unknown, handler: unknown) => handler, generate: mocks.generate } }));
 vi.mock("@functions/genai/tools/index", () => ({
   internalDatabaseSearch: { name: "internalDatabaseSearch" }, webSearch: { name: "webSearch" },
 }));
+vi.mock("node:crypto", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:crypto")>();
+  return {
+    ...actual,
+    default: { ...actual, randomUUID: mocks.randomUUID },
+    randomUUID: mocks.randomUUID,
+  };
+});
 
 import { estraiFontiDalRisultato, wordQuoteFlow, wordReviewFlow } from "@functions/genai/wordAgent/flow";
 
@@ -12,6 +20,7 @@ describe("Word-agent flows", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.generate.mockReset();
+    mocks.randomUUID.mockReset();
   });
 
   it("extracts and deduplicates citation results and calculates missing scores", () => {
@@ -19,6 +28,21 @@ describe("Word-agent flows", () => {
       { id: "s1", titolo: "Sentenza", _distance: 0.2 }, { id: "s1", titolo: "Duplicate" },
     ] } }] }] };
     expect(estraiFontiDalRisultato(response)).toEqual([{ id: "s1", titolo: "Sentenza", url: undefined, score: 0.8 }]);
+  });
+
+  it("uses unique secure fallback keys for sources without identifiers", () => {
+    mocks.randomUUID
+      .mockReturnValueOnce("00000000-0000-4000-8000-000000000001")
+      .mockReturnValueOnce("00000000-0000-4000-8000-000000000002");
+    const response = { messages: [{ role: "tool", content: [{ toolResponse: { output: [
+      { titolo: "Prima fonte" }, { titolo: "Seconda fonte" },
+    ] } }] }] };
+
+    expect(estraiFontiDalRisultato(response)).toEqual([
+      { id: "id-non-disponibile", titolo: "Prima fonte", url: undefined, score: undefined },
+      { id: "id-non-disponibile", titolo: "Seconda fonte", url: undefined, score: undefined },
+    ]);
+    expect(mocks.randomUUID).toHaveBeenCalledTimes(2);
   });
 
   it("returns a safe message when quote research yields no citations and handles an empty review", async () => {

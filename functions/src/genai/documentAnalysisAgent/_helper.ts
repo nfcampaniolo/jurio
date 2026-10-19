@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { ai } from "../_config";
 
 //DOCTRINE
@@ -72,7 +73,7 @@ export async function generateWithRetry(
       }
 
       const baseDelay = 2000 * Math.pow(2, attempt);
-      const jitter = Math.floor(Math.random() * 1000);
+      const jitter = randomInt(1000);
       const delay = baseDelay + jitter;
 
       console.warn(

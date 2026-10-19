@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { FieldValue, WriteBatch } from "firebase-admin/firestore";
 import { getDb} from "../_deps";
 
@@ -84,7 +85,7 @@ export async function updateUserDocuments(uidDelete: string, uidOwner: string) {
 }
 
 function generateVoucherCode(): string {
-  return 'VCH-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+  return `VCH-${randomInt(36 ** 6).toString(36).toUpperCase().padStart(6, "0")}`;
 }
 
 export async function handleTeamCreationInTx(

@@ -4,7 +4,7 @@ import { userFileSearch } from "./userFileSearch";
 import { webSearch, doctrineSearch } from "./webSearch";
 import { enableFirebaseTelemetry } from "@genkit-ai/firebase";
 
-enableFirebaseTelemetry();
+void enableFirebaseTelemetry();
 
 export const dynamicTools = [
   internalDatabaseSearch,

@@ -1,7 +1,19 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ generate: vi.fn() }));
+const mocks = vi.hoisted(() => ({
+  generate: vi.fn(),
+  randomInt: vi.fn(() => 0),
+}));
+
 vi.mock("@functions/genai/_config", () => ({ ai: { generate: mocks.generate } }));
+vi.mock("node:crypto", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:crypto")>();
+  return {
+    ...actual,
+    default: { ...actual, randomInt: mocks.randomInt },
+    randomInt: mocks.randomInt,
+  };
+});
 
 import { chunkText, generateWithRetry, isResourceExhaustedError, safeParseJson } from "@functions/genai/documentAnalysisAgent/_helper";
 
@@ -9,6 +21,7 @@ describe("document-analysis helpers", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.generate.mockReset();
+    mocks.randomInt.mockReturnValue(0);
   });
 
   it("splits long content and handles empty content and fenced JSON", () => {
@@ -22,11 +35,15 @@ describe("document-analysis helpers", () => {
     expect(isResourceExhaustedError({ status: "RESOURCE_EXHAUSTED" })).toBe(true);
     expect(isResourceExhaustedError(new Error("other"))).toBe(false);
     mocks.generate.mockRejectedValueOnce({ code: 429 }).mockResolvedValueOnce({ text: "ok" });
+    mocks.randomInt.mockReturnValue(375);
     vi.useFakeTimers();
     const retry = generateWithRetry({} as never, 1);
-    await vi.runAllTimersAsync();
+    await vi.advanceTimersByTimeAsync(2374);
+    expect(mocks.generate).toHaveBeenCalledOnce();
+    await vi.advanceTimersByTimeAsync(1);
     await expect(retry).resolves.toEqual({ text: "ok" });
     expect(mocks.generate).toHaveBeenCalledTimes(2);
+    expect(mocks.randomInt).toHaveBeenCalledWith(1000);
     vi.useRealTimers();
   });
 
