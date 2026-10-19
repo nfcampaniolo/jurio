@@ -8,7 +8,8 @@
     "types": ["vite/client", "vitest/globals", "react", "react-dom", "node"],
     "skipLibCheck": true,
     "paths": {
-     "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@functions/*": ["./functions/src/*"]
     },
 
     /* Bundler mode */
@@ -26,7 +27,7 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
-
   },
-  "include": ["src", "tests", "scripts", "tests"]
+  "include": ["src", "tests", "scripts"],
+  "exclude": ["tests/functions/**", "functions/**"]
 }

@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">92.59% </span>
+                <span class="strong">90.32% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>25/27</span>
+                <span class='fraction'>28/31</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">62.5% </span>
+                <span class="strong">71.42% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>5/8</span>
+                <span class='fraction'>10/14</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">87.5% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>7/7</span>
+                <span class='fraction'>7/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">96.42% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>23/23</span>
+                <span class='fraction'>27/28</span>
             </div>
         
             
@@ -111,9 +111,21 @@
 <a name='L46'></a><a href='#L46'>46</a>
 <a name='L47'></a><a href='#L47'>47</a>
 <a name='L48'></a><a href='#L48'>48</a>
-<a name='L49'></a><a href='#L49'>49</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -126,8 +138,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">9x</span>
 <span class="cline-any cline-yes">5x</span>
@@ -138,14 +160,20 @@
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
@@ -159,13 +187,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">// File: src/context/AuthProvider.tsx
-&nbsp;
-import { useEffect, useState, type ReactNode } from "react";
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { useEffect, useState, type ReactNode } from "react";
 import { AuthContext } from "./AuthContext";
 &nbsp;
 type FirebaseUser = import("firebase/auth").User;
-const STATIC_ROUTES = new Set(["/privacy", "/termini", "/gdpr"]);
+const STATIC_ROUTES = new Set(["https://jurio.it/privacy", "https://jurio.it/termini", "https://jurio.it/gdpr"]);
 &nbsp;
 const isInitialStaticRoute = () =&gt; {
   <span class="missing-if-branch" title="if path not taken" >I</span>if (typeof window === "undefined") <span class="cstat-no" title="statement not covered" >return false;</span>
@@ -174,9 +200,19 @@ const isInitialStaticRoute = () =&gt; {
 &nbsp;
 export const AuthProvider = ({ children }: { children: ReactNode }) =&gt; {
   const [user, setUser] = useState&lt;FirebaseUser | null&gt;(null);
-  const [loading, setLoading] = useState(!isInitialStaticRoute()); 
+  
+  // Inizializza a unauthenticated se è una rotta statica, altrimenti loading
+  const [status, setStatus] = useState&lt;'loading' | 'authenticated' | 'unauthenticated' | 'error'&gt;(
+    isInitialStaticRoute() ? 'unauthenticated' : 'loading'
+  );
   const [hasConflict, setHasConflict] = useState(false);
+  const [errorMessage, setErrorMessage] = useState&lt;string | null&gt;(null);
 &nbsp;
+  // Azzeramento immediato dello stato per evitare rimbalzi dal router
+  const resolveConflict = <span class="fstat-no" title="function not covered" >() =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    setHasConflict(false);</span>
+  };
+  
   useEffect(() =&gt; {
     if (isInitialStaticRoute()) return;
 &nbsp;
@@ -186,14 +222,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) =&gt; {
     (async () =&gt; {
       const mod = await import("@/features/auth/hooks/auth");
     
+      // Allineato alla nuova firma: accetta solo 'u' e 'conflict'
       unsubscribe = mod.onUserStateChange((u: FirebaseUser | null, conflict: boolean) =&gt; {
         <span class="missing-if-branch" title="if path not taken" >I</span>if (cancelled) <span class="cstat-no" title="statement not covered" >return;</span>
+&nbsp;
         setUser(u);
         setHasConflict(conflict);
-        setLoading(false);
+        setStatus(u ? 'authenticated' : 'unauthenticated');
       });
-    })().catch(() =&gt; {
-      <span class="missing-if-branch" title="else path not taken" >E</span>if (!cancelled) setLoading(false);
+    })().catch((err) =&gt; {
+      // Cattura eventuali errori di inizializzazione o import dinamico
+      <span class="missing-if-branch" title="else path not taken" >E</span>if (!cancelled) {
+        setStatus('error');
+        setErrorMessage(err instanceof Error ? err.message : <span class="branch-1 cbranch-no" title="branch not covered" >"Errore sconosciuto")</span>;
+      }
     });
 &nbsp;
     return () =&gt; {
@@ -203,7 +245,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) =&gt; {
   }, []);
   
   return (
-    &lt;AuthContext.Provider value={{ user, loading, hasConflict }}&gt;
+    &lt;AuthContext.Provider value={{ user, status, hasConflict, errorMessage, resolveConflict }}&gt;
       {children}
     &lt;/AuthContext.Provider&gt;
   );
@@ -214,7 +256,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) =&gt; {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-09-02T11:35:28.251Z
+                at 2026-10-19T08:16:28.733Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

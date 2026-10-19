@@ -1,6 +1,6 @@
 import { getAuth } from "firebase-admin/auth";
 import type { Firestore } from "firebase-admin/firestore";
-import { consumePerMinuteFeature, consumeDailyFeature } from "../utils";
+import { consumePerMinuteFeature, consumeDailyFeature } from "../_utils";
 
 export interface JurioDocument {
   id?: string;

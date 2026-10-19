@@ -1,10 +1,7 @@
 <!doctype html>
 <html lang="it">
     <head>
-        <script
-            type="text/javascript"
-            src="https://embeds.iubenda.com/widgets/7f06adba-d6ba-41a7-9758-69f5297af96e.js"
-        ></script>
+         <!-- <script type="text/javascript" src="https://embeds.iubenda.com/widgets/7f06adba-d6ba-41a7-9758-69f5297af96e.js"></script> -->
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width,initial-scale=1" />
         <meta name="application-name" content="Jurio" />
@@ -57,7 +54,6 @@
                 background: radial-gradient(circle at center, #262420 0, #171614 100%);
                 overflow: hidden;
                 cursor: none;
-                border-radius: 0;
                 box-shadow: inset 0 0 60px rgba(0, 0, 0, 0.6);
                 border: 1px solid rgba(226, 185, 111, 0.15);
             }
@@ -547,60 +543,43 @@
         <div class="scroll-progress" aria-hidden="true"></div>
         <div id="header"></div>
         <main id="contenuto">
-            <section class="hero" aria-labelledby="hero-title">
-                <div class="container hero-grid">
-                    <div class="hero-copy reveal reveal-left">
-                        <span class="eyebrow">Ricerca giuridica · AI</span>
-                        <h1 id="hero-title">L’essenziale per la <em>ricerca giuridica.</em></h1>
-                        <div class="hero-value" aria-label="Punti di forza di Jurio">
-                            <div class="hero-value-price">
-                                <div class="hero-value-price-visual" aria-hidden="true">
-                                    <i class="fa-solid fa-scale-balanced"></i>
-                                </div>
-                                <div class="hero-value-price-copy">
-                                    <span>Jurio</span> <strong>La tecnologia più avanzata, al miglior prezzo.</strong>
-                                </div>
-                            </div>
-                            <div class="hero-value-grid" aria-label="Tecnologia e patrimonio documentale">
-                                <div class="hero-value-card">
-                                    <div class="hero-value-icon" aria-hidden="true">
-                                        <i class="fa-solid fa-folder-open"></i>
-                                    </div>
-                                     <strong>400K+</strong><span>documenti giuridici elaborati e indicizzati</span>
-                                </div>
-                                <div class="hero-value-card">
-                                    <div class="hero-value-icon" aria-hidden="true">
-                                        <i class="fa-solid fa-magnifying-glass"></i>
-                                    </div>
-                                     <strong>RAG</strong><span>AI collegata alle fonti giuridiche</span>
-                                </div>
-                                <div class="hero-value-card">
-                                    <div class="hero-value-icon" aria-hidden="true">
-                                        <i class="fa-solid fa-plug"></i>
-                                    </div>
-                                     <strong>MCP</strong><span>integrazione con strumenti e workflow AI</span>
-                                </div>
-                            </div>
-                            <div class="hero-value-proof">
-                                <span class="hero-value-mark" aria-hidden="true"
-                                    ><i class="fa-solid fa-shield-halved"></i></span
-                                > <strong>Tecnologia premium. Prezzo competitivo.</strong>
-                            </div>
+            <section class="hero hero-jurio" aria-labelledby="hero-title">
+                <div class="container">
+
+                    <!-- HERO EDITORIALE -->
+                    <section class="hero-jurio-header reveal"
+                            aria-labelledby="hero-title">
+
+                        <!-- COLONNA TESTUALE -->
+                        <div class="hero-jurio-heading">
+
+                            <span class="eyebrow hero-jurio-eyebrow">
+                                Ricerca giuridica · AI verificabile
+                            </span>
+
+                            <h1 id="hero-title">
+                                L’essenziale per la
+                                <em>ricerca giuridica.</em>
+                            </h1>
+
                         </div>
-                        <div class="hero-actions">
-                            <a class="button button-primary" href="/login"
-                                >Inizia una prova gratuita senza carta<span aria-hidden="true">→</span></a
-                            ><a class="button button-secondary" href="/ricerca">Esplora la ricerca giuridica</a
-                            ><a class="button button-secondary" href="https://jurio.it/fonti">Scopri le fonti</a>
-                        </div>
-                    </div>
-                    <div>
-                        <div
-                            class="demo-card reveal reveal-scale"
-                            aria-label="Anteprima interattiva della piattaforma Jurio"
-                        >
-                            <div class="demo-media" id="interactive-demo">
-                                <div class="doc-mockup" style="top: 15%; left: 15%; transform: rotate(-6deg)">
+
+                        <!-- COLONNA VISIVA -->
+                        <div class="hero-jurio-demo">
+
+                            <div id="interactive-demo"
+                                class="hero-jurio-visual"
+                                aria-label="Anteprima interattiva della ricerca giuridica di Jurio">
+
+                                <div class="hero-jurio-visual-caption">
+                                    <span class="hero-jurio-status"></span>
+                                    Motore di ricerca giuridica
+                                </div>
+
+                                <!-- Documento 1 -->
+                                <div class="doc-mockup"
+                                    style="top: 15%; left: 15%; transform: rotate(-6deg)">
+
                                     <div class="doc-line title"></div>
                                     <div class="doc-line"></div>
                                     <div class="doc-line"></div>
@@ -609,7 +588,11 @@
                                     <div class="doc-line"></div>
                                     <div class="doc-line short"></div>
                                 </div>
-                                <div class="doc-mockup" style="top: 40%; right: 10%; transform: rotate(8deg)">
+
+                                <!-- Documento 2 -->
+                                <div class="doc-mockup"
+                                    style="top: 40%; right: 10%; transform: rotate(8deg)">
+
                                     <div class="doc-line title"></div>
                                     <div class="doc-line"></div>
                                     <div class="doc-line med"></div>
@@ -617,7 +600,11 @@
                                     <div class="doc-line short" style="margin-top: 12px"></div>
                                     <div class="doc-line"></div>
                                 </div>
-                                <div class="doc-mockup" style="bottom: 10%; left: 40%; transform: rotate(-2deg)">
+
+                                <!-- Documento 3 -->
+                                <div class="doc-mockup"
+                                    style="bottom: 10%; left: 40%; transform: rotate(-2deg)">
+
                                     <div class="doc-line title"></div>
                                     <div class="doc-line med"></div>
                                     <div class="doc-line"></div>
@@ -626,6 +613,8 @@
                                     <div class="doc-line"></div>
                                     <div class="doc-line med"></div>
                                 </div>
+
+                                <!-- Scanner animato -->
                                 <div class="crosshair-container" id="crosshair-tracker">
                                     <div class="crosshair" id="crosshair-ui">
                                         <div class="bracket bracket-tl"></div>
@@ -636,40 +625,195 @@
                                         <div class="scanner-line-fx"></div>
                                     </div>
                                 </div>
+
+                                <div class="hero-jurio-visual-footer">
+                                    <span>Ricerca semantica</span>
+                                    <span>Fonti collegate</span>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                    <!-- PANNELLO PRINCIPALE: TECNOLOGIA + VISUAL -->
+                    <article class="hero-jurio-platform reveal reveal-scale"
+                            aria-label="Tecnologia e ricerca giuridica di Jurio">
+
+                        <div class="hero-jurio-platform-copy">
+
+                            <div class="hero-jurio-meta">
+                                <span class="hero-jurio-number">01</span>
+                                <span class="hero-jurio-label">
+                                    Architettura AI Enterprise
+                                </span>
+                            </div>
+
+                            <h2 class="hero-jurio-platform-title">
+                                La tecnologia.
+                                <span>Al servizio delle fonti.</span>
+                            </h2>
+
+                            <p class="hero-jurio-platform-description">
+                                Una piattaforma AI con infrastruttura e dati
+                                100% europei, progettata per offrire al tuo
+                                studio ricerca giuridica avanzata, integrazione
+                                con gli strumenti AI e massima convenienza.
+                            </p>
+
+                            <!-- SPECIFICHE TECNICHE -->
+                            <div class="hero-jurio-specs"
+                                aria-label="Specifiche tecniche">
+
+                                <div class="hero-jurio-spec">
+                                    <div class="hero-jurio-spec-top">
+                                        <i class="fa-solid fa-database"
+                                        aria-hidden="true"></i>
+                                        <span>Banche dati</span>
+                                    </div>
+
+                                    <strong>400K+</strong>
+
+                                    <p>Atti e sentenze indicizzati</p>
+                                </div>
+
+                                <div class="hero-jurio-spec">
+                                    <div class="hero-jurio-spec-top">
+                                        <i class="fa-solid fa-network-wired"
+                                        aria-hidden="true"></i>
+                                        <span>Motore</span>
+                                    </div>
+
+                                    <strong>RAG v2</strong>
+
+                                    <p>Ancoraggio alle fonti giurisprudenziali</p>
+                                </div>
+
+                                <div class="hero-jurio-spec">
+                                    <div class="hero-jurio-spec-top">
+                                        <i class="fa-solid fa-code-branch"
+                                        aria-hidden="true"></i>
+                                        <span>Integrazione</span>
+                                    </div>
+
+                                    <strong>MCP Native</strong>
+
+                                    <p>Connessione a Claude, Mistral e AI Agents</p>
+                                </div>
+
+                            </div>
+
+                            <!-- VERIFICABILITÀ -->
+                            <div class="hero-jurio-proof">
+                                <span class="hero-jurio-proof-icon"
+                                    aria-hidden="true">
+                                    <i class="fa-solid fa-shield-halved"></i>
+                                </span>
+
+                                <p>
+                                    <strong>Fonti verificabili.</strong>
+                                    Verifica deterministica dei riferimenti citati,
+                                    con controllo delle fonti normative.
+                                </p>
+                            </div>
+
+                        </div>
+                        <!-- VISUAL INTERATTIVO: DOCUMENTI + SCANNER -->
+                        <div class="hero-jurio-intro">
+                            <p>
+                                Cerca per questione giuridica, collega i documenti
+                                ai precedenti e verifica le analisi sulle fonti.
+                                Tutto in un unico flusso di lavoro, progettato
+                                per le esigenze del tuo studio.
+                            </p>
+
+                            <div class="hero-jurio-actions hero-actions">
+                                <a class="button button-primary" href="/login">
+                                    Inizia la prova gratuita
+                                    <span aria-hidden="true">→</span>
+                                </a>
+
+                                <a class="button button-secondary" href="/ricerca">
+                                    Esplora la ricerca
+                                </a>
+
+                                <a class="button button-secondary"
+                                href="https://jurio.it/fonti">
+                                    Fonti verificate
+                                    <span aria-hidden="true">↗</span>
+                                </a>
                             </div>
                         </div>
-                        <ul class="feature-list" aria-label="Funzionalità principali" data-stagger>
-                            <li class="feature-item reveal reveal-right">
-                                <h2>Giurisprudenza rilevante, con le fonti in primo piano</h2>
-                                <p>
-                                    Cassazione, Consiglio di Stato e Corte costituzionale, organizzati per aiutarti a
-                                    individuare rapidamente precedenti, principi di diritto e orientamenti
-                                    pertinenti, <strong>sempre collegati alle relative fonti giurisprudenziali.</strong>
-                                </p>
-                            </li>
-                            <li class="feature-item reveal reveal-right">
-                                <h2>Ricerca giuridica intelligente, fondata sulle fonti</h2>
-                                <p>
-                                    Cerca per questione giuridica, fattispecie e significato, non soltanto per parole
-                                    chiave. L’AI individua le informazioni rilevanti e costruisce le proprie
-                                    inferenze <strong
-                                        >a partire dalla giurisprudenza sottostante, non da conclusioni prive di
-                                        riscontro.</strong
-                                    >
-                                </p>
-                            </li>
-                            <li class="feature-item reveal reveal-right">
-                                <h2>Ogni analisi resta verificabile</h2>
-                                <p>
-                                    Analizza i fascicoli selezionati e mettili in relazione con la
-                                    giurisprudenza. <strong
-                                        >Ricerca, inferenze e deduzioni restano ancorate alle fonti</strong
-                                    >, così puoi risalire rapidamente ai documenti che supportano l’analisi e valutarne
-                                    direttamente la rilevanza.
-                                </p>
-                            </li>
-                        </ul>
+
+                    </article>
+
+                    <!-- FUNZIONALITÀ -->
+                    <div class="hero-jurio-features"
+                        aria-label="Funzionalità principali"
+                        data-stagger>
+
+                        <article class="hero-jurio-feature reveal reveal-right">
+                            <div class="hero-jurio-meta">
+                                <span class="hero-jurio-number">02</span>
+                                <span class="hero-jurio-label">Giurisprudenza</span>
+                            </div>
+
+                            <h2>
+                                I precedenti rilevanti.
+                                <span>Con le fonti in primo piano.</span>
+                            </h2>
+
+                            <p>
+                                Cassazione, Consiglio di Stato e Corte costituzionale,
+                                organizzati per aiutarti a individuare rapidamente
+                                precedenti, principi di diritto e orientamenti
+                                pertinenti, sempre collegati alle relative
+                                fonti giurisprudenziali.
+                            </p>
+                        </article>
+
+                        <article class="hero-jurio-feature reveal reveal-right">
+                            <div class="hero-jurio-meta">
+                                <span class="hero-jurio-number">03</span>
+                                <span class="hero-jurio-label">Ricerca intelligente</span>
+                            </div>
+
+                            <h2>
+                                Cerca per significato.
+                                <span>Non solo per parole chiave.</span>
+                            </h2>
+
+                            <p>
+                                Cerca per questione giuridica e fattispecie.
+                                L’AI individua le informazioni rilevanti e costruisce
+                                le proprie inferenze a partire dalla giurisprudenza
+                                sottostante, non da conclusioni prive di riscontro.
+                            </p>
+                        </article>
+
+                        <article class="hero-jurio-feature reveal reveal-right">
+                            <div class="hero-jurio-meta">
+                                <span class="hero-jurio-number">04</span>
+                                <span class="hero-jurio-label">Analisi verificabile</span>
+                            </div>
+
+                            <h2>
+                                Ogni analisi.
+                                <span>Resta verificabile.</span>
+                            </h2>
+
+                            <p>
+                                Analizza i fascicoli selezionati e mettili in relazione
+                                con la giurisprudenza. Ricerca, inferenze e deduzioni
+                                restano ancorate alle fonti, così puoi risalire ai
+                                documenti che supportano l’analisi e valutarne
+                                direttamente la rilevanza.
+                            </p>
+                        </article>
+
                     </div>
+
                 </div>
             </section>
             <section class="section integrations-section" aria-labelledby="integrazioni-title">

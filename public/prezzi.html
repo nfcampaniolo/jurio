@@ -5,7 +5,7 @@
   <!-- =====================================================
        COOKIE / CONSENT MODE
        ===================================================== -->
-  <script type="text/javascript" src="https://embeds.iubenda.com/widgets/7f06adba-d6ba-41a7-9758-69f5297af96e.js"></script>
+  <!-- <script type="text/javascript" src="https://embeds.iubenda.com/widgets/7f06adba-d6ba-41a7-9758-69f5297af96e.js"></script> -->
 
   <!-- =====================================================
        BASIC META
@@ -30,17 +30,17 @@
   <meta property="og:title" content="Piani e Tariffe - Abbonamenti per Professionisti | Jurio">
   <meta property="og:description" content="Scopri i piani e le tariffe di Jurio. Ricerca giurisprudenziale avanzata e soluzioni Workspace scalabili.">
   <meta property="og:url" content="https://www.jurio.it/prezzi">
-  <meta property="og:image" content="https://www.jurio.it/logo.webp">
+  <meta property="og:image" content="https://jurio.it/logo.webp">
   
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Piani e Tariffe | Jurio">
-  <meta name="twitter:image" content="https://www.jurio.it/logo.webp">
+  <meta name="twitter:image" content="https://jurio.it/logo.webp">
 
   <!-- =====================================================
        FAVICON & CSS
        ===================================================== -->
   <link rel="icon" href="/favicon.ico">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="https://jurio.it/styles.css">
 
   <!-- STILE PREMIUM SPECIFICO PER I PREZZI -->
   <style>
@@ -420,10 +420,456 @@
         </div>
       </div>
     </section>
+<section class="section" id="limiti-utilizzo" style="padding: 3rem 0; background: color-mix(in srgb, var(--color-surface) 50%, transparent);">
+  <div class="container">
+    
+    <!-- Intestazione Sezione -->
+    <div style="text-align: center; max-width: 720px; margin: 0 auto 3rem auto;">
+      <span class="eyebrow" style="color: var(--color-primary); font-size: 0.72rem; font-weight: 850; text-transform: uppercase; letter-spacing: 0.18em; display: block; margin-bottom: 0.75rem;">
+        Trasparenza Totale
+      </span>
+      <h2 style="font-family: var(--font-serif); font-size: clamp(2rem, 4vw, 2.75rem); letter-spacing: -0.035em; margin-bottom: 1rem; color: var(--color-text);">
+        Capacità Operativa e <em>Limiti Giornalieri</em>
+      </h2>
+      <p style="color: var(--color-muted); font-size: 1.05rem; font-weight: 300; line-height: 1.6;">
+        Tutti i contatori delle funzionalità si <strong>azzerano ogni 24 ore</strong> per garantirti la massima continuità operativa senza costi nascosti a consumo.
+      </p>
+    </div>
 
+    <!-- Griglia Schede Limiti -->
+    <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; max-width: 1100px; margin: 0 auto;">
+      <style>
+        @media (min-width: 900px) {
+          .limits-grid { grid-template-columns: repeat(3, 1fr) !important; }
+        }
+        .usage-card {
+          background: var(--color-bg);
+          border: 1px solid var(--color-border);
+          border-radius: 18px;
+          padding: 2rem;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+          transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .usage-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 30px rgba(0,0,0,0.05);
+        }
+        .usage-card.highlight {
+          border-color: var(--color-primary);
+          background: var(--color-surface);
+        }
+        .usage-section-title {
+          font-size: 0.7rem;
+          font-weight: 850;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: var(--color-primary);
+          margin-top: 1.25rem;
+          margin-bottom: 0.5rem;
+          padding-bottom: 0.25rem;
+          border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+        }
+        .usage-list {
+          list-style: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+        }
+        .usage-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding-bottom: 0.5rem;
+          border-bottom: 1px dashed var(--color-border);
+        }
+        .usage-item:last-child {
+          border-bottom: none;
+          padding-bottom: 0;
+        }
+        .usage-label {
+          font-size: 0.85rem;
+          font-weight: 500;
+          color: var(--color-text);
+          display: flex;
+          flex-direction: column;
+        }
+        .usage-sublabel {
+          font-size: 0.72rem;
+          color: var(--color-muted);
+          font-weight: 300;
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+        
+        /* Icona Dettaglio (i) con Tooltip */
+        .info-icon {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: color-mix(in srgb, var(--color-text) 10%, transparent);
+          color: var(--color-muted);
+          font-size: 0.65rem;
+          font-weight: 700;
+          font-style: italic;
+          cursor: help;
+          position: relative;
+        }
+        .info-icon:hover {
+          background: var(--color-primary);
+          color: #fff;
+        }
+        .info-icon .tooltip {
+          visibility: hidden;
+          width: 220px;
+          background-color: var(--color-text);
+          color: var(--color-bg);
+          text-align: left;
+          border-radius: 6px;
+          padding: 8px 10px;
+          position: absolute;
+          z-index: 20;
+          bottom: 125%;
+          left: 50%;
+          transform: translateX(-50%);
+          opacity: 0;
+          transition: opacity 0.2s ease;
+          font-size: 0.72rem;
+          font-weight: 300;
+          line-height: 1.3;
+          pointer-events: none;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .info-icon:hover .tooltip {
+          visibility: visible;
+          opacity: 1;
+        }
+
+        .usage-badge {
+          font-size: 0.82rem;
+          font-weight: 800;
+          color: var(--color-primary);
+          background: rgba(224, 163, 46, 0.1);
+          padding: 3px 8px;
+          border-radius: 6px;
+          white-space: nowrap;
+        }
+        .usage-badge.disabled {
+          color: var(--color-border);
+          background: transparent;
+          font-weight: 400;
+        }
+      </style>
+
+      <div class="limits-grid" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
+        
+        <!-- PROVA GRATUITA (7 GIORNI) -->
+        <div class="usage-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <h3 style="font-family: var(--font-serif); font-size: 1.5rem; color: var(--color-text); margin: 0;">Prova Gratuita</h3>
+            <span style="font-size: 0.65rem; font-weight: 850; padding: 3px 8px; border: 1px solid var(--color-border); border-radius: 4px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-muted);">7 Giorni</span>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--color-muted); font-weight: 300; margin-bottom: 0.5rem;">
+            Accesso di prova per testare tutte le funzionalità della piattaforma.
+          </p>
+
+          <!-- SEZIONE SERVIZI DI RICERCA -->
+          <div class="usage-section-title">Servizi di Ricerca</div>
+          <ul class="usage-list">
+            <li class="usage-item">
+              <div class="usage-label">
+                Ricerca Giurisprudenziale
+                <span class="usage-sublabel">
+                  Cassazione, Merito, Costituzionale
+                  <span class="info-icon">i<span class="tooltip">Interrogazione semantica integrabile via MCP della banca dati della Cassazione, Corti d'Appello e Corte Costituzionale.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">100 / giorno</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Estrazione Testo Ufficiale
+                <span class="usage-sublabel">
+                  Download sentenze integrate
+                  <span class="info-icon">i<span class="tooltip">Estrazione ed elaborazione del testo integrale delle sentenze ufficiali (ottimizzato per utilizzo in MCP).</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">100 / giorno</span>
+            </li>
+          </ul>
+
+          <!-- SEZIONE ELABORAZIONE E SINTESI AI -->
+          <div class="usage-section-title">Elaborazione e Sintesi AI</div>
+          <ul class="usage-list">
+            <li class="usage-item">
+              <div class="usage-label">
+                Agente Legale AI
+                <span class="usage-sublabel">
+                  Interazione con fonti verificate
+                  <span class="info-icon">i<span class="tooltip">Interagisci con l'Agente AI basato su Corti Supreme, Corte Costituzionale, Massimari e fonti web certificate.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">20 / giorno</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Creazione &amp; Libreria Prompt
+                <span class="usage-sublabel">
+                  Personalizzazione istruzioni
+                  <span class="info-icon">i<span class="tooltip">Crea, salva ed esegui i tuoi prompt personalizzati per automatizzare i flussi dello studio.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">20 / giorno</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Ricerca Web Certificata
+                <span class="usage-sublabel">
+                  Modulo Agente Legale
+                  <span class="info-icon">i<span class="tooltip">Consultazione e verifica automatica su fonti giuridiche online certificate integrata nel tool di sintesi.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">10 / giorno</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Approfondimento Legale
+                <span class="usage-sublabel">
+                  Modulo Agente Legale
+                  <span class="info-icon">i<span class="tooltip">Analisi e sintesi complessa della dottrina e degli orientamenti prevalenti.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">15 / giorno</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Analisi Documentale
+                <span class="usage-sublabel">
+                  Documenti caricati dall'utente
+                  <span class="info-icon">i<span class="tooltip">Comprensione profonda, ragionamento ed elaborazione sui tuoi fascicoli e file personali.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">20 / giorno</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Trascrizione Vocale
+                <span class="usage-sublabel">
+                  Dettato e note vocali
+                  <span class="info-icon">i<span class="tooltip">Conversione da voce a testo per appunti di studio e bozze.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">20 / giorno</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- ESSENTIAL -->
+        <div class="usage-card">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <h3 style="font-family: var(--font-serif); font-size: 1.5rem; color: var(--color-text); margin: 0;">Essential</h3>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--color-muted); font-weight: 300; margin-bottom: 0.5rem;">
+            Motore di ricerca avanzato con piena integrazione al protocollo MCP.
+          </p>
+
+          <!-- SEZIONE SERVIZI DI RICERCA -->
+          <div class="usage-section-title">Servizi di Ricerca (Inclusi via MCP)</div>
+          <ul class="usage-list">
+            <li class="usage-item">
+              <div class="usage-label">
+                Ricerca Giurisprudenziale
+                <span class="usage-sublabel">
+                  Cassazione, Merito, Costituzionale
+                  <span class="info-icon">i<span class="tooltip">Interrogazione semantica integrabile via MCP anche su Claude Desktop, Cursor e client esterni.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">100 / giorno</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Estrazione Testo Ufficiale
+                <span class="usage-sublabel">
+                  Download sentenze integrate
+                  <span class="info-icon">i<span class="tooltip">Estrazione completa del testo ufficiale delle sentenze per analisi esterne tramite MCP.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">100 / giorno</span>
+            </li>
+          </ul>
+
+          <!-- SEZIONE ELABORAZIONE E SINTESI AI -->
+          <div class="usage-section-title">Elaborazione e Sintesi AI</div>
+          <ul class="usage-list">
+            <li class="usage-item">
+              <div class="usage-label">
+                Agente Legale AI
+                <span class="usage-sublabel">Interazione con fonti verificate</span>
+              </div>
+              <span class="usage-badge disabled">Non incluso</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Creazione &amp; Libreria Prompt
+                <span class="usage-sublabel">Personalizzazione istruzioni</span>
+              </div>
+              <span class="usage-badge disabled">Non inclusa</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Ricerca Web Certificata
+                <span class="usage-sublabel">Modulo Agente Legale</span>
+              </div>
+              <span class="usage-badge disabled">Non inclusa</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Approfondimento Legale
+                <span class="usage-sublabel">Modulo Agente Legale</span>
+              </div>
+              <span class="usage-badge disabled">Non incluso</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Analisi Documentale
+                <span class="usage-sublabel">Documenti caricati dall'utente</span>
+              </div>
+              <span class="usage-badge disabled">Non inclusa</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Trascrizione Vocale
+                <span class="usage-sublabel">Dettato e note vocali</span>
+              </div>
+              <span class="usage-badge disabled">Non inclusa</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- BUSINESS -->
+        <div class="usage-card highlight">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+            <h3 style="font-family: var(--font-serif); font-size: 1.5rem; color: var(--color-text); margin: 0;">Business</h3>
+            <span style="font-size: 0.65rem; font-weight: 850; padding: 3px 8px; background: var(--color-primary); color: #fff; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.08em;">Completo</span>
+          </div>
+          <p style="font-size: 0.85rem; color: var(--color-muted); font-weight: 300; margin-bottom: 0.5rem;">
+            Suite completa di ricerca, sintesi guidata e analisi intelligente dei documenti.
+          </p>
+
+          <!-- SEZIONE SERVIZI DI RICERCA -->
+          <div class="usage-section-title">Servizi di Ricerca (Inclusi via MCP)</div>
+          <ul class="usage-list">
+            <li class="usage-item">
+              <div class="usage-label">
+                Ricerca Giurisprudenziale
+                <span class="usage-sublabel">
+                  Cassazione, Merito, Costituzionale
+                  <span class="info-icon">i<span class="tooltip">Ricerca semantica diretta o tramite protocollo MCP su tutte le banche dati e Corte Costituzionale.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">200 / giorno</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Estrazione Testo Ufficiale
+                <span class="usage-sublabel">
+                  Download sentenze integrate
+                  <span class="info-icon">i<span class="tooltip">Download ed elaborazione del testo completo della sentenza, ottimizzato sia per piattaforma che per MCP.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">200 / giorno</span>
+            </li>
+          </ul>
+
+          <!-- SEZIONE ELABORAZIONE E SINTESI AI -->
+          <div class="usage-section-title">Elaborazione e Sintesi AI</div>
+          <ul class="usage-list">
+            <li class="usage-item">
+              <div class="usage-label">
+                Agente Legale AI
+                <span class="usage-sublabel">
+                  Interazione con fonti verificate
+                  <span class="info-icon">i<span class="tooltip">Interazioni ad alte prestazioni basate su Corti Supreme, Corte Costituzionale, Massimari e fonti web certificate.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">50 / giorno</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Creazione &amp; Libreria Prompt
+                <span class="usage-sublabel">
+                  Personalizzazione istruzioni
+                  <span class="info-icon">i<span class="tooltip">Crea, salva e gestisci prompt personalizzati per ottimizzare le risposte e le routine dello studio.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">100 / giorno</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Ricerca Web Certificata
+                <span class="usage-sublabel">
+                  Modulo Agente Legale
+                  <span class="info-icon">i<span class="tooltip">Integrazione in tempo reale delle fonti web e normative certificate all'interno della risposta dell'Agente.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">20 / giorno</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Approfondimento Legale
+                <span class="usage-sublabel">
+                  Modulo Agente Legale
+                  <span class="info-icon">i<span class="tooltip">Analisi ad alta profondità di orientamenti giurisprudenziali e dottrina.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">30 / giorno</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Analisi Documentale
+                <span class="usage-sublabel">
+                  Documenti caricati dall'utente
+                  <span class="info-icon">i<span class="tooltip">Comprensione profonda, estrazione e supporto alla stesura basato sui tuoi fascicoli.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">50 / giorno</span>
+            </li>
+            <li class="usage-item">
+              <div class="usage-label">
+                Trascrizione Vocale
+                <span class="usage-sublabel">
+                  Dettato e note vocali
+                  <span class="info-icon">i<span class="tooltip">Trascrizione accurata del parlato per pareri e note di studio.</span></span>
+                </span>
+              </div>
+              <span class="usage-badge">200 / giorno</span>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Nota a piè di sezione -->
+    <div style="margin-top: 2.5rem; text-align: center;">
+      <p style="font-size: 0.8rem; color: var(--color-muted); font-weight: 300; max-width: 650px; margin: 0 auto; line-height: 1.5;">
+        * Tutti i servizi compresi nella sezione <strong>Servizi di Ricerca</strong> sono già pronti e integrabili tramite il protocollo <strong>MCP</strong> nel piano Essential e superiori. Le frequenze di invio al minuto garantiscono tempi di risposta immediati per la continuità operativa dello studio.
+      </p>
+    </div>
+
+  </div>
+</section>
   </main>
 
   <div id="footer"></div>
+  
 
   <!-- =====================================================
        LOGICA DINAMICA E RECUPERO DATI
@@ -678,374 +1124,6 @@
   <!-- ===================================================
      LIMITI DI UTILIZZO E SOGLIE GIORNALIERE
      =================================================== -->
-<section class="section" id="limiti-utilizzo" style="padding: 3rem 0; background: color-mix(in srgb, var(--color-surface) 50%, transparent);">
-  <div class="container">
-    
-    <!-- Intestazione Sezione -->
-    <div style="text-align: center; max-width: 720px; margin: 0 auto 3rem auto;">
-      <span class="eyebrow" style="color: var(--color-primary); font-size: 0.72rem; font-weight: 850; text-transform: uppercase; letter-spacing: 0.18em; display: block; margin-bottom: 0.75rem;">
-        Trasparenza Totale
-      </span>
-      <h2 style="font-family: var(--font-serif); font-size: clamp(2rem, 4vw, 2.75rem); letter-spacing: -0.035em; margin-bottom: 1rem; color: var(--color-text);">
-        Capacità Operativa e <em>Limiti Giornalieri</em>
-      </h2>
-      <p style="color: var(--color-muted); font-size: 1.05rem; font-weight: 300; line-height: 1.6;">
-        Tutti i contatori delle funzionalità si <strong>azzerano ogni 24 ore</strong> per garantirti la massima continuità operativa senza costi nascosti a consumo.
-      </p>
-    </div>
 
-    <!-- Griglia Schede Limiti -->
-    <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; max-width: 1100px; margin: 0 auto;">
-      <style>
-        @media (min-width: 900px) {
-          .limits-grid { grid-template-columns: repeat(3, 1fr) !important; }
-        }
-        .usage-card {
-          background: var(--color-bg);
-          border: 1px solid var(--color-border);
-          border-radius: 18px;
-          padding: 2rem;
-          display: flex;
-          flex-direction: column;
-          position: relative;
-          transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        .usage-card:hover {
-          transform: translateY(-4px);
-          box-shadow: 0 12px 30px rgba(0,0,0,0.05);
-        }
-        .usage-card.highlight {
-          border-color: var(--color-primary);
-          background: var(--color-surface);
-        }
-        .usage-list {
-          list-style: none !important;
-          padding: 0 !important;
-          margin: 1.5rem 0 0 0 !important;
-          display: flex;
-          flex-direction: column;
-          gap: 1rem;
-        }
-        .usage-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding-bottom: 0.75rem;
-          border-bottom: 1px dashed var(--color-border);
-        }
-        .usage-item:last-child {
-          border-bottom: none;
-          padding-bottom: 0;
-        }
-        .usage-label {
-          font-size: 0.88rem;
-          font-weight: 500;
-          color: var(--color-text);
-          display: flex;
-          flex-direction: column;
-        }
-        .usage-sublabel {
-          font-size: 0.75rem;
-          color: var(--color-muted);
-          font-weight: 300;
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-        
-        /* Icona Dettaglio (i) con Tooltip */
-        .info-icon {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 14px;
-          height: 14px;
-          border-radius: 50%;
-          background: color-mix(in srgb, var(--color-text) 10%, transparent);
-          color: var(--color-muted);
-          font-size: 0.65rem;
-          font-weight: 700;
-          font-style: italic;
-          cursor: help;
-          position: relative;
-        }
-        .info-icon:hover {
-          background: var(--color-primary);
-          color: #fff;
-        }
-        .info-icon .tooltip {
-          visibility: hidden;
-          width: 200px;
-          background-color: var(--color-text);
-          color: var(--color-bg);
-          text-align: left;
-          border-radius: 6px;
-          padding: 6px 10px;
-          position: absolute;
-          z-index: 20;
-          bottom: 125%;
-          left: 50%;
-          transform: translateX(-50%);
-          opacity: 0;
-          transition: opacity 0.2s ease;
-          font-size: 0.72rem;
-          font-weight: 300;
-          line-height: 1.3;
-          pointer-events: none;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .info-icon:hover .tooltip {
-          visibility: visible;
-          opacity: 1;
-        }
-
-        .usage-badge {
-          font-size: 0.85rem;
-          font-weight: 800;
-          color: var(--color-primary);
-          background: rgba(224, 163, 46, 0.1);
-          padding: 4px 10px;
-          border-radius: 6px;
-          white-space: nowrap;
-        }
-        .usage-badge.disabled {
-          color: var(--color-border);
-          background: transparent;
-          font-weight: 400;
-        }
-      </style>
-
-      <div class="limits-grid" style="display: grid; grid-template-columns: 1fr; gap: 1.5rem;">
-        
-        <!-- PROVA GRATUITA (7 GIORNI) -->
-        <div class="usage-card">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-            <h3 style="font-family: var(--font-serif); font-size: 1.5rem; color: var(--color-text); margin: 0;">Prova Gratuita</h3>
-            <span style="font-size: 0.65rem; font-weight: 850; padding: 3px 8px; border: 1px solid var(--color-border); border-radius: 4px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-muted);">7 Giorni</span>
-          </div>
-          <p style="font-size: 0.85rem; color: var(--color-muted); font-weight: 300; margin-bottom: 1rem;">
-            Tutti gli strumenti attivi al 50% delle capacità Business.
-          </p>
-          <div style="font-size: 0.7rem; font-weight: 850; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 0.5rem;">
-            Rinnovo ogni 24 ore
-          </div>
-
-          <ul class="usage-list">
-            <li class="usage-item">
-              <div class="usage-label">
-                Ricerca Giurisprudenziale
-                <span class="usage-sublabel">
-                  Manuale e tramite agente
-                  <span class="info-icon">i<span class="tooltip">Interrogazione semantica della banca dati della Cassazione e delle Corti d'Appello.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">100 / giorno</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Estrazione Testo
-                <span class="usage-sublabel">
-                  Lettura completa atti
-                  <span class="info-icon">i<span class="tooltip">Estrazione ed elaborazione del testo da PDF e scansioni.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">100 / giorno</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Ricerca Web
-                <span class="usage-sublabel">
-                  Fonti e norme online
-                  <span class="info-icon">i<span class="tooltip">Consultazione guidata e verifica incrociata su fonti giuridiche online.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">10 / giorno</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Approfondimento Legale
-                <span class="usage-sublabel">
-                  Analisi dottrina e orientamenti
-                  <span class="info-icon">i<span class="tooltip">Sintesi complessa degli orientamenti giurisprudenziali prevalenti.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">15 / giorno</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Trascrizione Vocale
-                <span class="usage-sublabel">
-                  Dettato e note vocali
-                  <span class="info-icon">i<span class="tooltip">Conversione da voce a testo per appunti di studio e bozze.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">50 / giorno</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Analisi Documentale
-                <span class="usage-sublabel">
-                  Ragionamento e istruzioni
-                  <span class="info-icon">i<span class="tooltip">Comprensione profonda di fascicoli complessi e supporto alla stesura.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">50 / giorno</span>
-            </li>
-          </ul>
-        </div>
-
-        <!-- ESSENTIAL -->
-        <div class="usage-card">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-            <h3 style="font-family: var(--font-serif); font-size: 1.5rem; color: var(--color-text); margin: 0;">Essential</h3>
-          </div>
-          <p style="font-size: 0.85rem; color: var(--color-muted); font-weight: 300; margin-bottom: 1rem;">
-            Motore di ricerca avanzato e integrazione protocollo MCP.
-          </p>
-          <div style="font-size: 0.7rem; font-weight: 850; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 0.5rem;">
-            Rinnovo ogni 24 ore
-          </div>
-
-          <ul class="usage-list">
-            <li class="usage-item">
-              <div class="usage-label">
-                Ricerca Giurisprudenziale
-                <span class="usage-sublabel">
-                  Manuale e via MCP
-                  <span class="info-icon">i<span class="tooltip">Interrogazione semantica integrabile anche su Claude Desktop e canvas esterni.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">200 / giorno</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Estrazione Testo
-                <span class="usage-sublabel">
-                  Lettura completa atti
-                  <span class="info-icon">i<span class="tooltip">Estrazione ed elaborazione del testo da PDF e scansioni.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">200 / giorno</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Ricerca Web
-                <span class="usage-sublabel">Fonti e norme online</span>
-              </div>
-              <span class="usage-badge disabled">Non inclusa</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Approfondimento Legale
-                <span class="usage-sublabel">Analisi dottrina e orientamenti</span>
-              </div>
-              <span class="usage-badge disabled">Non inclusa</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Trascrizione Vocale
-                <span class="usage-sublabel">Dettato e note vocali</span>
-              </div>
-              <span class="usage-badge disabled">Non inclusa</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Analisi Documentale
-                <span class="usage-sublabel">Ragionamento e istruzioni</span>
-              </div>
-              <span class="usage-badge disabled">Non inclusa</span>
-            </li>
-          </ul>
-        </div>
-
-        <!-- BUSINESS -->
-        <div class="usage-card highlight">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
-            <h3 style="font-family: var(--font-serif); font-size: 1.5rem; color: var(--color-text); margin: 0;">Business</h3>
-            <span style="font-size: 0.65rem; font-weight: 850; padding: 3px 8px; background: var(--color-primary); color: #fff; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.08em;">Completo</span>
-          </div>
-          <p style="font-size: 0.85rem; color: var(--color-muted); font-weight: 300; margin-bottom: 1rem;">
-            Tutti gli strumenti intelligenti per la gestione dello studio.
-          </p>
-          <div style="font-size: 0.7rem; font-weight: 850; color: var(--color-primary); text-transform: uppercase; letter-spacing: 0.12em; margin-top: 0.5rem;">
-            Rinnovo ogni 24 ore
-          </div>
-
-          <ul class="usage-list">
-            <li class="usage-item">
-              <div class="usage-label">
-                Ricerca Giurisprudenziale
-                <span class="usage-sublabel">
-                  Manuale e tramite agente
-                  <span class="info-icon">i<span class="tooltip">Interrogazione semantica della banca dati della Cassazione e delle Corti d'Appello.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">200 / giorno</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Estrazione Testo
-                <span class="usage-sublabel">
-                  Lettura completa atti
-                  <span class="info-icon">i<span class="tooltip">Estrazione ed elaborazione del testo da PDF e scansioni.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">200 / giorno</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Ricerca Web
-                <span class="usage-sublabel">
-                  Fonti e norme online
-                  <span class="info-icon">i<span class="tooltip">Consultazione guidata e verifica incrociata su fonti giuridiche online.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">20 / giorno</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Approfondimento Legale
-                <span class="usage-sublabel">
-                  Analisi dottrina e orientamenti
-                  <span class="info-icon">i<span class="tooltip">Sintesi complessa degli orientamenti giurisprudenziali prevalenti.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">30 / giorno</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Trascrizione Vocale
-                <span class="usage-sublabel">
-                  Dettato e note vocali
-                  <span class="info-icon">i<span class="tooltip">Conversione da voce a testo per appunti di studio e bozze.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">100 / giorno</span>
-            </li>
-            <li class="usage-item">
-              <div class="usage-label">
-                Analisi Documentale
-                <span class="usage-sublabel">
-                  Ragionamento e istruzioni
-                  <span class="info-icon">i<span class="tooltip">Comprensione profonda di fascicoli complessi e supporto alla stesura.</span></span>
-                </span>
-              </div>
-              <span class="usage-badge">100 / giorno</span>
-            </li>
-          </ul>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- Nota a piè di sezione -->
-    <div style="margin-top: 2.5rem; text-align: center;">
-      <p style="font-size: 0.8rem; color: var(--color-muted); font-weight: 300; max-width: 600px; margin: 0 auto; line-height: 1.5;">
-        * Le frequenze di invio al minuto garantiscono tempi di risposta immediati per tutte le postazioni operative dello studio.
-      </p>
-    </div>
-
-  </div>
-</section>
 </body>
 </html>

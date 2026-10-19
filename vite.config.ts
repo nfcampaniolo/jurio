@@ -34,6 +34,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
+      "@functions": path.resolve(__dirname, "functions/src"),
     },
   },
   server: {
@@ -75,8 +76,8 @@ export default defineConfig({
     coverage: {
       reporter: ["lcov", "text"],
       reportsDirectory: "coverage",
-      include: ["src/**/*.{ts,tsx,js,jsx}"],
-      exclude: ["src/test/**", "**/*.d.ts"],
+      include: ["src/**/*.{ts,tsx,js,jsx}", "functions/src/**/*.ts"],
+      exclude: ["src/test/**", "functions/src/**/*.d.ts", "**/*.d.ts"],
     },
   },
 });

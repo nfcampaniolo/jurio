@@ -1325,6 +1325,7 @@ details[open] > div.faq-content-inner {
   /* Hero */
   .hero {
     padding: 2.5rem 0 3rem;
+    margin-bottom: 3rem;
   }
 
   .hero::before {
@@ -1394,11 +1395,14 @@ details[open] > div.faq-content-inner {
      COME FUNZIONA
      ========================================= */
 
-  .steps {
+.steps {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 0;
-  }
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
 
   .step {
     min-height: 0;
@@ -3287,4 +3291,880 @@ details[open] > div.faq-content-inner {
 .faq details {
     margin-left: 20px;
     margin-right: 20px;
+}
+
+
+/* =========================================================
+   JURIO — HERO EDITORIALE
+   ========================================================= */
+
+.hero-jurio {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: clamp(1rem, 1.5vw, 2.5rem) 0 2.5rem;
+}
+
+.hero-jurio::before {
+    width: min(50vw, 680px);
+    height: min(50vw, 680px);
+    right: -20vw;
+    top: -16vw;
+    opacity: .7;
+}
+
+.hero-jurio > .container {
+    position: relative;
+    z-index: 1;
+}
+
+
+/* HEADER */
+
+.hero-jurio-header {
+    display: grid;
+    grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
+    align-items: center;
+    gap: clamp(2rem, 4vw, 4.5rem);
+    width: 100%;
+    margin: 0;
+    padding-block: clamp(3rem, 6vw, 5rem);
+}
+
+.hero-jurio-heading {
+    min-width: 0;
+}
+
+.hero-jurio .hero-jurio-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 1.5rem;
+    color: var(--color-muted);
+    font-size: .7rem;
+    font-weight: 750;
+    line-height: 1;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+}
+
+.hero-jurio .hero-jurio-eyebrow::before {
+    content: "";
+    width: 26px;
+    height: 1px;
+    background: var(--color-primary);
+    opacity: 1;
+}
+
+.hero-jurio-header h1 {
+    max-width: 850px;
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(3rem, 6vw, 5.5rem);
+    font-weight: 500;
+    line-height: .98;
+    letter-spacing: -.055em;
+    text-wrap: balance;
+}
+
+.hero-jurio-header h1 span {
+    display: block;
+    color: var(--color-muted);
+}
+
+.hero-jurio-intro {
+    padding-bottom: .35rem;
+}
+
+.hero-jurio-intro > p {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 1rem;
+    line-height: 1.8;
+}
+
+.hero-jurio .hero-jurio-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .65rem;
+    margin-top: 1.5rem;
+}
+
+.hero-jurio-actions .button {
+    min-height: 44px;
+    padding: 0 .9rem;
+    font-size: .82rem;
+}
+
+
+/* PANNELLO PRINCIPALE */
+
+.hero-jurio-platform {
+    display: grid;
+    grid-template-columns: minmax(0, 1.08fr) minmax(300px, .92fr);
+    align-items: stretch;
+    gap: clamp(1.75rem, 4vw, 3.5rem);
+    margin-bottom: 18px;
+    padding: clamp(1.5rem, 4vw, 3.25rem);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: 26px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-soft);
+    transition:
+        transform .5s cubic-bezier(.16, 1, .3, 1),
+        box-shadow .5s ease,
+        border-color .35s ease;
+}
+
+.hero-jurio-platform:hover {
+    box-shadow: var(--shadow-hover);
+}
+
+.hero-jurio-platform-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+}
+
+.hero-jurio-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.25rem;
+}
+
+.hero-jurio-number {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    color: var(--color-muted);
+    font-size: .65rem;
+    font-weight: 750;
+}
+
+.hero-jurio-label {
+    color: var(--color-muted);
+    font-size: .67rem;
+    font-weight: 750;
+    line-height: 1.3;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+}
+
+.hero-jurio-platform-title {
+    margin: 0 0 1rem;
+    font-family: var(--font-serif);
+    font-size: clamp(2rem, 3.4vw, 3.25rem);
+    font-weight: 500;
+    line-height: 1.02;
+    letter-spacing: -.045em;
+}
+
+.hero-jurio-platform-title span {
+    display: block;
+    color: var(--color-muted);
+}
+
+.hero-jurio-platform-description {
+    max-width: 580px;
+    margin: 0;
+    color: var(--color-muted);
+    font-size: .93rem;
+    line-height: 1.75;
+}
+
+
+/* SPECIFICHE TECNICHE */
+
+.hero-jurio-specs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .65rem;
+    margin: 1.6rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hero-jurio-spec {
+    min-width: 0;
+    padding: .9rem .8rem;
+    border: 1px solid var(--color-border);
+    border-radius: 13px;
+    background: var(--color-bg);
+    transition:
+        transform .35s ease,
+        border-color .35s ease;
+}
+
+.hero-jurio-spec:hover {
+    transform: translateY(-3px);
+    border-color: var(--color-primary);
+}
+
+.hero-jurio-spec-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .65rem;
+    color: var(--color-muted);
+    font-size: .59rem;
+    font-weight: 700;
+    letter-spacing: .055em;
+    text-transform: uppercase;
+}
+
+.hero-jurio-spec-top i {
+    color: var(--color-primary);
+    font-size: .8rem;
+}
+
+.hero-jurio-spec > strong {
+    display: block;
+    overflow-wrap: anywhere;
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: clamp(1rem, 1.5vw, 1.4rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -.04em;
+}
+
+.hero-jurio-spec > p {
+    margin: .45rem 0 0;
+    color: var(--color-muted);
+    font-size: .69rem;
+    line-height: 1.45;
+}
+
+
+/* VERIFICABILITÀ */
+
+.hero-jurio-proof {
+    display: flex;
+    align-items: flex-start;
+    gap: .7rem;
+    margin-top: 1.4rem;
+    padding-top: 1.1rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.hero-jurio-proof-icon {
+    display: inline-flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid var(--color-border);
+    border-radius: 50%;
+    color: var(--color-primary);
+    font-size: .8rem;
+}
+
+.hero-jurio-proof p {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: .77rem;
+    line-height: 1.6;
+}
+
+.hero-jurio-proof strong {
+    color: var(--color-text);
+    font-weight: 750;
+}
+
+
+/* VISUAL DOCUMENTALE */
+
+.hero-jurio-visual {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 420px;
+    overflow: hidden;
+    isolation: isolate;
+    border: 1px solid var(--color-border);
+    border-radius: 20px;
+    background:
+        radial-gradient(
+            circle at 50% 48%,
+            color-mix(in srgb, var(--color-primary) 12%, transparent),
+            transparent 47%
+        ),
+        var(--color-bg);
+}
+
+.hero-jurio-visual::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    width: 70%;
+    aspect-ratio: 1;
+    border: 1px solid color-mix(
+        in srgb,
+        var(--color-primary) 25%,
+        transparent
+    );
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 35px color-mix(
+            in srgb,
+            var(--color-primary) 5%,
+            transparent
+        ),
+        0 0 0 75px color-mix(
+            in srgb,
+            var(--color-primary) 3%,
+            transparent
+        );
+}
+
+.hero-jurio-visual-caption,
+.hero-jurio-visual-footer {
+    position: absolute;
+    right: 1rem;
+    left: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    color: var(--color-muted);
+    font-size: .63rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+}
+
+.hero-jurio-visual-caption {
+    top: 1rem;
+    justify-content: flex-start;
+}
+
+.hero-jurio-status {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    background: var(--color-primary);
+    box-shadow: 0 0 0 4px color-mix(
+        in srgb,
+        var(--color-primary) 14%,
+        transparent
+    );
+}
+
+.hero-jurio-visual-footer {
+    bottom: 1rem;
+    padding-top: .8rem;
+    border-top: 1px solid var(--color-border);
+    font-size: .58rem;
+    letter-spacing: .04em;
+}
+
+.hero-jurio-document {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    width: 43%;
+    max-width: 210px;
+    aspect-ratio: .72;
+    padding: clamp(.8rem, 1.5vw, 1.2rem);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: 5px;
+    background: var(--color-surface);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, .09);
+}
+
+.hero-jurio-document--one {
+    top: 13%;
+    left: 7%;
+    transform: rotate(-8deg);
+}
+
+.hero-jurio-document--two {
+    top: 15%;
+    right: 7%;
+    transform: rotate(7deg);
+}
+
+.hero-jurio-document--three {
+    bottom: 10%;
+    left: 29%;
+    transform: rotate(-2deg);
+}
+
+.hero-jurio-doc-kicker {
+    margin-bottom: 1rem;
+    color: var(--color-muted);
+    font-family: var(--font-sans);
+    font-size: .43rem;
+    font-weight: 800;
+    letter-spacing: .09em;
+    line-height: 1.3;
+}
+
+.hero-jurio-doc-title,
+.hero-jurio-doc-line {
+    display: block;
+    flex: 0 0 auto;
+    height: 4px;
+    margin-bottom: 8px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--color-text) 16%, transparent);
+}
+
+.hero-jurio-doc-title {
+    width: 82%;
+    height: 6px;
+    margin-bottom: 14px;
+    background: color-mix(in srgb, var(--color-text) 65%, transparent);
+}
+
+.hero-jurio-doc-line--short {
+    width: 55%;
+}
+
+.hero-jurio-doc-line--medium {
+    width: 76%;
+}
+
+.hero-jurio-doc-space {
+    height: 13px;
+    flex: 0 0 auto;
+}
+
+.hero-jurio-crosshair {
+    position: absolute;
+    z-index: 4;
+    top: 50%;
+    left: 50%;
+    display: grid;
+    place-items: center;
+    width: 92px;
+    aspect-ratio: 1;
+    border: 1px solid var(--color-primary);
+    border-radius: 50%;
+    background: var(--color-surface);
+    color: var(--color-primary);
+    box-shadow:
+        0 0 0 9px color-mix(
+            in srgb,
+            var(--color-primary) 12%,
+            transparent
+        ),
+        0 12px 35px rgba(0, 0, 0, .12);
+    transform: translate(-50%, -50%);
+}
+
+.hero-jurio-crosshair::before,
+.hero-jurio-crosshair::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    background: color-mix(
+        in srgb,
+        var(--color-primary) 50%,
+        transparent
+    );
+}
+
+.hero-jurio-crosshair::before {
+    width: 125px;
+    height: 1px;
+}
+
+.hero-jurio-crosshair::after {
+    width: 1px;
+    height: 125px;
+}
+
+.hero-jurio-crosshair span {
+    font-family: var(--font-serif);
+    font-size: 2.2rem;
+    font-weight: 700;
+}
+
+
+/* TRE FUNZIONALITÀ */
+
+.hero-jurio-features {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+.hero-jurio-feature {
+    position: relative;
+    min-width: 0;
+    padding: 1.6rem;
+    border: 1px solid var(--color-border);
+    border-radius: 22px;
+    background: var(--color-surface);
+    transition:
+        transform .45s cubic-bezier(.16, 1, .3, 1),
+        border-color .35s ease,
+        box-shadow .45s ease;
+}
+
+.hero-jurio-feature:hover {
+    transform: translateY(-5px);
+    border-color: color-mix(
+        in srgb,
+        var(--color-border) 65%,
+        var(--color-primary)
+    );
+    box-shadow: var(--shadow-soft);
+}
+
+.hero-jurio-feature .hero-jurio-meta {
+    margin-bottom: 1.4rem;
+}
+
+.hero-jurio-feature h2 {
+    margin: 0 0 .9rem;
+    font-family: var(--font-serif);
+    font-size: clamp(1.35rem, 2vw, 1.85rem);
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -.035em;
+}
+
+.hero-jurio-feature h2 span {
+    display: block;
+    margin-top: .15rem;
+    color: var(--color-muted);
+}
+
+.hero-jurio-feature > p {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: .86rem;
+    line-height: 1.75;
+}
+
+
+/* FOOTER EDITORIALE */
+
+.hero-jurio-footer {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-top: 2rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.hero-jurio-footer-caption {
+    color: var(--color-muted);
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+}
+
+.hero-jurio-footer-line {
+    height: 1px;
+    flex: 1;
+    background: var(--color-border);
+}
+
+.hero-jurio-footer strong {
+    font-size: .85rem;
+    font-weight: 750;
+}
+
+.hero-jurio-footer strong span {
+    padding: 0 .35rem;
+    color: var(--color-primary);
+}
+
+
+/* TABLET */
+
+
+@media (max-width: 1050px) {
+
+    /* Header: titolo e demo impilati */
+    .hero-jurio-header {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2rem;
+        padding-block: 3rem;
+    }
+
+    .hero-jurio-heading {
+        max-width: 46rem;
+    }
+
+    .hero-jurio-heading h1 {
+        max-width: 15ch;
+    }
+
+    /* Pannello tecnologico */
+    .hero-jurio-platform {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2rem;
+    }
+
+    /* Demo interattiva */
+    .hero-jurio-visual {
+        width: 100%;
+        min-height: clamp(22rem, 48vw, 28rem);
+    }
+
+    /* Schede funzionalità */
+    .hero-jurio-feature {
+        padding: clamp(1.25rem, 3vw, 1.75rem);
+    }
+
+}
+
+
+
+/* MOBILE */
+
+
+@media (max-width: 720px) {
+
+    /* HERO */
+    .hero-jurio {
+        padding: 1.5rem 0 1.5rem;
+    }
+
+    .hero-jurio::before {
+        width: 280px;
+        height: 280px;
+        right: -180px;
+        top: -70px;
+    }
+
+    /* HEADER: TITOLO + DEMO */
+    .hero-jurio-header {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+        gap: 1.75rem;
+        margin-bottom: 2rem;
+        padding-block: 1rem 0;
+    }
+
+    .hero-jurio-heading {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .hero-jurio .hero-jurio-eyebrow {
+        margin-bottom: 1rem;
+        font-size: 0.65rem;
+        line-height: 1.5;
+    }
+
+    .hero-jurio-heading h1 {
+        max-width: 13ch;
+        margin: 0;
+        font-size: clamp(2.5rem, 10.5vw, 3.5rem);
+        line-height: 1.02;
+        letter-spacing: -0.045em;
+        text-wrap: balance;
+    }
+
+    .hero-jurio-heading h1 span {
+        display: block;
+    }
+
+    /* DEMO */
+    .hero-jurio-demo {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .hero-jurio-visual {
+        width: 100%;
+        min-height: clamp(18rem, 78vw, 22rem);
+        border-radius: 15px;
+    }
+
+    .hero-jurio-visual-caption,
+    .hero-jurio-visual-footer {
+        right: 0.75rem;
+        left: 0.75rem;
+        font-size: 0.58rem;
+    }
+
+    .hero-jurio-document,
+    .hero-jurio-visual .doc-mockup {
+        width: 44%;
+        padding: 0.8rem;
+    }
+
+    .hero-jurio-document--one {
+        top: 17%;
+        left: 5%;
+    }
+
+    .hero-jurio-document--two {
+        top: 18%;
+        right: 5%;
+    }
+
+    .hero-jurio-document--three {
+        bottom: 12%;
+        left: 28%;
+    }
+
+    .hero-jurio-crosshair,
+    .hero-jurio-visual .crosshair-container {
+        width: 72px;
+        height: 72px;
+    }
+
+    .hero-jurio-crosshair span,
+    .hero-jurio-visual .crosshair-j {
+        font-size: 1.8rem;
+    }
+
+    .hero-jurio-crosshair::before {
+        width: 100px;
+    }
+
+    .hero-jurio-crosshair::after {
+        height: 100px;
+    }
+
+    /* PANNELLO TECNOLOGICO */
+    .hero-jurio-platform {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.25rem;
+        padding: 1.1rem;
+        border-radius: 18px;
+    }
+
+    .hero-jurio-platform-title {
+        font-size: clamp(1.9rem, 8vw, 2.7rem);
+        line-height: 1.04;
+    }
+
+    .hero-jurio-platform-description {
+        font-size: 0.9rem;
+        line-height: 1.7;
+    }
+
+    /* SPECIFICHE */
+    .hero-jurio-specs {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.55rem;
+        margin-top: 1.1rem;
+    }
+
+    .hero-jurio-spec {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 0.25rem 0.75rem;
+        padding: 0.8rem;
+    }
+
+    .hero-jurio-spec-top {
+        grid-column: 1;
+        margin: 0;
+    }
+
+    .hero-jurio-spec > strong {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+        font-size: 1.1rem;
+        text-align: right;
+    }
+
+    .hero-jurio-spec > p {
+        grid-column: 1;
+        margin: 0;
+        font-size: 0.72rem;
+    }
+
+    .hero-jurio-proof {
+        align-items: flex-start;
+        margin-top: 1rem;
+    }
+
+    .hero-jurio-proof p {
+        font-size: 0.75rem;
+        line-height: 1.65;
+    }
+
+    /* FUNZIONALITA */
+    .hero-jurio-features {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.75rem;
+    }
+
+    .hero-jurio-feature {
+        padding: 1.15rem;
+        border-radius: 16px;
+    }
+
+    .hero-jurio-feature .hero-jurio-meta {
+        margin-bottom: 0.75rem;
+    }
+
+    .hero-jurio-feature h2 {
+        font-size: 1.5rem;
+        line-height: 1.15;
+    }
+
+    .hero-jurio-feature > p {
+        font-size: 0.88rem;
+        line-height: 1.7;
+    }
+
+    /* FOOTER */
+    .hero-jurio-footer {
+        flex-wrap: wrap;
+        gap: 0.7rem;
+    }
+
+    .hero-jurio-footer-caption {
+        font-size: 0.6rem;
+    }
+
+    .hero-jurio-footer-line {
+        min-width: 25px;
+    }
+
+    .hero-jurio-footer strong {
+        font-size: 0.78rem;
+    }
+
+    /* INTERAZIONI */
+    .hero-jurio-platform:hover,
+    .hero-jurio-feature:hover,
+    .hero-jurio-spec:hover {
+        transform: none;
+    }
+}
+
+@media (max-width: 768px) {
+    .steps {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ACCESSIBILITÀ: ANIMAZIONI RIDOTTE */
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-jurio-platform,
+    .hero-jurio-feature,
+    .hero-jurio-spec {
+        transition: none !important;
+    }
 }
