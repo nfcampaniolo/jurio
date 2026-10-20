@@ -15,7 +15,7 @@ describe("deep-analysis prompt builders", () => {
     expect(prompt).toContain("webSearch");
     expect(prompt).toContain("userFileSearch");
     expect(prompt).toContain("ALLEGATI / FASCICOLO UTENTE CARICATI (1)");
-    expect(prompt).toContain("userFileSearch");
+    expect(prompt).toContain("Gli ID vengono passati dal backend");
   });
 
   it("includes source evidence and refinement constraints in the follow-up prompts", () => {
@@ -24,6 +24,10 @@ describe("deep-analysis prompt builders", () => {
       originalPrompt: "Q", direttivaHitl: "approfondisci", requiredTools: [], hasUserDocs: false,
       docsLength: 0, docs: [], knownIds: ["s1"],
     })).toContain("approfondisci");
+    expect(buildRefineResearchSystemPrompt({
+      originalPrompt: "Q", direttivaHitl: "approfondisci", requiredTools: [], hasUserDocs: false,
+      docsLength: 0, docs: [], knownIds: ["precedente-1"],
+    })).toContain("precedente-1");
     expect(buildRefineMappingSystemPrompt({ originalPrompt: "Q", direttivaHitl: "nuovi dati" })).toContain("nuovi dati");
     expect(buildSynthesisReportSystemPrompt("Q")).toContain("esclusivamente i dati JSON");
   });

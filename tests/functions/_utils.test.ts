@@ -91,11 +91,13 @@ function responseMock(overrides: Partial<{ headersSent: boolean; writableEnded: 
     writableEnded: false,
     status: vi.fn(),
     json: vi.fn(),
+    set: vi.fn(),
     send: vi.fn(),
     end: vi.fn(),
   }, overrides);
   res.status.mockReturnValue(res);
   res.json.mockReturnValue(res);
+  res.set.mockReturnValue(res);
   res.send.mockReturnValue(res);
   res.end.mockReturnValue(res);
   return res;
@@ -310,6 +312,14 @@ describe("functions/src/_utils", () => {
       ["TOO_MANY_REQUESTS", 429, { error: "Too Many Requests", details: "Limite di utilizzo superato." }],
       ["quota_exceeded", 429, { error: "Too Many Requests", details: "Limite di utilizzo superato." }],
       ["Limite raggiunto", 429, { error: "Too Many Requests", details: "Limite di utilizzo superato." }],
+      [
+        "AI_TEMPORARILY_UNAVAILABLE: Vertex busy",
+        503,
+        {
+          error: "AI temporarily unavailable",
+          details: "Il servizio IA è temporaneamente sovraccarico. Analisi e fonti sono salvate; riprova a generare la sintesi tra poco.",
+        },
+      ],
       ["ToolLoop exceeded", 422, { error: "ToolLoop", details: "ToolLoop exceeded" }],
       ["other failure", 500, { error: "Process failed", details: "other failure" }],
     ])("maps handler error %s to HTTP %i", async (message, status, body) => {
@@ -324,6 +334,9 @@ describe("functions/src/_utils", () => {
       // Assert
       expect(res.status).toHaveBeenCalledWith(status);
       expect(res.json).toHaveBeenCalledWith(body);
+      if (status === 503) {
+        expect(res.set).toHaveBeenCalledWith("Retry-After", "10");
+      }
     });
 
     it("returns a generic internal error for non-Error throws", async () => {

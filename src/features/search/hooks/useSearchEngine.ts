@@ -105,6 +105,7 @@ export function useSearchEngine(
   history: ReturnType<typeof useSearchHistory>
 ) {
   const [loading, setLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
   const [topResults, setTopResults] = useState<DocumentoGiurisprudenziale[]>([]);
   const [results, setResults] = useState<DocumentoGiurisprudenziale[]>([]);
   const [visibleCount, setVisibleCount] = useState(10);
@@ -197,6 +198,7 @@ export function useSearchEngine(
     if (!trimmedInput && !isBrowseDbMode) return [];
 
     setLoading(true);
+    setHasSearched(false);
     setDetailedMatch(null);
     setIsDeepSearchAvailable(false);
     setLastDbDoc(null);
@@ -231,6 +233,7 @@ export function useSearchEngine(
             const finalDocs = filters.applyUiFiltersAndSort(docs);
             setResults(finalDocs);
             setVisibleCount(finalDocs.length);
+            setHasSearched(true);
             return finalDocs;
           }
 
@@ -309,6 +312,7 @@ export function useSearchEngine(
             results_count: finalResults.length + filteredGenericTop.length,
           });
 
+          setHasSearched(true);
           return finalResults;
         }
       );
@@ -357,6 +361,7 @@ export function useSearchEngine(
       });
 
       setIsDeepSearchAvailable(false);
+      setHasSearched(true);
 
     } catch (err: unknown) {
       if (isUnavailableError(err)) toast.error("Ricerca approfondita non disponibile al momento.");
@@ -409,7 +414,8 @@ export function useSearchEngine(
   };
 
   return {
-    loading, topResults, results, visibleCount, setVisibleCount,
+    loading, hasSearched,
+    topResults, results, visibleCount, setVisibleCount,
     detailedMatch, setDetailedMatch, isDeepSearchAvailable,
     isDbPaginatedMode, hasMoreDbResults, webFallback, searchStatus, deny,
     handleSearch, handleDeepSearch, handleLoadMore

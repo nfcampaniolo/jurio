@@ -6,6 +6,7 @@ import { getDb, sanitize } from "../../_deps";
 import { DeepAnalysisRequestBody, DeepAnalysisConfig, DEFAULT_CONFIG } from "../_interfaces";
 import { InquadramentoSchema, MappaDialetticaSchema  } from "./_schema";
 import { researchAnalysisFlow, refineResearchFlow, generateSynthesisReportFlow  } from "./flow";
+import { reportDeepAnalysisProgress } from "./_progress";
 const db = getDb();
 
 /**
@@ -57,11 +58,11 @@ export function resolveDeepAnalysisConfig(
         ? source.sourceInternalDB
         : DEFAULT_CONFIG.sourceInternalDB,
     sourceDoctrine:
-      typeof (source as any).sourceDoctrine === "boolean"
-        ? (source as any).sourceDoctrine
+      typeof source.sourceDoctrine === "boolean"
+        ? source.sourceDoctrine
         : true,
     webLimit: clampInteger(source.webLimit, DEFAULT_CONFIG.webLimit, 1, 10),
-  } as DeepAnalysisConfig;
+  };
 }
 
 function clampNumber(
@@ -97,7 +98,7 @@ export function createDeepAnalysisTitle(prompt: string): string {
   return `${clean.slice(0, 57)}...`;
 }
 
-export async function executeDeepAnalysis(req: Request, res: Response): Promise<any> {
+export async function executeDeepAnalysis(req: Request, res: Response): Promise<void> {
   return withSecureApiEndpoint(req, res, async (uid): Promise<void> => {
     const body = req.body as DeepAnalysisRequestBody;
     const { action, sessionId, prompt, direttivaHitl, docs, config } = body;
@@ -150,15 +151,27 @@ export async function executeDeepAnalysis(req: Request, res: Response): Promise<
       const normalizedDocs = normalizeDeepAnalysisDocs(docs);
       const resolvedConfig = resolveDeepAnalysisConfig(config);
 
-      const output = await researchAnalysisFlow({
-        prompt: normalizedPrompt,
-        docs: normalizedDocs,
-        userId: uid,
-        config: resolvedConfig,
-      });
+      let output;
+      try {
+        output = await researchAnalysisFlow({
+          prompt: normalizedPrompt,
+          docs: normalizedDocs,
+          userId: uid,
+          config: resolvedConfig,
+          sessionId: normalizedSessionId,
+        });
+      } catch (error) {
+        await reportDeepAnalysisProgress(
+          normalizedSessionId,
+          "research",
+          "La ricerca non è riuscita. Riprova tra poco.",
+          "error"
+        );
+        throw error;
+      }
 
       const now = admin.firestore.FieldValue.serverTimestamp();
-      const sessionPayload: Record<string, any> = {
+      const sessionPayload: Record<string, unknown> = {
         user: uid,
         ownerId: uid,
         title: createDeepAnalysisTitle(normalizedPrompt),
@@ -175,6 +188,12 @@ export async function executeDeepAnalysis(req: Request, res: Response): Promise<
       };
 
       await sessionRef.set(sanitize(sessionPayload), { merge: true });
+      await reportDeepAnalysisProgress(
+        normalizedSessionId,
+        "completed",
+        "Ricerca completata. La mappa dialettica è pronta per la revisione.",
+        "completed"
+      );
 
       res.status(200).json({
         success: true,
@@ -209,16 +228,28 @@ export async function executeDeepAnalysis(req: Request, res: Response): Promise<
         ...(savedConfig as Partial<DeepAnalysisConfig>),
       };
 
-      const output = await refineResearchFlow({
-        originalPrompt: typeof currentSessionData.promptOriginale === "string" ? currentSessionData.promptOriginale : "",
-        direttivaHitl: normalizedHitl,
-        currentInquadramento: InquadramentoSchema.parse(currentSessionData.inquadramento ?? {}),
-        currentMappaDialettica: MappaDialetticaSchema.parse(currentSessionData.mappaDialettica ?? {}),
-        currentMappaConcettuale: currentSessionData.mappaConcettuale ?? null,
-        docs: Array.isArray(currentSessionData.documentiAllegati) ? currentSessionData.documentiAllegati : [],
-        userId: uid,
-        config: resolvedConfig,
-      });
+      let output;
+      try {
+        output = await refineResearchFlow({
+          originalPrompt: typeof currentSessionData.promptOriginale === "string" ? currentSessionData.promptOriginale : "",
+          direttivaHitl: normalizedHitl,
+          currentInquadramento: InquadramentoSchema.parse(currentSessionData.inquadramento ?? {}),
+          currentMappaDialettica: MappaDialetticaSchema.parse(currentSessionData.mappaDialettica ?? {}),
+          currentMappaConcettuale: currentSessionData.mappaConcettuale ?? null,
+          docs: Array.isArray(currentSessionData.documentiAllegati) ? currentSessionData.documentiAllegati : [],
+          userId: uid,
+          config: resolvedConfig,
+          sessionId: normalizedSessionId,
+        });
+      } catch (error) {
+        await reportDeepAnalysisProgress(
+          normalizedSessionId,
+          "refinement",
+          "L'approfondimento non è riuscito. Riprova tra poco.",
+          "error"
+        );
+        throw error;
+      }
 
       const now = admin.firestore.FieldValue.serverTimestamp();
       await sessionRef.set(
@@ -231,6 +262,12 @@ export async function executeDeepAnalysis(req: Request, res: Response): Promise<
           updatedAt: now,
         }),
         { merge: true }
+      );
+      await reportDeepAnalysisProgress(
+        normalizedSessionId,
+        "completed",
+        "Approfondimento completato. La mappa aggiornata è pronta.",
+        "completed"
       );
 
       res.status(200).json({
@@ -246,13 +283,25 @@ export async function executeDeepAnalysis(req: Request, res: Response): Promise<
 
     // --- AZIONE: GENERATE SYNTHESIS ---
     if (action === "generate_synthesis") {
-      const output = await generateSynthesisReportFlow({
-        quesitoOriginale: String(sessionData?.promptOriginale ?? ""),
-        inquadramento: sessionData?.inquadramento ?? {},
-        mappaDialettica: sessionData?.mappaDialettica ?? {},
-        mappaConcettuale: sessionData?.mappaConcettuale ?? undefined,
-        userId: uid,
-      });
+      let output;
+      try {
+        output = await generateSynthesisReportFlow({
+          quesitoOriginale: String(sessionData?.promptOriginale ?? ""),
+          inquadramento: sessionData?.inquadramento ?? {},
+          mappaDialettica: sessionData?.mappaDialettica ?? {},
+          mappaConcettuale: sessionData?.mappaConcettuale ?? undefined,
+          userId: uid,
+          sessionId: normalizedSessionId,
+        });
+      } catch (error) {
+        await reportDeepAnalysisProgress(
+          normalizedSessionId,
+          "synthesis",
+          "La generazione della sintesi non è riuscita. Riprova tra poco.",
+          "error"
+        );
+        throw error;
+      }
 
       await sessionRef.update(
         sanitize({
@@ -260,6 +309,12 @@ export async function executeDeepAnalysis(req: Request, res: Response): Promise<
           status: "completed",
           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
         })
+      );
+      await reportDeepAnalysisProgress(
+        normalizedSessionId,
+        "completed",
+        "Sintesi strategica completata.",
+        "completed"
       );
 
       res.status(200).json({

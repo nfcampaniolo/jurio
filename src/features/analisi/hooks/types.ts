@@ -54,6 +54,12 @@ export interface DeepAnalysisSession {
   userId: string;
   title: string;
   status: SessionStatus;
+  progress?: {
+    phase: string;
+    message: string;
+    status: "running" | "completed" | "error";
+    updatedAt?: Date;
+  };
   
   promptOriginale: string;
   documentiAllegati: string[];

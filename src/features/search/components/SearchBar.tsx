@@ -25,7 +25,7 @@ export const SearchBar = () => {
       filteredSuggestions,
       activeIndex, setActiveIndex,
       showSuggestions, setShowSuggestions,
-      topResults, results, visibleCount,
+      topResults, results, visibleCount, hasSearched,
       filterGrado, setFilterGrado,
       filterTipo, setFilterTipo,
       handleSearch, handleKeyDown, handleClick,
@@ -515,7 +515,7 @@ export const SearchBar = () => {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="max-w-5xl mx-auto px-4 md:px-0 mt-6 sm:mt-8 mb-6"
+          className="relative z-10 max-w-5xl mx-auto px-4 md:px-0 mt-6 sm:mt-8 mb-6"
         >
           <div className="relative bg-(--color-surface) border border-(--color-border) rounded-lg p-6 sm:p-8 shadow-(--shadow-soft) overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
@@ -559,6 +559,7 @@ export const SearchBar = () => {
       <SearchResultsList
         totalResultsCount={totalResultsCount}
         isSearching={isSearching}
+        hasSearched={hasSearched}
         effectiveTopMatches={effectiveTopMatches}
         effectiveAllMatches={effectiveAllMatches}
         visibleTopMatches={visibleTopMatches}

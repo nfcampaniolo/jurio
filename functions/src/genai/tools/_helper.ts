@@ -30,33 +30,44 @@ export async function createResearchEmbedding(
 }
 
 const embeddingCache = new Map<string, number[]>();
+const embeddingRequests = new Map<string, Promise<number[]>>();
+let openAIClient: OpenAI | undefined;
 
 export async function createEmbedding(text: string): Promise<number[]> {
   const cacheKey = text.trim().toLowerCase();
-  
-  // 1. Controllo in RAM: se abbiamo già l'embedding, restituiscilo subito (0ms di latenza)
-  if (embeddingCache.has(cacheKey)) {
-    return embeddingCache.get(cacheKey)!;
+  const cached = embeddingCache.get(cacheKey);
+  if (cached) {
+    return cached;
   }
 
-  // 2. Esecuzione standard API OpenAI
-  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  const res = await client.embeddings.create({
-    model: CFG.embedding.model,
-    input: text.trim(),
-    dimensions: CFG.embedding.dimensions,
-  });
-  
-  const vector = res.data[0].embedding;
-
-  // 3. Meccanismo di sicurezza: svuota la cache se supera i 1000 elementi 
-  if (embeddingCache.size > 1000) {
-    embeddingCache.clear();
+  const pending = embeddingRequests.get(cacheKey);
+  if (pending) {
+    return pending;
   }
-  
-  // 4. Salva il nuovo embedding e restituiscilo
-  embeddingCache.set(cacheKey, vector);
-  return vector;
+
+  const request = (async () => {
+    openAIClient ??= new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    const response = await openAIClient.embeddings.create({
+      model: CFG.embedding.model,
+      input: text.trim(),
+      dimensions: CFG.embedding.dimensions,
+    });
+
+    const vector = response.data[0].embedding;
+    if (embeddingCache.size >= 1000) {
+      const oldestKey = embeddingCache.keys().next().value;
+      if (oldestKey) embeddingCache.delete(oldestKey);
+    }
+    embeddingCache.set(cacheKey, vector);
+    return vector;
+  })();
+
+  embeddingRequests.set(cacheKey, request);
+  try {
+    return await request;
+  } finally {
+    embeddingRequests.delete(cacheKey);
+  }
 }
 
 export function mapToObject(doc: FirebaseFirestore.QueryDocumentSnapshot, keywords: string[]) {

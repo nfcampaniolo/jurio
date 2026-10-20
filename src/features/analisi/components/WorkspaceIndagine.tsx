@@ -74,6 +74,38 @@ export const WorkspaceIndagine: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSession?.id]);
 
+  const progress = activeSession?.progress;
+
+  useEffect(() => {
+    if (!progress || !isLogModalOpen) return;
+
+    const progressStepId = `backend-${progress.phase}`;
+    const status: LogStep["status"] =
+      progress.status === "error"
+        ? "error"
+        : progress.status === "completed"
+          ? "success"
+          : "pending";
+
+    setExecutionSteps((previous) => {
+      const hasStep = previous.some((step) => step.id === progressStepId);
+      const steps = previous.map((step) =>
+        step.status === "pending" && step.id !== progressStepId
+          ? { ...step, status: "success" as const }
+          : step
+      );
+      const nextStep: LogStep = {
+        id: progressStepId,
+        timestamp: new Date().toLocaleTimeString(),
+        message: progress.message,
+        status,
+      };
+
+      if (!hasStep) return [...steps, nextStep];
+      return steps.map((step) => (step.id === progressStepId ? nextStep : step));
+    });
+  }, [progress, isLogModalOpen]);
+
   const handleSalvaTitolo = async () => {
     setIsEditingTitle(false);
     if (activeSession && titoloEditabile.trim() !== activeSession.title) {
@@ -99,21 +131,14 @@ export const WorkspaceIndagine: React.FC<Props> = ({
     const ora = new Date().toLocaleTimeString();
     setExecutionSteps([
       { id: '1', timestamp: ora, message: "Inizializzazione parametri di ricerca e filtri di confidenza...", status: "success" },
-      { id: '2', timestamp: ora, message: "Interrogazione dei tool attivi (Database Interno, Web Search, Fascicolo)...", status: "pending" }
+      { id: '2', timestamp: ora, message: "Invio della richiesta al backend e attesa dell'avanzamento...", status: "pending" }
     ]);
 
     try {
-      setTimeout(() => {
-        setExecutionSteps(prev => [
-          ...prev.map(s => s.id === '2' ? { ...s, status: 'success' as const } : s),
-          { id: '3', timestamp: new Date().toLocaleTimeString(), message: "Analisi multi-turno e strutturazione tesi Favorevole/Contraria...", status: "pending" }
-        ]);
-      }, 2000);
-
       await avviaRicercaPrecedenti(quesito, configurazione, attachedDocs, onSessionCreated, signal);
 
       setExecutionSteps(prev => [
-        ...prev.map(s => s.id === '3' ? { ...s, status: 'success' as const } : s),
+        ...prev.map(s => s.status === "pending" ? { ...s, status: "success" as const } : s),
         { id: '4', timestamp: new Date().toLocaleTimeString(), message: "Mappa Dialettica completata e persistita su Firestore.", status: "success" }
       ]);
 
@@ -207,6 +232,25 @@ export const WorkspaceIndagine: React.FC<Props> = ({
     }
   };
 
+  const handleGeneraSintesi = async () => {
+    setLogModalTitle("Redazione della Sintesi Strategica");
+    setExecutionSteps([
+      {
+        id: "synthesis-start",
+        timestamp: new Date().toLocaleTimeString(),
+        message: "Preparazione delle fonti approvate per la sintesi finale...",
+        status: "success",
+      },
+      {
+        id: "synthesis-pending",
+        timestamp: new Date().toLocaleTimeString(),
+        message: "Generazione del report strategico in corso...",
+        status: "pending",
+      },
+    ]);
+    await avviaGenerazioneSintesi();
+  };
+
   const fontiFav = activeSession?.mappaDialettica?.orientamentoFavorevole?.fonti || [];
   const fontiCont = activeSession?.mappaDialettica?.orientamentoContrario?.fonti || [];
   const tutteLeFonti: PrecedenteReperito[] = [...fontiFav, ...fontiCont];
@@ -258,7 +302,7 @@ export const WorkspaceIndagine: React.FC<Props> = ({
               setDirettivaPersonalizzata={setDirettivaPersonalizzata}
               handleEseguiHitlAction={handleEseguiHitlAction}
               isProcessing={isProcessing}
-              avviaGenerazioneSintesi={avviaGenerazioneSintesi}
+              avviaGenerazioneSintesi={handleGeneraSintesi}
               fontiApprovateCount={fontiApprovateCount}
             />
           )}

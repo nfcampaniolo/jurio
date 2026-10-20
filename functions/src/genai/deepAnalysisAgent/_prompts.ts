@@ -4,13 +4,11 @@ export function buildResearchAnalysisSystemPrompt(params: {
   hasUserDocs: boolean;
   docsLength: number;
   docs: Array<string | { id: string }>;
+  knownIds?: string[];
 }): string {
-  const { prompt, requiredTools, hasUserDocs, docsLength, docs } = params;
-
+  const { prompt, requiredTools, hasUserDocs, docsLength, knownIds = [] } = params;
   return `
-SEI JURIO.
-
-Esegui un'analisi giurisprudenziale e dottrinale approfondita sul seguente quesito.
+Sei un pianificatore di ricerche giuridiche. Prepara query brevi e mirate per le fonti abilitate.
 
 QUESITO UTENTE:
 "${prompt}"
@@ -19,19 +17,18 @@ FONTI ABILITATE:
 ${requiredTools.length ? requiredTools.join("\n") : "(Nessun tool esterno abilitato)"}
 
 ALLEGATI / FASCICOLO UTENTE CARICATI (${docsLength}):
-${hasUserDocs ? docs.map((id) => `- \${typeof id === "string" ? id : id.id}`).join("\n") : "(Nessun allegato presente)"}
+${hasUserDocs ? "(Gli ID vengono passati dal backend allo strumento documentale.)" : "(Nessun allegato presente)"}
 
-REGOLE TASSATIVE DI RICERCA ED ESTRAZIONE:
-1. 
-${
-  hasUserDocs
-    ? "ALLEGATI UTENTE DETECTATI: DEVI consultare obbligatoriamente 'userFileSearch' per analizzare il contenuto dei documenti allegati."
-    : "Nessun allegato utente presente."
-}
-2. Effettua al massimo 2 chiamate di ricerca in totale (Massimo 3 turni di tool).
-3. CIRCUIT BREAKER: Se trovi giurisprudenza/documenti sufficienti per inquadrare la questione, FERMATI IMMEDIATAMENTE. Non effettuare ricerche ridondanti.
-4. Non inventare mai fonti. I risultati dei tool costituiscono i tuoi unici dati reali.
-5. Utilizza il database interno per i precedenti giurisprudenziali, Dottrina per orientamenti e note, il Web per la normativa aggiornata e la prassi, e il Fascicolo Utente per gli allegati di causa.
+Regole:
+${hasUserDocs ? "userFileSearch verrà eseguito obbligatoriamente dal backend sugli allegati indicati." : ""}
+1. Seleziona al massimo due fonti esterne tra quelle abilitate, privilegiando quelle pertinenti al quesito.
+2. Per ogni fonte selezionata, restituisci una query italiana specifica e utilizzabile dal relativo strumento.
+3. Per il database interno scegli "semantic", salvo che il quesito contenga un identificativo univoco o un riferimento normativo preciso.
+4. Non selezionare fonti non abilitate e non restituire query per strumenti non necessari.
+5. Gli allegati vengono cercati separatamente dal backend usando i loro ID: non includerli nella selezione delle fonti esterne.
+6. Per il web scegli "institutional" per verifiche normative ufficiali; altrimenti "all".
+7. Non inventare fatti o riferimenti.
+${knownIds.length ? `8. Evita query che ripropongano fonti già acquisite: ${knownIds.join(", ")}.` : ""}
 `;
 }
 
@@ -72,7 +69,7 @@ export function buildRefineResearchSystemPrompt(params: {
   docs: Array<string | { id: string }>;
   knownIds: string[];
 }): string {
-  const { originalPrompt, direttivaHitl, requiredTools, hasUserDocs, docsLength, docs, knownIds } = params;
+  const { originalPrompt, direttivaHitl, requiredTools, hasUserDocs, docsLength, knownIds } = params;
 
   return `
 SEI JURIO.
@@ -89,10 +86,10 @@ FONTI ABILITATE:
 ${requiredTools.length ? requiredTools.join("\n") : "(Nessun tool esterno abilitato)"}
 
 ALLEGATI / FASCICOLO UTENTE CARICATI (${docsLength}):
-${hasUserDocs ? docs.map((id) => `- \${typeof id === "string" ? id : id.id}`).join("\n") : "(Nessun allegato presente)"}
+${hasUserDocs ? "(Gli ID vengono passati dal backend allo strumento documentale.)" : "(Nessun allegato presente)"}
 
 FONTI GIÀ ACQUISITE (DA NON RIPETERE):
-${knownIds.length ? knownIds.map((id) => `- \${id}`).join("\n") : "(nessuna)"}
+${knownIds.length ? knownIds.map((id) => `- ${id}`).join("\n") : "(nessuna)"}
 
 REGOLE DI LIMITAZIONE E CIRCUIT BREAKER (TASSATIVE):
 1. Cerca nuove fonti pertinenti alla direttiva senza rieseguire query su ID già acquisiti.

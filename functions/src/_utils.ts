@@ -115,6 +115,15 @@ function handleApiError(res: Response, err: unknown): void {
     res.status(429).json({ error: "Too Many Requests", details: "Limite di utilizzo superato." });
     return;
   }
+  if (msg.includes("AI_TEMPORARILY_UNAVAILABLE")) {
+    res.set("Retry-After", "10");
+    res.status(503).json({
+      error: "AI temporarily unavailable",
+      details:
+        "Il servizio IA è temporaneamente sovraccarico. Analisi e fonti sono salvate; riprova a generare la sintesi tra poco.",
+    });
+    return;
+  }
   if (msg.includes("ToolLoop")) {
     res.status(422).json({ error: "ToolLoop", details: msg });
     return;

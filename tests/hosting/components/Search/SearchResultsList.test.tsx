@@ -78,6 +78,7 @@ describe("SearchResultsList Component Suite", () => {
     const defaultProps: React.ComponentProps<typeof SearchResultsList> = {
       totalResultsCount: 4,
       isSearching: true,
+      hasSearched: false,
       effectiveTopMatches: dummyTopMatches,
       effectiveAllMatches: dummyAllMatches,
       visibleTopMatches: dummyTopMatches,
@@ -97,6 +98,11 @@ describe("SearchResultsList Component Suite", () => {
   test("non renderizza nulla se totalResultsCount è 0 e loading è false", () => {
     const { container } = renderComponent({ totalResultsCount: 0, loading: false });
     expect(container).toBeEmptyDOMElement();
+  });
+
+  test("mostra un messaggio quando una ricerca completata non restituisce risultati", () => {
+    renderComponent({ totalResultsCount: 0, hasSearched: true });
+    expect(screen.getByRole("status")).toHaveTextContent("Nessun elemento trovato");
   });
 
   test("renderizza il conteggio dei documenti trovati se totalResultsCount > 0", () => {

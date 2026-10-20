@@ -344,6 +344,9 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
         if (res.status === 429 || errorDetail.includes("quota_exceeded")) {
           throw new Error("QUOTA_EXCEEDED");
         }
+        if (res.status === 503 || errorDetail.includes("AI_TEMPORARILY_UNAVAILABLE")) {
+          throw new Error("AI_TEMPORARILY_UNAVAILABLE");
+        }
         throw new Error(errorDetail || "Errore durante la generazione della sintesi.");
       }
 
@@ -355,6 +358,8 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
         // Gestito
       } else if (error.message === "QUOTA_EXCEEDED" || error.message.includes("quota_exceeded")) {
         toast.error("Hai raggiunto il limite giornaliero per questa funzione. Riprova domani o aggiorna il tuo piano.", { duration: 5000 });
+      } else if (error.message === "AI_TEMPORARILY_UNAVAILABLE") {
+        toast.error("Il servizio IA è temporaneamente sovraccarico. L'analisi è salvata: puoi riprovare a generare la sintesi tra poco.", { duration: 7000 });
       } else {
         console.error(err);
         toast.error("Errore nel server. Si prega di riprovare in seguito.");

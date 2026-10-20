@@ -7,6 +7,7 @@ import type { Sentenza, Ordinanza, Decreto, DocumentoGiurisprudenzaGenerico } fr
 interface SearchResultsListProps {
   totalResultsCount: number;
   isSearching: boolean;
+  hasSearched: boolean;
   effectiveTopMatches: (Sentenza | Ordinanza | Decreto | DocumentoGiurisprudenzaGenerico)[];
   effectiveAllMatches: (Sentenza | Ordinanza | Decreto | DocumentoGiurisprudenzaGenerico)[];
   visibleTopMatches: (Sentenza | Ordinanza | Decreto | DocumentoGiurisprudenzaGenerico)[];
@@ -22,6 +23,7 @@ interface SearchResultsListProps {
 export const SearchResultsList: React.FC<SearchResultsListProps> = ({
   totalResultsCount,
   isSearching,
+  hasSearched,
   effectiveTopMatches,
   effectiveAllMatches,
   visibleTopMatches,
@@ -33,7 +35,18 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
   handleClick,
   handleLoadMore,
 }) => {
-  if (totalResultsCount === 0 && !loading) return null;
+  if (totalResultsCount === 0 && !loading) {
+    if (!hasSearched) return null;
+
+    return (
+      <div
+        className="max-w-5xl mx-auto mt-6 sm:mt-8 px-4 md:px-0 text-center text-sm text-(--color-muted)"
+        role="status"
+      >
+        Nessun elemento trovato
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-5xl mx-auto mt-6 sm:mt-8 space-y-6 sm:space-y-8 px-4 md:px-0">
