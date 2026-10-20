@@ -9,7 +9,8 @@ describe("support-agent prompt builders", () => {
   it("adds a caller prefix and frames fallback queries", () => {
     const prompt = buildJurioSupportSystemPrompt("Base instructions");
     expect(prompt.startsWith("Base instructions")).toBe(true);
-    expect(prompt).toContain("userManualSearch");
+    expect(prompt).toContain("risultati della ricerca nel manuale Jurio");
+    expect(prompt).toContain("entro 120 parole");
     expect(buildFallbackUserPrompt("contratto")).toContain('"contratto"');
   });
 

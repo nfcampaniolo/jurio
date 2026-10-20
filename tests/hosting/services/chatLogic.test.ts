@@ -153,7 +153,9 @@ describe("Chat Support Logic & Cache Suite", () => {
         status: 502,
       });
 
-      await expect(sendSupportMessage(inputMessages)).rejects.toThrow("Errore server: 502");
+      await expect(sendSupportMessage(inputMessages)).rejects.toThrow(
+        "Il servizio di supporto è temporaneamente non disponibile. Riprova tra poco."
+      );
     });
 
     test("solleva errore se la risposta è priva di body leggibile", async () => {
@@ -170,7 +172,7 @@ describe("Chat Support Logic & Cache Suite", () => {
 
     test("processa stream con testo incrementale e termina regolarmente con [DONE]", async () => {
       const sseChunks = [
-        "data: {\"message\":{\"text\":\"La verifica \"}}\n",
+        "data: {\"message\":{\"text\":\"La verifica \"}}\n\n",
         "data: {\"message\":{\"text\":\"richiede l'indicazione \"}}\n\n",
         "data: {\"message\":{\"text\":\"dell'organo giudicante.\"}}\n\n",
         "data: [DONE]\n\n",
@@ -182,7 +184,8 @@ describe("Chat Support Logic & Cache Suite", () => {
         body: createMockStream(sseChunks),
       });
 
-      const response = await sendSupportMessage(inputMessages);
+      const onTextSpy = vi.fn();
+      const response = await sendSupportMessage(inputMessages, undefined, onTextSpy);
 
       expect(mockFetchWithAppCheckOnly).toHaveBeenCalledWith(
         "https://api.jurio.it/support/chat",
@@ -191,7 +194,27 @@ describe("Chat Support Logic & Cache Suite", () => {
       expect(response.botReply).toBe(
         "La verifica richiede l'indicazione dell'organo giudicante."
       );
+      expect(onTextSpy).toHaveBeenNthCalledWith(1, "La verifica ");
+      expect(onTextSpy).toHaveBeenLastCalledWith(
+        "La verifica richiede l'indicazione dell'organo giudicante."
+      );
       expect(response.fonti).toEqual([]);
+    });
+
+    test("ricompone gli eventi SSE divisi tra letture successive dello stream", async () => {
+      mockFetchWithAppCheckOnly.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        body: createMockStream([
+          "data: {\"message\":{\"text\":\"Risposta",
+          " frammentata\"}}\n\n",
+          "data: [DONE]\n\n",
+        ]),
+      });
+
+      await expect(sendSupportMessage(inputMessages)).resolves.toMatchObject({
+        botReply: "Risposta frammentata",
+      });
     });
 
     test("invoca il callback onStatus quando riceve aggiornamenti di stato", async () => {
@@ -279,11 +302,10 @@ describe("Chat Support Logic & Cache Suite", () => {
       expect(response.fonti).toEqual(sampleSources);
     });
 
-    test("intercetta chunk con errore o JSON malformato registrando warning senza bloccare lo stream", async () => {
+    test("ignora un evento JSON malformato e continua a leggere lo stream", async () => {
       const sseChunks = [
         ": heartbeat comment\n",
         "data: non-un-json-valido\n\n",
-        "data: {\"error\":\"Avviso non bloccante dal motore AI\"}\n\n",
         "data: {\"message\":{\"text\":\"Risposta dopo il chunk anomalo.\"}}\n\n",
         "data: [DONE]\n\n",
       ];
@@ -300,11 +322,34 @@ describe("Chat Support Logic & Cache Suite", () => {
         "Errore parsing chunk JSON:",
         expect.any(String)
       );
-      expect(console.warn).toHaveBeenCalledWith(
-        "Errore parsing chunk JSON:",
-        "Avviso non bloccante dal motore AI"
-      );
       expect(response.botReply).toBe("Risposta dopo il chunk anomalo.");
+    });
+
+    test("propaga gli errori SSE del backend invece di restituire una risposta vuota", async () => {
+      mockFetchWithAppCheckOnly.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        body: createMockStream([
+          "data: {\"error\":\"Si è verificato un errore durante l'elaborazione.\"}\n\n",
+          "data: [DONE]\n\n",
+        ]),
+      });
+
+      await expect(sendSupportMessage(inputMessages)).rejects.toThrow(
+        "Si è verificato un errore durante l'elaborazione."
+      );
+    });
+
+    test("rileva una connessione interrotta prima dell'evento DONE", async () => {
+      mockFetchWithAppCheckOnly.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        body: createMockStream(["data: {\"message\":{\"text\":\"Risposta incompleta\"}}\n\n"]),
+      });
+
+      await expect(sendSupportMessage(inputMessages)).rejects.toThrow(
+        "La connessione al servizio si è interrotta prima del completamento. Riprova."
+      );
     });
   });
 });

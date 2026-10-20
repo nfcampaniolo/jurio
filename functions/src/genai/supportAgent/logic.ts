@@ -33,6 +33,7 @@ export async function enforcePublicRateLimit(
 
 export async function executeSupport(req: Request, res: Response): Promise<any> {
   return corsHandlerDomain(req, res, async (): Promise<void> => {
+    // 1. Gestione rapida preflight e validazione metodo
     if (req.method === "OPTIONS") {
       res.status(204).end();
       return;
@@ -42,69 +43,80 @@ export async function executeSupport(req: Request, res: Response): Promise<any> 
       return;
     }
 
-    try {
-      // 1. App Check (Restituisce esplicitamente 401 in caso di fallimento)
-      try {
-        await requireAppCheck(req);
-      } catch (appCheckError) {
-        console.warn(`[JURIO-SUPPORT] Tentativo di accesso fallito AppCheck: ${req.ip}`);
-        res.status(401).json({ error: "Unauthorized" });
-        return;
-      }
-     
-      // 2. Rate Limiting Pubblico tramite helper centralizzato
-      try {
-        await enforcePublicRateLimit(req, "support_public");
-      } catch (rateLimitError) {
-        console.warn(`[JURIO-SUPPORT] Rate limit superato.`);
-        res.status(429).json({ error: "Too Many Requests" });
-        return;
-      }
+    // 2. Controlli di sicurezza in parallelo per azzerare la latenza iniziale
+    const [appCheckResult, rateLimitResult] = await Promise.allSettled([
+      requireAppCheck(req),
+      enforcePublicRateLimit(req, "support_public")
+    ]);
+    if (appCheckResult.status === "rejected") {
+      console.warn(`[JURIO-SUPPORT] Accesso fallito AppCheck: ${req.ip}`);
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    if (rateLimitResult.status === "rejected") {
+      console.warn(`[JURIO-SUPPORT] Rate limit superato: ${req.ip}`);
+      res.status(429).json({ error: "Too Many Requests" });
+      return;
+    }
 
-      // 3. Adeguamento e Validazione Input (Prevenzione DoS)
-      const body = (req.body ?? {}) as SupportRequestBody;
-      const messages = body.messages;
+    // 3. Validazione e Sanitizzazione Rigorosa dell'Input (Prevenzione DoS)
+    const body = (req.body ?? {}) as SupportRequestBody;
+    const messages = body.messages;
 
-      if (!Array.isArray(messages) || messages.length === 0 || messages.length > 20) {
-        res.status(400).json({ error: "Bad Request: Invalid messages array length." });
-        return;
-      }
+    if (!Array.isArray(messages) || messages.length === 0 || messages.length > 20) {
+      res.status(400).json({ error: "Bad Request: Invalid messages array length." });
+      return;
+    }
 
-      const lastMessage = messages[messages.length - 1];
-      if (typeof lastMessage?.content !== "string" || !lastMessage.content.trim()) {
-        res.status(400).json({ error: "Bad Request: Invalid prompt content." });
-        return;
-      }
+    const lastMessage = messages[messages.length - 1];
+    if (typeof lastMessage?.content !== "string" || !lastMessage.content.trim()) {
+      res.status(400).json({ error: "Bad Request: Invalid prompt content." });
+      return;
+    }
 
-      const safePrompt = lastMessage.content.trim().substring(0, 1000);
-      const safeHistory = messages.slice(0, -1)
-        .filter(m => m && typeof m.content === "string")
-        .map(m => ({
-           role: (m.role === 'assistant' || m.role === 'model') ? 'model' as const : 'user' as const,
-           content: m.content.substring(0, 2000)
-        }));
+    const safePrompt = lastMessage.content.trim().substring(0, 1000);
+    const safeHistory = messages.slice(0, -1)
+      .filter(m => m && typeof m.content === "string")
+      .map(m => ({
+         role: (m.role === 'assistant' || m.role === 'model') ? 'model' as const : 'user' as const,
+         content: m.content.substring(0, 2000)
+      }));
 
-      // 4. Inizializzazione Flow GenAI
-      const flowStream = legalAgentSupport.stream({ prompt: safePrompt, history: safeHistory });
+    // 4. Configurazione Header SSE ad alte prestazioni
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      'Connection': 'keep-alive',
+      'X-Accel-Buffering': 'no', // Disabilita il buffering dei proxy (es. Nginx/Cloudflare)
+    });
+    res.flushHeaders();
 
-      // 5. Configurazione Header SSE e Flush
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      res.flushHeaders(); 
+    // 5. Gestione del ciclo di vita della connessione (Disconnessione client)
+    let clientDisconnected = false;
+    const abortController = new AbortController();
 
-      let clientDisconnected = false;
-      req.on('close', () => {
+    req.on('close', () => {
+      if (!clientDisconnected) {
         clientDisconnected = true;
+        abortController.abort();
         if (!res.writableEnded) res.end();
+      }
+    });
+
+    try {
+      // 6. Avvio del Flow GenAI in Streaming
+      const flowStream = legalAgentSupport.stream({ 
+        prompt: safePrompt, 
+        history: safeHistory 
       });
 
-      // 6. Esecuzione del Flow Streaming
+      // Iterazione in tempo reale sui chunk emessi dal flow (status e text)
       for await (const chunk of flowStream.stream) {
         if (clientDisconnected || res.writableEnded) break;
         res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
       }
 
+      // 7. Attesa e invio dell'output finale (risposta + fonti strutturate)
       if (!clientDisconnected && !res.writableEnded) {
         const finalOutput = await flowStream.output; 
         res.write(`data: ${JSON.stringify({ result: finalOutput })}\n\n`);
@@ -113,8 +125,10 @@ export async function executeSupport(req: Request, res: Response): Promise<any> 
       }
 
     } catch (err: unknown) {
+      if (clientDisconnected) return; // Ignora se il client ha chiuso volontariamente la connessione
+
       const msg = err instanceof Error ? err.message : "Internal error";
-      console.error(`[JURIO-SUPPORT] Errore Streaming Endpoint: ${msg}`);
+      console.error(`[JURIO-SUPPORT] Errore durante lo streaming del flow: ${msg}`);
 
       // Anti Information Disclosure sullo stream SSE
       if (res.headersSent && !res.writableEnded) {

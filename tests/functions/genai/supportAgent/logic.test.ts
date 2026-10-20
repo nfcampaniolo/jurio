@@ -94,7 +94,7 @@ describe("support-agent endpoint helpers", () => {
     mocks.minute.mockResolvedValue(undefined);
     mocks.daily.mockResolvedValue(undefined);
     const res = {
-      status: vi.fn().mockReturnThis(), json: vi.fn(), setHeader: vi.fn(), flushHeaders: vi.fn(),
+      status: vi.fn().mockReturnThis(), json: vi.fn(), setHeader: vi.fn(), writeHead: vi.fn(), flushHeaders: vi.fn(),
       write: vi.fn(), end: vi.fn(), writableEnded: false, headersSent: true,
     };
     await executeSupport(req as never, res as never);

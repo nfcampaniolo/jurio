@@ -4,6 +4,9 @@ import { REASONING_SYSTEM_PROMPT, buildReasoningUserPrompt, PROMPT_MASSIMAZIONE,
 import { DoctrineOutputSchema } from "./_schema";
 import { chunkText, safeParseJson, generateWithRetry } from "./_helper";
 
+const DOCTRINE_CHUNK_CONCURRENCY = 2;
+const DOCTRINE_SYSTEM_PROMPT = buildDoctrineSystemPrompt(PROMPT_DOTTRINA);
+
 export const reasoningFlow = ai.defineFlow(
   {
     name: 'reasoningFlow',
@@ -57,77 +60,80 @@ export const doctrineFlow = ai.defineFlow(
       `[doctrineFlow] Documento suddiviso in ${textChunks.length} chunk.`
     );
 
-    const allTematiche: any[] = [];
+    const allTematiche: z.infer<typeof DoctrineOutputSchema>["tematiche"] = [];
 
-    for (let i = 0; i < textChunks.length; i++) {
-      const chunk = textChunks[i];
-      console.log(
-        `[doctrineFlow] Elaborazione chunk ${i + 1}/${textChunks.length} (${chunk.length} caratteri)...`
+    for (let start = 0; start < textChunks.length; start += DOCTRINE_CHUNK_CONCURRENCY) {
+      const batch = textChunks.slice(start, start + DOCTRINE_CHUNK_CONCURRENCY);
+      const results = await Promise.allSettled(
+        batch.map(async (chunk, batchIndex) => {
+          const chunkIndex = start + batchIndex;
+          const chunkStartedAt = Date.now();
+          console.log(
+            `[doctrineFlow] Elaborazione chunk ${chunkIndex + 1}/${textChunks.length} (${chunk.length} caratteri)...`
+          );
+
+          const response = await generateWithRetry({
+            model: "vertexai/gemini-3.8-flash",
+            system: DOCTRINE_SYSTEM_PROMPT,
+            prompt: buildDoctrineUserPrompt({
+              sourceUrl: input.sourceUrl,
+              chunkIndex: chunkIndex + 1,
+              totalChunks: textChunks.length,
+              chunk,
+            }),
+            output: {
+              format: "json",
+              schema: DoctrineOutputSchema,
+            },
+          });
+
+          const parsed = response.output ?? safeParseJson(response.text ?? "");
+          const validated = DoctrineOutputSchema.safeParse(parsed);
+          if (!validated.success) {
+            throw new Error(`Output strutturato non valido: ${validated.error.message}`);
+          }
+
+          console.info(
+            `[doctrineFlow] Chunk ${chunkIndex + 1}: ${validated.data.tematiche.length} tematiche in ${Date.now() - chunkStartedAt}ms`
+          );
+
+          return validated.data.tematiche.map((tema) => {
+            if (tema.summary.trim()) return tema;
+
+            const generatedSummary = [
+              tema.tematica ? `Tematica: ${tema.tematica}` : "",
+              tema.questione_di_diritto ? `Questione: ${tema.questione_di_diritto}` : "",
+              tema.orientamento ? `Orientamento: ${tema.orientamento}` : "",
+            ]
+              .filter(Boolean)
+              .join(" - ");
+
+            return {
+              ...tema,
+              summary: generatedSummary || "Documento giuridico della Corte di Cassazione",
+            };
+          });
+        })
       );
 
-      try {
-        const response = await generateWithRetry({
-          model: "vertexai/gemini-3.8-flash",
-          system: buildDoctrineSystemPrompt(PROMPT_DOTTRINA),
-          prompt: buildDoctrineUserPrompt({
-            sourceUrl: input.sourceUrl,
-            chunkIndex: i + 1,
-            totalChunks: textChunks.length,
-            chunk,
-          }),
-          output: {
-            format: "json",
-          },
-        });
-
-        if (!response?.text) {
-          console.warn(`[doctrineFlow] Chunk ${i + 1}: risposta AI vuota.`);
-          continue;
-        }
-
-        const parsed = safeParseJson(response.text);
-        if (!parsed) {
-          console.warn(`[doctrineFlow] Chunk ${i + 1}: JSON non parsabile.`);
-          continue;
-        }
-
-        let tematicheList: any[] = [];
-        if (
-          typeof parsed === "object" &&
-          parsed !== null &&
-          Array.isArray((parsed as any).tematiche)
-        ) {
-          tematicheList = (parsed as any).tematiche;
-        }
-
-        console.log(
-          `[doctrineFlow] Chunk ${i + 1}: ${tematicheList.length} tematiche`
-        );
-
-        for (const t of tematicheList) {
-          const generatedSummary = [
-            t.tematica ? `Tematica: ${t.tematica}` : "",
-            t.questione_di_diritto ? `Questione: ${t.questione_di_diritto}` : "",
-            t.orientamento ? `Orientamento: ${t.orientamento}` : "",
-            t.sintesi ? `Sintesi: ${t.sintesi}` : "",
-          ]
-            .filter(Boolean)
-            .join(" - ");
-
-          if (!t.summary || typeof t.summary !== "string" || !t.summary.trim()) {
-            t.summary =
-              generatedSummary ||
-              "Documento giuridico della Corte di Cassazione";
-          }
-        }
-
-        allTematiche.push(...tematicheList);
-      } catch (chunkError) {
+      const failedResult = results.find(
+        (result): result is PromiseRejectedResult => result.status === "rejected"
+      );
+      if (failedResult) {
+        const failedChunk = start + results.indexOf(failedResult) + 1;
         console.error(
-          `[doctrineFlow] Errore definitivo nel chunk ${i + 1}:`,
-          chunkError
+          `[doctrineFlow] Errore definitivo nel chunk ${failedChunk}:`,
+          failedResult.reason
         );
-        throw new Error(`Elaborazione Gemini fallita nel chunk ${i + 1}.`);
+        throw new Error(`Elaborazione Gemini fallita nel chunk ${failedChunk}.`, {
+          cause: failedResult.reason,
+        });
+      }
+
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          allTematiche.push(...result.value);
+        }
       }
     }
 
@@ -135,9 +141,7 @@ export const doctrineFlow = ai.defineFlow(
       `[doctrineFlow] Chunking completato. Totale tematiche grezze: ${allTematiche.length}`
     );
 
-    const validatedOutput = DoctrineOutputSchema.parse({
-      tematiche: allTematiche,
-    });
+    const validatedOutput = { tematiche: allTematiche };
 
     console.log(
       `[doctrineFlow] Validazione completata. Tematiche finali: ${validatedOutput.tematiche.length}`

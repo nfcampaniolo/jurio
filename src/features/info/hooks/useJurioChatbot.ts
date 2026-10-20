@@ -18,6 +18,7 @@ export const useJurioChatbot = () => {
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Inizializzazione della cronologia da cache
   useEffect(() => {
     const history = chatCache.get();
 
@@ -39,17 +40,33 @@ export const useJurioChatbot = () => {
     
     const currentInputValue = inputValue.trim(); 
     const userMsg: ChatMessage = { role: "user", content: currentInputValue };
-    const newHistory = [...messages, userMsg];
     
-    setMessages(newHistory);
-    chatCache.set(newHistory);
+    const historyBeforeSend = messages;
+    const pendingHistory = [...historyBeforeSend, userMsg, { role: "assistant" as const, content: "" }];
+    chatCache.set([...historyBeforeSend, userMsg]);
+    setMessages(pendingHistory);
+
     setInputValue("");
     setIsLoading(true);
 
     try {
-      const { botReply, fonti } = await sendSupportMessage(newHistory, (statusText: string) => {
-        setCurrentStatus(statusText);
-      });
+      // Chiamata all'helper di chatLogic rispettando la firma originale
+      const { botReply, fonti } = await sendSupportMessage(
+        [...historyBeforeSend, userMsg], 
+        (statusText: string) => {
+          setCurrentStatus(statusText);
+        },
+        (text: string) => {
+          setMessages((prevHistory) => {
+            const lastMessage = prevHistory[prevHistory.length - 1];
+            if (lastMessage?.role !== "assistant") return prevHistory;
+            return [
+              ...prevHistory.slice(0, -1),
+              { ...lastMessage, content: text },
+            ];
+          });
+        },
+      );
 
       const botMsg: ChatMessage = { 
         role: "assistant", 
@@ -57,9 +74,13 @@ export const useJurioChatbot = () => {
         sources: fonti as SourceItem[]
       };
       
-      const updatedHistory = [...newHistory, botMsg];
-      setMessages(updatedHistory);
-      chatCache.set(updatedHistory);
+      setMessages((prevHistory) => {
+        const updatedHistory = prevHistory[prevHistory.length - 1]?.role === "assistant"
+          ? [...prevHistory.slice(0, -1), botMsg]
+          : [...prevHistory, botMsg];
+        chatCache.set(updatedHistory);
+        return updatedHistory;
+      });
       
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -68,14 +89,11 @@ export const useJurioChatbot = () => {
         setError("Si è verificato un errore imprevisto.");
       }
       
-      // Rollback state: aggiornamento funzionale che evita il warning di Sonar 
-      // rimuovendo in sicurezza l'ultimo messaggio inviato dall'array corrente.
-      setMessages((prevHistory) => prevHistory.slice(0, -1));
+      // Rollback sicuro dello stato e della cache al momento pre-invio
+      setMessages(historyBeforeSend);
+      chatCache.set(historyBeforeSend);
 
-      // Il ripristino della cache usa la variabile 'messages' che fa riferimento 
-      // in modo corretto allo snapshot iniziale grazie alla closure.
-      chatCache.set(messages);
-
+      // Ripristina il testo nella textarea per evitare di perderlo
       setInputValue(currentInputValue);
       
     } finally {

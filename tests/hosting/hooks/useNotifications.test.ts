@@ -71,7 +71,7 @@ describe("useNotifications Hook Suite", () => {
     vi.clearAllMocks();
     for (const key in fsMocks.callbacks) delete fsMocks.callbacks[key];
     
-    mockUseAuth.mockReturnValue({ user: mockUser, loading: false });
+    mockUseAuth.mockReturnValue({ user: mockUser, status: "authenticated" });
   });
 
   afterEach(() => {
@@ -79,7 +79,7 @@ describe("useNotifications Hook Suite", () => {
   });
 
   test("gestisce lo stato di caricamento e disattiva dbLoading senza utente", () => {
-    mockUseAuth.mockReturnValue({ user: null, loading: false });
+    mockUseAuth.mockReturnValue({ user: null, status: "unauthenticated" });
 
     const { result } = renderHook(() => useNotifications());
 
@@ -87,6 +87,16 @@ describe("useNotifications Hook Suite", () => {
     expect(result.current.authLoading).toBe(false);
     expect(result.current.dbLoading).toBe(false);
     expect(result.current.feedCompleto).toEqual([]);
+  });
+
+  test("mantiene il caricamento mentre lo stato di autenticazione è pending", () => {
+    mockUseAuth.mockReturnValue({ user: mockUser, status: "loading" });
+
+    const { result } = renderHook(() => useNotifications());
+
+    expect(result.current.authLoading).toBe(true);
+    expect(result.current.dbLoading).toBe(true);
+    expect(fsMocks.callbacks["notification-query"]).toBeUndefined();
   });
 
   test("carica, unisce e ordina correttamente notifiche personali e broadcast", async () => {

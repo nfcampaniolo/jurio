@@ -38,6 +38,8 @@ vi.mock("lucide-react", () => {
     CheckCheck: mockIcon("check-check"),
     Loader2: mockIcon("loader-2"),
     Megaphone: mockIcon("megaphone"),
+    ArrowUpRight: mockIcon("arrow-up-right"),
+    Sparkles: mockIcon("sparkles"),
   };
 });
 
@@ -53,13 +55,12 @@ const mockUseNotificationsState = {
   formatTime: vi.fn(() => "10 min fa"),
 };
 
-// Adeguare il path relativo al modulo reale di useNotifications
 vi.mock("@/features/notifications/hooks/useNotifications", () => ({
   useNotifications: () => mockUseNotificationsState,
 }));
 
 /* ---------- subject under test ---------- */
-import NotificationsPage from "@/features/notifications/NotificationsPage"; // adegua il path se necessario
+import NotificationsPage from "@/features/notifications/NotificationsPage";
 
 describe("NotificationsPage Component Suite", () => {
   const dummyNotifications: MockNotification[] = [
@@ -108,14 +109,14 @@ describe("NotificationsPage Component Suite", () => {
       mockUseNotificationsState.authLoading = true;
 
       const { rerender } = render(<NotificationsPage />);
-      expect(screen.getByText(/Caricamento notifiche\.\.\./i)).toBeInTheDocument();
+      expect(screen.getByText("Preparazione delle notifiche")).toBeInTheDocument();
       expect(screen.getByTestId("icon-loader-2")).toBeInTheDocument();
 
       // Test con dbLoading attivo
       mockUseNotificationsState.authLoading = false;
       mockUseNotificationsState.dbLoading = true;
       rerender(<NotificationsPage />);
-      expect(screen.getByText(/Caricamento notifiche\.\.\./i)).toBeInTheDocument();
+      expect(screen.getByText("Preparazione delle notifiche")).toBeInTheDocument();
     });
 
     test("mostra il messaggio di accesso richiesto se l'utente non è autenticato", () => {
@@ -123,24 +124,24 @@ describe("NotificationsPage Component Suite", () => {
 
       render(<NotificationsPage />);
 
-      expect(
-        screen.getByText("Devi effettuare l'accesso per vedere le notifiche.")
-      ).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Accesso richiesto" })).toBeInTheDocument();
+      expect(screen.getByText(/Accedi al tuo account per visualizzare le notifiche/)).toBeInTheDocument();
       expect(screen.queryByRole("heading", { name: "Notifiche" })).toBeNull();
     });
   });
 
   describe("Stato Vuoto (Empty Feed)", () => {
-    test("renderizza il segnaposto 'Nessuna notifica' se la lista è vuota", () => {
+    test("renderizza lo stato vuoto quando la lista non contiene notifiche", () => {
       mockUseNotificationsState.feedCompleto = [];
       mockUseNotificationsState.unreadCount = 0;
 
       render(<NotificationsPage />);
 
-      expect(screen.getByRole("heading", { name: "Nessuna notifica" })).toBeInTheDocument();
-      expect(screen.getByText("Non hai ancora ricevuto aggiornamenti.")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Sei tutto in pari." })).toBeInTheDocument();
+      expect(screen.getByText(/Non hai nuove notifiche da leggere/)).toBeInTheDocument();
+      expect(screen.getByText("Non ci sono aggiornamenti al momento.")).toBeInTheDocument();
       expect(screen.queryByText(/Segna tutte come lette/i)).toBeNull();
-      expect(screen.queryByText(/nuove/i)).toBeNull();
+      expect(screen.queryByText(/^\d+ da leggere$/i)).toBeNull();
     });
   });
 
@@ -148,7 +149,8 @@ describe("NotificationsPage Component Suite", () => {
     test("renderizza le notifiche con titolo, messaggio, timestamp e conteggio non lette", () => {
       render(<NotificationsPage />);
 
-      expect(screen.getByText("2 nuove")).toBeInTheDocument();
+      expect(screen.getByText("2 da leggere")).toBeInTheDocument();
+      expect(screen.getByText("3 notifiche disponibili")).toBeInTheDocument();
       expect(screen.getByText("Rinnovo abbonamento completato")).toBeInTheDocument();
       expect(screen.getByText("Nuovo membro aggiunto al team")).toBeInTheDocument();
       expect(screen.getByText("Manutenzione programmata")).toBeInTheDocument();
@@ -171,8 +173,8 @@ describe("NotificationsPage Component Suite", () => {
 
       // 1 letta -> icona check
       expect(screen.getByTestId("icon-check")).toBeInTheDocument();
-      // 2 non lette -> etichette "Controlla →"
-      expect(screen.getAllByText("Controlla →")).toHaveLength(2);
+      // 2 non lette -> etichette di stato.
+      expect(screen.getAllByText("Da leggere")).toHaveLength(2);
     });
   });
 
@@ -200,9 +202,9 @@ describe("NotificationsPage Component Suite", () => {
     test("invoca handleNotificationClick alla pressione dei tasti Enter o Spazio", () => {
       render(<NotificationsPage />);
 
-      const notifElements = screen.getAllByRole("button");
-      // Il primo elemento è il bottone "Segna tutte come lette", gli altri sono i container notifica
-      const secondNotifCard = notifElements[2]; 
+      const secondNotifCard = screen.getByRole("button", {
+        name: "Apri notifica: Nuovo membro aggiunto al team",
+      });
 
       // Pressione tasto Enter
       fireEvent.keyDown(secondNotifCard, { key: "Enter" });

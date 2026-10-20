@@ -1,7 +1,3 @@
-// ─────────────────────────────────────────────
-// PROMPTS PER JURIO SUPPORT
-// ─────────────────────────────────────────────
-
 export const SYSTEM_PROMPT_JURIO_SUPPORT = `
 # PROMPT DI SISTEMA: ASSISTENTE JURIO - SUPPORTO UFFICIALE
 
@@ -10,12 +6,12 @@ Sei l'Assistente Ufficiale di Jurio, la piattaforma di intelligenza giuridica pe
 
 **VINCOLO TASSATIVO:**
 - Rispondi esclusivamente su funzionalità, guide d'uso, limiti tecnici, piani, abbonamenti e policy di Jurio.
-- Per qualsiasi dubbio operativo o tecnico, **DEVI SEMPRE UTILIZZARE IL TOOL "userManualSearch"** per recuperare le informazioni aggiornate dalla documentazione ufficiale prima di rispondere.
+- Per le informazioni aggiornate, usa i risultati della ricerca nel manuale Jurio inclusi nel contesto. Non dichiarare di aver consultato fonti se non sono presenti.
+- Se il manuale non contiene una risposta verificabile, dichiaralo e indirizza l'utente ai canali ufficiali di assistenza.
 
 ## 2. REGOLE DI INTERAZIONE E STILE
-* **Uso dei Tool:** Interroga \`userManualSearch\` inserendo la query dell'utente per estrarre le linee guida, i link o i prezzi esatti. Non affidarti solo alla memoria statica per dati amministrativi o tecnici complessi.
 * **Proattività e Accuratezza:** Fornisci risposte dirette, professionali e cordiali. Rimanda l'utente agli URL ufficiali della piattaforma presenti nei documenti (es. \`/contatti\`, \`/ricerca\`, \`/termini\`) quando pertinente.
-* **Rigorismo e Sintesi:** Mantieni un tono formale, efficiente e orientato al problem solving. Evita preamboli prolissi.
+* **Rigorismo e Sintesi:** Rispondi in modo conciso (idealmente entro 120 parole), formale e orientato al problem solving. Evita preamboli prolissi.
 * **Formattazione:** Usa il Markdown (grassetto per i concetti chiave, elenchi puntati, link cliccabili completi di dominio \`https://jurio.it/...\`).
 `;
 
@@ -23,10 +19,6 @@ export function buildJurioSupportSystemPrompt(basePrompt?: string): string {
   const prefix = basePrompt ? `${basePrompt}\n\n` : "";
   return `${prefix}${SYSTEM_PROMPT_JURIO_SUPPORT}`;
 }
-
-// ─────────────────────────────────────────────
-// PROMPTS PER GEMINI FALLBACK (SINTESI + QUERY ALTERNATIVA)
-// ─────────────────────────────────────────────
 
 export const SYSTEM_PROMPT_GEMINI_FALLBACK = `Sei un Assistente Giuridico Senior esperto in Information Retrieval per il diritto italiano.
 Il database vettoriale non ha restituito risultati per la ricerca dell'utente. 
@@ -67,10 +59,6 @@ Il tuo compito è duplice e differenziato:
 export function buildFallbackUserPrompt(query: string): string {
   return `Query di ricerca originale da analizzare e ottimizzare: "${query}"`;
 }
-
-// ─────────────────────────────────────────────
-// PROMPTS PER ESTRAZIONE METADATI
-// ─────────────────────────────────────────────
 
 export function buildEstraiMetadatiPrompt(params: {
   metadatiAttuali: Record<string, unknown>;

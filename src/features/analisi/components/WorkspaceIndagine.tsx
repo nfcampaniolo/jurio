@@ -8,7 +8,6 @@ import { ReviewPhase } from "./ReviewPhase";
 import { AccessDenied } from "@/shared/components/AccessDenied";
 import type { AttachedDocument } from "@/interfaces/interfaces";
 import type { DeepAnalysisConfig, PrecedenteReperito } from "../hooks/types";
-
 interface Props {
   sessioneId: string | null;
   onSessionCreated: (id: string) => void;
@@ -267,6 +266,7 @@ export const WorkspaceIndagine: React.FC<Props> = ({
           {((activeSession?.status === "completed" || isCompleted) && activeSession?.sintesiStrategica) && (
             <ReportSintesi session={activeSession} />
           )}
+         
         </div>
       </div>
     </div>

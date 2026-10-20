@@ -101,9 +101,10 @@ export const deepAnalysisAgent = onRequest(
 
 export const support = onRequest(
   { 
-    secrets: ["GOOGLE_GENAI_API_KEY"],
+    secrets: ["GOOGLE_GENAI_API_KEY", "OPENAI_API_KEY"],
     timeoutSeconds: 300,
     memory: "1GiB",
+    concurrency: 80,
   }, 
   async (req, res) => {
     return executeSupport(req, res);
@@ -156,7 +157,7 @@ export const wordAgent = onRequest(
 
 export const adminDoctrineUpload = onRequest(
   {
-    secrets: ["GOOGLE_GENAI_API_KEY"],
+    secrets: ["GOOGLE_GENAI_API_KEY", "OPENAI_API_KEY"],
     timeoutSeconds: 1200,
     memory: "4GiB",
     invoker: "public",

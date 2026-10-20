@@ -99,8 +99,13 @@ describe("useJurioChatbot Hook Suite", () => {
 
     test("completa il flusso di invio con successo, aggiorna lo stato temporale e appende la risposta del bot", async () => {
       mockSendSupportMessage.mockImplementationOnce(
-        async (_history: unknown, onStatus: (status: string) => void) => {
+        async (
+          _history: unknown,
+          onStatus: (status: string) => void,
+          onText: (text: string) => void
+        ) => {
           onStatus("Consultazione linee guida...");
+          onText("Puoi attivare il periodo di prova dalla sezione account.");
           return {
             botReply: "Puoi attivare il periodo di prova dalla sezione account.",
             fonti: [
@@ -147,6 +152,47 @@ describe("useJurioChatbot Hook Suite", () => {
       expect(result.current.currentStatus).toBeNull();
       expect(result.current.error).toBeNull();
       expect(mockChatCacheSet).toHaveBeenCalledTimes(2); // salvataggio utente + salvataggio risposta
+    });
+
+    test("mostra i token ricevuti mentre la risposta è ancora in generazione", async () => {
+      let sendText: ((text: string) => void) | undefined;
+      let resolveResponse: ((value: { botReply: string; fonti: [] }) => void) | undefined;
+      mockSendSupportMessage.mockImplementationOnce(
+        (_history: unknown, _onStatus: unknown, onText: (text: string) => void) => {
+          sendText = onText;
+          return new Promise((resolve) => {
+            resolveResponse = resolve;
+          });
+        }
+      );
+
+      const { result } = renderHook(() => useJurioChatbot());
+      act(() => {
+        result.current.setInputValue("Domanda in streaming");
+      });
+
+      let sending: Promise<void>;
+      await act(async () => {
+        sending = result.current.handleSend();
+        await Promise.resolve();
+      });
+
+      act(() => {
+        sendText?.("Risposta parziale");
+      });
+      expect(result.current.messages.at(-1)).toMatchObject({
+        role: "assistant",
+        content: "Risposta parziale",
+      });
+
+      await act(async () => {
+        resolveResponse?.({ botReply: "Risposta parziale completata", fonti: [] });
+        await sending;
+      });
+      expect(result.current.messages.at(-1)).toMatchObject({
+        role: "assistant",
+        content: "Risposta parziale completata",
+      });
     });
 
 test("esegue il rollback della cronologia e ripristina l'input dell'utente in caso di eccezione", async () => {

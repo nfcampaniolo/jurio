@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
+import { MemoryRouter } from "react-router-dom";
 import { DeepAnalysisLanding } from "@/features/analisi/components/DeepAnalysisLanding";
 import { useReducedMotion } from "framer-motion";
 
@@ -44,6 +45,13 @@ vi.mock("@/features/search/components/CTASection", () => ({
 
 const mockedUseReducedMotion = vi.mocked(useReducedMotion);
 
+const renderLanding = () =>
+  render(
+    <MemoryRouter>
+      <DeepAnalysisLanding />
+    </MemoryRouter>
+  );
+
 describe("DeepAnalysisLanding Component Suite", () => {
   const originalLocation = window.location;
 
@@ -70,7 +78,7 @@ describe("DeepAnalysisLanding Component Suite", () => {
   });
 
   test("renderizza l'intestazione principale, la descrizione e le 4 fasi del workflow", () => {
-    render(<DeepAnalysisLanding />);
+    renderLanding();
 
     expect(
       screen.getByRole("heading", { level: 1, name: /l'approfondimento giurisprudenziale per i casi più complessi/i })
@@ -90,7 +98,7 @@ describe("DeepAnalysisLanding Component Suite", () => {
   });
 
   test("renderizza i piani di accesso (Essential e Business)", () => {
-    render(<DeepAnalysisLanding />);
+    renderLanding();
 
     expect(screen.getByText("Essential")).toBeInTheDocument();
     expect(screen.getByText("Indagine giurisprudenziale avanzata")).toBeInTheDocument();
@@ -100,7 +108,7 @@ describe("DeepAnalysisLanding Component Suite", () => {
   });
 
   test("reindirizza alla pagina dei prezzi al clic sulla CTA dei piani", () => {
-    render(<DeepAnalysisLanding />);
+    renderLanding();
 
     const ctaButton = screen.getByRole("button", { name: /attiva l'analisi assistita su un documento esterno/i });
     fireEvent.click(ctaButton);
@@ -109,7 +117,7 @@ describe("DeepAnalysisLanding Component Suite", () => {
   });
 
   test("renderizza la sezione CTA lazy loaded", async () => {
-    render(<DeepAnalysisLanding />);
+    renderLanding();
 
     const lazySection = await screen.findByTestId("lazy-cta-section");
     expect(lazySection).toBeInTheDocument();
@@ -118,7 +126,7 @@ describe("DeepAnalysisLanding Component Suite", () => {
   test("gestisce correttamente la modalità reduced motion senza crashare", () => {
     mockedUseReducedMotion.mockReturnValue(true);
 
-    render(<DeepAnalysisLanding />);
+    renderLanding();
 
     expect(
       screen.getByRole("heading", { level: 1, name: /l'approfondimento giurisprudenziale per i casi più complessi/i })

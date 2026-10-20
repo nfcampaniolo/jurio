@@ -49,6 +49,9 @@ vi.mock("lucide-react", () => {
     User: Icon("user"),
     Loader2: Icon("loader-2"),
     ExternalLink: Icon("external-link"),
+    BookOpen: Icon("book-open"),
+    Globe: Icon("globe"),
+    Scale: Icon("scale"),
   };
 });
 
@@ -99,11 +102,7 @@ describe("JurioChatbot Component Suite", () => {
     expect(floatingBtn).toHaveClass("opacity-100");
     expect(screen.getByTestId("icon-message-square")).toBeInTheDocument();
 
-    const titleHeading = screen.getByRole("heading", { name: "Jurio", level: 3 });
-    const dialogContainer = titleHeading.closest(".fixed.z-100")!;
-    expect(dialogContainer).toHaveClass("translate-y-full");
-    expect(dialogContainer).toHaveClass("opacity-0");
-    expect(dialogContainer).toHaveClass("pointer-events-none");
+    expect(screen.queryByRole("heading", { name: "Jurio", level: 3 })).not.toBeInTheDocument();
   });
 
   test("apre il widget, mostra l'header e gestisce le azioni di chiusura e reset della chat", () => {
@@ -140,7 +139,7 @@ describe("JurioChatbot Component Suite", () => {
 
     render(<JurioChatbot />);
 
-    const textarea = screen.getByPlaceholderText("Chiedi a Jurio...");
+    const textarea = screen.getByPlaceholderText("Scrivi un quesito giuridico...");
     expect(textarea).toHaveValue("Qual è il principio espresso dalle Sezioni Unite?");
 
     fireEvent.change(textarea, { target: { value: "Nuova query" } });
@@ -173,7 +172,7 @@ describe("JurioChatbot Component Suite", () => {
     rerender(<JurioChatbot />);
 
     expect(sendBtn).toBeDisabled();
-    expect(screen.getByPlaceholderText("Chiedi a Jurio...")).toBeDisabled();
+    expect(screen.getByPlaceholderText("Scrivi un quesito giuridico...")).toBeDisabled();
   });
 
   test("renderizza i messaggi utente e assistente, applicando Typewriter sull'ultimo messaggio assistente", () => {
@@ -200,13 +199,12 @@ describe("JurioChatbot Component Suite", () => {
 
     render(<JurioChatbot />);
 
-    expect(screen.getAllByTestId("icon-user")).toHaveLength(2);
-
-    expect(screen.getByTestId("typewriter-content")).toHaveTextContent(
+    expect(screen.getByText("Spiegami la sentenza 500/1999.")).toBeInTheDocument();
+    expect(screen.getByText("Quali sono le conseguenze pratiche?")).toBeInTheDocument();
+    expect(screen.getAllByTestId("typewriter-content")).toHaveLength(2);
+    expect(screen.getAllByTestId("typewriter-content")[1]).toHaveTextContent(
       "Le conseguenze riguardano la tutela risarcitoria innanzi al giudice ordinario e amministrativo."
     );
-
-    expect(screen.getAllByTestId("markdown-content").length).toBeGreaterThanOrEqual(3);
   });
 
   test("renderizza e deduplica i link delle fonti per i messaggi dell'assistente", () => {
@@ -246,16 +244,17 @@ describe("JurioChatbot Component Suite", () => {
     expect(screen.getAllByTestId("icon-external-link")).toHaveLength(2);
   });
 
-  test("mostra l'indicatore di caricamento con status personalizzato e gestisce il banner di errore", () => {
+  test("mostra lo stato del caricamento e il banner di errore", () => {
     mockHookState.isOpen = true;
+    mockHookState.messages = [{ role: "assistant", content: "Benvenuto" }];
     mockHookState.isLoading = true;
     mockHookState.currentStatus = "Analisi massime in corso...";
     mockHookState.error = "Si è verificato un errore durante la generazione della risposta.";
 
     render(<JurioChatbot />);
 
-    expect(screen.getByTestId("icon-loader-2")).toBeInTheDocument();
     expect(screen.getByText("Analisi massime in corso...")).toBeInTheDocument();
+    expect(document.querySelectorAll(".animate-bounce")).toHaveLength(3);
 
     expect(
       screen.getByText("Si è verificato un errore durante la generazione della risposta.")
@@ -266,10 +265,11 @@ describe("JurioChatbot Component Suite", () => {
     mockHookState.isOpen = true;
     mockHookState.isLoading = true;
     mockHookState.currentStatus = null;
+    mockHookState.messages = [{ role: "user", content: "Test" }];
 
     render(<JurioChatbot />);
 
-    expect(screen.getByText("Jurio sta elaborando...")).toBeInTheDocument();
+    expect(screen.getByText("Consultazione archivi in corso...")).toBeInTheDocument();
   });
 
   test("sincronizza l'hash dell'URL (#bot) all'avvio, all'apertura e su evento hashchange", () => {

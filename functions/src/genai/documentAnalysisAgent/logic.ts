@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { createHash } from "node:crypto";
 import { validateUserPlanAndLimits, withSecureApiEndpoint } from "../../_utils";
 import { getDb } from "../../_deps";
 import { MAX_INPUT_CHARS_DOCUMENT } from "../../_constants";
@@ -6,8 +7,10 @@ import { reasoningFlow, doctrineFlow } from "./flow";
 import { ReasoningRequestBody, ReasoningFlowOutput } from "../_interfaces";
 import { randomUUID } from "crypto";
 import { FieldValue } from "firebase-admin/firestore";
+import { createDoctrineEmbeddings } from "./_embedding";
 
 const db = getDb();
+const DOCTRINE_UPLOAD_LOCK_MS = 25 * 60 * 1000;
 
 export async function executeReasoning(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (uid): Promise<void> => {
@@ -131,99 +134,207 @@ export async function executeAdminDoctrineUpload(req: Request, res: Response): P
       return;
     }
 
-    console.log(`[DOCTRINE-${reqId}] URL: ${sourceUrl} | Testo: ${extractedText.length} caratteri`);
-
-    // 3. Esecuzione Flow AI
-    console.log(`[DOCTRINE-${reqId}] Invocazione doctrineFlow...`);
-    const startTime = performance.now();
-
-    const parsedDoctrine = await doctrineFlow({
-      extractedText,
-      sourceUrl,
-    });
-
-    const elapsedTimeSec = Number(
-      ((performance.now() - startTime) / 1000).toFixed(1)
+    const contentHash = createHash("sha256")
+      .update(JSON.stringify([sourceUrl, extractedText]))
+      .digest("hex");
+    const lockOwner = randomUUID();
+    const sourceLockRef = db.collection("doctrine_upload_locks").doc(
+      createHash("sha256").update(sourceUrl).digest("hex")
     );
+    const lockClaim = await db.runTransaction(async (transaction) => {
+      const lockSnap = await transaction.get(sourceLockRef);
+      const lock = lockSnap.data();
+      const leaseExpiry = lock?.leaseExpiresAt;
+      const leaseExpiryMs =
+        leaseExpiry instanceof Date
+          ? leaseExpiry.getTime()
+          : typeof leaseExpiry?.toMillis === "function"
+            ? leaseExpiry.toMillis()
+            : 0;
 
-    if (!parsedDoctrine?.tematiche || parsedDoctrine.tematiche.length === 0) {
-      throw new Error("L'AI non ha estratto alcuna tematica dal documento.");
-    }
-
-    console.log(`[DOCTRINE-${reqId}] Gemini completato in ${elapsedTimeSec}s. Tematiche: ${parsedDoctrine.tematiche.length}`);
-
-    // 4. Rimozione documenti esistenti (stesso sourceUrl)
-    console.log(`[DOCTRINE-${reqId}] Ricerca documenti esistenti con sourceUrl: ${sourceUrl}`);
-    const existingDocsSnap = await db
-      .collection("doctrine")
-      .where("sourceUrl", "==", sourceUrl)
-      .get();
-
-    if (!existingDocsSnap.empty) {
-      console.log(`[DOCTRINE-${reqId}] Trovati ${existingDocsSnap.size} documenti esistenti da eliminare.`);
-      const DELETE_BATCH_SIZE = 450;
-      let deletedCount = 0;
-
-      for (let i = 0; i < existingDocsSnap.docs.length; i += DELETE_BATCH_SIZE) {
-        const deleteBatch = db.batch();
-        const chunk = existingDocsSnap.docs.slice(i, i + DELETE_BATCH_SIZE);
-
-        chunk.forEach((docSnap) => {
-          deleteBatch.delete(docSnap.ref);
-        });
-
-        await deleteBatch.commit();
-        deletedCount += chunk.length;
+      if (lockSnap.exists && leaseExpiryMs > Date.now()) {
+        return { claimed: false };
       }
 
-      console.log(`[DOCTRINE-${reqId}] Eliminazione completata. Rimossi ${deletedCount} vecchi documenti.`);
-    } else {
-      console.log(`[DOCTRINE-${reqId}] Nessun documento esistente trovato per il sourceUrl specificato.`);
+      transaction.set(sourceLockRef, {
+        owner: lockOwner,
+        contentHash,
+        leaseExpiresAt: new Date(Date.now() + DOCTRINE_UPLOAD_LOCK_MS),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+      return { claimed: true };
+    });
+
+    if (!lockClaim.claimed) {
+      res.status(409).json({
+        error: "DOCUMENT_PROCESSING",
+        details: "Questo documento è già in elaborazione. Attendi il completamento prima di riprovare.",
+      });
+      return;
     }
 
-    // 5. Generazione ID documento e salvataggio batch su Firestore
-    const documentBaseId = randomUUID();
-    const doctrineCollection = db.collection("doctrine");
+    try {
+      console.log(`[DOCTRINE-${reqId}] URL: ${sourceUrl} | Testo: ${extractedText.length} caratteri`);
 
-    const BATCH_SIZE = 450;
-    let savedCount = 0;
+      const previousVersion = await db
+        .collection("doctrine")
+        .where("contentHash", "==", contentHash)
+        .get();
 
-    for (let start = 0; start < parsedDoctrine.tematiche.length; start += BATCH_SIZE) {
-      const batch = db.batch();
-      const batchItems = parsedDoctrine.tematiche.slice(start, start + BATCH_SIZE);
-
-      batchItems.forEach((tema, localIndex) => {
-        const index = start + localIndex;
-        const nodeDocId = `${documentBaseId}_theme_${index}`;
-        const nodeRef = doctrineCollection.doc(nodeDocId);
-
-        batch.set(nodeRef, {
-          id: nodeDocId,
-          document_base_id: documentBaseId,
-          ...tema,
-          sourceUrl,
-          uploaded_by: uid,
-          created_at: FieldValue.serverTimestamp(),
-          isEmbeddingFinished: false,
-          isEmbeddingFailed: false,
+      if (!previousVersion.empty) {
+        const existingData = previousVersion.docs[0].data();
+        const docBaseId = String(existingData.document_base_id ?? "");
+        console.info(`[DOCTRINE-${reqId}] Contenuto già indicizzato (${previousVersion.size} tematiche): salto AI, embedding e scrittura.`);
+        res.status(200).json({
+          message: "Documento già indicizzato",
+          tematiche_estratte: previousVersion.size,
+          tematiche_salvate: previousVersion.size,
+          docBaseId,
+          alreadyIndexed: true,
+          processing_time_seconds: 0,
         });
+        return;
+      }
+
+      // 3. Esecuzione Flow AI
+      console.log(`[DOCTRINE-${reqId}] Invocazione doctrineFlow...`);
+      const startTime = performance.now();
+
+      const parsedDoctrine = await doctrineFlow({
+        extractedText,
+        sourceUrl,
       });
 
-      await batch.commit();
-      savedCount += batchItems.length;
+      const elapsedTimeSec = Number(
+        ((performance.now() - startTime) / 1000).toFixed(1)
+      );
 
-      console.log(`[DOCTRINE-${reqId}] Batch Firestore ${Math.floor(start / BATCH_SIZE) + 1} completato: ${batchItems.length} documenti`);
+      if (!parsedDoctrine?.tematiche || parsedDoctrine.tematiche.length === 0) {
+        throw new Error("L'AI non ha estratto alcuna tematica dal documento.");
+      }
+
+      console.log(`[DOCTRINE-${reqId}] Gemini completato in ${elapsedTimeSec}s. Tematiche: ${parsedDoctrine.tematiche.length}`);
+
+      const embeddingByTopic: Array<number[] | undefined> = new Array(parsedDoctrine.tematiche.length);
+      const embeddingInputs = parsedDoctrine.tematiche
+        .map((tema, index) => {
+          const text = tema.summary;
+          return typeof text === "string" && text.trim()
+            ? { index, text: text.trim() }
+            : null;
+        })
+        .filter((entry): entry is { index: number; text: string } => entry !== null);
+      const embeddingTopicIndexes = new Set(embeddingInputs.map(({ index }) => index));
+      const embeddingStartedAt = Date.now();
+      const embeddings = await createDoctrineEmbeddings(
+        embeddingInputs.map(({ text }) => text),
+        reqId
+      );
+      let embeddingCount = 0;
+      embeddingInputs.forEach(({ index }, inputIndex) => {
+        const embedding = embeddings[inputIndex];
+        if (embedding) {
+          embeddingByTopic[index] = embedding;
+          embeddingCount += 1;
+        }
+      });
+      if (embeddingInputs.length > 0) {
+        console.info(
+          `[DOCTRINE-${reqId}] Embedding in batch: ${embeddingCount}/${embeddingInputs.length} tematiche in ${Date.now() - embeddingStartedAt}ms`
+        );
+      }
+
+      // 4. Rimozione documenti esistenti (stesso sourceUrl)
+      console.log(`[DOCTRINE-${reqId}] Ricerca documenti esistenti con sourceUrl: ${sourceUrl}`);
+      const existingDocsSnap = await db
+        .collection("doctrine")
+        .where("sourceUrl", "==", sourceUrl)
+        .get();
+
+      if (!existingDocsSnap.empty) {
+        console.log(`[DOCTRINE-${reqId}] Trovati ${existingDocsSnap.size} documenti esistenti da eliminare.`);
+        const DELETE_BATCH_SIZE = 450;
+        let deletedCount = 0;
+
+        for (let i = 0; i < existingDocsSnap.docs.length; i += DELETE_BATCH_SIZE) {
+          const deleteBatch = db.batch();
+          const chunk = existingDocsSnap.docs.slice(i, i + DELETE_BATCH_SIZE);
+
+          chunk.forEach((docSnap) => {
+            deleteBatch.delete(docSnap.ref);
+          });
+
+          await deleteBatch.commit();
+          deletedCount += chunk.length;
+        }
+
+        console.log(`[DOCTRINE-${reqId}] Eliminazione completata. Rimossi ${deletedCount} vecchi documenti.`);
+      } else {
+        console.log(`[DOCTRINE-${reqId}] Nessun documento esistente trovato per il sourceUrl specificato.`);
+      }
+
+      // 5. Generazione ID documento e salvataggio batch su Firestore
+      const documentBaseId = randomUUID();
+      const doctrineCollection = db.collection("doctrine");
+
+      const BATCH_SIZE = 450;
+      let savedCount = 0;
+
+      for (let start = 0; start < parsedDoctrine.tematiche.length; start += BATCH_SIZE) {
+        const batch = db.batch();
+        const batchItems = parsedDoctrine.tematiche.slice(start, start + BATCH_SIZE);
+
+        batchItems.forEach((tema, localIndex) => {
+          const index = start + localIndex;
+          const nodeDocId = `${documentBaseId}_theme_${index}`;
+          const nodeRef = doctrineCollection.doc(nodeDocId);
+          const embedding = embeddingByTopic[index];
+          const hasEmbeddingText = embeddingTopicIndexes.has(index);
+
+          batch.set(nodeRef, {
+            id: nodeDocId,
+            document_base_id: documentBaseId,
+            ...tema,
+            sourceUrl,
+            contentHash,
+            uploaded_by: uid,
+            created_at: FieldValue.serverTimestamp(),
+            ...(embedding
+              ? {
+                  embedding: FieldValue.vector(embedding),
+                  lastVectorizedAt: FieldValue.serverTimestamp(),
+                  isEmbeddingFinished: true,
+                }
+              : {
+                  isEmbeddingFinished: !hasEmbeddingText,
+                }),
+            isEmbeddingFailed: false,
+          });
+        });
+
+        await batch.commit();
+        savedCount += batchItems.length;
+
+        console.log(`[DOCTRINE-${reqId}] Batch Firestore ${Math.floor(start / BATCH_SIZE) + 1} completato: ${batchItems.length} documenti`);
+      }
+
+      console.log(`[DOCTRINE-${reqId}] Operazione conclusa. Salvati ${savedCount} documenti.`);
+
+      // 6. Risposta finale
+      res.status(200).json({
+        message: "Documento indicizzato con successo",
+        tematiche_estratte: parsedDoctrine.tematiche.length,
+        tematiche_salvate: savedCount,
+        docBaseId: documentBaseId,
+        processing_time_seconds: elapsedTimeSec,
+      });
+    } finally {
+      await db.runTransaction(async (transaction) => {
+        const lockSnap = await transaction.get(sourceLockRef);
+        if (lockSnap.exists && lockSnap.data()?.owner === lockOwner) {
+          transaction.delete(sourceLockRef);
+        }
+      });
     }
-
-    console.log(`[DOCTRINE-${reqId}] Operazione conclusa. Salvati ${savedCount} documenti.`);
-
-    // 6. Risposta finale
-    res.status(200).json({
-      message: "Documento indicizzato con successo",
-      tematiche_estratte: parsedDoctrine.tematiche.length,
-      tematiche_salvate: savedCount,
-      docBaseId: documentBaseId,
-      processing_time_seconds: elapsedTimeSec,
-    });
   });
 }

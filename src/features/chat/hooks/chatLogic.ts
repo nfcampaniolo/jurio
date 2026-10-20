@@ -72,7 +72,8 @@ export const chatCache = {
 
 export const sendSupportMessage = async (
   messages: readonly ChatMessage[], 
-  onStatus?: (statusText: string) => void
+  onStatus?: (statusText: string) => void,
+  onText?: (text: string) => void
 ): Promise<{ botReply: string; fonti: readonly SourceItem[] }> => {
   if (!SUPPORT_ENDPOINT) {
     throw new Error("Servizio non disponibile");
@@ -80,68 +81,95 @@ export const sendSupportMessage = async (
   
   const response = await fetchWithAppCheckOnly(SUPPORT_ENDPOINT, { messages });
   if (!response.ok) {
-    throw new Error(`Errore server: ${response.status}`);
+    if (response.status === 401) {
+      throw new Error("Verifica di sicurezza non riuscita. Ricarica la pagina e riprova.");
+    }
+    if (response.status === 429) {
+      throw new Error("Hai inviato troppe richieste. Attendi qualche minuto e riprova.");
+    }
+    if (response.status >= 500) {
+      throw new Error("Il servizio di supporto è temporaneamente non disponibile. Riprova tra poco.");
+    }
+    throw new Error(`Richiesta non riuscita (HTTP ${response.status}).`);
   }
 
   const reader = response.body?.getReader();
   const decoder = new TextDecoder();
   let fullContent = "";
   let extractedFonti: readonly SourceItem[] = [];
+  let lineBuffer = "";
+  let eventData: string[] = [];
+  let streamCompleted = false;
 
   if (!reader) {
     throw new Error("Impossibile leggere lo stream.");
   }
 
+  const dispatchEvent = (): void => {
+    if (eventData.length === 0) return;
+
+    const data = eventData.join("\n");
+    eventData = [];
+    if (data === "[DONE]") {
+      streamCompleted = true;
+      return;
+    }
+
+    let parsed: StreamDataChunk;
+    try {
+      parsed = JSON.parse(data) as StreamDataChunk;
+    } catch (parseError: unknown) {
+      console.warn(
+        "Errore parsing chunk JSON:",
+        parseError instanceof Error ? parseError.message : "JSON non valido"
+      );
+      return;
+    }
+
+    if (parsed.error) {
+      throw new Error(parsed.error);
+    }
+    if (parsed.message?.text) {
+      fullContent += parsed.message.text;
+      onText?.(fullContent);
+    } else if (parsed.message?.status) {
+      onStatus?.(parsed.message.status);
+    } else if (parsed.result) {
+      if (!fullContent) {
+        fullContent = parsed.result.risposta;
+        onText?.(fullContent);
+      }
+      extractedFonti = parsed.result.fonti ?? [];
+    }
+  };
+
+  const processLine = (line: string): void => {
+    if (line === "") {
+      dispatchEvent();
+    } else if (line.startsWith("data:")) {
+      eventData.push(line.slice(5).replace(/^ /, ""));
+    }
+  };
+
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
-
-    const chunkStr = decoder.decode(value, { stream: true });
-    const lines = chunkStr.split("\n");
-
-    for (const line of lines) {
-      const cleanedLine = line.trim();
-      if (!cleanedLine || cleanedLine === "data: [DONE]") continue;
-
-      if (cleanedLine.startsWith("data: ")) {
-        try {
-          const jsonString = cleanedLine.replace("data: ", "").trim();
-          const parsed = JSON.parse(jsonString) as StreamDataChunk;
-          
-          // 1. Gestione dei messaggi di testo in streaming
-          if (parsed.message?.text) {
-            const text = parsed.message.text;
-            fullContent += text;
-          } 
-          // 2. Gestione degli stati di avanzamento (es. "Consultazione del manuale Jurio...")
-          else if (parsed.message?.status) {
-            if (onStatus) {
-              onStatus(parsed.message.status);
-            }
-          }
-          // 3. Gestione del risultato finale inviato dal backend (contiene risposta e fonti)
-          else if (parsed.result?.risposta) {
-            const finalText = parsed.result.risposta;
-            if (!fullContent) {
-              fullContent = finalText;
-            }
-            if (parsed.result.fonti) {
-              extractedFonti = parsed.result.fonti;
-            }
-          }
-          // 4. Gestione di eventuali errori restituiti dallo stream
-          else if (parsed.error) {
-            throw new Error(parsed.error);
-          }
-        } catch (e: unknown) {
-          if (e instanceof Error) {
-            console.warn("Errore parsing chunk JSON:", e.message);
-          } else {
-            console.warn("Errore parsing chunk JSON sconosciuto");
-          }
-        }
-      }
+    lineBuffer += decoder.decode(value ?? new Uint8Array(), { stream: !done });
+    let newlineIndex = lineBuffer.indexOf("\n");
+    while (newlineIndex !== -1) {
+      processLine(lineBuffer.slice(0, newlineIndex).replace(/\r$/, ""));
+      lineBuffer = lineBuffer.slice(newlineIndex + 1);
+      newlineIndex = lineBuffer.indexOf("\n");
     }
+    if (done) break;
+  }
+
+  if (lineBuffer) processLine(lineBuffer.replace(/\r$/, ""));
+  dispatchEvent();
+  if (!streamCompleted) {
+    throw new Error("La connessione al servizio si è interrotta prima del completamento. Riprova.");
+  }
+  if (!fullContent.trim()) {
+    throw new Error("Il servizio non ha restituito una risposta. Riprova.");
   }
 
   return {

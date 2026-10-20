@@ -1,17 +1,13 @@
 import {
   buildJurioSupportSystemPrompt,
-  SYSTEM_PROMPT_JURIO_SUPPORT,
   SYSTEM_PROMPT_GEMINI_FALLBACK,
   buildFallbackUserPrompt,
   buildEstraiMetadatiPrompt,
 } from "./_prompts";
 import { z } from 'genkit';
-import { ai, CFG } from "../_config";
-import { userManualSearch } from "../tools/index";
-import {ChatMessageSchema, EstraiMetadatiInputSchema, EstraiMetadatiOutputSchema, GeminiFallbackInputSchema, GeminiFallbackOutputSchema} from "./_schema";
-// ─────────────────────────────────────────────
-// FLOW — Legal Agent Support (Jurio Assistant)
-// ─────────────────────────────────────────────
+import { ai } from "../_config";
+import { searchUserManual, type ManualSearchResult } from "../tools/support";
+import { ChatMessageSchema, EstraiMetadatiInputSchema, EstraiMetadatiOutputSchema, GeminiFallbackInputSchema, GeminiFallbackOutputSchema } from "./_schema";
 
 export const legalAgentSupport = ai.defineFlow(
   {
@@ -32,66 +28,88 @@ export const legalAgentSupport = ai.defineFlow(
   async (input, { sendChunk }) => {
     sendChunk({ status: "Analisi della richiesta in corso..." });
 
-    // Preparazione della history limitata dalla finestra configurata
-    const history = (input.history ?? []).slice(-CFG.limits.historyWindow).map((msg) => ({
+    sendChunk({ status: "Consultazione del manuale Jurio..." });
+    const searchStartedAt = Date.now();
+    const recentUserMessages = (input.history ?? [])
+      .filter((message) => message.role === "user")
+      .slice(-2)
+      .map((message) => message.content.slice(0, 500));
+    const manualQuery = [...recentUserMessages, input.prompt].join("\n").slice(-3000);
+    const manualResults = await searchUserManual(manualQuery);
+    console.info(`[JURIO-SUPPORT] Ricerca manuale completata in ${Date.now() - searchStartedAt}ms`);
+    const fontiEstratte = manualResults.filter(
+      (result): result is ManualSearchResult & { id: string; text: string } =>
+        typeof result.id === "string" && typeof result.text === "string"
+    );
+    const searchFailed = manualResults.some((result) => typeof result.error === "string");
+    const fontiPerPrompt = fontiEstratte.slice(0, 2);
+    const manualContext = searchFailed
+      ? "La ricerca nel manuale non è riuscita. Non presentare informazioni non verificate come provenienti dal manuale."
+      : fontiPerPrompt.length > 0
+      ? fontiPerPrompt.map((source, index) =>
+        `[Fonte ${index + 1}]\n${source.text.slice(0, 1000)}\nLink: ${source.links?.slice(0, 2).join(", ") ?? "nessuno"}`
+      ).join("\n\n")
+      : "Nessuna fonte pertinente è stata trovata nel manuale.";
+
+    const history = (input.history ?? []).slice(-4).map((msg) => ({
       role: msg.role,
-      content: [{ text: msg.content }],
+      content: [{ text: msg.content.slice(0, 700) }],
     }));
 
     const messages = [
       {
         role: "system" as const,
-        content: [{ text: buildJurioSupportSystemPrompt(SYSTEM_PROMPT_JURIO_SUPPORT) }],
+        content: [{
+          text: `${buildJurioSupportSystemPrompt()}\n\n` +
+            `Risultati aggiornati della ricerca nel manuale Jurio:\n${manualContext}`,
+        }],
       },
       ...history,
       { role: "user" as const, content: [{ text: input.prompt }] },
     ];
+    const ragContextChars = fontiPerPrompt.reduce(
+      (total, source) => total + Math.min(source.text.length, 1000),
+      0
+    );
+    const historyChars = history.reduce((total, message) => total + message.content[0].text.length, 0);
+    const promptChars = messages.reduce(
+      (total, message) => total + message.content.reduce((messageTotal, part) => messageTotal + (part.text?.length ?? 0), 0),
+      0
+    );
+    console.info(
+      `[JURIO-SUPPORT] Contesto modello: fonti=${fontiPerPrompt.length}, ` +
+      `RAG=${ragContextChars} caratteri, history=${historyChars} caratteri, ` +
+      `totale=${promptChars} caratteri`
+    );
 
+    const generationStartedAt = Date.now();
+    let firstTokenLogged = false;
     const response = await ai.generate({
-      messages: messages as any,
-      tools: [userManualSearch],
+      messages,
+      config: {
+        maxOutputTokens: 400,
+        thinkingConfig: { thinkingLevel: "LOW" },
+      },
       onChunk: (chunk) => {
         if (chunk.text) {
+          if (!firstTokenLogged) {
+            firstTokenLogged = true;
+            console.info(`[JURIO-SUPPORT] Primo token generato in ${Date.now() - generationStartedAt}ms`);
+          }
           sendChunk({ text: chunk.text });
         } 
-        else if (chunk.content?.some((part: any) => part.toolRequest)) {
-          sendChunk({ status: "Consultazione del manuale Jurio..." });
-        }
       },
     });
+    console.info(`[JURIO-SUPPORT] Generazione risposta completata in ${Date.now() - generationStartedAt}ms`);
 
     sendChunk({ status: "Risposta completata." });
 
-    // 2. RECUPERO DELLE FONTI (Estrazione dell'output del tool)
-    let fontiEstratte: any[] = [];
-    
-    // In Genkit, i risultati dei tool si trovano nei messaggi di tipo 'tool' all'interno della risposta
-    if (response.messages) {
-      const toolMessages = response.messages.filter((m: any) => m.role === 'tool');
-      
-      toolMessages.forEach((msg: any) => {
-        msg.content.forEach((contentItem: any) => {
-          if (contentItem.toolResponse && contentItem.toolResponse.name === 'userManualSearch') {
-            const output = contentItem.toolResponse.output;
-            // Se il tool ha restituito risultati, li pushiamo nell'array delle fonti
-            if (Array.isArray(output) && output.length > 0 && !output[0].messaggio) {
-              fontiEstratte.push(...output);
-            }
-          }
-        });
-      });
-    }
-
     return { 
       risposta: response.text, 
-      fonti: fontiEstratte // <-- Ora il frontend riceverà i chunk usati (con links, text, id, ecc.)
+      fonti: fontiEstratte
     };
   }
 );
-
-// ─────────────────────────────────────────────
-// FLOW — Fallback Gemini (Sintesi + Query Alternativa)
-// ─────────────────────────────────────────────
 
 export const legalGeminiFallbackFlow = ai.defineFlow(
   {

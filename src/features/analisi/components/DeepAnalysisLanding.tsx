@@ -3,6 +3,7 @@ import React, { Suspense, lazy } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Compass, Landmark, Route, Scale } from "lucide-react";
 import { ButtonCTA } from '@/shared/components/ButtonCTA';
+import { Footer } from "@/shared/components/Footer";
 const CTASection = lazy(() => import('@/features/search/components/CTASection'));
 
 const workflowSteps = [
@@ -38,7 +39,8 @@ export const DeepAnalysisLanding: React.FC = () => {
     window.location.href = '/prezzi';
   };
   return (
-    <section aria-labelledby="deep-analysis-heading" className="py-10 bg-(--color-bg)">
+    <>
+        <section aria-labelledby="deep-analysis-heading" className="py-10 bg-(--color-bg)">
       <div className="mx-auto flex flex-col items-center px-6 max-w-7xl">
         
         {/* HEADER SEZIONE */}
@@ -175,7 +177,8 @@ export const DeepAnalysisLanding: React.FC = () => {
             </div>
             </div>
         </motion.div>
-
+      </div>
+    </section>
         {/* SEZIONE CTA Lazy Loaded */}
         <motion.div 
           initial={{ opacity: 0 }}
@@ -184,12 +187,11 @@ export const DeepAnalysisLanding: React.FC = () => {
           transition={{ delay: 0.8 }}
           className="w-full mt-16"
         >
-          <Suspense fallback={<div className="h-40 w-full animate-pulse bg-(--color-surface) border border-(--color-border) rounded-lg max-w-5xl mx-auto" />}>
+          <Suspense fallback={<div className="h-40 w-full animate-pulse bg-(--color-surface) border border-(--color-border) rounded-lg mx-auto" />}>
             <CTASection />
+            <Footer />
           </Suspense>
         </motion.div>
-
-      </div>
-    </section>
+    </>
   );
 };

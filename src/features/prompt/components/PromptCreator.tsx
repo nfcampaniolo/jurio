@@ -6,7 +6,7 @@ import {
   type Control,
   type UseFormRegister,
 } from "react-hook-form";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   FaPlus,
   FaTrash,
@@ -186,6 +186,7 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
     clearError,
   } = usePromptGenerator();
 
+  const shouldReduceMotion = useReducedMotion();
   const [activeHint, setActiveHint] = useState<string | null>(null);
 
   const defaultValues: PromptBuilderForm = {
@@ -356,10 +357,14 @@ export const PromptCreator: React.FC<PromptCreatorProps> = ({
           {(isGenerating || generatedPrompt || error) && (
             <motion.div
               key="status-overlay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.12, ease: "linear" }}
+              initial={shouldReduceMotion ? false : { opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -12 }}
+              transition={
+                shouldReduceMotion
+                  ? { duration: 0.12, ease: "linear" }
+                  : { duration: 0.3, ease: "easeOut" }
+              }
               className="absolute inset-0 z-50 bg-(--color-surface) flex items-center justify-center p-6 border-t border-(--color-border)"
             >
               {isGenerating ? (

@@ -7,6 +7,75 @@ import { getDb } from "../../_deps";
 const db = getDb();
 const MAX_VECTOR_FETCH = Math.max(CFG.limits.vectorFetchLimit, 10);
 
+export interface ManualSearchResult {
+  id?: string;
+  text?: string;
+  links?: string[];
+  images?: string;
+  _distance?: number;
+  _score?: number;
+  _type?: string;
+  sourceType?: string;
+  message?: string;
+  error?: string;
+}
+
+export async function searchUserManual(query: string): Promise<ManualSearchResult[]> {
+  try {
+    const finalQuery = normalizeQuery(query);
+
+    if (!finalQuery) {
+      return [{ message: "Query manuale vuota." }];
+    }
+
+    const queryVector = await createEmbedding(finalQuery);
+    const manualRef = db.collection("manual");
+    const vectorQuery = manualRef.findNearest({
+      vectorField: "embedding",
+      queryVector,
+      limit: MAX_VECTOR_FETCH,
+      distanceMeasure: "COSINE",
+      distanceThreshold: CFG.ragDistance.manual,
+      distanceResultField: "__ragDistance",
+    });
+
+    const snapshot = await vectorQuery.get();
+
+    if (snapshot.empty) {
+      return [{ message: "Nessuna informazione pertinente trovata nel manuale." }];
+    }
+
+    const results = snapshot.docs
+      .map((doc) => {
+        const data = doc.data();
+        const distance = getDistance(doc, queryVector);
+
+        return {
+          id: doc.id,
+          text: data.text || "",
+          links: Array.isArray(data.links) ? data.links : [],
+          images: data.images || "",
+          _distance: distance,
+          _score: Math.max(0, 1 - distance),
+          _type: "manual_documentation",
+          sourceType: "manual",
+        };
+      })
+      .filter((item) => item._distance <= CFG.ragDistance.manual)
+      .sort((a, b) => a._distance - b._distance)
+      .slice(0, CFG.limits.maxManualLimit);
+
+    if (results.length === 0) {
+      return [{ message: `Nessuna informazione pertinente trovata nel manuale per "${finalQuery}".` }];
+    }
+
+    return results;
+  } catch (error) {
+    console.error("[Tool userManualSearch]", error);
+    return [{ error: "Errore durante la ricerca nel manuale di Jurio." }];
+  }
+}
+
 export const userManualSearch = ai.defineTool(
   {
     name: "userManualSearch",
@@ -24,76 +93,5 @@ export const userManualSearch = ai.defineTool(
     }),
     outputSchema: z.any(),
   },
-  async (input) => {
-    try {
-      const finalQuery = normalizeQuery(input.query);
-
-      if (!finalQuery) {
-        return [
-          {
-            message: "Query manuale vuota.",
-          },
-        ];
-      }
-
-      const queryVector = await createEmbedding(finalQuery);
-
-      const manualRef = db.collection("manual");
-      const vectorQuery = (manualRef as any).findNearest({
-        vectorField: "embedding",
-        queryVector,
-        limit: MAX_VECTOR_FETCH,
-        distanceMeasure: "COSINE",
-        distanceThreshold: CFG.ragDistance.manual,
-        distanceResultField: "__ragDistance",
-      });
-
-      const snapshot = await vectorQuery.get();
-
-      if (snapshot.empty) {
-        return [
-          {
-            message: "Nessuna informazione pertinente trovata nel manuale.",
-          },
-        ];
-      }
-
-      const results = snapshot.docs
-        .map((doc: any) => {
-          const data = doc.data();
-          const distance = getDistance(doc, queryVector);
-
-          return {
-            id: doc.id,
-            text: data.text || "",
-            links: Array.isArray(data.links) ? data.links : [],
-            images: data.images || "",
-            _distance: distance,
-            _score: Math.max(0, 1 - distance),
-            _type: "manual_documentation",
-            sourceType: "manual",
-          };
-        })
-        .filter((item: any) => item._distance <= CFG.ragDistance.manual)
-        .sort((a: any, b: any) => a._distance - b._distance)
-        .slice(0, CFG.limits.maxManualLimit);
-
-      if (results.length === 0) {
-        return [
-          {
-            message: `Nessuna informazione pertinente trovata nel manuale per "${finalQuery}".`,
-          },
-        ];
-      }
-
-      return results;
-    } catch (error) {
-      console.error("[Tool userManualSearch]", error);
-      return [
-        {
-          error: "Errore durante la ricerca nel manuale di Jurio.",
-        },
-      ];
-    }
-  }
+  async (input) => searchUserManual(input.query)
 );

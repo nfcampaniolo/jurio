@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  db: { collection: vi.fn(), batch: vi.fn() },
+  db: { collection: vi.fn(), batch: vi.fn(), runTransaction: vi.fn() },
   batch: { set: vi.fn(), delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) },
+  transaction: { get: vi.fn(), set: vi.fn(), delete: vi.fn() },
+  createDoctrineEmbeddings: vi.fn(),
   secure: vi.fn((_req: unknown, _res: unknown, handler: (uid: string) => unknown) => handler("u1")),
   validate: vi.fn(),
   reasoning: vi.fn(),
@@ -11,6 +13,9 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@functions/_deps", () => ({ getDb: () => mocks.db }));
 vi.mock("@functions/_utils", () => ({ validateUserPlanAndLimits: mocks.validate, withSecureApiEndpoint: mocks.secure }));
 vi.mock("@functions/genai/documentAnalysisAgent/flow", () => ({ reasoningFlow: mocks.reasoning, doctrineFlow: mocks.doctrine }));
+vi.mock("@functions/genai/documentAnalysisAgent/_embedding", () => ({
+  createDoctrineEmbeddings: mocks.createDoctrineEmbeddings,
+}));
 
 import { executeAdminDoctrineUpload, executeReasoning } from "@functions/genai/documentAnalysisAgent/logic";
 
@@ -21,6 +26,22 @@ describe("document-analysis endpoint", () => {
     mocks.reasoning.mockResolvedValue({ sintesi: "answer" });
     mocks.doctrine.mockResolvedValue({ tematiche: [{ tematica: "tema" }] });
     mocks.batch.commit.mockResolvedValue(undefined);
+    mocks.createDoctrineEmbeddings.mockResolvedValue([[0.1, 0.2]]);
+    let lockData: Record<string, unknown> | undefined;
+    mocks.transaction.get.mockImplementation(async () => ({
+      exists: !!lockData,
+      data: () => lockData,
+    }));
+    mocks.transaction.set.mockImplementation((_ref: unknown, data: Record<string, unknown>) => {
+      lockData = data;
+    });
+    mocks.transaction.delete.mockImplementation(() => {
+      lockData = undefined;
+    });
+    mocks.db.runTransaction.mockImplementation(
+      (callback: (transaction: typeof mocks.transaction) => Promise<unknown>) =>
+        callback(mocks.transaction)
+    );
   });
 
   it("rejects an empty question before querying Firestore", async () => {
@@ -99,11 +120,69 @@ describe("document-analysis endpoint", () => {
     expect(mocks.doctrine).toHaveBeenCalledWith({ extractedText: "document", sourceUrl: "https://example.org" });
     expect(mocks.batch.set).toHaveBeenCalledWith(savedRef, expect.objectContaining({
       tematica: "Tema 1", sourceUrl: "https://example.org", uploaded_by: "u1",
-      isEmbeddingFinished: false, isEmbeddingFailed: false,
+      isEmbeddingFinished: true, isEmbeddingFailed: false, contentHash: expect.any(String),
+      embedding: expect.anything(),
     }));
+    expect(mocks.createDoctrineEmbeddings).toHaveBeenCalledWith(["Sintesi"], expect.any(String));
     expect(mocks.batch.commit).toHaveBeenCalledOnce();
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
       message: "Documento indicizzato con successo", tematiche_estratte: 1, tematiche_salvate: 1,
+    }));
+  });
+
+  it("does not start duplicate work while the same source is being processed", async () => {
+    const activeLock = {
+      owner: "another-request",
+      leaseExpiresAt: new Date(Date.now() + 60_000),
+    };
+    mocks.transaction.get.mockResolvedValue({
+      exists: true,
+      data: () => activeLock,
+    });
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn() };
+
+    await executeAdminDoctrineUpload({
+      body: { extractedText: "document", sourceUrl: "https://example.org" },
+      ip: "127.0.0.1",
+    } as never, res as never);
+
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      error: "DOCUMENT_PROCESSING",
+    }));
+    expect(mocks.doctrine).not.toHaveBeenCalled();
+    expect(mocks.createDoctrineEmbeddings).not.toHaveBeenCalled();
+  });
+
+  it("skips model and embedding work for an already indexed exact input", async () => {
+    const indexedDoc = {
+      data: () => ({ document_base_id: "existing-document" }),
+    };
+    const doctrineCollection = {
+      where: vi.fn().mockReturnThis(),
+      get: vi.fn().mockResolvedValue({ empty: false, docs: [indexedDoc] }),
+      doc: vi.fn(),
+    };
+    const userSnap = { exists: true, data: () => ({ planId: "admin" }) };
+    mocks.db.collection.mockImplementation((name: string) => name === "register"
+      ? { doc: () => ({ get: vi.fn().mockResolvedValue(userSnap) }) }
+      : name === "doctrine_upload_locks"
+        ? { doc: () => ({ id: "lock-ref" }) }
+        : doctrineCollection);
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn() };
+
+    await executeAdminDoctrineUpload({
+      body: { extractedText: "document", sourceUrl: "https://example.org" },
+      ip: "127.0.0.1",
+    } as never, res as never);
+
+    expect(doctrineCollection.where).toHaveBeenCalledWith("contentHash", "==", expect.any(String));
+    expect(mocks.doctrine).not.toHaveBeenCalled();
+    expect(mocks.createDoctrineEmbeddings).not.toHaveBeenCalled();
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
+      message: "Documento già indicizzato",
+      docBaseId: "existing-document",
+      alreadyIndexed: true,
     }));
   });
 });

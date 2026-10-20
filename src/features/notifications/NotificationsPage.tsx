@@ -1,19 +1,9 @@
 import { Helmet } from "@dr.pogodin/react-helmet";
-import { 
-  Bell, 
-  CreditCard, 
-  Users, 
-  UserCircle, 
-  FileText, 
-  LifeBuoy, 
-  Info,
-  Check,
-  CheckCheck,
-  Loader2,
-  Megaphone
-} from "lucide-react";
-import type { NotificationType } from "@/interfaces/interfaces";
-import { useNotifications } from "./hooks/useNotifications"; // Aggiusta il path in base alle tue cartelle
+import { Bell, Loader2 } from "lucide-react";
+
+import { NotificationFeed } from "./components/NotificationFeed";
+import { NotificationHeader } from "./components/NotificationHeader";
+import { useNotifications } from "./hooks/useNotifications";
 
 export default function NotificationsPage() {
   const {
@@ -24,37 +14,35 @@ export default function NotificationsPage() {
     unreadCount,
     handleNotificationClick,
     markAllAsRead,
-    formatTime
+    formatTime,
   } = useNotifications();
 
-  // Resta nel tsx perché ritorna elementi JSX
-  const getIconForType = (type: NotificationType, isRead: boolean, isGlobal?: boolean) => {
-    const colorClass = isRead ? "text-(--color-muted)" : "text-(--color-text)";
-    const size = 16;
-
-    if (isGlobal) return <Megaphone size={size} className={colorClass} />;
-
-    switch (type) {
-      case "billing": return <CreditCard size={size} className={colorClass} />;
-      case "team": return <Users size={size} className={colorClass} />;
-      case "account": return <UserCircle size={size} className={colorClass} />;
-      case "report": return <FileText size={size} className={colorClass} />;
-      case "support": return <LifeBuoy size={size} className={colorClass} />;
-      default: return <Info size={size} className={colorClass} />;
-    }
-  };
-
-  // Stati di caricamento e di assenza utente
   if (authLoading || dbLoading) {
     return (
       <>
         <Helmet>
           <title>Caricamento notifiche... | Jurio</title>
         </Helmet>
-        <div className="flex justify-center items-center h-64 text-(--color-muted) gap-2 bg-(--color-bg)">
-          <Loader2 size={18} className="animate-spin text-(--color-text)" />
-          <span className="text-xs font-bold uppercase tracking-widest">Caricamento notifiche...</span>
-        </div>
+
+        <main className="flex min-h-[65vh] items-center justify-center bg-(--color-bg) px-4 text-(--color-text)">
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex size-14 items-center justify-center rounded-2xl border border-(--color-border) bg-(--color-surface) shadow-(--shadow-soft)">
+              <Loader2
+                size={23}
+                className="animate-spin text-(--color-text)"
+              />
+            </div>
+
+            <div className="space-y-1 text-center">
+              <p className="text-sm font-medium">
+                Preparazione delle notifiche
+              </p>
+              <p className="text-xs text-(--color-muted)">
+                Stiamo sincronizzando i tuoi aggiornamenti.
+              </p>
+            </div>
+          </div>
+        </main>
       </>
     );
   }
@@ -65,9 +53,26 @@ export default function NotificationsPage() {
         <Helmet>
           <title>Accesso richiesto | Jurio</title>
         </Helmet>
-        <div className="flex justify-center items-center h-64 text-(--color-muted) text-xs font-bold uppercase tracking-widest bg-(--color-bg)">
-          Devi effettuare l'accesso per vedere le notifiche.
-        </div>
+
+        <main className="flex min-h-[65vh] items-center justify-center bg-(--color-bg) px-4">
+          <div className="w-full max-w-md rounded-2xl border border-(--color-border) bg-(--color-surface) p-8 text-center shadow-(--shadow-soft)">
+            <div className="mx-auto mb-5 flex size-14 items-center justify-center rounded-2xl border border-(--color-border) bg-(--color-bg)">
+              <Bell size={24} className="text-(--color-muted)" />
+            </div>
+
+            <h1
+              className="text-xl font-medium tracking-tight text-(--color-text)"
+              style={{ fontFamily: "var(--font-serif)" }}
+            >
+              Accesso richiesto
+            </h1>
+
+            <p className="mt-2 text-sm leading-6 text-(--color-muted)">
+              Accedi al tuo account per visualizzare le notifiche e gli
+              aggiornamenti.
+            </p>
+          </div>
+        </main>
       </>
     );
   }
@@ -76,105 +81,129 @@ export default function NotificationsPage() {
     <>
       <Helmet>
         <title>
-          {unreadCount > 0 ? `(${unreadCount}) Notifiche` : "Notifiche"} | Jurio
+          {unreadCount > 0
+            ? `(${unreadCount}) Notifiche | Jurio`
+            : "Notifiche | Jurio"}
         </title>
-        <meta name="description" content="Visualizza gli aggiornamenti, le comunicazioni di servizio e le notifiche del tuo account." />
+
+        <meta
+          name="description"
+          content="Visualizza gli aggiornamenti, le comunicazioni di servizio e le notifiche del tuo account."
+        />
       </Helmet>
 
-      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 bg-(--color-bg) text-(--color-text) min-h-screen">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-md border border-(--color-border) bg-(--color-surface) text-(--color-text) shadow-xs">
-              <Bell size={20} className="opacity-80" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-medium tracking-tight" style={{ fontFamily: 'var(--font-serif)' }}>
-                Notifiche
-              </h1>
-              <p className="text-xs text-(--color-muted) font-light mt-0.5">
-                Aggiornamenti e comunicazioni di servizio dal sistema.
-              </p>
-            </div>
-            {unreadCount > 0 && (
-              <span className="bg-(--color-text) text-(--color-surface) text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-sm shadow-xs ml-2">
-                {unreadCount} nuove
-              </span>
-            )}
-          </div>
+      <style>{`
+        @keyframes notifications-page-enter {
+          from {
+            opacity: 0;
+            transform: translateY(12px);
+            filter: blur(4px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+            filter: blur(0);
+          }
+        }
 
-          {unreadCount > 0 && (
-            <button 
-              type="button"
-              onClick={markAllAsRead}
-              className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-(--color-muted) hover:text-(--color-text) transition-colors cursor-pointer outline-none"
-            >
-              <CheckCheck size={16} />
-              <span>Segna tutte come lette</span>
-            </button>
-          )}
+        @keyframes notifications-card-enter {
+          from {
+            opacity: 0;
+            transform: translateY(16px) scale(0.985);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes notifications-float {
+          0%, 100% {
+            transform: translate3d(0, 0, 0) scale(1);
+          }
+          50% {
+            transform: translate3d(0, 18px, 0) scale(1.06);
+          }
+        }
+
+        @keyframes notifications-pulse {
+          0%, 100% {
+            box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary) 22%, transparent);
+          }
+          50% {
+            box-shadow: 0 0 0 5px color-mix(in srgb, var(--color-primary) 0%, transparent);
+          }
+        }
+
+        .notifications-page-enter {
+          animation: notifications-page-enter 650ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .notifications-card-enter {
+          opacity: 0;
+          animation: notifications-card-enter 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .notifications-decoration {
+          animation: notifications-float 14s ease-in-out infinite;
+        }
+
+        .notifications-unread-indicator {
+          animation: notifications-pulse 2.8s ease-in-out infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .notifications-page-enter,
+          .notifications-card-enter,
+          .notifications-decoration,
+          .notifications-unread-indicator {
+            animation: none !important;
+            opacity: 1;
+            filter: none;
+            transform: none;
+          }
+
+          .notifications-card-enter,
+          .notifications-card-enter * {
+            transition-duration: 0.01ms !important;
+          }
+        }
+      `}</style>
+
+      <main className="relative isolate min-h-screen overflow-hidden bg-(--color-bg) text-(--color-text)">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 z-0 h-105 overflow-hidden"
+        >
+          <div
+            className="notifications-decoration absolute -top-40 left-[5%] size-87.5 rounded-full opacity-15 blur-[100px]"
+            style={{ background: "var(--color-primary)" }}
+          />
+
+          <div
+            className="notifications-decoration absolute -top-24 right-[5%] size-75 rounded-full opacity-10 blur-[90px]"
+            style={{
+              background: "var(--color-primary)",
+              animationDelay: "-7s",
+            }}
+          />
+
+          <div className="absolute inset-x-0 bottom-0 h-40 bg-linear-to-b from-transparent to-(--color-bg)" />
         </div>
 
-        <div className="space-y-3">
-          {feedCompleto.length === 0 ? (
-            <div className="relative p-12 text-center bg-(--color-surface) rounded-lg border border-(--color-border) shadow-(--shadow-soft) overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
-              <Bell className="mx-auto text-(--color-muted) opacity-40 mb-3 mt-1" size={36} />
-              <h3 className="text-sm sm:text-base font-medium text-(--color-text) mb-1" style={{ fontFamily: 'var(--font-serif)' }}>Nessuna notifica</h3>
-              <p className="text-xs text-(--color-muted) font-light">Non hai ancora ricevuto aggiornamenti.</p>
-            </div>
-          ) : (
-            feedCompleto.map((notif) => (
-                <div
-                  key={notif.id}
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleNotificationClick(notif)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      void handleNotificationClick(notif);
-                    }
-                  }}
-                  className={`relative flex items-start gap-4 p-4 rounded-lg border transition-all cursor-pointer shadow-xs overflow-hidden outline-none focus-visible:ring-1 focus-visible:ring-(--color-text) ${
-                    notif.isRead 
-                      ? "bg-(--color-surface) border-(--color-border) opacity-70" 
-                      : "bg-(--color-surface) border-(--color-border)"
-                  }`}
-                >
-                {!notif.isRead && (
-                  <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
-                )}
-
-                <div className="p-2 rounded-md border border-(--color-border) bg-(--color-bg) shrink-0 mt-0.5 shadow-xs">
-                  {getIconForType(notif.type, notif.isRead, notif.isGlobal)}
-                </div>
-
-                <div className="flex-1 min-w-0 pt-0.5">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <h3 className={`text-xs sm:text-sm truncate tracking-tight ${notif.isRead ? 'font-light text-(--color-text)' : 'font-medium text-(--color-text)'}`}>
-                      {notif.title}
-                    </h3>
-                    <span className="text-[10px] uppercase tracking-wider text-(--color-muted) font-mono shrink-0">
-                      {formatTime(notif.createdAt)}
-                    </span>
-                  </div>
-                  <p className={`text-xs mt-1 line-clamp-2 font-light ${notif.isRead ? 'text-(--color-muted)' : 'text-(--color-text)'}`}>
-                    {notif.message}
-                  </p>
-                </div>
-
-                <div className="shrink-0 self-center">
-                   {notif.isRead ? (
-                     <Check size={16} className="text-(--color-muted) opacity-50" />
-                   ) : (
-                     <span className="text-[10px] font-bold uppercase tracking-widest text-(--color-text)">Controlla &rarr;</span>
-                   )}
-                </div>
-              </div>
-            ))
-          )}
+        <div className="notifications-page-enter relative z-10 mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
+          <NotificationHeader
+            notificationCount={feedCompleto.length}
+            unreadCount={unreadCount}
+            onMarkAllAsRead={markAllAsRead}
+          />
+          <NotificationFeed
+            notifications={feedCompleto}
+            onNotificationClick={handleNotificationClick}
+            formatTime={formatTime}
+          />
         </div>
-      </div>
+      </main>
     </>
   );
 }

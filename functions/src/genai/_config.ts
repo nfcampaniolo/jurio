@@ -12,7 +12,10 @@ export const ai = genkit({
       location: "eu",
     }),
   ],
-  model: "vertexai/gemini-3.8-flash",
+  // Generation-level config can override this default for complex tasks.
+  model: vertexAI.model("gemini-3.8-flash", {
+    thinkingConfig: { thinkingLevel: "LOW" },
+  }),
 });
 
 // ─────────────────────────────────────────────
