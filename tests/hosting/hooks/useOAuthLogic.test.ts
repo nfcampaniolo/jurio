@@ -169,7 +169,7 @@ describe("useOAuthLogic Hook Suite", () => {
       expect(mockSetDoc).toHaveBeenCalledWith(
         `oauth_codes/${expectedAuthCode}`,
         expect.objectContaining({
-          uid: "usr_flv_2026",
+          user: "usr_flv_2026",
           client_id: "jurio_client_app",
           redirect_uri:
             "https://client.external.it/callback",

@@ -93,7 +93,7 @@ describe("team document and creation utilities", () => {
     expect(mocks.batchCommit).toHaveBeenCalledTimes(2);
   });
 
-  it("reassigns document ownership using collection-specific query fields", async () => {
+  it("reassigns document ownership using the user field", async () => {
     // Arrange
     const docRef = { path: "documents/doc-1" };
     mocks.get.mockResolvedValue({ empty: false, docs: [{ ref: docRef }] });
@@ -103,10 +103,10 @@ describe("team document and creation utilities", () => {
     await updateUserDocuments("member-1", "owner-1");
 
     // Assert
-    expect(mocks.where).toHaveBeenNthCalledWith(1, "ownerId", "==", "member-1");
-    expect(mocks.where).toHaveBeenNthCalledWith(2, "user", "==", "member-1");
+    expect(mocks.where).toHaveBeenCalledTimes(3);
+    expect(mocks.where).toHaveBeenCalledWith("user", "==", "member-1");
     expect(mocks.batchUpdate).toHaveBeenCalledTimes(3);
-    expect(mocks.batchUpdate).toHaveBeenCalledWith(docRef, { user: "owner-1", ownerId: "owner-1" });
+    expect(mocks.batchUpdate).toHaveBeenCalledWith(docRef, { user: "owner-1" });
     expect(mocks.batchCommit).toHaveBeenCalledTimes(3);
   });
 

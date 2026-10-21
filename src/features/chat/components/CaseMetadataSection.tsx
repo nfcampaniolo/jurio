@@ -25,18 +25,37 @@ export const CaseMetadataSection: React.FC<CaseMetadataSectionProps> = ({
 
   useEffect(() => {
     let unsubscribe = () => {};
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+    let cancelled = false;
+    let attempts = 0;
+    const MAX_RETRIES = 30;
 
-    const setupListener = async () => {
+    // Cambiando fascicolo (o creandone uno nuovo) non devono restare i metadati del precedente
+    setMetadati(initialMetadati);
+    setEditingKey(null);
+    setIsAddingNew(false);
+    if (!activeFascicoloId) return;
+
+    const subscribe = async () => {
       try {
         const db = await getDb();
+        if (cancelled) return;
         const fascicoloRef = doc(db, "fascicoli", activeFascicoloId);
-        
+
         unsubscribe = onSnapshot(fascicoloRef, (docSnap) => {
+          attempts = 0;
           if (docSnap.exists()) {
             const data = docSnap.data();
             setMetadati(data.metadati || {});
           }
         }, (err) => {
+          // Il fascicolo viene creato al primo messaggio: finché non esiste la lettura è negata e
+          // Firestore chiude il listener, quindi va riaperto o i metadati non arriverebbero mai.
+          if (err.code === "permission-denied" && !cancelled && attempts < MAX_RETRIES) {
+            attempts += 1;
+            retryTimer = setTimeout(() => void subscribe(), 2000);
+            return;
+          }
           console.error("Errore ascolto metadati:", err);
         });
       } catch (error) {
@@ -44,11 +63,14 @@ export const CaseMetadataSection: React.FC<CaseMetadataSectionProps> = ({
       }
     };
 
-    void setupListener();
+    void subscribe();
 
     return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
       unsubscribe();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFascicoloId]);
 
   const handleSaveEdit = async (key: string) => {

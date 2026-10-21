@@ -42,7 +42,7 @@ mcpRouter.use(async (req, res) => {
 
     const tokenData = tokenSnap.data();
     const expiresAt = tokenData?.expiresAt;
-    const uid = tokenData?.uid;
+    const uid = tokenData?.user;
 
     if (typeof uid !== "string" || !uid || !expiresAt || typeof expiresAt.toDate !== "function") {
       res.status(401).json({ error: "unauthorized", message: "Dati del token non validi." });

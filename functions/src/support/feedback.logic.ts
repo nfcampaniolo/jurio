@@ -15,7 +15,6 @@ const MAX_NOTES_CHARS = 2000;
 
 export async function executeSubmitFeedback(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (uid): Promise<void> => {
-    // 1. Verifica utente nel DB e validazione unificata piano/limiti (feature "feedback")
     const userSnap = await db.collection("register").doc(uid).get();
     if (!userSnap.exists) {
       res.status(404).json({ error: "Not Found" });

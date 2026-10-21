@@ -80,7 +80,7 @@ export async function verifyPlanAndLimits(
     const expiresAt = tokenData?.expiresAt;
 
     if (
-      !tokenData?.uid ||
+      !tokenData?.user ||
       !expiresAt ||
       typeof expiresAt.toDate !== "function" ||
       expiresAt.toDate() <= new Date()
@@ -92,7 +92,7 @@ export async function verifyPlanAndLimits(
       };
     }
 
-    uid = String(tokenData.uid);
+    uid = String(tokenData.user);
   } else {
     // Compatibilità con richieste autenticate mediante Firebase ID token.
     try {

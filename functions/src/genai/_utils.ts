@@ -9,7 +9,7 @@ export function assertResourceOwner(
   uid: string,
   customMessage = "Accesso alla risorsa negato."
 ): void {
-  const owner = resourceData?.ownerId ?? resourceData?.user ?? resourceData?.userId;
+  const owner = resourceData?.user;
   if (!owner || owner !== uid) {
     throw new Error(customMessage);
   }

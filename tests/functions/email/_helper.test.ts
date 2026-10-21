@@ -84,7 +84,7 @@ describe("email helper", () => {
       });
       expect(mocks.collection).toHaveBeenCalledWith("notification");
       expect(mocks.batchSet).toHaveBeenNthCalledWith(2, { id: "notification-id" }, {
-        uid: "uid-1",
+        user: "uid-1",
         title: "Titolo",
         message: "Testo",
         type: "system",
@@ -115,10 +115,10 @@ describe("email helper", () => {
       await expect(result).rejects.toThrow("commit fallito");
       expect(mocks.batchSet).toHaveBeenCalledTimes(3);
       expect(mocks.batchSet).toHaveBeenNthCalledWith(2, { id: "notification-id" }, expect.objectContaining({
-        uid: "one", type: "report", link: "/report", isRead: false,
+        user: "one", type: "report", link: "/report", isRead: false,
       }));
       expect(mocks.batchSet).toHaveBeenNthCalledWith(3, { id: "notification-id" }, expect.objectContaining({
-        uid: "two", type: "team", link: "/team", isRead: false,
+        user: "two", type: "team", link: "/team", isRead: false,
       }));
     });
   });

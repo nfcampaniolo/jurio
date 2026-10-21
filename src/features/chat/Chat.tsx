@@ -34,7 +34,11 @@ export const LegalChatPage = () => {
   const titoloRicevuto = state?.inizializzaTitolo;
   const documentiRicevuti = state?.inizializzaDocumenti;
   
-  const chatLogic = useLegalChat({ docs: documentiRicevuti });
+  const chatLogic = useLegalChat({
+    docs: documentiRicevuti,
+    title: titoloRicevuto,
+    isNewFascicolo: Boolean(titoloRicevuto),
+  });
   const {
     sessionType,
     isConverting,
@@ -80,12 +84,6 @@ export const LegalChatPage = () => {
     document.body.style.overflow = denyOpen ? "hidden" : "unset";
     return () => { document.body.style.overflow = "unset"; };
   }, [denyOpen]);
-  
-  useEffect(() => {
-    if (titoloRicevuto) {
-      chatLogic.setSessionTitle(titoloRicevuto);
-    }
-  }, [titoloRicevuto, chatLogic]);
   
   // Auto-resize della Textarea
   useEffect(() => {
@@ -269,6 +267,7 @@ export const LegalChatPage = () => {
               }}
               onSourceClick={handleSourceClick}
               onDeleteThread={chatLogic.deleteThread}
+              onRenameThread={chatLogic.renameThread}
               isReadOnly={isReadOnly}
             />
           </div>
@@ -297,7 +296,6 @@ export const LegalChatPage = () => {
         <Header />
         
         <main className="flex-1 relative flex overflow-hidden w-full">
-          {/* initial={false} disattiva l'animazione di fade-in al primo mount */}
           <AnimatePresence mode="wait" initial={false}>
             {sessionType === 'seleziona' && (
               <motion.div 

@@ -139,6 +139,28 @@ export const useEntityOperations = ({
     }
   };
 
+  const renameThread = async (fascicoloId: string, threadId: string, newTitle: string) => {
+    const title = newTitle.trim();
+    if (!title) return;
+    let previousTitle: string | undefined;
+    setThreads((prev) => {
+      previousTitle = prev.find((t) => t.id === threadId)?.title;
+      return prev.map((t) => t.id === threadId ? { ...t, title } : t);
+    });
+    try {
+      const { doc, updateDoc, serverTimestamp } = await import("firebase/firestore");
+      const db = await getDb();
+      await updateDoc(doc(db, "fascicoli", fascicoloId, "threads", threadId), { title, updatedAt: serverTimestamp() });
+    } catch (error) {
+      console.error("Errore durante la rinomina della conversazione:", error);
+      toast.error("Errore durante la rinomina della conversazione.");
+      if (previousTitle !== undefined) {
+        const restored = previousTitle;
+        setThreads((prev) => prev.map((t) => t.id === threadId ? { ...t, title: restored } : t));
+      }
+    }
+  };
+
   const handleToggleFascicoloLink = async (docItem: AttachedDocument, fascicoloId: string, isLinking: boolean) => {
     const previousDocs = [...archiveDocs];
     try {
@@ -196,5 +218,5 @@ export const useEntityOperations = ({
     }
   }, [setArchiveDocs]);
 
-  return { renameFascicolo, renameChat, deleteChat, deleteFascicolo, deleteThread, handleToggleFascicoloLink, handleDeleteDocumento, handleRenameDocumento };
+  return { renameFascicolo, renameChat, deleteChat, deleteFascicolo, deleteThread, renameThread, handleToggleFascicoloLink, handleDeleteDocumento, handleRenameDocumento };
 };

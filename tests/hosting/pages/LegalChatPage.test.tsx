@@ -351,9 +351,17 @@ let mockLegalChatState = {
   deleteThread: mockDeleteThread,
 };
 
+const mockUseLegalChat = vi.fn((initialData?: unknown) => {
+  void initialData;
+  return mockLegalChatState;
+});
+
 vi.mock("@/features/chat/hooks/useLegalChat", () => ({
   __esModule: true,
-  useLegalChat: () => mockLegalChatState,
+  useLegalChat: (initialData?: unknown) => {
+    mockUseLegalChat(initialData);
+    return mockLegalChatState;
+  },
 }));
 
 /* ---------- component under test ---------- */
@@ -434,12 +442,22 @@ describe("LegalChatPage Suite", () => {
     expect(mockStartFascicoloSetup).toHaveBeenCalledTimes(1);
   });
 
-  test("inizializza il titolo della sessione se passato tramite router location state", () => {
-    mockLocationState = { inizializzaTitolo: "Fascicolo n. 450/2026" };
+  test("mostra la chat e passa i dati iniziali del nuovo fascicolo al relativo hook", () => {
+    mockLocationState = {
+      inizializzaTitolo: "Fascicolo n. 450/2026",
+      inizializzaDocumenti: [],
+    };
+    mockLegalChatState.sessionType = "fascicolo";
 
     render(<LegalChatPage />);
 
-    expect(mockSetSessionTitle).toHaveBeenCalledWith("Fascicolo n. 450/2026");
+    expect(mockUseLegalChat).toHaveBeenCalledWith({
+      docs: [],
+      title: "Fascicolo n. 450/2026",
+      isNewFascicolo: true,
+    });
+    expect(screen.getByTestId("chat-header")).toBeInTheDocument();
+    expect(screen.getByTestId("message-list")).toBeInTheDocument();
   });
 
   test("renderizza il layout completo della chat quando la sessione è attiva (temporanea o fascicolo)", () => {

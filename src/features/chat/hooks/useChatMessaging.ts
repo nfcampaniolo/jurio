@@ -108,6 +108,7 @@ export const useChatMessaging = ({
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       let buffer = "";
+      let partialText = "";
 
       while (true) {
         const { done, value } = await reader.read();
@@ -151,15 +152,13 @@ export const useChatMessaging = ({
               setAgentStatusText(parsed.status);
             }
 
-            // 3. Flusso di messaggi Genkit (testo parziale)
+            // 3. Il testo parziale non viene renderizzato (evita re-render e doppio caricamento): si mostra solo la risposta finale
             if (parsed.message) {
               if (typeof parsed.message === "object") {
                 if (parsed.message.status) setAgentStatusText(parsed.message.status);
-                if (parsed.message.text) {
-                  setMessages(prev => prev.map(msg => msg.id === agentMsgId ? { ...msg, content: (msg.content || "") + parsed.message.text } : msg));
-                }
+                if (parsed.message.text) partialText += parsed.message.text;
               } else if (typeof parsed.message === "string") {
-                setMessages(prev => prev.map(msg => msg.id === agentMsgId ? { ...msg, content: (msg.content || "") + parsed.message } : msg));
+                partialText += parsed.message;
               }
             }
 
@@ -174,7 +173,7 @@ export const useChatMessaging = ({
               }
               setMessages(prev => prev.map(msg => msg.id === agentMsgId ? { 
                 ...msg, 
-                content: parsed.result.risposta || msg.content, 
+                content: parsed.result.risposta || partialText || msg.content, 
                 sources: parsed.result.fonti || [] 
               } : msg));
             }

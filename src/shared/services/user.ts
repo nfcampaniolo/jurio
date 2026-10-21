@@ -12,16 +12,10 @@ import { toast } from "react-hot-toast";
 
 export async function userExists(uid: string): Promise<boolean> {
   const db = await getDb();
-  const { doc, getDoc } = await import("firebase/firestore");
+  const { doc, getDocFromServer } = await import("firebase/firestore");
   const ref = doc(db, "users", uid);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
-    return false;
-  }
-
-  const data = snap.data();
-  return Boolean(data && data.email && data.name && data.surname); 
+  const snap = await getDocFromServer(ref);
+  return snap.exists();
 }
 
 export async function getUser(uid: string): Promise<UserData> {
@@ -125,7 +119,7 @@ export async function deleteUser(uid: string): Promise<void> {
 
   const chatsQuery = query(
     collection(db, "chats"),
-    where("ownerId", "==", uid)
+    where("user", "==", uid)
   );
 
   const chatsSnap = await getDocs(chatsQuery);
@@ -285,7 +279,7 @@ export async function exportUserData(uid: string): Promise<void> {
   }
 
   // --- Chats & Messages ---
-  const chatsSnap = await getDocs(query(collection(db, "chats"), where("ownerId", "==", uid)));
+  const chatsSnap = await getDocs(query(collection(db, "chats"), where("user", "==", uid)));
   for (const chatDoc of chatsSnap.docs) {
     const chatData: ExportedChat = { 
       id: chatDoc.id, 

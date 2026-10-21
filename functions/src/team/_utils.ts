@@ -45,11 +45,8 @@ export async function updateUserDocuments(uidDelete: string, uidOwner: string) {
   const collectionsToUpdate = ["fascicoli", "documents", "document_chunks"];
   
   for (const collectionName of collectionsToUpdate) {
-    // Seleziona dinamicamente il campo da interrogare in base alla collection
-    const fieldToQuery = collectionName === "fascicoli" ? "ownerId" : "user";
-
     const snapshot = await db.collection(collectionName)
-      .where(fieldToQuery, "==", uidDelete)
+      .where("user", "==", uidDelete)
       .get();
 
     if (snapshot.empty) continue;
@@ -61,8 +58,7 @@ export async function updateUserDocuments(uidDelete: string, uidOwner: string) {
     snapshot.docs.forEach((doc) => {
       // Aggiorna solo i campi di proprietà senza toccare nient'altro
       currentBatch.update(doc.ref, {
-        user: uidOwner,
-        ownerId: uidOwner
+        user: uidOwner
       });
       
       operationCount++;

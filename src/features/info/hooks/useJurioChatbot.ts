@@ -1,5 +1,5 @@
 // useJurioChatbot.ts
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { chatCache, sendSupportMessage, type ChatMessage } from '@/features/chat/hooks/chatLogic';
 
 export interface SourceItem {
@@ -17,6 +17,7 @@ export const useJurioChatbot = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentStatus, setCurrentStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const isSendingRef = useRef(false);
 
   // Inizializzazione della cronologia da cache
   useEffect(() => {
@@ -33,8 +34,9 @@ export const useJurioChatbot = () => {
   }, []);
 
   const handleSend = async (): Promise<void> => {
-    if (!inputValue.trim() || isLoading) return;
+    if (!inputValue.trim() || isSendingRef.current) return;
 
+    isSendingRef.current = true;
     setError(null);
     setCurrentStatus("Analisi della richiesta in corso...");
     
@@ -97,6 +99,7 @@ export const useJurioChatbot = () => {
       setInputValue(currentInputValue);
       
     } finally {
+      isSendingRef.current = false;
       setIsLoading(false);
       setCurrentStatus(null);
     }

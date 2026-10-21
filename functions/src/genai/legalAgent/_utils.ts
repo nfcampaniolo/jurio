@@ -49,23 +49,25 @@ export async function persistLegalAgentConversation(args: {
   const batch = db.batch();
   const FieldValue = admin.firestore.FieldValue;
 
+  // Timestamp distinti: con lo stesso serverTimestamp l'ordinamento "desc" tra user e model è casuale
+  const nowMs = Date.now();
   batch.set(args.messagesRef.doc(), {
     role: "user",
     content: args.prompt,
-    timestamp: FieldValue.serverTimestamp(),
+    timestamp: admin.firestore.Timestamp.fromMillis(nowMs),
   });
 
   batch.set(args.messagesRef.doc(), {
     role: "model",
     content: String(args.result?.risposta ?? ""),
     sources: Array.isArray(args.result?.fonti) ? args.result.fonti : [],
-    timestamp: FieldValue.serverTimestamp(),
+    timestamp: admin.firestore.Timestamp.fromMillis(nowMs + 1),
   });
 
   const parentCollection = args.isFascicolo ? "fascicoli" : "chats";
   const parentRef = db.collection(parentCollection).doc(args.parentId);
   const parentUpdate: Record<string, any> = {
-    ownerId: args.uid,
+    user: args.uid,
     updatedAt: FieldValue.serverTimestamp(),
   };
 
@@ -111,8 +113,8 @@ export async function migrateChatToFascicolo(args: {
   const [oldChatSnap, newFascicoloSnap] = await Promise.all([oldChatRef.get(), newFascicoloRef.get()]);
 
   if (!oldChatSnap.exists) throw new Error("Chat sorgente non trovata.");
-  if (oldChatSnap.data()?.ownerId && oldChatSnap.data()?.ownerId !== args.uid) throw new Error("Accesso alla chat sorgente negato.");
-  if (newFascicoloSnap.exists && newFascicoloSnap.data()?.ownerId !== args.uid) throw new Error("Accesso al fascicolo destinazione negato.");
+  if (oldChatSnap.data()?.user && oldChatSnap.data()?.user !== args.uid) throw new Error("Accesso alla chat sorgente negato.");
+  if (newFascicoloSnap.exists && newFascicoloSnap.data()?.user !== args.uid) throw new Error("Accesso al fascicolo destinazione negato.");
 
   const oldChatTitle = String(oldChatSnap.data()?.title ?? "Conversazione importata");
   const finalTitle = typeof args.title === "string" && args.title.trim() ? args.title.trim() : oldChatTitle;
@@ -123,7 +125,7 @@ export async function migrateChatToFascicolo(args: {
 
   operations.push((batch) => {
     batch.set(newFascicoloRef, {
-      ownerId: args.uid,
+      user: args.uid,
       title: finalTitle,
       updatedAt: FieldValue.serverTimestamp(),
       ...(newFascicoloSnap.exists ? {} : { createdAt: FieldValue.serverTimestamp() }),
@@ -144,6 +146,7 @@ export async function migrateChatToFascicolo(args: {
     operations.push((batch) => {
       batch.set(newMessageRef, {
         ...sanitize(data),
+        migrated: true,
         timestamp: data.timestamp ?? data.createdAt ?? FieldValue.serverTimestamp(),
       });
     });
@@ -194,11 +197,18 @@ export async function processFascicoloDocs(
     return;
   }
   try {
-    const updatePromises = docs.map((doc) => {
-      return addFascicoloIdToDocAndChunks(doc, fascicoloId);
-    });
-    await Promise.all(updatePromises);
-    console.log(`[Successo] FascicoloId ${fascicoloId} associato a ${docs.length} documenti e relativi chunks.`);
+    const uniqueDocs = Array.from(new Set(docs));
+    const refs = uniqueDocs.map((id) => db.collection("documents").doc(id));
+    const snaps = await db.getAll(...refs);
+    // Salta i documenti già collegati: evita query sui chunk e scritture ripetute a ogni messaggio.
+    const pendingDocs = snaps
+      .filter((snap) => snap.exists && !((snap.get("fascicoloIds") as string[] | undefined) ?? []).includes(fascicoloId))
+      .map((snap) => snap.id);
+
+    if (pendingDocs.length === 0) return;
+
+    await Promise.all(pendingDocs.map((doc) => addFascicoloIdToDocAndChunks(doc, fascicoloId)));
+    console.log(`[Successo] FascicoloId ${fascicoloId} associato a ${pendingDocs.length} documenti e relativi chunks.`);
   } catch (error) {
     console.error("Errore durante l'esecuzione di processFascicoloDocs:", error);
     throw error;

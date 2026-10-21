@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  db: { batch: vi.fn(), collection: vi.fn() },
+  db: { batch: vi.fn(), collection: vi.fn(), getAll: vi.fn() },
   batch: { set: vi.fn(), update: vi.fn(), delete: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) },
   docRef: { id: "doc-1" },
   chunkDoc: { ref: { id: "chunk-1" } },
@@ -91,6 +91,10 @@ describe("legal-agent response helpers", () => {
       }),
     };
     mocks.db.collection.mockImplementation((name: string) => name === "documents" ? documents : chunks);
+    mocks.db.getAll.mockResolvedValue([
+      { id: "doc-1", exists: true, get: () => ["other"] },
+      { id: "doc-2", exists: true, get: () => undefined },
+    ]);
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
 
     await processFascicoloDocs("f1", ["doc-1", "doc-2"]);
@@ -104,9 +108,16 @@ describe("legal-agent response helpers", () => {
     expect(log).toHaveBeenCalledOnce();
   });
 
+  it("skips documents already linked to the fascicolo", async () => {
+    mocks.db.collection.mockReturnValue({ doc: vi.fn((id: string) => ({ id })) });
+    mocks.db.getAll.mockResolvedValue([{ id: "doc-1", exists: true, get: () => ["f1"] }]);
+    await processFascicoloDocs("f1", ["doc-1", "doc-1"]);
+    expect(mocks.db.batch).not.toHaveBeenCalled();
+  });
+
   it("rejects attempts to migrate a chat owned by another user", async () => {
-    const oldChat = { get: vi.fn().mockResolvedValue({ exists: true, data: () => ({ ownerId: "other-user" }) }) };
-    const fascicolo = { get: vi.fn().mockResolvedValue({ exists: true, data: () => ({ ownerId: "u1" }) }) };
+    const oldChat = { get: vi.fn().mockResolvedValue({ exists: true, data: () => ({ user: "other-user" }) }) };
+    const fascicolo = { get: vi.fn().mockResolvedValue({ exists: true, data: () => ({ user: "u1" }) }) };
     mocks.db.collection.mockImplementation((name: string) => ({ doc: () => name === "chats" ? oldChat : fascicolo }));
     await expect(migrateChatToFascicolo({
       uid: "u1", oldChatId: "chat-1", newFascicoloId: "case-1",
@@ -116,8 +127,8 @@ describe("legal-agent response helpers", () => {
 
   it("rejects missing migration chats and destination fascicoli owned by someone else", async () => {
     const absentChat = { get: vi.fn().mockResolvedValue({ exists: false }) };
-    const ownedChat = { get: vi.fn().mockResolvedValue({ exists: true, data: () => ({ ownerId: "u1", title: "Chat" }) }) };
-    const foreignFascicolo = { get: vi.fn().mockResolvedValue({ exists: true, data: () => ({ ownerId: "u2" }) }) };
+    const ownedChat = { get: vi.fn().mockResolvedValue({ exists: true, data: () => ({ user: "u1", title: "Chat" }) }) };
+    const foreignFascicolo = { get: vi.fn().mockResolvedValue({ exists: true, data: () => ({ user: "u2" }) }) };
     mocks.db.collection.mockImplementation((name: string) => ({ doc: () => name === "chats" ? absentChat : foreignFascicolo }));
     await expect(migrateChatToFascicolo({ uid: "u1", oldChatId: "absent", newFascicoloId: "case" }))
       .rejects.toThrow("Chat sorgente non trovata.");
@@ -130,6 +141,7 @@ describe("legal-agent response helpers", () => {
     const documents = { doc: vi.fn(() => ({ id: "document" })) };
     const chunks = { where: vi.fn().mockReturnThis(), get: vi.fn().mockRejectedValue(new Error("query failed")) };
     mocks.db.collection.mockImplementation((name: string) => name === "documents" ? documents : chunks);
+    mocks.db.getAll.mockResolvedValue([{ id: "document", exists: true, get: () => [] }]);
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     await expect(processFascicoloDocs("case-1", ["document"])).rejects.toThrow("query failed");
     expect(error).toHaveBeenCalledOnce();

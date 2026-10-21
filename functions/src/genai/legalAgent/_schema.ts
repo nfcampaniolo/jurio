@@ -16,4 +16,5 @@ export interface ExecutionProfile {
   model: string;
   dbLimit: number;
   webLimit: number;
+  thinkingLevel: "LOW" | "MEDIUM" | "HIGH";
 }

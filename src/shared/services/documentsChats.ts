@@ -7,7 +7,7 @@ export async function listChatsByUser(userId: string): Promise<PastChat[]> {
 
   const q = query(
     collection(db, "chats"), 
-    where("ownerId", "==", userId),
+    where("user", "==", userId),
     orderBy("updatedAt", "desc")
   );
   

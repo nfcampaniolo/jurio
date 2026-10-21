@@ -84,7 +84,7 @@ describe("Documents & Chats Service Suite", () => {
 
       expect(mockGetDb).toHaveBeenCalledTimes(1);
       expect(mockCollection).toHaveBeenCalledWith(fakeDbInstance, "chats");
-      expect(mockWhere).toHaveBeenCalledWith("ownerId", "==", "usr_flv_2026");
+      expect(mockWhere).toHaveBeenCalledWith("user", "==", "usr_flv_2026");
       expect(mockOrderBy).toHaveBeenCalledWith("updatedAt", "desc");
       expect(mockQuery).toHaveBeenCalled();
       expect(mockGetDocs).toHaveBeenCalled();

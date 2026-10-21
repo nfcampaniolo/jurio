@@ -58,7 +58,7 @@ export const Header: React.FC = () => {
         // 1. Ascoltatore Notifiche Personali
         const qPersonal = query(
           collection(db, "notification"),
-          where("uid", "==", user.uid),
+          where("user", "==", user.uid),
           where("isRead", "==", false),
           limit(1)
         );

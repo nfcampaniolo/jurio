@@ -16,12 +16,12 @@ describe("GenAI shared helpers", () => {
     mocks.batch.commit.mockResolvedValue(undefined);
   });
 
-  it("accepts each supported owner field and rejects mismatches", () => {
-    expect(() => assertResourceOwner({ ownerId: "u1" }, "u1")).not.toThrow();
+  it("accepts only the user owner field and rejects mismatches", () => {
     expect(() => assertResourceOwner({ user: "u1" }, "u1")).not.toThrow();
-    expect(() => assertResourceOwner({ userId: "u1" }, "u1")).not.toThrow();
+    expect(() => assertResourceOwner({ ownerId: "u1" }, "u1")).toThrow("Accesso alla risorsa negato.");
+    expect(() => assertResourceOwner({ userId: "u1" }, "u1")).toThrow("Accesso alla risorsa negato.");
     expect(() => assertResourceOwner({}, "u1", "custom")).toThrow("custom");
-    expect(() => assertResourceOwner({ ownerId: "u2" }, "u1")).toThrow("Accesso alla risorsa negato.");
+    expect(() => assertResourceOwner({ user: "u2" }, "u1")).toThrow("Accesso alla risorsa negato.");
   });
 
   it("hashes an address deterministically without returning it", () => {

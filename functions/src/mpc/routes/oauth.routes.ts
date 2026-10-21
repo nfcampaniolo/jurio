@@ -228,7 +228,7 @@ oauthRouter.post("/token", async (req, res) => {
     const expiresInSeconds = 30 * 24 * 60 * 60;
 
     await db.collection("oauth_tokens").doc(accessToken).set({
-      uid: codeData.uid,
+      user: codeData.user,
       createdAt: FieldValue.serverTimestamp(),
       expiresAt: Timestamp.fromDate(expireDate),
       client_id: String(codeData.client_id),

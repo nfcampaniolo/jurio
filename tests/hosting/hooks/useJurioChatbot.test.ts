@@ -195,6 +195,37 @@ describe("useJurioChatbot Hook Suite", () => {
       });
     });
 
+    test("ignora un secondo invio mentre la richiesta è ancora in corso", async () => {
+      let resolveResponse: ((value: { botReply: string; fonti: [] }) => void) | undefined;
+      mockSendSupportMessage.mockImplementationOnce(
+        () => new Promise((resolve) => {
+          resolveResponse = resolve;
+        })
+      );
+
+      const { result } = renderHook(() => useJurioChatbot());
+      act(() => {
+        result.current.setInputValue("Domanda inviata una sola volta");
+      });
+
+      let firstSend: Promise<void>;
+      await act(async () => {
+        firstSend = result.current.handleSend();
+        await Promise.resolve();
+        await result.current.handleSend();
+      });
+
+      expect(mockSendSupportMessage).toHaveBeenCalledTimes(1);
+
+      await act(async () => {
+        resolveResponse?.({ botReply: "Risposta unica", fonti: [] });
+        await firstSend;
+      });
+
+      expect(result.current.messages.filter((message) => message.role === "user")).toHaveLength(1);
+      expect(result.current.messages.filter((message) => message.role === "assistant")).toHaveLength(2);
+    });
+
 test("esegue il rollback della cronologia e ripristina l'input dell'utente in caso di eccezione", async () => {
       mockSendSupportMessage.mockRejectedValueOnce(new Error("Timeout server di supporto"));
 

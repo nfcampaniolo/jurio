@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   persist: vi.fn().mockResolvedValue(undefined),
   migrate: vi.fn().mockResolvedValue(undefined),
   processDocs: vi.fn().mockResolvedValue(undefined),
+  extractMetadata: vi.fn().mockResolvedValue(0),
   setupSse: vi.fn(),
   sendSse: vi.fn(),
   sendRaw: vi.fn(),
@@ -15,6 +16,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@functions/_deps", () => ({ getDb: () => mocks.db, sanitize: (value: unknown) => value }));
 vi.mock("@functions/_utils", () => ({ validateUserPlanAndLimits: mocks.validate, withSecureApiEndpoint: mocks.secure }));
 vi.mock("@functions/genai/legalAgent/flow", () => ({ legalAgentFlow: { stream: vi.fn() } }));
+vi.mock("@functions/genai/supportAgent/_metadata", () => ({ extractMetadataFromThread: mocks.extractMetadata }));
 vi.mock("@functions/genai/legalAgent/_utils", () => ({
   setupLegalAgentSse: mocks.setupSse, sendLegalAgentSse: mocks.sendSse, sendLegalAgentSseRaw: mocks.sendRaw,
   persistLegalAgentConversation: mocks.persist, migrateChatToFascicolo: mocks.migrate, processFascicoloDocs: mocks.processDocs,
@@ -48,7 +50,17 @@ describe("legal-agent endpoint", () => {
     expect(mocks.migrate).toHaveBeenCalledWith({
       uid: "u1", oldChatId: "chat-1", newFascicoloId: "case-1", title: "Case",
     });
+    expect(mocks.extractMetadata).toHaveBeenCalledWith("case-1", "chat-1");
     expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({ success: true });
+  });
+
+  it("completes the migration even if metadata extraction fails", async () => {
+    mocks.extractMetadata.mockRejectedValueOnce(new Error("llm down"));
+    const req = { body: { action: "migrate", old_chat_uuid: "chat-1", new_fascicolo_uuid: "case-1" }, on: vi.fn() };
+    const res = { on: vi.fn(), status: vi.fn().mockReturnThis(), json: vi.fn() };
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    await executeLegalAgent(req as never, res as never);
     expect(res.json).toHaveBeenCalledWith({ success: true });
   });
 

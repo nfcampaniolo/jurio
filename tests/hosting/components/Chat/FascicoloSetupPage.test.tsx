@@ -139,7 +139,7 @@ describe("FascicoloSetupPage", () => {
     expect(screen.getByText("Documenti Collegati (0)")).toBeInTheDocument();
     expect(screen.getByText("Nessun documento pronto per questo fascicolo.")).toBeInTheDocument();
 
-    // Pulsante submit disabilitato per assenza titolo e documenti
+    // Il titolo è necessario per abilitare la creazione.
     const submitBtn = screen.getByRole("button", { name: "Crea Fascicolo" });
     expect(submitBtn).toBeDisabled();
 
@@ -199,6 +199,35 @@ describe("FascicoloSetupPage", () => {
     // Con titolo e documenti, il bottone standard è abilitato
     const submitBtn = screen.getByRole("button", { name: "Crea Fascicolo" });
     expect(submitBtn).toBeEnabled();
+  });
+
+  test("consente di creare un fascicolo senza documenti se il titolo è presente", async () => {
+    mockUseLegalChat.mockReturnValue({
+      ...defaultChatLogic,
+      sessionTitle: "Pratica da avviare",
+      attachedDocs: [],
+    });
+    mockUuidv4
+      .mockReturnValueOnce("thread-senza-documenti")
+      .mockReturnValueOnce("fascicolo-senza-documenti");
+
+    render(<FascicoloSetupPage />);
+
+    const submitBtn = screen.getByRole("button", { name: "Crea Fascicolo" });
+    expect(submitBtn).toBeEnabled();
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith(
+        "/fascicolo/fascicolo-senza-documenti/thread-senza-documenti",
+        {
+          state: {
+            inizializzaTitolo: "Pratica da avviare",
+            inizializzaDocumenti: [],
+          },
+        }
+      );
+    });
   });
 
   test("gestisce l'apertura e la chiusura del DocumentSelectorPanel", () => {

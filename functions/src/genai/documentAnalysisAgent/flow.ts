@@ -73,7 +73,7 @@ export const doctrineFlow = ai.defineFlow(
           );
 
           const response = await generateWithRetry({
-            model: "vertexai/gemini-3.8-flash",
+            model: "vertexai/gemini-3.5-flash",
             system: DOCTRINE_SYSTEM_PROMPT,
             prompt: buildDoctrineUserPrompt({
               sourceUrl: input.sourceUrl,

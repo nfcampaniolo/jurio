@@ -5,7 +5,7 @@ export interface PastFascicolo {
   title: string;
   createdAt: Date;
   updatedAt: Date;
-  ownerId?: string;
+  user?: string;
 }
 
 export interface DocumentSelectorPanelProps {

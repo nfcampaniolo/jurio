@@ -175,9 +175,9 @@ export async function validateUserPlanAndLimits(
   }
 
   // Usa la chiave dinamica basata sul feature type (es. "legal_agent") anziché "research"
-  const limits = (
-    JURIO_USAGE_LIMITS?.[type] as Record<string, { perMinute: number; perDay: number }>
-  )?.[planId] ?? { perMinute: 0, perDay: 0 };
+  // Le feature trasversali definiscono solo il limite "global"; per le altre, un piano senza limite esplicito resta bloccato
+  const featureLimits = JURIO_USAGE_LIMITS?.[type] as Record<string, { perMinute: number; perDay: number }> | undefined;
+  const limits = featureLimits?.[planId] ?? featureLimits?.global ?? { perMinute: 0, perDay: 0 };
 
   try {
     await Promise.all([

@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React, { createRef } from "react";
 import type { SVGProps, HTMLAttributes } from "react";
 import { MessageList } from "@/features/chat/components/MessageList";
@@ -14,6 +14,8 @@ vi.mock("lucide-react", () => {
     Scale: Icon("scale"),
     Globe: Icon("globe"),
     BookOpen: Icon("book-open"),
+    Copy: Icon("copy"),
+    Check: Icon("check"),
   };
 });
 
@@ -22,10 +24,21 @@ vi.mock("framer-motion", () => ({
   motion: {
     div: ({
       children,
+      initial,
+      animate,
+      transition,
       ...props
-    }: HTMLAttributes<HTMLDivElement>) => (
-      <div {...props}>{children}</div>
-    ),
+    }: HTMLAttributes<HTMLDivElement> & {
+      initial?: boolean | Record<string, number>;
+      animate?: Record<string, number>;
+      transition?: Record<string, unknown>;
+    }) => {
+      void animate;
+      void transition;
+      return (
+        <div {...props} data-motion-initial={initial === false ? "false" : "animated"}>{children}</div>
+      );
+    },
   },
 }));
 
@@ -186,6 +199,8 @@ describe("MessageList", () => {
     // Il messaggio storico del modello non è l'ultimo ed è marcato isHistorical -> data-animate="false"
     const typewriter = screen.getByTestId("typewriter");
     expect(typewriter).toHaveAttribute("data-animate", "false");
+    expect(document.getElementById("msg-msg-model-historical"))
+      .toHaveAttribute("data-motion-initial", "false");
   });
 
   test("renderizza fonti web e giurisprudenziali gestendo click, hover e stato attivo", () => {
@@ -271,5 +286,27 @@ describe("MessageList", () => {
     expect(screen.getByText("Sent. n. 5544/2025")).toBeInTheDocument();
     expect(screen.getByText("CdS: n. 123")).toBeInTheDocument();
     expect(screen.getByText("Documento")).toBeInTheDocument();
+  });
+
+  test("copia il testo del messaggio e segnala quando una risposta non ha fonti", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    const answer: Message = {
+      id: "msg-copy",
+      role: "model",
+      content: "Risposta da copiare.",
+      timestamp: new Date(),
+      sources: [],
+    };
+
+    render(<MessageList {...defaultProps} messages={[answer]} />);
+    fireEvent.click(screen.getByRole("button", { name: "Copia messaggio" }));
+
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith("Risposta da copiare."));
+    expect(screen.getByText("Nessuna fonte verificabile disponibile per questa risposta."))
+      .toBeInTheDocument();
   });
 });

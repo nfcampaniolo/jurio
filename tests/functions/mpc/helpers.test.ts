@@ -93,7 +93,7 @@ describe("MPC helpers", () => {
 
     it("accepts a live OAuth token with an allowed user plan and consumes both limits", async () => {
       const expiresAt = { toDate: () => new Date(Date.now() + 60_000) };
-      const { db } = makeDb(snapshot({ uid: "oauth-user", expiresAt }));
+      const { db } = makeDb(snapshot({ user: "oauth-user", expiresAt }));
 
       const result = await verifyPlanAndLimits("Bearer oauth-token", db);
 
@@ -104,9 +104,9 @@ describe("MPC helpers", () => {
 
     it("rejects OAuth token records with missing uid or expired/malformed expiration", async () => {
       const cases = [
-        { uid: "", expiresAt: { toDate: () => new Date(Date.now() + 1000) } },
-        { uid: "user", expiresAt: { toDate: () => new Date(Date.now() - 1000) } },
-        { uid: "user", expiresAt: {} },
+        { user: "", expiresAt: { toDate: () => new Date(Date.now() + 1000) } },
+        { user: "user", expiresAt: { toDate: () => new Date(Date.now() - 1000) } },
+        { user: "user", expiresAt: {} },
       ];
 
       for (const tokenData of cases) {
@@ -119,7 +119,7 @@ describe("MPC helpers", () => {
 
     it("rejects authenticated users missing from the user registry", async () => {
       const missingUserDb = makeDb(
-        snapshot({ uid: "user", expiresAt: { toDate: () => new Date(Date.now() + 60_000) } }),
+        snapshot({ user: "user", expiresAt: { toDate: () => new Date(Date.now() + 60_000) } }),
         snapshot(undefined, false)
       ).db;
       const missingUser = await verifyPlanAndLimits("Bearer token", missingUserDb);
@@ -129,7 +129,7 @@ describe("MPC helpers", () => {
 
     it("denies inactive plans and converts rate-limit errors to a user-facing guard", async () => {
       const inactiveDb = makeDb(
-        snapshot({ uid: "user", expiresAt: { toDate: () => new Date(Date.now() + 60_000) } }),
+        snapshot({ user: "user", expiresAt: { toDate: () => new Date(Date.now() + 60_000) } }),
         snapshot({ planId: "expired" })
       ).db;
       const inactive = await verifyPlanAndLimits("Bearer token", inactiveDb);
@@ -138,7 +138,7 @@ describe("MPC helpers", () => {
 
       mocks.consumePerMinuteFeature.mockRejectedValueOnce(new Error("rate limit exceeded"));
       const limitedDb = makeDb(
-        snapshot({ uid: "user", expiresAt: { toDate: () => new Date(Date.now() + 60_000) } })
+        snapshot({ user: "user", expiresAt: { toDate: () => new Date(Date.now() + 60_000) } })
       ).db;
       const limited = await verifyPlanAndLimits("Bearer token", limitedDb);
       expect(limited).toMatchObject({ ok: false, isError: false });

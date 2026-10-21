@@ -90,7 +90,7 @@ describe("speech and document text agents", () => {
     mocks.userGet.mockResolvedValue({ exists: true });
     mocks.tokenGet.mockResolvedValue({
       exists: true,
-      data: () => ({ uid: "user-1", expiresAt: { toDate: () => new Date(Date.now() + 60_000) } }),
+      data: () => ({ user: "user-1", expiresAt: { toDate: () => new Date(Date.now() + 60_000) } }),
       ref: { delete: mocks.tokenDelete },
     });
     mocks.tokenDelete.mockResolvedValue(undefined);
@@ -233,7 +233,7 @@ describe("speech and document text agents", () => {
     // Arrange
     mocks.tokenGet.mockResolvedValueOnce({
       exists: true,
-      data: () => ({ uid: "user-1", expiresAt: { toDate: () => new Date(Date.now() - 1) } }),
+      data: () => ({ user: "user-1", expiresAt: { toDate: () => new Date(Date.now() - 1) } }),
       ref: { delete: mocks.tokenDelete },
     });
     const expired = response();

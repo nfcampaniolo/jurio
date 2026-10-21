@@ -1,6 +1,6 @@
 import { onRequest } from "firebase-functions/v2/https";
 import { setGlobalOptions } from "firebase-functions/v2/options";
-import { onDocumentCreated } from "firebase-functions/v2/firestore";
+import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler"; 
 
 import { app } from "./mpc/app";
@@ -21,7 +21,7 @@ import { executeVerifyVoucher, executeSendTeamInviteEmail } from  "./team/teamsh
 import { executeDeleteTeam, executeShareAllTeamDocuments } from  "./team/teammanagement.logic";
 import { executeListCloudFiles, executeDownloadCloudFile } from "./cloud/googledrive.logic";
 import { handleEmbeddingCreation, handleEmbeddingDocumentCreation, handleEmbeddingManualCreation } from "./triggers/embedding.logic";
-import { handleGenerateStaticStatsJson, handleFascicoloCreation, handleProcessContacts } from "./triggers/triggers.logic";
+import { handleGenerateStaticStatsJson, handleFileCreation, handleProcessContacts } from "./triggers/triggers.logic";
 import { executeTasksDowngrade, computeAndSaveWeeklyStats, computeAndSaveMonthlyUsage } from "./schedules/tasks.logic";
 import { executePayWithStripeCreateCheckoutSession, executeStripeWebhook } from "./subscriptions/payments.logic";
 import { executeGetRegister, executeGetPrice, executeApplyDiscountCoupon} from "./subscriptions/subscription.logic";
@@ -311,13 +311,13 @@ export const processManualEmbedding = onDocumentCreated(
   handleEmbeddingManualCreation
 );
 
-export const processFascicoloCreation = onDocumentCreated(
+export const processFileCreation = onDocumentWritten(
   {
     document: "fascicoli/{fascicoloId}", 
-    timeoutSeconds: 60, // Parametri base per i fascicoli
+    timeoutSeconds: 60,
     memory: "512MiB"
   },
-  handleFascicoloCreation
+  handleFileCreation
 );
 
 export const generateStaticStatsJson = onDocumentCreated(
@@ -344,7 +344,7 @@ export const processContacts = onDocumentCreated(
 export const updateMetadataFromChat = onDocumentCreated(
   {
     document: "fascicoli/{fascicoloId}/threads/{threadId}/messages/{messageId}",
-    timeoutSeconds: 60,
+    timeoutSeconds: 300,
     memory: "512MiB",
     secrets: ["GOOGLE_GENAI_API_KEY"],
   },

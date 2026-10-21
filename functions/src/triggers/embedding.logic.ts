@@ -182,7 +182,7 @@ export async function handleEmbeddingDocumentCreation(
 
     await batch.commit();
     console.log(`✅ Documento ${parentId} completato con ${chunksToEmbed.length} chunk.`);
-    await applyTeamVisibility(snap.ref, snap.data(), "user")
+    await applyTeamVisibility(snap.ref, snap.data())
 
   } catch (error) {
     console.error(`❌ Critical error embedding document ${parentId}:`, error);
@@ -230,7 +230,7 @@ export async function handleChunkEmbedding(
     });
 
     console.log(`✅ Embedding creato con successo per il chunk: ${event.params.docId}`);
-    await applyTeamVisibility(snap.ref, snap.data(), "user")
+    await applyTeamVisibility(snap.ref, snap.data())
   } catch (error) {
     console.error(`❌ Errore embedding per chunk ${event.params.docId}:`, error);
     

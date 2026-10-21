@@ -199,7 +199,7 @@ describe("oauthRouter", () => {
 
   describe("token exchange", () => {
     const validCodeData = (overrides: Record<string, unknown> = {}) => ({
-      uid: "user-1",
+      user: "user-1",
       client_id: "client-1",
       expiresAt: futureExpiration(),
       code_challenge: createHash("sha256").update("verifier").digest("base64url"),
@@ -273,7 +273,7 @@ describe("oauthRouter", () => {
 
       expect(mocks.codeDelete).toHaveBeenCalledOnce();
       expect(mocks.tokenSet).toHaveBeenCalledWith(expect.objectContaining({
-        uid: "user-1",
+        user: "user-1",
         createdAt: "server-timestamp",
         expiresAt: expect.objectContaining({ toDate: expect.any(Function) }),
         client_id: "client-1",

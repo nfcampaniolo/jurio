@@ -16,7 +16,7 @@ vi.mock("@functions/triggers/_helper", () => ({ applyTeamVisibility: mocks.apply
 vi.mock("@functions/email/comms/logic", () => ({ enqueueContactEmail: mocks.enqueueContactEmail }));
 
 import {
-  handleFascicoloCreation,
+  handleFileCreation,
   handleGenerateStaticStatsJson,
   handleProcessContacts,
 } from "@functions/triggers/triggers.logic";
@@ -33,17 +33,18 @@ describe("Firestore trigger handlers", () => {
     mocks.applyTeamVisibility.mockResolvedValue(undefined);
   });
 
-  it("forwards created fascicolo snapshots to team visibility and ignores missing snapshots", async () => {
+  it("forwards fascicolo ownership changes to team visibility and ignores missing events", async () => {
     // Arrange
-    const snapshot = { ref: { id: "f-1" }, data: () => ({ ownerId: "u-1" }) };
+    const snapshot = { exists: true, ref: { id: "f-1" }, data: () => ({ user: "u-1" }) };
+    const event = { data: { before: { exists: false }, after: snapshot } };
 
     // Act
-    await handleFascicoloCreation({ data: snapshot } as never);
-    await handleFascicoloCreation({ data: undefined } as never);
+    await handleFileCreation(event as never);
+    await handleFileCreation({ data: undefined } as never);
 
     // Assert
     expect(mocks.applyTeamVisibility).toHaveBeenCalledOnce();
-    expect(mocks.applyTeamVisibility).toHaveBeenCalledWith(snapshot.ref, { ownerId: "u-1" }, "ownerId");
+    expect(mocks.applyTeamVisibility).toHaveBeenCalledWith(snapshot.ref, { user: "u-1" });
   });
 
   it("filters non-weekly stats and writes normalized weekly stats to public storage", async () => {

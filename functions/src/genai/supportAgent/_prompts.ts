@@ -73,6 +73,7 @@ REGOLE FONDAMENTALI:
 - NON INVENTARE. Estrai solo dati esplicitamente menzionati nella chat.
 - Se un dato è incerto o ambiguo, ignoralo.
 - Sii sintetico e usa nomenclature standard per le chiavi.
+- Analizza l'INTERA conversazione, non solo l'ultimo messaggio. Dai priorità ai fatti dichiarati dall'utente; usa le risposte dell'IA solo per interpretare i riferimenti dell'utente.
 - Se non ci sono novità, restituisci un array vuoto.
 
 <metadati_attuali>

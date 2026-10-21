@@ -2,13 +2,18 @@ import { Request, Response } from "express";
 import OpenAI from "openai";
 import { corsHandlerDomain, requireAppCheck, consumePerMinuteFeature, consumeDailyFeature, withSecureApiEndpoint, validateUserPlanAndLimits  } from "../../_utils";
 import { hashIpForRateLimiting } from "../_utils";
-import { legalAgentSupport, estraiMetadatiFlow } from "./flow";
+import { legalAgentSupport } from "./flow";
+import { extractAndSaveFascicoloMetadata } from "./_metadata";
 import { JURIO_USAGE_LIMITS, JurioFeatureType } from "../../_constants";
-import { MessageDoc, FascicoloDoc, ExtractedMetadataItem, EstraiMetadatiResult, SupportRequestBody, GenerateEmbeddingRequestBody, GenerateEmbeddingResponse } from "../_interfaces";
+import { MessageDoc, SupportRequestBody, GenerateEmbeddingRequestBody, GenerateEmbeddingResponse } from "../_interfaces";
 import { FirestoreEvent, QueryDocumentSnapshot } from "firebase-functions/v2/firestore";
+import * as admin from "firebase-admin";
 import { getDb } from "../../_deps";
 
 const db = getDb();
+// Il trigger parte dal messaggio utente ma l'estrazione analizza l'intero thread
+const MAX_THREAD_MESSAGES = 100;
+const MAX_CONTEXT_CHARS = 40_000;
 
 export async function enforcePublicRateLimit(
   req: Request, 
@@ -93,13 +98,13 @@ export async function executeSupport(req: Request, res: Response): Promise<any> 
 
     // 5. Gestione del ciclo di vita della connessione (Disconnessione client)
     let clientDisconnected = false;
-    const abortController = new AbortController();
 
-    req.on('close', () => {
-      if (!clientDisconnected) {
+    req.on('aborted', () => {
+      clientDisconnected = true;
+    });
+    res.on('close', () => {
+      if (!res.writableEnded) {
         clientDisconnected = true;
-        abortController.abort();
-        if (!res.writableEnded) res.end();
       }
     });
 
@@ -152,72 +157,61 @@ export async function executeUpdateMetadataFromChat(
   
   // Evita loop e risparmia token: analizziamo solo i messaggi dell'utente
   if (messageData.role === "model") return; 
+  // I messaggi importati da una chat vengono analizzati una sola volta dalla migrazione
+  if ((messageData as { migrated?: boolean }).migrated) return;
+
+  // Messaggi troppo brevi (es. "ok", "grazie") non portano informazioni sul caso
+  if (typeof messageData.content !== "string" || messageData.content.trim().length < 20) return;
 
   const { fascicoloId, threadId } = event.params;
 
   try {
+    // Limite di frequenza: al massimo un'estrazione ogni 60s per fascicolo, anche con più messaggi ravvicinati
+    const fascicoloRef = db.collection("fascicoli").doc(fascicoloId);
+    const checkedAt = (await fascicoloRef.get()).data()?.metadatiCheckedAt;
+    const lastMs = typeof checkedAt?.toMillis === "function" ? checkedAt.toMillis() : 0;
     const messagesRef = db.collection("fascicoli").doc(fascicoloId)
                           .collection("threads").doc(threadId)
                           .collection("messages");
-    
+
+    // Invece di scartare il messaggio ravvicinato, attende la fine della finestra: così le informazioni più recenti non vanno perse
+    const waitMs = 60_000 - (Date.now() - lastMs);
+    if (waitMs > 0) {
+      if (waitMs > 90_000) return;
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      // Se nel frattempo è arrivato un messaggio utente più recente, ci pensa la sua invocazione
+      const recent = await messagesRef.orderBy("timestamp", "desc").limit(5).get();
+      const newestUser = recent.docs.find((d) => d.data().role !== "model");
+      if (newestUser && newestUser.id !== snapshot.id) return;
+    }
+    await fascicoloRef.set({ metadatiCheckedAt: admin.firestore.Timestamp.now() }, { merge: true });
+
     const historySnap = await messagesRef
       .orderBy("timestamp", "desc")
-      .limit(4) 
+      .limit(MAX_THREAD_MESSAGES)
       .get();
 
     const chatContext = historySnap.docs
       .map(doc => {
         const data = doc.data() as MessageDoc;
-        const safeContent = typeof data.content === "string" ? data.content.trim() : "";
+        // Si tronca per messaggio invece di scartare l'intero contesto; i dati dell'utente hanno più spazio
+        const maxChars = data.role === "model" ? 1500 : 3000;
+        const safeContent = typeof data.content === "string" ? data.content.trim().substring(0, maxChars) : "";
         const ruolo = data.role === "model" ? "IA" : "UTENTE";
         return `${ruolo}: ${safeContent}`;
       })
       .reverse()
       .join("\n\n");
 
-    // Protezione da costi eccessivi: blocco contesto anomalo
-    if (!chatContext || chatContext.length > 5000) return;
+    if (!chatContext) return;
 
-    const fascicoloRef = db.collection("fascicoli").doc(fascicoloId);
-    const fascicoloSnap = await fascicoloRef.get();
-    if (!fascicoloSnap.exists) return;
-    
-    const fascicoloData = fascicoloSnap.data() as FascicoloDoc;
-    const metadatiAttuali = fascicoloData.metadati || {};
-
-    const result = (await estraiMetadatiFlow({
-      chatContext,
-      metadatiAttuali
-    })) as EstraiMetadatiResult;
-
-    const estratti = result.dati_nuovi_o_aggiornati || [];
-    if (!Array.isArray(estratti) || estratti.length === 0) return;
-
-    const updatePayload: Record<string, string> = {};
-    let hasUpdates = false;
-
-    // Sanitizzazione input IA prima della scrittura DB
-    estratti.forEach((item: ExtractedMetadataItem) => {
-      if (typeof item.chiave === "string" && typeof item.valore === "string") {
-        const safeKey = item.chiave.replace(/[^a-zA-Z0-9_]/g, '').trim().substring(0, 50);
-        const safeValue = item.valore.trim().substring(0, 500); 
-
-        if (safeKey && safeValue) {
-          updatePayload[`metadati.${safeKey}`] = safeValue;
-          hasUpdates = true;
-        }
-      }
-    });
-
-    if (!hasUpdates) return;
-
-    await fascicoloRef.update(updatePayload);
-    
-    console.log(`[JURIO-METADATA] Aggiornate ${Object.keys(updatePayload).length} chiavi per fascicolo ${fascicoloId}`);
+    // Protezione da costi eccessivi: contesto limitato agli ultimi MAX_CONTEXT_CHARS caratteri
+    const updated = await extractAndSaveFascicoloMetadata(fascicoloId, chatContext.slice(-MAX_CONTEXT_CHARS));
+    console.log(`[JURIO-METADATA] Fascicolo ${fascicoloId}: analizzati ${historySnap.size} messaggi, chiavi aggiornate: ${updated}`);
 
   } catch (error) {
-    console.error(`[JURIO-METADATA] Errore estrazione metadati per fascicolo ${fascicoloId}`);
-    throw error; 
+    // Nessun rethrow: un errore (es. 429) non deve far rieseguire il trigger in loop
+    console.error(`[JURIO-METADATA] Errore estrazione metadati per fascicolo ${fascicoloId}`, error);
   }
 }
 

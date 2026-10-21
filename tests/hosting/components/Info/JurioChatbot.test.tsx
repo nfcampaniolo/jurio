@@ -64,8 +64,8 @@ vi.mock("react-markdown", () => ({
 
 /* ---------- mock Typewriter ---------- */
 vi.mock("@/shared/components/Typewriter", () => ({
-  Typewriter: ({ text }: { text: string; speed?: number }) => (
-    <div data-testid="typewriter-content">{text}</div>
+  Typewriter: ({ text, animate }: { text: string; speed?: number; animate?: boolean }) => (
+    <div data-testid="typewriter-content" data-animate={String(animate)}>{text}</div>
   ),
 }));
 
@@ -205,6 +205,7 @@ describe("JurioChatbot Component Suite", () => {
     expect(screen.getAllByTestId("typewriter-content")[1]).toHaveTextContent(
       "Le conseguenze riguardano la tutela risarcitoria innanzi al giudice ordinario e amministrativo."
     );
+    expect(screen.getAllByTestId("typewriter-content")[1]).toHaveAttribute("data-animate", "false");
   });
 
   test("renderizza e deduplica i link delle fonti per i messaggi dell'assistente", () => {
@@ -259,6 +260,21 @@ describe("JurioChatbot Component Suite", () => {
     expect(
       screen.getByText("Si è verificato un errore durante la generazione della risposta.")
     ).toBeInTheDocument();
+  });
+
+  test("mostra subito il testo parziale ricevuto mentre l'assistente sta ancora generando", () => {
+    mockHookState.isOpen = true;
+    mockHookState.isLoading = true;
+    mockHookState.messages = [
+      { role: "user", content: "Domanda" },
+      { role: "assistant", content: "Jurio è l'assistente legale virtuale basato su int" },
+    ];
+
+    render(<JurioChatbot />);
+
+    expect(screen.getByText(
+      "Jurio è l'assistente legale virtuale basato su int"
+    )).toBeInTheDocument();
   });
 
   test("mostra il messaggio di fallback se currentStatus è assente durante il caricamento", () => {

@@ -203,7 +203,7 @@ const JurioChatbot: React.FC = () => {
                                 key={messageId}
                                 text={msg.content}
                                 speed={5}
-                                animate={isLastMessage && !isLoading}
+                                animate={false}
                                 isStreaming={isLoading && isLastMessage}
                               />
                             )}

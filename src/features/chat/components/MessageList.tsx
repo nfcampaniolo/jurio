@@ -1,6 +1,7 @@
-import { useState, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { motion } from "framer-motion";
-import { Scale, Globe, BookOpen } from "lucide-react";
+import { Check, Copy, Scale, Globe, BookOpen } from "lucide-react";
+import { toast } from "react-hot-toast";
 import { Typewriter } from "@/shared/components/Typewriter";
 import { type Source, type Message } from "@/interfaces/interfaces";
 import { FeedbackComponent } from "@/shared/components/FeedbackComponent";
@@ -25,13 +26,31 @@ export const MessageList = ({
   handleSourceClick
 }: MessageListProps) => {
   const [completedMessages, setCompletedMessages] = useState<Record<string, boolean>>({});
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const copiedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
+  }, []);
+
+  const copyMessage = async (message: Message) => {
+    try {
+      await navigator.clipboard.writeText(message.content);
+      setCopiedMessageId(message.id);
+      if (copiedTimeoutRef.current) clearTimeout(copiedTimeoutRef.current);
+      copiedTimeoutRef.current = setTimeout(() => setCopiedMessageId(null), 1500);
+    } catch (error) {
+      console.error("[MessageList] Impossibile copiare il messaggio:", error);
+      toast.error("Impossibile copiare il messaggio.");
+    }
+  };
 
   const handleTypingComplete = (id: string) => {
     setCompletedMessages((prev) => ({ ...prev, [id]: true }));
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:pr-12 scroll-smooth w-full custom-scrollbar">
+    <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:pr-12 w-full custom-scrollbar">
       
       {messages.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center text-neutral-400 dark:text-neutral-500 space-y-3 my-auto">
@@ -57,10 +76,10 @@ export const MessageList = ({
               <motion.div 
                 key={msg.id} 
                 id={`msg-${msg.id}`}
-                initial={{ opacity: 0, y: 8 }} 
+                initial={msg.isHistorical ? false : { opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }} 
                 transition={{ duration: 0.25, ease: "easeOut" }}
-                className={`flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`group flex w-full ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div className={`max-w-[95%] md:max-w-[88%] min-w-0 flex flex-col gap-2 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
                   
@@ -97,7 +116,20 @@ export const MessageList = ({
                       <p className="whitespace-pre-wrap leading-relaxed wrap-break-word">{msg.content}</p>
                     )}
                   </div>
-                  
+
+                  {msg.content && (
+                    <button
+                      type="button"
+                      onClick={() => void copyMessage(msg)}
+                      aria-label={copiedMessageId === msg.id ? "Messaggio copiato" : "Copia messaggio"}
+                      title={copiedMessageId === msg.id ? "Messaggio copiato" : "Copia messaggio"}
+                      className="self-end inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-neutral-500 opacity-100 transition-opacity hover:bg-neutral-100 hover:text-neutral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#e0a32e] sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 dark:hover:bg-neutral-800 dark:hover:text-neutral-200"
+                    >
+                      {copiedMessageId === msg.id ? <Check size={14} /> : <Copy size={14} />}
+                      <span>{copiedMessageId === msg.id ? "Copiato" : "Copia"}</span>
+                    </button>
+                  )}
+
                   {/* FONTI INLINE (PILLOLE ELEGANTE) */}
                   {msg.sources && msg.sources.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-0.5 max-w-full">
@@ -136,6 +168,11 @@ export const MessageList = ({
                         );
                       })}
                     </div>
+                  )}
+                  {msg.role === "model" && msg.content && (!msg.sources || msg.sources.length === 0) && (
+                    <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-300" role="note">
+                      Nessuna fonte verificabile disponibile per questa risposta.
+                    </p>
                   )}
 
                   {/* COMPONENTE FEEDBACK */}

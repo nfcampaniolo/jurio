@@ -278,6 +278,20 @@ describe("useEntityOperations Hook Suite", () => {
     });
   });
 
+  describe("renameThread", () => {
+    test("aggiorna il titolo del thread nello stato e su Firestore", async () => {
+      threadsState = [{ id: "thread-1", title: "Vecchio", createdAt: new Date() }];
+      const props = setupProps();
+      const { result } = renderHook(() => useEntityOperations(props));
+
+      await act(async () => {
+        await result.current.renameThread("fsc-1", "thread-1", "  Nuovo titolo ");
+      });
+
+      expect(threadsState[0].title).toBe("Nuovo titolo");
+    });
+  });
+
   describe("handleToggleFascicoloLink", () => {
     test("collega il documento al fascicolo e aggiorna i chunk correlati", async () => {
       const targetDoc: AttachedDocument = {

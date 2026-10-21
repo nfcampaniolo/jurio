@@ -32,7 +32,20 @@ describe("legal-agent orchestration helpers", () => {
 
   it("selects retrieval limits and maps history into model/user messages", () => {
     expect(getExecutionProfile("short")).toMatchObject({ dbLimit: 5, webLimit: 2 });
-    expect(getExecutionProfile("x".repeat(150))).toMatchObject({ dbLimit: 8, webLimit: 3 });
+    expect(getExecutionProfile("short").thinkingLevel).toBe("LOW");
+    expect(getExecutionProfile("analizza la responsabilità contrattuale")).toMatchObject({
+      thinkingLevel: "HIGH",
+    });
+    expect(getExecutionProfile("x".repeat(150))).toMatchObject({
+      dbLimit: 5,
+      webLimit: 2,
+      thinkingLevel: "MEDIUM",
+    });
+    expect(getExecutionProfile("x".repeat(600))).toMatchObject({
+      dbLimit: 8,
+      webLimit: 3,
+      thinkingLevel: "HIGH",
+    });
     const messages = prepareContextAndMessages({
       prompt: "new", userId: "u1", history: [
         { role: "user", content: "old" }, { role: "assistant", content: "prior" },
@@ -85,7 +98,54 @@ describe("legal-agent orchestration helpers", () => {
     expect(sources).toHaveLength(2);
     expect(sources).toEqual(expect.arrayContaining([
       expect.objectContaining({ identificativo: "Case source", score: 0.9, match_percentage: 90, url_riferimento: "https://example.org" }),
-      expect.objectContaining({ identificativo: "contract.pdf", _type: "document_chunk", match_percentage: 50 }),
+      expect.objectContaining({
+        identificativo: "contract.pdf",
+        _type: "document_chunk",
+        documento_id: "d1",
+        _id_interno: "d1",
+        match_percentage: 50,
+      }),
+    ]));
+  });
+
+  it("maps attached-document and case-law tool fields to usable citation metadata", () => {
+    const sources = extractAndFormatSources([
+      {
+        role: "tool",
+        content: [{
+          toolResponse: {
+            name: "internalDatabaseSearch",
+            output: [{
+              id: "case-id",
+              caseNumber: "123/2026",
+              court: "Cassazione",
+              sourceUrl: "https://example.org/case",
+              _type: "giurisprudenza_puntuale",
+            }],
+          },
+        }],
+      },
+    ], [{
+      id: "chunk-id",
+      documentId: "document-id",
+      fileName: "contratto.pdf",
+      originalPosition: 4,
+      _type: "document_chunk",
+    }]);
+
+    expect(sources).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        documento_id: "case-id",
+        identificativo: "123/2026",
+        organo_giudicante: "Cassazione",
+        url_riferimento: "https://example.org/case",
+      }),
+      expect.objectContaining({
+        documento_id: "document-id",
+        _id_interno: "chunk-id",
+        identificativo: "contratto.pdf",
+        posizione_originale: 4,
+      }),
     ]));
   });
 });

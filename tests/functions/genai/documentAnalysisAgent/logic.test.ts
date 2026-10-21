@@ -73,7 +73,7 @@ describe("document-analysis endpoint", () => {
     expect(mocks.reasoning).toHaveBeenCalledWith({ question: "explain this", customPrompt: undefined });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
-      message: { sintesi: "answer" }, status: "SENT_BY_BOT", model: "gemini-3.8-flash", provider: "google",
+      message: { sintesi: "answer" }, status: "SENT_BY_BOT", model: "gemini-3.5-flash", provider: "google",
     });
   });
 

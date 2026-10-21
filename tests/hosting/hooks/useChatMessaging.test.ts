@@ -304,11 +304,12 @@ describe("useChatMessaging Hook Suite", () => {
   });
 
   describe("Elaborazione del flusso SSE (Server-Sent Events)", () => {
-    test("aggiorna status text, appende i chunk di testo e gestisce il [DONE] finale", async () => {
+    test("aggiorna status text, accumula i chunk e completa la risposta prima di [DONE]", async () => {
       const sseChunks = [
         `data: ${JSON.stringify({ message: { status: "Ricerca precedenti in corso..." } })}\n\n`,
         `data: ${JSON.stringify({ message: "In tema di prescrizione " })}\n\n`,
         `data: ${JSON.stringify({ message: "il termine ordinario è di dieci anni." })}\n\n`,
+        `data: ${JSON.stringify({ result: {} })}\n\n`,
         `data: [DONE]\n\n`,
       ];
 

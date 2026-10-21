@@ -1,14 +1,24 @@
-import { FirestoreEvent, QueryDocumentSnapshot } from "firebase-functions/v2/firestore";
+import { FirestoreEvent, Change, DocumentSnapshot, QueryDocumentSnapshot } from "firebase-functions/v2/firestore";
 import { getAdminStorage } from "../_deps";
 import { applyTeamVisibility } from "./_helper";
 import { enqueueContactEmail }  from "../email/comms/logic";
 
-export async function handleFascicoloCreation(
-  event: FirestoreEvent<QueryDocumentSnapshot | undefined, Record<string, string>>
+export async function handleFileCreation(
+  event: FirestoreEvent<Change<DocumentSnapshot> | undefined, Record<string, string>>
 ) {
-  const snap = event.data;
-  if (!snap) return;
-  await applyTeamVisibility(snap.ref, snap.data(), "ownerId");
+  const change = event.data;
+  if (!change) return;
+  const snapBefore = change.before;
+  const snapAfter = change.after;
+  if (!snapAfter.exists) return;
+  const dataBefore = snapBefore.exists ? snapBefore.data() : null;
+  const dataAfter = snapAfter.data();
+  if (!dataAfter) return;
+  const ownerChanged = dataBefore?.user !== dataAfter.user;
+  if (snapBefore.exists && !ownerChanged) {
+    return;
+  }
+  await applyTeamVisibility(snapAfter.ref, dataAfter);
 }
 
 export async function handleGenerateStaticStatsJson(

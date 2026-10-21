@@ -25,7 +25,7 @@ export const fetchUserPayments = async (uid: string): Promise<PaymentRecord[]> =
   // Query per Stripe
   const stripeQuery = query(
     collection(db, "stripeSessions"),
-    where("uid", "==", uid),
+    where("user", "==", uid),
     where("status", "==", "COMPLETED")
   );
 

@@ -190,8 +190,8 @@ export async function executeExtractDocumentText(req: Request, res: Response): P
       const expiresAt = tokenData?.expiresAt;
 
       if (
-        typeof tokenData?.uid !== "string" ||
-        !tokenData.uid ||
+        typeof tokenData?.user !== "string" ||
+        !tokenData.user ||
         !expiresAt ||
         typeof expiresAt.toDate !== "function"
       ) {
@@ -205,7 +205,7 @@ export async function executeExtractDocumentText(req: Request, res: Response): P
         return;
       }
 
-      uid = tokenData.uid;
+      uid = tokenData.user;
     } else {
       try {
         await requireAppCheck(req);

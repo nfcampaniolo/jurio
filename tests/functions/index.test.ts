@@ -35,7 +35,7 @@ const mocks = vi.hoisted(() => {
     "handleEmbeddingDocumentCreation",
     "handleEmbeddingManualCreation",
     "handleGenerateStaticStatsJson",
-    "handleFascicoloCreation",
+    "handleFileCreation",
     "handleProcessContacts",
     "executeTasksDowngrade",
     "computeAndSaveWeeklyStats",
@@ -70,6 +70,7 @@ vi.mock("../../functions/node_modules/firebase-functions/lib/esm/v2/options.mjs"
 }));
 vi.mock("../../functions/node_modules/firebase-functions/lib/esm/v2/providers/firestore.mjs", () => ({
   onDocumentCreated: vi.fn((...args: unknown[]) => mocks.register("document", args)),
+  onDocumentWritten: vi.fn((...args: unknown[]) => mocks.register("document", args)),
 }));
 vi.mock("../../functions/node_modules/firebase-functions/lib/esm/v2/providers/scheduler.mjs", () => ({
   onSchedule: vi.fn((...args: unknown[]) => mocks.register("schedule", args)),
@@ -143,7 +144,7 @@ vi.mock("../../functions/src/triggers/embedding.logic", () => ({
 }));
 vi.mock("../../functions/src/triggers/triggers.logic", () => ({
   handleGenerateStaticStatsJson: mocks.handlers.handleGenerateStaticStatsJson,
-  handleFascicoloCreation: mocks.handlers.handleFascicoloCreation,
+  handleFileCreation: mocks.handlers.handleFileCreation,
   handleProcessContacts: mocks.handlers.handleProcessContacts,
 }));
 vi.mock("../../functions/src/schedules/tasks.logic", () => ({
@@ -269,7 +270,7 @@ describe("functions/src/index", () => {
     ["processSentenceEmbedding", "handleEmbeddingCreation"],
     ["processDoctrineEmbedding", "handleEmbeddingCreation"],
     ["processManualEmbedding", "handleEmbeddingManualCreation"],
-    ["processFascicoloCreation", "handleFascicoloCreation"],
+    ["processFileCreation", "handleFileCreation"],
   ] as const)("dispatches %s document events to %s", async (exportName, mockName) => {
     // Arrange
     const event = { id: "event-1" };

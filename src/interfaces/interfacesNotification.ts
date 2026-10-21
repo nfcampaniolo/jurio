@@ -11,7 +11,7 @@ export type NotificationType =
 
 export interface JurioNotification {
   id: string;
-  uid: string;
+  user: string;
   title: string;
   message: string;
   type: NotificationType;

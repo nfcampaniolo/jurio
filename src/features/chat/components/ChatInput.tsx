@@ -307,7 +307,7 @@ export const ChatInput = ({
                     <VoiceVisualizer />
                   </motion.div>
                 ) : (
-                  <motion.div key="input" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex-1 flex items-center">
+                  <motion.div key="input" initial={false} animate={{ opacity: 1 }} className="flex-1 flex items-center">
                     <textarea 
                       ref={textAreaRef}
                       value={inputValue} 

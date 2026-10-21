@@ -46,10 +46,10 @@ describe("applyTeamVisibility", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     // Act
-    await applyTeamVisibility(docRef as never, {}, "ownerId");
+    await applyTeamVisibility(docRef as never, {});
 
     // Assert
-    expect(warn).toHaveBeenCalledWith("Campo utente 'ownerId' non trovato nel doc document-1");
+    expect(warn).toHaveBeenCalledWith("Campo utente 'user' non trovato nel doc document-1");
     expect(mocks.getDb).not.toHaveBeenCalled();
     expect(mocks.update).not.toHaveBeenCalled();
     warn.mockRestore();
@@ -61,7 +61,7 @@ describe("applyTeamVisibility", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
 
     // Act
-    await applyTeamVisibility(docRef as never, { ownerId: "user-1" }, "ownerId");
+    await applyTeamVisibility(docRef as never, { user: "user-1" });
 
     // Assert
     expect(mocks.where).toHaveBeenCalledWith("member_ids", "array-contains", "user-1");
@@ -78,7 +78,7 @@ describe("applyTeamVisibility", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
 
     // Act
-    await applyTeamVisibility(docRef as never, { ownerId: "user-1" }, "ownerId");
+    await applyTeamVisibility(docRef as never, { user: "user-1" });
 
     // Assert
     expect(mocks.update).not.toHaveBeenCalled();
@@ -88,7 +88,7 @@ describe("applyTeamVisibility", () => {
     mocks.get.mockResolvedValueOnce({ empty: false, docs: [teamDoc] });
 
     // Act
-    await applyTeamVisibility(docRef as never, { ownerId: "user-1" }, "ownerId");
+    await applyTeamVisibility(docRef as never, { user: "user-1" });
 
     // Assert
     expect(mocks.update).not.toHaveBeenCalled();
@@ -102,7 +102,7 @@ describe("applyTeamVisibility", () => {
     const log = vi.spyOn(console, "log").mockImplementation(() => {});
 
     // Act
-    await applyTeamVisibility(docRef as never, { ownerId: "user-1" }, "ownerId");
+    await applyTeamVisibility(docRef as never, { user: "user-1" });
 
     // Assert
     expect(mocks.update).not.toHaveBeenCalled();
@@ -113,7 +113,7 @@ describe("applyTeamVisibility", () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
 
     // Act
-    await expect(applyTeamVisibility(docRef as never, { ownerId: "user-1" }, "ownerId")).resolves.toBeUndefined();
+    await expect(applyTeamVisibility(docRef as never, { user: "user-1" })).resolves.toBeUndefined();
 
     // Assert
     expect(error).toHaveBeenCalledWith("Errore in applyTeamVisibility per docs/document-1:", failure);

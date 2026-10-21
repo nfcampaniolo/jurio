@@ -99,7 +99,7 @@ describe("fetchUserPayments Service Suite", () => {
 
     // Verifica filtri query Firestore
     expect(mockCollection).toHaveBeenCalledWith("mock_db", "stripeSessions");
-    expect(mockWhere).toHaveBeenCalledWith("uid", "==", "user_123");
+    expect(mockWhere).toHaveBeenCalledWith("user", "==", "user_123");
     expect(mockWhere).toHaveBeenCalledWith("status", "==", "COMPLETED");
     expect(mockGetDocs).toHaveBeenCalledTimes(1);
 

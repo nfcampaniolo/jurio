@@ -9,6 +9,7 @@ const {
   mockGetAuth,
   mockDoc,
   mockGetDoc,
+  mockGetDocFromServer,
   mockSetDoc,
   mockDeleteDoc,
   mockCollection,
@@ -25,6 +26,7 @@ const {
   mockGetAuth: vi.fn(),
   mockDoc: vi.fn((_db: unknown, ...pathSegments: string[]) => pathSegments.join("/")),
   mockGetDoc: vi.fn(),
+  mockGetDocFromServer: vi.fn(),
   mockSetDoc: vi.fn().mockResolvedValue(undefined),
   mockDeleteDoc: vi.fn().mockResolvedValue(undefined),
   mockCollection: vi.fn((_db: unknown, ...pathSegments: string[]) => pathSegments.join("/")),
@@ -58,6 +60,7 @@ vi.mock("firebase/auth", () => ({
 vi.mock("firebase/firestore", () => ({
   doc: (_db: unknown, ...pathSegments: string[]) => mockDoc(_db, ...pathSegments),
   getDoc: (ref: unknown) => mockGetDoc(ref),
+  getDocFromServer: (ref: unknown) => mockGetDocFromServer(ref),
   setDoc: (ref: unknown, data: unknown, options: unknown) => mockSetDoc(ref, data, options),
   deleteDoc: (ref: unknown) => mockDeleteDoc(ref),
   collection: (_db: unknown, ...pathSegments: string[]) => mockCollection(_db, ...pathSegments),
@@ -93,8 +96,8 @@ describe("User Service Suite", () => {
   });
 
   describe("userExists", () => {
-    test("restituisce true se il documento esiste e tutti i campi anagrafici essenziali sono valorizzati", async () => {
-      mockGetDoc.mockResolvedValueOnce({
+    test("restituisce true quando esiste il documento utente", async () => {
+      mockGetDocFromServer.mockResolvedValueOnce({
         exists: () => true,
         data: () => ({
           email: "nicoloflavio@example.com",
@@ -105,11 +108,12 @@ describe("User Service Suite", () => {
 
       const exists = await userExists("user_123");
       expect(exists).toBe(true);
-      expect(mockGetDoc).toHaveBeenCalledTimes(1);
+      expect(mockGetDocFromServer).toHaveBeenCalledTimes(1);
+      expect(mockGetDocFromServer).toHaveBeenCalledWith("users/user_123");
     });
 
-    test("restituisce false se il documento esiste ma mancano campi anagrafici (profilo non completato)", async () => {
-      mockGetDoc.mockResolvedValueOnce({
+    test("restituisce true per un account esistente con dati anagrafici incompleti", async () => {
+      mockGetDocFromServer.mockResolvedValueOnce({
         exists: () => true,
         data: () => ({
           email: "nicoloflavio@example.com",
@@ -119,11 +123,11 @@ describe("User Service Suite", () => {
       });
 
       const exists = await userExists("user_123");
-      expect(exists).toBe(false);
+      expect(exists).toBe(true);
     });
 
     test("restituisce false se il documento utente non esiste su Firestore", async () => {
-      mockGetDoc.mockResolvedValueOnce({
+      mockGetDocFromServer.mockResolvedValueOnce({
         exists: () => false,
         data: () => null,
       });

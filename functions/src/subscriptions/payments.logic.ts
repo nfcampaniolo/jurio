@@ -114,7 +114,7 @@ export async function executePayWithStripeCreateCheckoutSession(req: Request, re
 
     // 7. Registrazione sessione su Firestore
     await db.collection("stripeSessions").doc(session.id).set({
-      uid,
+      user: uid,
       planId,
       expectedCurrency: currency.toUpperCase(),
       expectedPriceId: plan.stripePriceId,

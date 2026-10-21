@@ -135,8 +135,8 @@ export const sendSupportMessage = async (
     } else if (parsed.message?.status) {
       onStatus?.(parsed.message.status);
     } else if (parsed.result) {
-      if (!fullContent) {
-        fullContent = parsed.result.risposta;
+      fullContent = parsed.result.risposta;
+      if (fullContent) {
         onText?.(fullContent);
       }
       extractedFonti = parsed.result.fonti ?? [];

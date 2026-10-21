@@ -42,7 +42,7 @@ export function useNotifications() {
         // A. Notifiche Personali
         const qPersonal = query(
           collection(db, "notification"),
-          where("uid", "==", user.uid),
+          where("user", "==", user.uid),
           orderBy("createdAt", "desc")
         );
 

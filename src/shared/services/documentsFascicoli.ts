@@ -8,7 +8,7 @@ export async function listFascicoliByUser(userId: string): Promise<PastFascicolo
   const q = query(
     collection(db, "fascicoli"), 
     or(
-      where("ownerId", "==", userId),
+      where("user", "==", userId),
       where("visibleTo", "array-contains", userId)
     ),
     orderBy("updatedAt", "desc")
@@ -23,7 +23,7 @@ export async function listFascicoliByUser(userId: string): Promise<PastFascicolo
       title: data.title || "Nuovo Fascicolo",
       createdAt: data.createdAt?.toDate().toLocaleDateString("it-IT") || new Date().toLocaleDateString("it-IT"),
       updatedAt: data.updatedAt?.toDate().toLocaleDateString("it-IT") || new Date().toLocaleDateString("it-IT"), 
-      ownerId: data.ownerId || ""
+      user: data.user || ""
     };
   }).sort((a, b) => {
     return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
@@ -39,12 +39,10 @@ export const fetchFascicoloData = async (fascicoloId: string): Promise<DBThreadP
     const q = query(threadsRef, orderBy("updatedAt", "desc"));
     const threadsSnapshot = await getDocs(q);
     
-    const fascicoloData: DBThreadPayload[] = [];
-
     console.log(`\n=== 📁 LOG DB: FASCICOLO ${fascicoloId} (Ordinato per updatedAt) ===`);
     console.log(`Percorso base: fascicoli/${fascicoloId}/threads`);
-    
-    for (const threadDoc of threadsSnapshot.docs) {
+
+    const fascicoloData = await Promise.all(threadsSnapshot.docs.map(async (threadDoc) => {
       const threadId = threadDoc.id;
       const messagesRef = collection(db, "fascicoli", fascicoloId, "threads", threadId, "messages");
       const messagesSnapshot = await getDocs(query(messagesRef, orderBy("timestamp", "asc")));
@@ -74,15 +72,15 @@ export const fetchFascicoloData = async (fascicoloId: string): Promise<DBThreadP
       
       const threadData = threadDoc.data() as DBThreadData;
       
-      fascicoloData.push({
+      console.log(`\n↳ 🧵 Thread: ${threadId} | Aggiornato il:`, toDateSafe(threadData.updatedAt).toLocaleString("it-IT"));
+      console.log(`  Messaggi nel thread:`, messages.length);
+
+      return {
         threadId,
         threadData,
         messages
-      });
-
-      console.log(`\n↳ 🧵 Thread: ${threadId} | Aggiornato il:`, toDateSafe(threadData.updatedAt).toLocaleString("it-IT"));
-      console.log(`  Messaggi nel thread:`, messages.length);
-    }
+      };
+    }));
     
     fascicoloData.sort((a, b) => {
       const timeA = toDateSafe(a.threadData?.updatedAt).getTime();

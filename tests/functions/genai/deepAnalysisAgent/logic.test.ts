@@ -79,7 +79,7 @@ describe("deep-analysis request helpers", () => {
       prompt: "question", docs: ["d1", "d2"], userId: "u1",
     }));
     expect(sessionRef.set).toHaveBeenCalledWith(expect.objectContaining({
-      ownerId: "u1", promptOriginale: "question", documentiAllegati: ["d1", "d2"], fontiUsate: ["source-1"],
+      user: "u1", promptOriginale: "question", documentiAllegati: ["d1", "d2"], fontiUsate: ["source-1"],
     }), { merge: true });
     expect(sessionRef.set).toHaveBeenCalledWith(expect.objectContaining({
       progress: expect.objectContaining({ phase: "completed", status: "completed" }),

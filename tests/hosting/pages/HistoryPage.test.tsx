@@ -177,12 +177,12 @@ const defaultFascicoli: PastFascicolo[] = [
   {
     id: "f-1",
     title: "Fascicolo Societario",
-    ownerId: "user-123",
+    user: "user-123",
   } as unknown as PastFascicolo,
   {
     id: "f-shared",
     title: "Fascicolo Condiviso da Terzi",
-    ownerId: "other-user",
+    user: "other-user",
   } as unknown as PastFascicolo,
 ];
 

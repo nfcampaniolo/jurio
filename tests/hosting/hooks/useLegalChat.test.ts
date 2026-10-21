@@ -184,7 +184,7 @@ describe("useLegalChat Orchestrator Suite", () => {
           user: "usr_flv_2026",
         },
       ];
-      const mockFascicoli = [{ id: "fsc-1", title: "Fascicolo Societario", ownerId: "usr_flv_2026" }] as unknown as PastFascicolo[];
+      const mockFascicoli = [{ id: "fsc-1", title: "Fascicolo Societario", user: "usr_flv_2026" }] as unknown as PastFascicolo[];
       const mockChats = [{ id: "chat-1", title: "Chat Risoluzione Contrattuale" }] as unknown as PastChat[];
 
       mockListDocumentsByUser.mockResolvedValueOnce(mockDocs);
@@ -249,7 +249,7 @@ describe("useLegalChat Orchestrator Suite", () => {
       const sampleFascicolo = {
         id: "fsc-200",
         title: "Contenzioso Banca Intesa",
-        ownerId: "another_user_uid",
+        user: "another_user_uid",
       } as unknown as PastFascicolo;
       mockListFascicoliByUser.mockResolvedValueOnce([sampleFascicolo]);
 
@@ -280,6 +280,60 @@ describe("useLegalChat Orchestrator Suite", () => {
       expect(result.current.threadTitle).toBe("Analisi Clausole Vessatorie");
       expect(result.current.threads).toHaveLength(1);
       expect(mockNavigate).toHaveBeenCalledWith("/fascicolo/fsc-200/thr-1");
+    });
+
+    test("inizializza la chat del nuovo fascicolo anche prima che esista nell'archivio", async () => {
+      mockParams.fascicoloId = "fsc-new";
+      mockParams.threadId = "thr-new";
+
+      const { result } = renderHook(() =>
+        useLegalChat({ title: "Nuova pratica", isNewFascicolo: true })
+      );
+
+      await waitFor(() => expect(result.current.isLoadingData).toBe(false));
+
+      expect(result.current.sessionType).toBe("fascicolo");
+      expect(result.current.sessionTitle).toBe("Nuova pratica");
+      expect(result.current.activeThreadId).toBe("thr-new");
+      expect(result.current.threadTitle).toBe("Nuova conversazione");
+      expect(result.current.threads).toEqual([
+        expect.objectContaining({ id: "thr-new", title: "Nuova conversazione" }),
+      ]);
+      expect(result.current.messages).toEqual([]);
+      expect(mockFetchFascicoloData).not.toHaveBeenCalled();
+    });
+
+    test("riusa i messaggi in cache quando si cambia thread nello stesso fascicolo", async () => {
+      mockParams.fascicoloId = "fsc-cache";
+      mockParams.threadId = "thr-1";
+      mockListFascicoliByUser.mockResolvedValueOnce([
+        { id: "fsc-cache", title: "Fascicolo cache", user: "usr_flv_2026" } as PastFascicolo,
+      ]);
+      const mockDate = { toDate: () => new Date("2026-03-01T08:00:00Z") } as never;
+      mockFetchFascicoloData.mockResolvedValueOnce([
+        {
+          threadId: "thr-1",
+          threadData: { title: "Primo thread", createdAt: mockDate, updatedAt: mockDate },
+          messages: [{ id: "msg-1", role: "user", content: "Prima domanda" } as never],
+        },
+        {
+          threadId: "thr-2",
+          threadData: { title: "Secondo thread", createdAt: mockDate, updatedAt: mockDate },
+          messages: [{ id: "msg-2", role: "user", content: "Seconda domanda" } as never],
+        },
+      ]);
+
+      const { result, rerender } = renderHook(() => useLegalChat());
+      await waitFor(() => expect(result.current.messages[0]?.id).toBe("msg-1"));
+
+      act(() => {
+        mockParams.threadId = "thr-2";
+        rerender();
+      });
+
+      await waitFor(() => expect(result.current.messages[0]?.id).toBe("msg-2"));
+      expect(result.current.threadTitle).toBe("Secondo thread");
+      expect(mockFetchFascicoloData).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -421,9 +475,17 @@ describe("useLegalChat Orchestrator Suite", () => {
         result.current.setSessionTitle("Parere Esistente");
       });
 
-      await act(async () => {
-        await result.current.convertChatToFascicolo("Nuovo Fascicolo Notifiche");
-      });
+      const originalLocation = window.location;
+      const assign = vi.fn();
+      Object.defineProperty(window, "location", { configurable: true, value: { ...originalLocation, assign } });
+
+      try {
+        await act(async () => {
+          await result.current.convertChatToFascicolo("Nuovo Fascicolo Notifiche");
+        });
+      } finally {
+        Object.defineProperty(window, "location", { configurable: true, value: originalLocation });
+      }
 
       expect(mockGetSecurityTokens).toHaveBeenCalled();
       expect(globalThis.fetch).toHaveBeenCalledWith(
@@ -444,7 +506,7 @@ describe("useLegalChat Orchestrator Suite", () => {
           }),
         })
       );
-      expect(mockNavigate).toHaveBeenCalledWith("/fascicolo/mock-uuid-1/chat-temp-123");
+      expect(assign).toHaveBeenCalledWith("/fascicolo/mock-uuid-1/chat-temp-123");
     });
   });
 

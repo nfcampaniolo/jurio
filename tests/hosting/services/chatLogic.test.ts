@@ -269,7 +269,7 @@ describe("Chat Support Logic & Cache Suite", () => {
       expect(response.fonti).toEqual(sampleSources);
     });
 
-    test("non sovrascrive botReply con result.risposta se il testo era già stato accumulato", async () => {
+    test("completa il testo progressivo con la risposta finale del backend", async () => {
       const sampleSources: SourceItem[] = [
         {
           id: "src_2",
@@ -283,7 +283,7 @@ describe("Chat Support Logic & Cache Suite", () => {
         "data: {\"message\":{\"text\":\"Testo parziale accumulato via token.\"}}\n\n",
         `data: ${JSON.stringify({
           result: {
-            risposta: "Risposta alternativa dal blocco result",
+            risposta: "Testo parziale accumulato via token. Il backend completa qui la risposta.",
             fonti: sampleSources,
           },
         })}\n\n`,
@@ -296,9 +296,15 @@ describe("Chat Support Logic & Cache Suite", () => {
         body: createMockStream(sseChunks),
       });
 
-      const response = await sendSupportMessage(inputMessages);
+      const onTextSpy = vi.fn();
+      const response = await sendSupportMessage(inputMessages, undefined, onTextSpy);
 
-      expect(response.botReply).toBe("Testo parziale accumulato via token.");
+      expect(response.botReply).toBe(
+        "Testo parziale accumulato via token. Il backend completa qui la risposta."
+      );
+      expect(onTextSpy).toHaveBeenLastCalledWith(
+        "Testo parziale accumulato via token. Il backend completa qui la risposta."
+      );
       expect(response.fonti).toEqual(sampleSources);
     });
 

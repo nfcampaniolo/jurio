@@ -3,14 +3,13 @@ import { getDb} from "../_deps";
 
 export async function applyTeamVisibility(
   docRef: DocumentReference, 
-  data: any, 
-  userIdField: string
+  data: any
 ): Promise<void> {
   
   // 1. Recuperiamo l'ID dell'utente dal documento appena creato
-  const userId = data[userIdField];
+  const userId = data.user;
   if (!userId) {
-    console.warn(`Campo utente '${userIdField}' non trovato nel doc ${docRef.id}`);
+    console.warn(`Campo utente 'user' non trovato nel doc ${docRef.id}`);
     return;
   }
 

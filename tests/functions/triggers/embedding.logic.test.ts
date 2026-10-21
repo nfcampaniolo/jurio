@@ -188,7 +188,7 @@ describe("embedding trigger handlers", () => {
       parentId: "parent-1", text: "chunk two", index: 1, embedding: { vector: [3] },
     }));
     expect(mocks.commit).toHaveBeenCalledOnce();
-    expect(mocks.applyTeamVisibility).toHaveBeenCalledWith(snap.ref, data, "user");
+    expect(mocks.applyTeamVisibility).toHaveBeenCalledWith(snap.ref, data);
     log.mockRestore();
   });
 
@@ -246,7 +246,7 @@ describe("embedding trigger handlers", () => {
       processedAt: "server-time",
       isEmbeddingFailed: "delete-field",
     });
-    expect(mocks.applyTeamVisibility).toHaveBeenCalledWith(snap.ref, { text: "chunk text", user: "u1" }, "user");
+    expect(mocks.applyTeamVisibility).toHaveBeenCalledWith(snap.ref, { text: "chunk text", user: "u1" });
     log.mockRestore();
 
     // Arrange

@@ -86,7 +86,7 @@ export async function executeReasoning(req: Request, res: Response): Promise<any
     res.status(200).json({
       message: parsedJson,
       status: "SENT_BY_BOT",
-      model: "gemini-3.8-flash",
+      model: "gemini-3.5-flash",
       provider: "google",
     });
   });

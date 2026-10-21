@@ -2,7 +2,38 @@ import { z } from 'genkit';
 import { ai } from "../_config";
 import { getExecutionProfile, generateChatTitle, prepareContextAndMessages, appendOrchestrationRule, extractAndFormatSources, appendRetrievalContext, extractToolName, executeRequestedTools } from "./_helper";
 import { FlowChunkPayload, ToolContext } from "./_schema";
-import { userFileSearch, dynamicTools } from "../tools/index";
+import { userFileSearch, internalDatabaseSearch, webSearch, dynamicTools } from "../tools/index";
+
+interface ToolResponseContext {
+  toolResponse?: {
+    name?: string;
+    output?: unknown;
+  };
+}
+
+function isToolNamed(tool: unknown, expectedName: string): boolean {
+  if (!tool || (typeof tool !== "object" && typeof tool !== "function")) return false;
+  const candidate = tool as { name?: unknown; __action?: { name?: unknown } };
+  return candidate.name === expectedName || candidate.__action?.name === expectedName;
+}
+
+const isQuotaError = (error: unknown): boolean => {
+  const e = error as { status?: string; code?: number } | null;
+  return e?.status === "RESOURCE_EXHAUSTED" || e?.code === 429;
+};
+
+// Vertex restituisce 429 prima di emettere token: riprovare non duplica l'output in streaming.
+async function generateWithQuotaRetry<T>(fn: () => Promise<T>, delaysMs: number[] = [2000, 5000]): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (!isQuotaError(error) || attempt >= delaysMs.length) throw error;
+      console.warn(`[legalAgentFlow] 429 da Vertex, nuovo tentativo ${attempt + 1}/${delaysMs.length}`);
+      await new Promise((resolve) => setTimeout(resolve, delaysMs[attempt]));
+    }
+  }
+}
 
 export const legalAgentFlow = ai.defineFlow(
   {
@@ -49,6 +80,10 @@ export const legalAgentFlow = ai.defineFlow(
 
     safeSend({ status: "Analisi della richiesta..." });
 
+    const flowStart = Date.now();
+    const stageTimes: Record<string, number> = {};
+    const markStage = (name: string, since: number) => { stageTimes[name] = Date.now() - since; };
+
     const profile = getExecutionProfile(promptLower);
     const selectedModel = profile.model;
 
@@ -67,14 +102,21 @@ export const legalAgentFlow = ai.defineFlow(
       dbLimit: profile.dbLimit,
       webLimit: profile.webLimit,
     };
+    const availableTools = toolContext.docs.length > 0
+      ? dynamicTools.filter((tool) => !isToolNamed(tool, "userFileSearch"))
+      : dynamicTools;
 
     let rawOutputs: any[] = []; 
 
     // Pre-caricamento intelligente dei documenti allegati
     if (toolContext.docs.length > 0) {
       safeSend({ status: "Lettura dei documenti allegati..." });
+      const preRetrievalStart = Date.now();
       try {
-        const preRetrievalOutput = await userFileSearch({ query: prompt }, { context: toolContext });
+        const documentQuery = prompt.length >= 3
+          ? prompt.slice(0, 4000)
+          : "Analizza i documenti allegati";
+        const preRetrievalOutput = await userFileSearch({ query: documentQuery }, { context: toolContext });
         
         if (Array.isArray(preRetrievalOutput)) {
           rawOutputs = preRetrievalOutput;
@@ -94,6 +136,8 @@ export const legalAgentFlow = ai.defineFlow(
         }
       } catch (e) {
         console.warn("Errore lettura documenti iniziali:", e);
+      } finally {
+        markStage("preRetrievalMs", preRetrievalStart);
       }
     }
 
@@ -107,95 +151,119 @@ export const legalAgentFlow = ai.defineFlow(
     }
 
     let finalResponse: any = null;
-    let activeToolResponses: any[] = []; 
+    let activeToolResponses: ToolResponseContext[] = [];
+    const initialTextChunks: string[] = [];
 
     try {
       safeSend({ status: "Districando..." });
+      const turn1Start = Date.now();
 
       // PRIMA CHIAMATA LLM (Totalmente Agentica)
-      const turn1Response = await ai.generate({
+      const turn1Response = await generateWithQuotaRetry(() => ai.generate({
         model: selectedModel,
         messages: messages,
-        tools: dynamicTools, 
+        tools: availableTools,
         returnToolRequests: true,
         context: toolContext,
-        config: { 
-          maxOutputTokens: 3000 
+        config: {
+          maxOutputTokens: 3000,
+          thinkingConfig: { thinkingLevel: profile.thinkingLevel },
         },
         onChunk: (chunk: any) => {
           const toolName = extractToolName(chunk);
           if (toolName) {
             safeSend({ status: `Ricerca in corso: ${toolName}...` });
           } else if (typeof chunk?.text === "string" && chunk.text.length > 0) {
-            safeSend({ text: chunk.text });
+            initialTextChunks.push(chunk.text);
           }
         },
-      });
+      }));
 
       finalResponse = turn1Response;
+      markStage("turn1Ms", turn1Start);
 
       // ESECUZIONE TOOL E SINTESI (Solo se l'LLM ha deciso di chiamarli)
       if (Array.isArray(turn1Response.toolRequests) && turn1Response.toolRequests.length > 0) {
         safeSend({ status: "Consultazione archivi in corso..." });
+        const toolsStart = Date.now();
 
         const toolResponses = await executeRequestedTools(
           turn1Response.toolRequests,
-          dynamicTools,
+          availableTools,
           toolContext,
           safeSend
         );
         
         activeToolResponses = toolResponses;
+        markStage("toolsMs", toolsStart);
+      }
 
-        if (toolResponses.length > 0) {
-          safeSend({ status: "Sintesi finale..." });
-          
-          // 1. Formattiamo i risultati dei tool come contesto testuale pulito
-          const toolResultsContext = toolResponses.map((tr: any) => {
-            const name = tr.toolResponse?.name || "archivio";
-            const output = tr.toolResponse?.output;
-            const content = typeof output === "string" ? output : JSON.stringify(output, null, 2);
-            return `--- DATI REPERITI DA [${name}] ---\n${content}`;
-          }).join("\n\n");
+      const isConversational = /^(grazie|ok|chiaro|perfetto|ciao|va bene|ottimo|esatto)[.!?]*$/i.test(promptLower);
+      if (!isConversational && activeToolResponses.length === 0 && rawOutputs.length === 0) {
+        safeSend({ status: "Ricerca delle fonti giuridiche..." });
+        const fallbackStart = Date.now();
+        const legalReferenceQuery = /\b(art(?:icolo)?\.?|legge|d\.?\s*lgs\.?|codice|normativa|vigente|aggiornament\w*)\b/i.test(prompt);
+        const fallbackToolName = legalReferenceQuery ? "ricerca web" : "ricerca in banca dati interna";
+        const sourceQuery = prompt.slice(0, 3000);
+        const fallbackOutput = legalReferenceQuery
+          ? await webSearch({ query: sourceQuery, focus: "institutional" }, { context: toolContext })
+          : await internalDatabaseSearch({ searchType: "semantic", query: sourceQuery }, { context: toolContext });
+        activeToolResponses = [{
+          toolResponse: { name: fallbackToolName, output: fallbackOutput },
+        }];
+        markStage("fallbackSearchMs", fallbackStart);
+      }
 
-          // 2. Prepariamo i messaggi per la sintesi: cronologia originale + dati estratti.
-          // Escludiamo i messaggi tecnici con toolRequest per evitare blocchi da Vertex AI.
-          const synthesisMessages = [
-            ...messages,
-            {
-              role: "user" as const,
-              content: [
-                {
-                  text: `[DATI REPERITI DAGLI ARCHIVI/TOOL]:\n${toolResultsContext}\n\n[ISTRUZIONE DI SINTESI]: Rispondi alla richiesta dell'utente in modo esaustivo, chiaro e strutturato, basandoti ESCLUSIVAMENTE sulle informazioni sopra riportate. Rispondi direttamente al quesito senza menzionare passaggi tecnici interni o i nomi dei tool utilizzati.`
-                }
-              ]
+      if (activeToolResponses.length === 0 && initialTextChunks.length > 0) {
+        safeSend({ text: initialTextChunks.join("") });
+      }
+
+      if (activeToolResponses.length > 0) {
+        safeSend({ status: "Sintesi finale..." });
+        const synthesisStart = Date.now();
+        const toolResultsContext = activeToolResponses.map((tr) => {
+          const name = tr.toolResponse?.name || "archivio";
+          const output = tr.toolResponse?.output;
+          const content = typeof output === "string" ? output : JSON.stringify(output, null, 2);
+          return `--- DATI REPERITI DA [${name}] ---\n${content}`;
+        }).join("\n\n");
+        const synthesisMessages = [
+          ...messages,
+          {
+            role: "user" as const,
+            content: [{
+              text: `[DATI REPERITI DAGLI ARCHIVI/TOOL]:\n${toolResultsContext}\n\n[ISTRUZIONE DI SINTESI]: Rispondi in modo chiaro e strutturato basandoti ESCLUSIVAMENTE sui dati reperiti. Cita nel testo le fonti pertinenti con i riferimenti riconoscibili presenti nei risultati (organo, numero, titolo o URL); se i risultati non contengono fonti verificabili, dichiaralo e non presentare conclusioni non supportate come certe. Fornisci una motivazione sintetica quando utile, senza esporre ragionamenti interni. Non menzionare i nomi dei tool o passaggi tecnici.`
+            }]
+          }
+        ];
+
+        finalResponse = await generateWithQuotaRetry(() => ai.generate({
+          model: selectedModel,
+          messages: synthesisMessages,
+          config: {
+            maxOutputTokens: 3000,
+            thinkingConfig: { thinkingLevel: profile.thinkingLevel },
+          },
+          onChunk: (chunk: any) => {
+            if (typeof chunk?.text === "string" && chunk.text.length > 0) {
+              safeSend({ text: chunk.text });
             }
-          ];
-
-          // 3. Generazione testuale pura (Niente tools -> Nessun loop possibile)
-          finalResponse = await ai.generate({
-            model: selectedModel,
-            messages: synthesisMessages,
-            config: { 
-              maxOutputTokens: 3000 
-            },
-            onChunk: (chunk: any) => {
-              if (typeof chunk?.text === "string" && chunk.text.length > 0) {
-                safeSend({ text: chunk.text });
-              }
-            },
-          });
-        }
+          },
+        }));
+        markStage("synthesisMs", synthesisStart);
       }
 
     } catch (error: unknown) {
       console.error("[legalAgentFlow] Errore ai.generate:", error);
-      const msg = "Il motore neurale ha incontrato un errore imprevisto durante l'elaborazione.";
+      const msg = isQuotaError(error)
+        ? "Il servizio AI è temporaneamente sovraccarico. Riprova tra qualche istante."
+        : "Il motore neurale ha incontrato un errore imprevisto durante l'elaborazione.";
       safeSend({ error: { message: msg } }); 
       throw new Error(msg);
     }
 
     const titoloGenerato = await titlePromise;
+    console.log("[legalAgentFlow] Timing", JSON.stringify({ ...stageTimes, totalMs: Date.now() - flowStart }));
     const sourceMessages = finalResponse?.messages ?? messages;
     
     // Estrazione Fonti Combinata 

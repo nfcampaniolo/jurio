@@ -1,5 +1,6 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import React from "react";
 
 /* ---------- mock firebase ---------- */
@@ -124,6 +125,14 @@ vi.mock("@/features/chat/components/SourcesSection", () => ({
 import { RightSidebar } from "@/features/chat/components/RightSidebar";
 import type { Message, Source, ThreadItem } from "@/interfaces/interfaces";
 
+function renderWithRouter(ui: React.ReactElement) {
+  return render(
+    <MemoryRouter initialEntries={[window.location.pathname]}>
+      {ui}
+    </MemoryRouter>
+  );
+}
+
 describe("RightSidebar Component Suite", () => {
   const mockSetActiveSourceId = vi.fn();
   const mockOnThreadSelect = vi.fn();
@@ -157,7 +166,7 @@ describe("RightSidebar Component Suite", () => {
   };
 
   test("renderizza tutte le sezioni (CaseMetadata, Thread, Sources) per sessionType = 'fascicolo'", () => {
-    render(<RightSidebar {...defaultProps} />);
+    renderWithRouter(<RightSidebar {...defaultProps} />);
 
     // CaseMetadataSection
     const metadataSection = screen.getByTestId("case-metadata-section");
@@ -181,7 +190,7 @@ describe("RightSidebar Component Suite", () => {
   });
 
   test("non renderizza CaseMetadataSection e ThreadSection quando sessionType !== 'fascicolo'", () => {
-    render(
+    renderWithRouter(
       <RightSidebar
         {...defaultProps}
         sessionType="temporanea"
@@ -196,7 +205,7 @@ describe("RightSidebar Component Suite", () => {
   });
 
   test("inoltra la modalità isReadOnly a CaseMetadataSection e ThreadSection", () => {
-    render(
+    renderWithRouter(
       <RightSidebar
         {...defaultProps}
         isReadOnly={true}
@@ -211,7 +220,7 @@ describe("RightSidebar Component Suite", () => {
     // URL senza ID fascicolo
     window.history.pushState({}, "Test", "/chat");
 
-    render(
+    renderWithRouter(
       <RightSidebar
         sessionType="fascicolo"
         attachedDocs={[]}
@@ -233,7 +242,7 @@ describe("RightSidebar Component Suite", () => {
   });
 
   test("collega correttamente le callback delle sotto-sezioni (Thread e Sources)", () => {
-    render(<RightSidebar {...defaultProps} />);
+    renderWithRouter(<RightSidebar {...defaultProps} />);
 
     // Azioni ThreadSection
     fireEvent.click(screen.getByTestId("thread-select-btn"));

@@ -173,7 +173,6 @@ export async function executeDeepAnalysis(req: Request, res: Response): Promise<
       const now = admin.firestore.FieldValue.serverTimestamp();
       const sessionPayload: Record<string, unknown> = {
         user: uid,
-        ownerId: uid,
         title: createDeepAnalysisTitle(normalizedPrompt),
         status: "review",
         promptOriginale: normalizedPrompt,

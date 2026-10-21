@@ -106,7 +106,7 @@ describe("mcpRouter", () => {
     const expired = makeResponse();
     mocks.tokenGet.mockResolvedValueOnce({
       exists: true,
-      data: () => ({ uid: "user", expiresAt: { toDate: () => new Date(Date.now() - 1000) } }),
+      data: () => ({ user: "user", expiresAt: { toDate: () => new Date(Date.now() - 1000) } }),
       ref: { delete: deleteToken },
     });
     await routeMiddleware()({ method: "POST", headers: { authorization: `Bearer ${"c".repeat(64)}$` } }, expired);
@@ -124,7 +124,7 @@ describe("mcpRouter", () => {
     };
     mocks.tokenGet.mockResolvedValue({
       exists: true,
-      data: () => ({ uid: "user", expiresAt: { toDate: () => new Date(Date.now() + 60_000) } }),
+      data: () => ({ user: "user", expiresAt: { toDate: () => new Date(Date.now() + 60_000) } }),
     });
     mocks.connect.mockRejectedValueOnce(new Error("transport connection failed"));
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});

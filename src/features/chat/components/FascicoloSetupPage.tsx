@@ -149,7 +149,7 @@ export const FascicoloSetupPage: React.FC = () => {
           <button 
             type="button"
             onClick={handleSubmit} 
-            disabled={isSaving || (!isConverting && attachedDocs.length === 0) || sessionTitle.trim() === ""} 
+            disabled={isSaving || sessionTitle.trim() === ""}
             className="px-5 py-2.5 bg-(--color-text) text-(--color-surface) disabled:opacity-35 disabled:cursor-not-allowed text-xs font-bold uppercase tracking-widest rounded-md hover:opacity-90 transition-all shadow-xs flex items-center gap-2 outline-none"
           >
             {isSaving && <Loader2 size={14} className="animate-spin" />}

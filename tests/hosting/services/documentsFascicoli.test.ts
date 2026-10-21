@@ -94,7 +94,7 @@ describe("Documents & Fascicoli Service Suite", () => {
   /* LIST FASCICOLI BY USER                                                     */
   /* -------------------------------------------------------------------------- */
   describe("listFascicoliByUser", () => {
-    test("esegue query con clausola 'or' per ownerId e visibleTo e ordina per updatedAt desc", async () => {
+    test("esegue query con clausola 'or' per user e visibleTo e ordina per updatedAt desc", async () => {
       const dateOlder = new Date("2026-03-01T10:00:00Z");
       const dateNewer = new Date("2026-03-10T14:30:00Z");
 
@@ -105,7 +105,7 @@ describe("Documents & Fascicoli Service Suite", () => {
             title: "Contenzioso Contrattuale Alfa S.r.l.",
             createdAt: { toDate: () => dateOlder },
             updatedAt: { toDate: () => dateOlder },
-            ownerId: "usr_flv_2026",
+            user: "usr_flv_2026",
           }),
         },
         {
@@ -114,7 +114,7 @@ describe("Documents & Fascicoli Service Suite", () => {
             title: "Arbitrato Societario Beta S.p.A.",
             createdAt: { toDate: () => dateOlder },
             updatedAt: { toDate: () => dateNewer },
-            ownerId: "usr_partner_99",
+            user: "usr_partner_99",
           }),
         },
       ];
@@ -125,7 +125,7 @@ describe("Documents & Fascicoli Service Suite", () => {
 
       expect(mockGetDb).toHaveBeenCalledTimes(1);
       expect(mockCollection).toHaveBeenCalledWith(fakeDbInstance, "fascicoli");
-      expect(mockWhere).toHaveBeenCalledWith("ownerId", "==", "usr_flv_2026");
+      expect(mockWhere).toHaveBeenCalledWith("user", "==", "usr_flv_2026");
       expect(mockWhere).toHaveBeenCalledWith("visibleTo", "array-contains", "usr_flv_2026");
       expect(mockOr).toHaveBeenCalled();
       expect(mockOrderBy).toHaveBeenCalledWith("updatedAt", "desc");
@@ -133,7 +133,7 @@ describe("Documents & Fascicoli Service Suite", () => {
 
       expect(result).toHaveLength(2);
       expect(result.some((f) => f.id === "fascicolo_1" && f.title === "Contenzioso Contrattuale Alfa S.r.l.")).toBe(true);
-      expect(result.some((f) => f.id === "fascicolo_2" && f.ownerId === "usr_partner_99")).toBe(true);
+      expect(result.some((f) => f.id === "fascicolo_2" && f.user === "usr_partner_99")).toBe(true);
     });
 
     test("applica valori di fallback per campi opzionali o mancanti", async () => {
@@ -146,7 +146,7 @@ describe("Documents & Fascicoli Service Suite", () => {
             title: undefined,
             createdAt: null,
             updatedAt: null,
-            ownerId: undefined,
+            user: undefined,
           }),
         },
       ];
@@ -161,7 +161,7 @@ describe("Documents & Fascicoli Service Suite", () => {
         title: "Nuovo Fascicolo",
         createdAt: todayFormatted,
         updatedAt: todayFormatted,
-        ownerId: "",
+        user: "",
       });
     });
 

@@ -84,14 +84,16 @@ export const legalAgentSupport = ai.defineFlow(
 
     const generationStartedAt = Date.now();
     let firstTokenLogged = false;
+    let streamedText = "";
     const response = await ai.generate({
       messages,
       config: {
-        maxOutputTokens: 400,
+        maxOutputTokens: 1200,
         thinkingConfig: { thinkingLevel: "LOW" },
       },
       onChunk: (chunk) => {
         if (chunk.text) {
+          streamedText += chunk.text;
           if (!firstTokenLogged) {
             firstTokenLogged = true;
             console.info(`[JURIO-SUPPORT] Primo token generato in ${Date.now() - generationStartedAt}ms`);
@@ -100,12 +102,19 @@ export const legalAgentSupport = ai.defineFlow(
         } 
       },
     });
-    console.info(`[JURIO-SUPPORT] Generazione risposta completata in ${Date.now() - generationStartedAt}ms`);
+    const finalText = response.text;
+    const risposta = streamedText.length > finalText.length ? streamedText : finalText;
+    console.info(
+      `[JURIO-SUPPORT] Generazione risposta completata in ${Date.now() - generationStartedAt}ms; ` +
+      `stop=${response.finishReason ?? "sconosciuto"}, ` +
+      `stream=${streamedText.length} caratteri, finale=${finalText.length} caratteri, ` +
+      `outputTokens=${response.usage?.outputTokens ?? "sconosciuto"}`
+    );
 
     sendChunk({ status: "Risposta completata." });
 
     return { 
-      risposta: response.text, 
+      risposta,
       fonti: fontiEstratte
     };
   }
@@ -168,13 +177,40 @@ export const estraiMetadatiFlow = ai.defineFlow(
     const { chatContext, metadatiAttuali } = input;
 
     try {
-      const extractionResult = await ai.generate({
-        prompt: buildEstraiMetadatiPrompt({ metadatiAttuali, chatContext }),
-        
-        output: {
-          schema: EstraiMetadatiOutputSchema
-        },
-      });
+      // Errori di rete transitori (es. "fetch failed" all'avvio a freddo): si riprova con backoff
+      let extractionResult;
+      for (let attempt = 1; ; attempt++) {
+        try {
+          // Timeout per tentativo: una chiamata appesa non deve consumare l'intero timeout della function
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          try {
+            extractionResult = await Promise.race([
+              ai.generate({
+                // gemini-3.5-flash va spesso in timeout (>100s) anche su richieste banali; il lite risponde in <1s
+                model: "vertexai/gemini-3.5-flash-lite",
+                prompt: buildEstraiMetadatiPrompt({ metadatiAttuali, chatContext }),
+                output: {
+                  schema: EstraiMetadatiOutputSchema
+                },
+                // Estrazione dati strutturata: nessun ragionamento esteso, risposta breve
+                config: {
+                  maxOutputTokens: 1500,
+                  thinkingConfig: { thinkingLevel: "MINIMAL" },
+                },
+              }),
+              new Promise<never>((_, reject) => {
+                timer = setTimeout(() => reject(new Error("Timeout estrazione metadati")), 60_000);
+              }),
+            ]);
+          } finally {
+            if (timer) clearTimeout(timer);
+          }
+          break;
+        } catch (err) {
+          if (attempt >= 2) throw err;
+          await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+        }
+      }
 
       return extractionResult.output || { dati_nuovi_o_aggiornati: [] };
 

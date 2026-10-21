@@ -95,9 +95,12 @@ describe("support-agent endpoint helpers", () => {
     mocks.daily.mockResolvedValue(undefined);
     const res = {
       status: vi.fn().mockReturnThis(), json: vi.fn(), setHeader: vi.fn(), writeHead: vi.fn(), flushHeaders: vi.fn(),
-      write: vi.fn(), end: vi.fn(), writableEnded: false, headersSent: true,
+      write: vi.fn(), end: vi.fn(), on: vi.fn(), writableEnded: false, headersSent: true,
     };
     await executeSupport(req as never, res as never);
+    expect(req.on).toHaveBeenCalledWith("aborted", expect.any(Function));
+    expect(req.on).not.toHaveBeenCalledWith("close", expect.any(Function));
+    expect(res.on).toHaveBeenCalledWith("close", expect.any(Function));
     expect(mocks.supportFlow.stream).toHaveBeenCalledWith({
       prompt: "question", history: [{ role: "model", content: "prior" }],
     });
@@ -122,6 +125,7 @@ describe("support-agent endpoint helpers", () => {
       })),
       get: vi.fn().mockResolvedValue({ exists: true, data: () => ({ metadati: { old: "value" } }) }),
       update,
+      set: vi.fn().mockResolvedValue(undefined),
     };
     mocks.db.collection.mockReturnValue({ doc: vi.fn(() => fascicoloRef) });
     mocks.metadataFlow.mockResolvedValue({
@@ -132,13 +136,68 @@ describe("support-agent endpoint helpers", () => {
       ],
     });
     await executeUpdateMetadataFromChat({
-      data: { data: () => ({ role: "user", content: "input" }) },
+      data: { data: () => ({ role: "user", content: "Il cliente Ada Lovelace chiede assistenza" }) },
       params: { fascicoloId: "f1", threadId: "t1", messageId: "m1" },
     } as never);
     expect(mocks.metadataFlow).toHaveBeenCalledWith({
       chatContext: "UTENTE: Cliente: Ada", metadatiAttuali: { old: "value" },
     });
     expect(update).toHaveBeenCalledWith({ "metadati.Nme": "Ada Lovelace" });
+  });
+
+  it("skips short messages and throttles repeated extractions", async () => {
+    mocks.metadataFlow.mockClear();
+    const recent = { toMillis: () => Date.now() - 1000 };
+    const set = vi.fn();
+    mocks.db.collection.mockReturnValue({ doc: vi.fn(() => ({
+      get: vi.fn().mockResolvedValue({ exists: true, data: () => ({ metadatiCheckedAt: recent }) }), set,
+    })) });
+    const ev = (content: string) => ({
+      data: { data: () => ({ role: "user", content }) },
+      params: { fascicoloId: "f1", threadId: "t1", messageId: "m1" },
+    }) as never;
+    await executeUpdateMetadataFromChat(ev("ok"));
+    await executeUpdateMetadataFromChat(ev("Un messaggio sufficientemente lungo sul caso"));
+    expect(mocks.metadataFlow).not.toHaveBeenCalled();
+    expect(set).not.toHaveBeenCalled();
+  });
+
+  it("truncates long conversations instead of skipping metadata extraction", async () => {
+    const update = vi.fn().mockResolvedValue(undefined);
+    const longAnswer = "x".repeat(9000);
+    const fascicoloRef = {
+      collection: vi.fn(() => ({
+        doc: vi.fn(() => ({
+          collection: vi.fn(() => ({
+            orderBy: vi.fn().mockReturnThis(), limit: vi.fn().mockReturnThis(),
+            get: vi.fn().mockResolvedValue({
+              docs: [{ data: () => ({ role: "model", content: longAnswer }) }, { data: () => ({ role: "user", content: "Giudice: Rossi" }) }],
+            }),
+          })),
+        })),
+      })),
+      get: vi.fn().mockResolvedValue({ exists: true, data: () => ({}) }),
+      update,
+      set: vi.fn().mockResolvedValue(undefined),
+    };
+    mocks.db.collection.mockReturnValue({ doc: vi.fn(() => fascicoloRef) });
+    mocks.metadataFlow.mockResolvedValue({ dati_nuovi_o_aggiornati: [{ chiave: "Giudice", valore: "Rossi" }] });
+    await executeUpdateMetadataFromChat({
+      data: { data: () => ({ role: "user", content: "Il cliente Ada Lovelace chiede assistenza" }) },
+      params: { fascicoloId: "f1", threadId: "t1", messageId: "m1" },
+    } as never);
+    const { chatContext } = mocks.metadataFlow.mock.calls[0][0] as { chatContext: string };
+    expect(chatContext.length).toBeLessThanOrEqual(5000);
+    expect(update).toHaveBeenCalledWith({ "metadati.Giudice": "Rossi" });
+  });
+
+  it("ignores messages imported by a chat migration", async () => {
+    mocks.db.collection.mockClear();
+    await executeUpdateMetadataFromChat({
+      data: { data: () => ({ role: "user", content: "old", migrated: true }) },
+      params: { fascicoloId: "f1", threadId: "t1", messageId: "m1" },
+    } as never);
+    expect(mocks.db.collection).not.toHaveBeenCalled();
   });
 
   it("skips model-generated metadata events and returns 500 if embedding secrets are unavailable", async () => {

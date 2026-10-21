@@ -172,7 +172,7 @@ export function useOAuthLogic() {
         const db = await getDb();
 
         await setDoc(doc(db, "oauth_codes", authCode), {
-          uid: user.uid,
+          user: user.uid,
           client_id: clientId,
           redirect_uri: redirectUri,
           code_challenge: codeChallenge,

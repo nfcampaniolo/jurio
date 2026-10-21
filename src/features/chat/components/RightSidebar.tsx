@@ -1,4 +1,5 @@
 import React from "react";
+import { useLocation } from "react-router-dom";
 import { CaseMetadataSection } from "./CaseMetadataSection";
 import { ThreadSection } from "./ThreadSection";
 import { SourcesSection } from "./SourcesSection";
@@ -18,6 +19,7 @@ interface RightSidebarProps {
   onNewThread?: () => void;
   onSourceClick?: (e: React.MouseEvent, source: Source) => void;
   onDeleteThread?: (fascicoloId: string, threadId: string) => void;
+  onRenameThread?: (fascicoloId: string, threadId: string, title: string) => void | Promise<void>;
   metadati?: Record<string, string>;
   isReadOnly?: boolean;
 }
@@ -33,14 +35,13 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
   onNewThread, 
   onSourceClick,
   onDeleteThread,
+  onRenameThread,
   metadati: initialMetadati = {},
   isReadOnly = false
 }) => {
-  const getFascicoloIdFromUrl = () => {
-    const pathParts = window.location.pathname.split('/');
-    return pathParts[2]; 
-  };
-  const activeFascicoloId = getFascicoloIdFromUrl();
+  // useLocation rende il componente reattivo ai cambi di rotta (es. creazione di un nuovo fascicolo)
+  const { pathname } = useLocation();
+  const activeFascicoloId = pathname.split('/')[2] ?? "";
 
   return (
     <div className="flex flex-col bg-(--color-surface) border-l border-(--color-border) h-full overflow-hidden">
@@ -63,6 +64,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
           onThreadSelect={onThreadSelect}
           onNewThread={onNewThread}
           onDeleteThread={onDeleteThread}
+          onRenameThread={onRenameThread}
           isReadOnly={isReadOnly}
         />
       )}

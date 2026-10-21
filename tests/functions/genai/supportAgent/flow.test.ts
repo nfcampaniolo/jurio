@@ -25,7 +25,7 @@ describe("support-agent flows", () => {
     expect(mocks.generate).toHaveBeenCalledOnce();
     expect(mocks.generate.mock.calls[0][0]).toMatchObject({
       config: {
-        maxOutputTokens: 400,
+        maxOutputTokens: 1200,
         thinkingConfig: { thinkingLevel: "LOW" },
       },
     });
@@ -38,6 +38,22 @@ describe("support-agent flows", () => {
       fonti: [{ id: "m1", text: "Manual excerpt", links: ["/guide"] }],
     });
     expect(sendChunk).toHaveBeenCalledWith({ status: "Consultazione del manuale Jurio..." });
+  });
+
+  it("preserves the full streamed answer when the final model text is shorter", async () => {
+    mocks.generate.mockImplementationOnce(async ({ onChunk }: { onChunk: (chunk: { text: string }) => void }) => {
+      onChunk({ text: "Jurio è l'assistente legale " });
+      onChunk({ text: "virtuale basato su intelligenza artificiale." });
+      return { text: "Jurio è l'assistente legale virtuale basato su int" };
+    });
+    const sendChunk = vi.fn();
+    const handler = legalAgentSupport as unknown as (input: unknown, context: unknown) => Promise<unknown>;
+
+    await expect(handler({ prompt: "Come funziona Jurio?", history: [] }, { sendChunk })).resolves.toEqual({
+      risposta: "Jurio è l'assistente legale virtuale basato su intelligenza artificiale.",
+      fonti: [{ id: "m1", text: "Manual excerpt", links: ["/guide"] }],
+    });
+    expect(sendChunk).toHaveBeenCalledWith({ text: "virtuale basato su intelligenza artificiale." });
   });
 
   it("generates an answer without citations when manual search has no matches", async () => {

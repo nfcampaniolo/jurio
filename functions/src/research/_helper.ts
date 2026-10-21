@@ -42,8 +42,8 @@ export async function authenticateRequest(req: Request): Promise<AuthResult> {
     const expiresAt = tokenData?.expiresAt;
 
     if (
-      typeof tokenData?.uid !== "string" ||
-      !tokenData.uid ||
+      typeof tokenData?.user !== "string" ||
+      !tokenData.user ||
       !expiresAt ||
       typeof expiresAt.toDate !== "function" ||
       expiresAt.toDate() <= new Date()
@@ -54,7 +54,7 @@ export async function authenticateRequest(req: Request): Promise<AuthResult> {
       throw new Error("UNAUTHORIZED");
     }
 
-    return { uid: tokenData.uid, isOAuthRequest: true };
+    return { uid: tokenData.user, isOAuthRequest: true };
   }
 
   try {

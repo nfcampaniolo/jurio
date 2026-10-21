@@ -13,6 +13,7 @@ vi.mock("lucide-react", () => {
     Trash2: Icon("trash-2"),
     ChevronRight: Icon("chevron-right"),
     Lock: Icon("lock"),
+    Pencil: Icon("pencil"),
   };
 });
 
@@ -65,6 +66,31 @@ describe("ThreadSection Component Suite", () => {
     expect(screen.getAllByTestId("icon-message-square").length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByTestId("icon-chevron-right")).toHaveLength(2);
     expect(screen.getAllByTestId("icon-trash-2")).toHaveLength(2);
+  });
+
+  test("rinomina una conversazione con Invio e annulla con Escape", () => {
+    const onRename = vi.fn();
+    render(<ThreadSection {...defaultProps} onRenameThread={onRename} />);
+
+    fireEvent.click(screen.getAllByLabelText("Rinomina conversazione")[0]);
+    let input = screen.getByLabelText("Nuovo nome conversazione");
+    fireEvent.change(input, { target: { value: "  Titolo nuovo  " } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onRename).toHaveBeenCalledWith("fascicolo-123", "thread-1", "Titolo nuovo");
+    expect(mockOnThreadSelect).not.toHaveBeenCalled();
+
+    onRename.mockClear();
+    fireEvent.click(screen.getAllByLabelText("Rinomina conversazione")[0]);
+    input = screen.getByLabelText("Nuovo nome conversazione");
+    fireEvent.change(input, { target: { value: "Altro" } });
+    fireEvent.keyDown(input, { key: "Escape" });
+    expect(onRename).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText("Nuovo nome conversazione")).not.toBeInTheDocument();
+  });
+
+  test("non mostra la rinomina in sola lettura", () => {
+    render(<ThreadSection {...defaultProps} onRenameThread={vi.fn()} isReadOnly />);
+    expect(screen.queryByLabelText("Rinomina conversazione")).not.toBeInTheDocument();
   });
 
   test("applica le classi di stile corrette per l'elemento attivo vs inattivo", () => {

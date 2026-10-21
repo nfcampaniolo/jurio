@@ -1,10 +1,9 @@
-import { ai, CFG } from "../_config";
+import { CFG } from "../_config";
 import { ToolContext, ExecutionProfile } from "./_schema";
 import { userFileSearch, internalDatabaseSearch, webSearch } from "../tools/index";
 import {
   SYSTEM_ORCHESTRATION_RULES,
   buildLegalAgentSystemPrompt,
-  buildChatTitlePrompt,
   formatRetrievalContextBlock,
 } from "./_prompts";
 
@@ -113,18 +112,21 @@ export async function executeRequestedTools(
   return results;
 }
 
+// Titolo deterministico: evita una chiamata LLM dedicata al primo messaggio.
 export async function generateChatTitle(prompt: string, isFirstMessage?: boolean): Promise<string | undefined> {
   if (!isFirstMessage) return undefined;
-  
-  const generateTask = ai.generate({
-    prompt: buildChatTitlePrompt(prompt),
-  }).then(res => res.text.trim()).catch(e => {
-    console.warn("Errore generazione titolo:", e);
-    return undefined;
-  });
 
-  const timeout = new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), 4000));
-  return Promise.race([generateTask, timeout]);
+  const cleaned = prompt
+    .replace(/\[Testo selezionato in riferimento\]:[\s\S]*$/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!cleaned) return undefined;
+
+  const MAX_LEN = 60;
+  if (cleaned.length <= MAX_LEN) return cleaned;
+  const cut = cleaned.slice(0, MAX_LEN);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 30 ? cut.slice(0, lastSpace) : cut).trim()}…`;
 }
 
 export function prepareContextAndMessages(input: {
@@ -172,10 +174,19 @@ export function prepareContextAndMessages(input: {
 }
 
 export function getExecutionProfile(promptLower: string): ExecutionProfile {
-  if (promptLower.length < 150) {
-    return { model: "vertexai/gemini-3.8-flash", dbLimit: 5, webLimit: 2 };
+  const needsDeepReasoning =
+    promptLower.length >= 600 ||
+    /\b(analizza|confronta|controvers|eccezion|responsabilit|risarciment|impugn|strategia|prescrizion|decadenza|concorso|bilanciamento|distinguish)\w*/i.test(promptLower);
+
+  if (promptLower.length < 150 && !needsDeepReasoning) {
+    return { model: "vertexai/gemini-3.5-flash", dbLimit: 5, webLimit: 2, thinkingLevel: "LOW" };
   }
-  return { model: "vertexai/gemini-3.8-flash", dbLimit: 8, webLimit: 3 };
+  return {
+    model: "vertexai/gemini-3.5-flash",
+    dbLimit: promptLower.length >= 600 ? 8 : 5,
+    webLimit: promptLower.length >= 600 ? 3 : 2,
+    thinkingLevel: needsDeepReasoning ? "HIGH" : "MEDIUM",
+  };
 }
 
 export async function executeDeterministicRetrieval(
@@ -259,8 +270,11 @@ export function extractAndFormatSources(
         continue;
       }
 
-      const baseKey = fonte.documento_id ?? fonte.id ?? fonte._id_interno ?? fonte.urn ?? fonte.link ?? fonte.url_riferimento;
-      const fallbackKey = typeof fonte.titolo === "string" ? fonte.titolo : (fonte.numero_sentenza || fonte.nome_file || null);
+      const documentId = fonte.documento_id ?? fonte.documentId ?? fonte.parentId;
+      const baseKey = documentId ?? fonte.id ?? fonte._id_interno ?? fonte.urn ?? fonte.link ?? fonte.url_riferimento ?? fonte.sourceUrl;
+      const fallbackKey = typeof fonte.titolo === "string"
+        ? fonte.titolo
+        : (fonte.title || fonte.numero_sentenza || fonte.caseNumber || fonte.nome_file || fonte.fileName || null);
       const key = baseKey ? String(baseKey) : fallbackKey;
 
       if (key && !fontiUniche.has(key)) {
@@ -334,24 +348,28 @@ export function extractAndFormatSources(
         f.name ||
         f.titolo ||
         f.numero_sentenza ||
-        (f.organo_giudicante && (f.dataSentenza || f.data)
-          ? `${f.organo_giudicante} del ${f.dataSentenza || f.data}`
+        f.caseNumber ||
+        (f.organo_giudicante || f.court
+          ? `${f.organo_giudicante || f.court}${(f.dataSentenza || f.data) ? ` del ${f.dataSentenza || f.data}` : ""}`
           : null) ||
         f.fonte ||
+        f.source ||
         null;
 
       return {
         _type: f._type,
-        documento_id: f.documento_id ?? f.id ?? f._id_interno ?? f.parentId ?? null,
-        posizione_originale: f.posizione_originale ?? f.index ?? null,
+        documento_id: f.documento_id ?? f.documentId ?? f.parentId ?? f.id ?? f._id_interno ?? null,
+        _id_interno: f._id_interno ?? (f._type === "document_chunk" ? f.id : null),
+        posizione_originale: f.posizione_originale ?? f.originalPosition ?? f.index ?? null,
         timestamp: f.timestamp ?? new Date().toISOString(),
         identificativo,
+        numero_sentenza: f.numero_sentenza ?? f.caseNumber ?? null,
         score: rawScore !== null ? rawScore : (isExactMatch ? 1 : null),
         match_percentage: matchPercentage,
-        organo_giudicante: f.organo_giudicante ?? null,
+        organo_giudicante: f.organo_giudicante ?? f.court ?? null,
         data_pubblicazione: f.dataSentenza ?? f.data ?? f.date ?? null,
-        fonte_web: f.fonte ?? null,
-        url_riferimento: f.link ?? f.urn ?? f.url ?? null,
+        fonte_web: f.fonte ?? f.source ?? null,
+        url_riferimento: f.link ?? f.urn ?? f.url ?? f.sourceUrl ?? null,
       };
     })
     .filter((f: any) =>

@@ -217,7 +217,7 @@ export async function executeShareAllTeamDocuments(req: Request, res: Response):
       await Promise.all([
         queueUpdates(db.collection("documents").where("user", "==", uid)),
         queueUpdates(db.collection("document_chunks").where("user", "==", uid)),
-        queueUpdates(db.collection("fascicoli").where("ownerId", "==", uid))
+        queueUpdates(db.collection("fascicoli").where("user", "==", uid))
       ]);
     }
 

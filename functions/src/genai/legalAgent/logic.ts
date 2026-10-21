@@ -3,6 +3,7 @@ import * as admin from "firebase-admin";
 import { validateUserPlanAndLimits, withSecureApiEndpoint } from "../../_utils";
 import { getDb, sanitize } from "../../_deps";
 import { legalAgentFlow } from "./flow";
+import { extractMetadataFromThread } from "../supportAgent/_metadata";
 import { 
   setupLegalAgentSse, 
   sendLegalAgentSse, 
@@ -51,6 +52,12 @@ export async function executeLegalAgent(req: Request, res: Response): Promise<an
         newFascicoloId: new_fascicolo_uuid,
         title,
       });
+      // Predispone i metadati del caso dall'intera chat importata; un errore non blocca la conversione.
+      // Attesa limitata: la risposta non deve restare bloccata sulla chiamata al modello.
+      const extraction = extractMetadataFromThread(new_fascicolo_uuid, old_chat_uuid).catch((error) => {
+        console.error("[legalAgent] Errore estrazione metadati dopo migrazione:", error);
+      });
+      await Promise.race([extraction, new Promise((resolve) => setTimeout(resolve, 8000))]);
       res.status(200).json({ success: true });
       return;
     }
