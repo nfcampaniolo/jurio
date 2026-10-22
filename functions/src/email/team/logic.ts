@@ -25,7 +25,7 @@ export async function enqueueVoucherEmail({
   try {
     const userRecord = await getAdminAuth().getUserByEmail(email);
     notifications.push({
-      uid: userRecord.uid,
+      user: userRecord.uid,
       title: "Nuovo Invito",
       message: `Sei stato invitato a unirti a ${teamName}. Usa il codice ${voucherCode}.`,
       type: "team",
@@ -60,7 +60,7 @@ export async function enqueueWelcomeTeamEmail({
   try {
     const userRecord = await getAdminAuth().getUserByEmail(email);
     notifications.push({
-      uid: userRecord.uid,
+      user: userRecord.uid,
       title: "Benvenuto nel Workspace!",
       message: `Ora fai parte del workspace ${teamName}.`,
       type: "team",
@@ -93,7 +93,7 @@ export async function enqueueRemoveTeamEmail({
   try {
     const userRecord = await getAdminAuth().getUserByEmail(email);
     notifications.push({
-      uid: userRecord.uid,
+      user: userRecord.uid,
       title: "Accesso revocato",
       message: `Non hai più accesso al workspace ${teamName}.`,
       type: "team"
@@ -129,7 +129,7 @@ export async function enqueueCloseTeamEmail({
     try {
       const userRecord = await getAdminAuth().getUserByEmail(em);
       notifications.push({
-        uid: userRecord.uid,
+        user: userRecord.uid,
         title: "Workspace Chiuso",
         message: `Il workspace ${teamName} è stato chiuso dall'amministratore.`,
         type: "team"

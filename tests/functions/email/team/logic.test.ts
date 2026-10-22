@@ -65,7 +65,7 @@ describe("team email logic", () => {
         subject: "Invito a unirti a Studio Alfa su Jurio",
         html: "<voucher>Studio Alfa:AB12</voucher>",
         notifications: [{
-          uid: "uid-1",
+          user: "uid-1",
           title: "Nuovo Invito",
           message: "Sei stato invitato a unirti a Studio Alfa. Usa il codice AB12.",
           type: "team",
@@ -111,7 +111,7 @@ describe("team email logic", () => {
         subject: "Benvenuto nel tuo nuovo Workspace su Jurio",
         html: "<welcome>Workspace</welcome>",
         notifications: [{
-          uid: "uid-2",
+          user: "uid-2",
           title: "Benvenuto nel Workspace!",
           message: "Ora fai parte del workspace Workspace.",
           type: "team",
@@ -153,7 +153,7 @@ describe("team email logic", () => {
         subject: "Aggiornamento sul tuo accesso a Team Gamma",
         html: "<removal>Team Gamma</removal>",
         notifications: [{
-          uid: "uid-3",
+          user: "uid-3",
           title: "Accesso revocato",
           message: "Non hai più accesso al workspace Team Gamma.",
           type: "team",
@@ -209,8 +209,8 @@ describe("team email logic", () => {
         subject: "Chiusura del Workspace su Jurio",
         html: "<closure>Workspace</closure>",
         notifications: expect.arrayContaining([
-          expect.objectContaining({ uid: "uid-a", title: "Workspace Chiuso", type: "team" }),
-          expect.objectContaining({ uid: "uid-c", title: "Workspace Chiuso", type: "team" }),
+          expect.objectContaining({ user: "uid-a", title: "Workspace Chiuso", type: "team" }),
+          expect.objectContaining({ user: "uid-c", title: "Workspace Chiuso", type: "team" }),
         ]),
       });
       expect(mocks.dispatch.mock.calls[0][0].notifications).toHaveLength(2);

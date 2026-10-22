@@ -56,9 +56,9 @@ describe("comms email logic", () => {
       expect(mocks.dispatch).toHaveBeenCalledWith({
         to: "user@example.com",
         subject,
-        html: expect.any(String),
+        html: `<${type === "account" ? "welcome" : "trial"}>Ada Lovelace</${type === "account" ? "welcome" : "trial"}>`,
         notifications: {
-          uid: "uid-1",
+          user: "uid-1",
           title,
           message,
           type,

@@ -68,7 +68,7 @@ describe("email helper", () => {
         from: "Support <support@example.com>",
         subject: "Aggiornamento",
         html: "<p>Corpo</p>",
-        notifications: { uid: "uid-1", title: "Titolo", message: "Testo" },
+        notifications: { user: "user-1", title: "Titolo", message: "Testo" },
       };
 
       // Act
@@ -84,7 +84,7 @@ describe("email helper", () => {
       });
       expect(mocks.collection).toHaveBeenCalledWith("notification");
       expect(mocks.batchSet).toHaveBeenNthCalledWith(2, { id: "notification-id" }, {
-        user: "uid-1",
+        user: "user-1",
         title: "Titolo",
         message: "Testo",
         type: "system",
@@ -103,8 +103,8 @@ describe("email helper", () => {
         subject: "Report",
         html: "<p>Report</p>",
         notifications: [
-          { uid: "one", title: "Uno", message: "Messaggio", type: "report" as const, link: "/report" },
-          { uid: "two", title: "Due", message: "Altro", type: "team" as const, link: "/team" },
+          { user: "one", title: "Uno", message: "Messaggio", type: "report" as const, link: "/report" },
+          { user: "two", title: "Due", message: "Altro", type: "team" as const, link: "/team" },
         ],
       };
 

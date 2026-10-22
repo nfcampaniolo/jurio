@@ -310,7 +310,7 @@ export async function executeSendAdminNotification(req: Request, res: Response):
 
       const notifications = sendInApp && chunkUids.length > 0
         ? chunkUids.map(u => ({
-            uid: u,
+            user: u,
             title,
             message,
             type: type as NotificationType,

@@ -3,19 +3,23 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => {
   const secure = vi.fn();
   const validate = vi.fn();
+  const consumeDaily = vi.fn();
+  const consumePerMinute = vi.fn();
   const registerGet = vi.fn();
   const teamGet = vi.fn();
   const teamsGet = vi.fn();
   const enqueue = vi.fn();
   const collection = vi.fn();
   const db = { collection };
-  return { secure, validate, registerGet, teamGet, teamsGet, enqueue, collection, db };
+  return { secure, validate, consumeDaily, consumePerMinute, registerGet, teamGet, teamsGet, enqueue, collection, db };
 });
 
 vi.mock("@functions/_deps", () => ({ getDb: () => mocks.db }));
 vi.mock("@functions/_utils", () => ({
   withSecureApiEndpoint: mocks.secure,
   validateUserPlanAndLimits: mocks.validate,
+  consumeDailyFeature: mocks.consumeDaily,
+  consumePerMinuteFeature: mocks.consumePerMinute,
 }));
 vi.mock("@functions/email/team/logic", () => ({ enqueueVoucherEmail: mocks.enqueue }));
 
@@ -56,6 +60,22 @@ describe("team voucher and invitation endpoints", () => {
     expect(mocks.validate).toHaveBeenCalledWith("owner-1", "teams", expect.any(Object));
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({ success: true, teams: [{ id: "team-1", name: "Alpha" }] });
+  });
+
+  it("allows voucher verification when the account plan is nessuno", async () => {
+    // Arrange
+    mocks.registerGet.mockResolvedValue({ exists: true, data: () => ({ planId: "nessuno" }) });
+    const { executeVerifyVoucher } = await import("@functions/team/teamsharing.logic");
+    const res = response();
+
+    // Act
+    await executeVerifyVoucher({ body: { voucher: "vch-1" } } as never, res as never);
+
+    // Assert
+    expect(mocks.consumePerMinute).toHaveBeenCalledWith("owner-1", "teams", 10);
+    expect(mocks.consumeDaily).toHaveBeenCalledWith("owner-1", "teams", 50);
+    expect(mocks.validate).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
   });
 
   it("rejects an empty voucher without scanning teams", async () => {

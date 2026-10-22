@@ -23,7 +23,7 @@ describe("email interface contracts", () => {
     // Arrange
     const type: NotificationType = "billing";
     const notification: NotificationPayload = {
-      uid: "user-1",
+      user: "user-1",
       title: "Pagamento",
       message: "Ricevuto",
       type,

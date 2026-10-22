@@ -31,7 +31,7 @@ async function enqueuePurchaseEmailGeneric(args: EnqueuePurchaseEmailArgs): Prom
     subject,
     html,
     notifications: {
-      uid: args.uid,
+      user: args.uid,
       title: "Acquisto Confermato",
       message: `Grazie! Il tuo ordine ${args.orderId} è andato a buon fine.`,
       type: "billing",
@@ -82,7 +82,7 @@ export async function enqueueDowngradeEmail({ uid }: EnqueueEmailArgs): Promise<
     subject,
     html,
     notifications: {
-      uid,
+      user: uid,
       title: "Piano Scaduto",
       message: "Il tuo abbonamento è scaduto. Controlla il tuo piano per continuare a utilizzare le funzionalità avanzate.",
       type: "billing",
@@ -112,7 +112,7 @@ export async function enqueueMonthlyUsageEmail({
     try {
       const userRecord = await getAdminAuth().getUserByEmail(em);
       notifications.push({
-        uid: userRecord.uid,
+        user: userRecord.uid,
         title: "Nuovo Report Mensile",
         message: `Il resoconto sull'utilizzo di Jurio di ${reportData.mese} è disponibile.`,
         type: "report",

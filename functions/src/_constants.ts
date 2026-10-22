@@ -108,6 +108,7 @@ export const JURIO_USAGE_LIMITS = {
 
 export const ALLOWED_PLANS = new Set([
   "prova",
+  "nessuno",
   "admin",
   "business",
   "personale",

@@ -245,7 +245,7 @@ describe("admin endpoints", () => {
       to: "recipient@example.test",
       subject: "Avviso",
       html: "<p>x</p>",
-      notifications: [{ uid: "user-2", title: "Avviso", message: "testo", type: "info", link: "" }],
+      notifications: [{ user: "user-2", title: "Avviso", message: "testo", type: "info", link: "" }],
     }));
     expect(res.status).toHaveBeenCalledWith(200);
   });

@@ -125,7 +125,7 @@ describe("plans email logic", () => {
         subject: "Conferma Ordine Jurio - session-1",
         html: `<purchase>buyer@example.com|premium|12.50 EUR|${start.toDate().toISOString()}|${expire.toDate().toISOString()}|session-1</purchase>`,
         notifications: {
-          uid: "uid",
+          user: "uid",
           title: "Acquisto Confermato",
           message: "Grazie! Il tuo ordine session-1 è andato a buon fine.",
           type: "billing",
@@ -215,7 +215,7 @@ describe("plans email logic", () => {
         subject: "Piano Jurio scaduto",
         html: `<downgrade>${expectedName}</downgrade>`,
         notifications: {
-          uid: "downgrade-uid",
+          user: "downgrade-uid",
           title: "Piano Scaduto",
           message: "Il tuo abbonamento è scaduto. Controlla il tuo piano per continuare a utilizzare le funzionalità avanzate.",
           type: "billing",
@@ -291,8 +291,8 @@ describe("plans email logic", () => {
         subject: "Il tuo resoconto mensile su Jurio: hai risparmiato 10 minuti!",
         html: "<report>settembre 2026</report>",
         notifications: expect.arrayContaining([
-          expect.objectContaining({ uid: "uid-a", type: "report", link: "/profilo/utilizzi" }),
-          expect.objectContaining({ uid: "uid-c", type: "report", link: "/profilo/utilizzi" }),
+          expect.objectContaining({ user: "uid-a", type: "report", link: "/profilo/utilizzi" }),
+          expect.objectContaining({ user: "uid-c", type: "report", link: "/profilo/utilizzi" }),
         ]),
       });
       expect(mocks.dispatch.mock.calls[0][0].notifications).toHaveLength(2);

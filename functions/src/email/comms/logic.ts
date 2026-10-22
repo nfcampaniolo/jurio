@@ -14,7 +14,7 @@ export async function enqueueWelcomeEmail({ uid }: EnqueueEmailArgs): Promise<vo
     subject,
     html,
     notifications: {
-      uid,
+      user: uid,
       title: "Benvenuto su Jurio!",
       message: "Siamo felici di averti a bordo. Inizia subito a esplorare la piattaforma.",
       type: "account",
@@ -35,7 +35,7 @@ export async function enqueueTrialEmail({ uid }: EnqueueEmailArgs): Promise<void
     subject,
     html,
     notifications: {
-      uid,
+      user: uid,
       title: "Periodo di Prova Attivo",
       message: "Hai iniziato il tuo periodo di prova gratuito. Goditi tutte le funzionalità premium!",
       type: "billing",

@@ -6,6 +6,7 @@ import type { ChangeEvent, Dispatch, ReactNode, SetStateAction } from "react";
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
+  Navigate: ({ to }: { to: string }) => <div data-testid="navigate" data-to={to} />,
 }));
 
 /* ---------- mock react-hot-toast ---------- */
@@ -43,6 +44,7 @@ const mockDeleteAccount = vi.fn();
 let mockProfileReturn = {
   user: { uid: "admin-123" } as unknown,
   loading: false,
+  planId: "admin",
   userData: { status: "admin", email: "admin@jurio.it" } as {
     status: string;
     email: string;
@@ -212,6 +214,7 @@ describe("Admin Dashboard Component Suite", () => {
     mockProfileReturn = {
       user: { uid: "admin-123" },
       loading: false,
+      planId: "admin",
       userData: { status: "admin", email: "admin@jurio.it" },
       name: "Flavio",
       surname: "Campaniolo",
@@ -269,8 +272,10 @@ describe("Admin Dashboard Component Suite", () => {
 
   test("non visualizza i tab di amministrazione né i contenuti riservati se l'utente non è admin", () => {
     mockProfileReturn.userData = { status: "user", email: "avvocato@studio.it" };
+    mockProfileReturn.planId = "personale";
     render(<Admin />);
 
+    expect(screen.getByTestId("navigate")).toHaveAttribute("data-to", "/profilo");
     expect(screen.queryByRole("button", { name: /Upload Massivo/i })).not.toBeInTheDocument();
     expect(screen.queryByTestId("upload-maxima-section")).not.toBeInTheDocument();
   });

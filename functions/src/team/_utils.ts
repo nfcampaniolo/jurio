@@ -2,7 +2,8 @@ import { randomInt } from "node:crypto";
 import { Response } from "express";
 import { FieldValue, WriteBatch } from "firebase-admin/firestore";
 import { getDb} from "../_deps";
-import { validateUserPlanAndLimits } from "../_utils";
+import { consumeDailyFeature, consumePerMinuteFeature, validateUserPlanAndLimits } from "../_utils";
+import { JURIO_USAGE_LIMITS } from "../_constants";
 
 const db = getDb();
 
@@ -13,7 +14,19 @@ export async function validateTeamUser(uid: string, res: Response): Promise<bool
     return false;
   }
 
-  await validateUserPlanAndLimits(uid, "teams", userSnap);
+  const planId = userSnap.data()?.planId;
+  const hasNoPlan =
+    typeof planId === "string" && planId.trim().toLowerCase() === "nessuno";
+
+  if (hasNoPlan) {
+    const limits = JURIO_USAGE_LIMITS.teams.global;
+    await Promise.all([
+      consumePerMinuteFeature(uid, "teams", limits.perMinute),
+      consumeDailyFeature(uid, "teams", limits.perDay),
+    ]);
+  } else {
+    await validateUserPlanAndLimits(uid, "teams", userSnap);
+  }
   return true;
 }
 

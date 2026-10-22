@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useProfile } from "@/features/profile/hooks/useProfile";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { AnimatePresence, motion } from "framer-motion";
 import { ConfirmModal } from "@/shared/components/ConfirmModal";
@@ -39,7 +39,7 @@ type AdminTab = "upload" | "doctrine" | "content" | "taxonomy" | "maintenance" |
 
 export const Admin: React.FC = () => {
   const navigate = useNavigate();
-  const { user, loading, userData, name, surname, avatar, deleteAccount } = useProfile();
+  const { user, loading, userData, planId, name, surname, avatar, deleteAccount } = useProfile();
   
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>("upload");
@@ -71,6 +71,10 @@ export const Admin: React.FC = () => {
         Caricamento...
       </div>
     );
+  }
+
+  if (planId !== "admin") {
+    return <Navigate to="/profilo" replace />;
   }
 
   const actions: Action[] = [
@@ -145,7 +149,7 @@ export const Admin: React.FC = () => {
       <main className="max-w-5xl mx-auto px-5 py-8 flex flex-col gap-8 min-h-[calc(100vh-80px)]">
         
         {/* NAVIGAZIONE TAB */}
-        {userData.status === "admin" && (
+        {planId === "admin" && (
           <div className="flex overflow-x-auto hide-scrollbar border-b border-(--color-border) gap-2 pb-px">
             {TABS.map((tab) => (
               <button
@@ -171,7 +175,7 @@ export const Admin: React.FC = () => {
         {/* CONTENUTO DEL TAB ATTIVO */}
         <div className="flex-1">
           <AnimatePresence mode="wait">
-            {userData.status === "admin" ? (
+            {planId === "admin" ? (
               <motion.div
                 key={activeTab}
                 initial={{ opacity: 0, y: 10 }}

@@ -19,7 +19,8 @@ import {
   FiActivity,
   FiLayout,
   FiSliders,
-  FiBookOpen
+  FiBookOpen,
+  FiShield
 } from "react-icons/fi";
 import { navigateItem } from "@/routes/navigation";
 import { Loader2 } from "lucide-react";
@@ -33,6 +34,7 @@ export const Profile: React.FC = () => {
     name,
     surname,
     avatar,
+    planId,
     deleteAccount,
     exportAccount
   } = useProfile();
@@ -59,6 +61,15 @@ export const Profile: React.FC = () => {
       </>
     );
   }
+
+  const adminActions: Action[] = planId === "admin"
+    ? [{
+        id: "admin",
+        label: "Amministrazione",
+        icon: <FiShield />,
+        onClick: () => void navigate("/admin"),
+      }]
+    : [];
 
   const actions: Action[] = [
     {
@@ -109,6 +120,7 @@ export const Profile: React.FC = () => {
       icon: <FiLayout />,
       onClick: () => void navigate("/profilo/team"),
     },
+    ...adminActions,
     {
       id: "logout",
       label: "Logout",

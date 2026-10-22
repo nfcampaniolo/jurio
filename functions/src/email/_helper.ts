@@ -58,7 +58,7 @@ export async function dispatchMailAndNotification({
     for (const notif of notifsArray) {
       const notifRef = db.collection("notification").doc();
       batch.set(notifRef, {
-        user: notif.uid,
+        user: notif.user,
         title: notif.title,
         message: notif.message,
         type: notif.type || "system",

@@ -43,7 +43,7 @@ export type EnqueueEmailArgsContact = {
 };
 
 export interface NotificationPayload {
-  uid: string;
+  user: string;
   title: string;
   message: string;
   type?: NotificationType;
