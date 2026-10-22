@@ -1,9 +1,10 @@
-import { lazy } from "react";
+import { lazy, Suspense } from "react";
 import type { RouteObject } from "react-router-dom";
 
 import { PublicOnly } from "./PublicOnly";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { RegistrationRoute } from "./RegistrationRoute";
+import { AuthLoader } from "./AuthLoader";
 
 // ============================================================
 // LAZY IMPORT
@@ -176,7 +177,11 @@ export const appRoutes: RouteObject[] = [
 
   {
     path: "/chat",
-    element: <Chat />,
+    element: (
+      <Suspense fallback={<AuthLoader />}>
+        <Chat />
+      </Suspense>
+    ),
   },
 
   {
@@ -272,8 +277,10 @@ export const appRoutes: RouteObject[] = [
   {
     path: "/chat/:chatId",
     element: (
-      <ProtectedRoute>
-        <Chat />
+      <ProtectedRoute fallback={<AuthLoader />}>
+        <Suspense fallback={<AuthLoader />}>
+          <Chat />
+        </Suspense>
       </ProtectedRoute>
     ),
   },
@@ -286,8 +293,10 @@ export const appRoutes: RouteObject[] = [
   {
     path: "/fascicolo/:fascicoloId/:threadId?",
     element: (
-      <ProtectedRoute>
-        <Chat />
+      <ProtectedRoute fallback={<AuthLoader />}>
+        <Suspense fallback={<AuthLoader />}>
+          <Chat />
+        </Suspense>
       </ProtectedRoute>
     ),
   },

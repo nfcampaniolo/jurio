@@ -89,6 +89,7 @@ describe("Google Drive Config & Loader Suite", () => {
     test("risolve immediatamente se lo script con l'id specificato esiste già nel DOM", async () => {
       const existingScript = document.createElement("script");
       existingScript.id = "script-gia-presente";
+      existingScript.dataset.loaded = "true";
       document.head.appendChild(existingScript);
 
       const appendSpy = vi.spyOn(document.head, "appendChild");
@@ -132,10 +133,12 @@ describe("Google Drive Config & Loader Suite", () => {
     const setupPreloadedScripts = () => {
       const tokenScript = document.createElement("script");
       tokenScript.id = GOOGLE_TOKEN_SCRIPT_ID;
+      tokenScript.dataset.loaded = "true";
       document.head.appendChild(tokenScript);
 
       const pickerScript = document.createElement("script");
       pickerScript.id = GOOGLE_PICKER_SCRIPT_ID;
+      pickerScript.dataset.loaded = "true";
       document.head.appendChild(pickerScript);
     };
 

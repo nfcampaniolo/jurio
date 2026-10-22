@@ -69,6 +69,10 @@ vi.mock("@/features/auth/Session", () => ({
   default: () => <div data-testid="page-session">Session Page</div>,
 }));
 
+vi.mock("@/routes/AuthLoader", () => ({
+  AuthLoader: () => <div data-testid="chat-loader">Loading</div>,
+}));
+
 vi.mock("@/features/chat/Chat", () => ({
   default: () => <div data-testid="page-chat">Chat Page</div>,
 }));

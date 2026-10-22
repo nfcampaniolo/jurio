@@ -6,7 +6,7 @@ import type { Timestamp } from "firebase/firestore";
 
 import type { SessionType, Source, Message, AttachedDocument, PastFascicolo, PastChat, DBThreadPayload } from "@/interfaces/interfaces";
 import { useAuth } from "@/context/useAuth";
-import { listDocumentsByUser, listFascicoliByUser, listChatsByUser, fetchChatMessages, fetchFascicoloData } from "@/shared/services/document";
+import { listDocumentsByUser, listFascicoliByUser, listChatsByUser, fetchChatMessages, fetchFascicoloData, fetchSingleThreadMessages } from "@/shared/services/document";
 import { getChatUrl } from "@/config/env";
 
 // Import dei sotto-hook
@@ -75,7 +75,8 @@ export const useLegalChat = (initialData?: {
   const [archiveDocs, setArchiveDocs] = useState<AttachedDocument[]>([]);
   const [pastFascicoli, setPastFascicoli] = useState<PastFascicolo[]>([]);
   const [pastChats, setPastChats] = useState<PastChat[]>([]);
-  const [isLoadingData, setIsLoadingData] = useState(false);
+  // Parte da true se c'è un utente: evita il flash lista vuota -> spinner -> lista
+  const [isLoadingData, setIsLoadingData] = useState(Boolean(user?.uid));
   const [isLoadingSession, setIsLoadingSession] = useState(Boolean(routeEntityKey && !isNewFascicolo));
   const [hasLoadedUserData, setHasLoadedUserData] = useState(false);
   const [isProcessingFiles, setIsProcessingFiles] = useState(false);
@@ -104,6 +105,17 @@ export const useLegalChat = (initialData?: {
     isStreaming, setMessages, setInputValue, setAgentState, setAgentStatusText,
     setShowFilters, setDenyOpen, setSessionTitle, setThreadTitle, setThreads
   });
+
+  // Prefetch del fascicolo in parallelo all'elenco utente, invece che in sequenza dopo di esso
+  const fascicoloPrefetchRef = useRef<Map<string, Promise<DBThreadPayload[]>>>(new Map());
+  useEffect(() => {
+    if (!user?.uid || !fascicoloId || isNewFascicolo) return;
+    if (!fascicoloPrefetchRef.current.has(fascicoloId)) {
+      fascicoloPrefetchRef.current.set(fascicoloId, fetchFascicoloData(fascicoloId, threadId ?? null));
+    }
+    // threadId volutamente fuori dalle dipendenze: serve solo al primo prefetch
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, fascicoloId, isNewFascicolo]);
 
   // --- Inizializzazione Dati Base ---
   useEffect(() => {
@@ -164,9 +176,12 @@ export const useLegalChat = (initialData?: {
     setIsLoadingSession(true);
     setMessages([]);
     try {
-      const threadsData = await fetchFascicoloData(fascicolo.id);
+      const prefetched = fascicoloPrefetchRef.current.get(fascicolo.id);
+      fascicoloPrefetchRef.current.delete(fascicolo.id);
+      const threadsData = await (prefetched ?? fetchFascicoloData(fascicolo.id, threadId ?? null));
       if (loadedEntityRef.current !== `fascicolo:${fascicolo.id}`) return;
       for (const thread of threadsData) {
+        if (thread.messagesLoaded === false) continue;
         threadMessagesCacheRef.current.set(
           `${fascicolo.id}:${thread.threadId}`,
           thread.messages.map((message: Message) => ({ ...message, isHistorical: true }))
@@ -182,6 +197,15 @@ export const useLegalChat = (initialData?: {
         }));
         const targetThreadId = threadId || threadsData[0].threadId;
         const activeThread = threadsData.find((t: DBThreadPayload) => t.threadId === targetThreadId) || threadsData[0];
+        if (activeThread.messagesLoaded === false) {
+          const loaded = await fetchSingleThreadMessages(fascicolo.id, activeThread.threadId);
+          if (loadedEntityRef.current !== `fascicolo:${fascicolo.id}`) return;
+          activeThread.messages = loaded;
+          threadMessagesCacheRef.current.set(
+            `${fascicolo.id}:${activeThread.threadId}`,
+            loaded.map((message: Message) => ({ ...message, isHistorical: true }))
+          );
+        }
         loadedThreadRef.current = `${fascicolo.id}:${activeThread.threadId}`;
         setActiveThreadId(activeThread.threadId); setThreadTitle(activeThread.threadData?.title || "Conversazione");
         setMessages(activeThread.messages.map((m: Message) => ({ ...m, isHistorical: true })));
@@ -295,22 +319,13 @@ export const useLegalChat = (initialData?: {
             setMessages([]);
             setThreadTitle("");
             setIsLoadingSession(true);
-            void fetchFascicoloData(fascicoloId).then((threadsData: DBThreadPayload[]) => {
+            void fetchSingleThreadMessages(fascicoloId, threadId).then((loaded: Message[]) => {
               if (loadedEntityRef.current !== entityKey || loadedThreadRef.current !== threadKey) return;
-              for (const thread of threadsData) {
-                threadMessagesCacheRef.current.set(
-                  `${fascicoloId}:${thread.threadId}`,
-                  thread.messages.map((message: Message) => ({ ...message, isHistorical: true }))
-                );
-              }
-              const activeThread = threadsData.find(t => t.threadId === threadId);
-              if (activeThread) {
-                setActiveThreadId(threadId);
-                setThreadTitle(activeThread.threadData?.title || "Conversazione");
-                setMessages(threadMessagesCacheRef.current.get(threadKey) ?? []);
-              } else {
-                setMessages([]);
-              }
+              const historical = loaded.map((message: Message) => ({ ...message, isHistorical: true }));
+              threadMessagesCacheRef.current.set(threadKey, historical);
+              setActiveThreadId(threadId);
+              setThreadTitle(threads.find((thread) => thread.id === threadId)?.title || "Conversazione");
+              setMessages(historical);
             }).catch((error: unknown) => {
               console.error("[ChatLoad] Errore caricamento thread:", error);
               toast.error("Errore nel caricamento della conversazione.");

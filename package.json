@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "git-push": "node scripts/git-push.js",
-    "test": "vitest",
+    "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "emulators": "firebase emulators:start --project dev"
   },

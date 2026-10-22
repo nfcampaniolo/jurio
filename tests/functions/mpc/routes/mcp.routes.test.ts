@@ -88,7 +88,7 @@ describe("mcpRouter", () => {
     const res = makeResponse();
     const token = "a".repeat(64);
 
-    await routeMiddleware()({ method: "POST", headers: { authorization: `Bearer ${token}$` } }, res);
+    await routeMiddleware()({ method: "POST", headers: { authorization: `Bearer ${token}` } }, res);
 
     expect(mocks.tokenGet).toHaveBeenCalledOnce();
     expect(res.status).toHaveBeenCalledWith(401);
@@ -98,7 +98,7 @@ describe("mcpRouter", () => {
   it("rejects malformed token records and deletes expired tokens", async () => {
     const malformed = makeResponse();
     mocks.tokenGet.mockResolvedValueOnce({ exists: true, data: () => ({ uid: "user" }) });
-    await routeMiddleware()({ method: "POST", headers: { authorization: `Bearer ${"b".repeat(64)}$` } }, malformed);
+    await routeMiddleware()({ method: "POST", headers: { authorization: `Bearer ${"b".repeat(64)}` } }, malformed);
     expect(malformed.status).toHaveBeenCalledWith(401);
     expect(malformed.json).toHaveBeenCalledWith({ error: "unauthorized", message: "Dati del token non validi." });
 
@@ -109,7 +109,7 @@ describe("mcpRouter", () => {
       data: () => ({ user: "user", expiresAt: { toDate: () => new Date(Date.now() - 1000) } }),
       ref: { delete: deleteToken },
     });
-    await routeMiddleware()({ method: "POST", headers: { authorization: `Bearer ${"c".repeat(64)}$` } }, expired);
+    await routeMiddleware()({ method: "POST", headers: { authorization: `Bearer ${"c".repeat(64)}` } }, expired);
     expect(deleteToken).toHaveBeenCalledOnce();
     expect(expired.status).toHaveBeenCalledWith(401);
     expect(expired.json).toHaveBeenCalledWith({ error: "unauthorized", message: "Token scaduto." });
@@ -119,7 +119,7 @@ describe("mcpRouter", () => {
     const res = makeResponse();
     const req = {
       method: "POST",
-      headers: { authorization: `Bearer ${"d".repeat(64)}$` },
+      headers: { authorization: `Bearer ${"d".repeat(64)}` },
       body: { jsonrpc: "2.0" },
     };
     mocks.tokenGet.mockResolvedValue({
@@ -145,7 +145,7 @@ describe("mcpRouter", () => {
     mocks.tokenGet.mockRejectedValue(new Error("database unavailable"));
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
 
-    await routeMiddleware()({ method: "POST", headers: { authorization: `Bearer ${"e".repeat(64)}$` } }, res);
+    await routeMiddleware()({ method: "POST", headers: { authorization: `Bearer ${"e".repeat(64)}` } }, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({ error: "MCP server error" });

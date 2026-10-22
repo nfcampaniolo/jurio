@@ -480,14 +480,13 @@ describe("LegalChatPage Suite", () => {
     expect(screen.getByTestId("right-sidebar")).toBeInTheDocument();
   });
 
-  test("mostra un indicatore durante il caricamento della sessione", () => {
+  test("mostra l'overlay durante il caricamento della sessione", () => {
     mockLegalChatState.sessionType = "fascicolo";
     mockLegalChatState.isLoadingSession = true;
 
     render(<LegalChatPage />);
 
-    expect(screen.getByRole("status")).toHaveTextContent("Caricamento fascicolo...");
-    expect(screen.getByTestId("icon-loader")).toBeInTheDocument();
+    expect(screen.getByTestId("session-loading-overlay")).toBeInTheDocument();
   });
 
   test("gestisce le azioni del workspace documentale (quote, semaforo, distinguish)", () => {

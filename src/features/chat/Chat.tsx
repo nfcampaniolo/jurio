@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { PanelRight, X, FolderPlus, Loader2 } from "lucide-react";
+import { PanelRight, X, FolderPlus } from "lucide-react";
 import { Helmet } from "@dr.pogodin/react-helmet";
 
 // --- Componenti Esistenti ---
@@ -95,6 +95,21 @@ export const LegalChatPage = () => {
       t.style.height = `${newHeight}px`;
     }
   }, [inputValue]);
+
+  // Isteresi: il loader sparisce solo dopo 250ms di stabilità, così i rimbalzi true/false/true dello stato di caricamento non producono flash
+  const isSessionBusy = isLoadingSession && (sessionType === 'fascicolo' || sessionType === 'temporanea');
+  const [holdLoader, setHoldLoader] = useState(false);
+  const [prevBusy, setPrevBusy] = useState(isSessionBusy);
+  if (prevBusy !== isSessionBusy) {
+    setPrevBusy(isSessionBusy);
+    if (!isSessionBusy) setHoldLoader(true);
+  }
+  useEffect(() => {
+    if (!holdLoader || isSessionBusy) return;
+    const t = setTimeout(() => setHoldLoader(false), 250);
+    return () => clearTimeout(t);
+  }, [holdLoader, isSessionBusy]);
+  const showSessionLoader = isSessionBusy || holdLoader;
 
   const clearAllAttachments = () => {
     attachedDocs.forEach(doc => removeAttachment(doc.id));
@@ -297,15 +312,15 @@ export const LegalChatPage = () => {
         <Header />
         
         <main className="flex-1 relative flex overflow-hidden w-full">
-          <AnimatePresence mode="wait" initial={false}>
+          <AnimatePresence initial={false}>
             {sessionType === 'seleziona' && (
               <motion.div 
                 key="seleziona" 
                 className="w-full h-full" 
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.24, ease: "easeOut" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, position: "absolute", inset: 0, pointerEvents: "none" }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
               >
                 <SelectionScreen 
                   startTempChat={startTempChat}
@@ -318,33 +333,26 @@ export const LegalChatPage = () => {
               <motion.div 
                 key="chat" 
                 className="w-full h-full" 
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.24, ease: "easeOut" }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, position: "absolute", inset: 0, pointerEvents: "none" }}
+                transition={{ duration: 0.15, ease: "easeOut" }}
               >
                 {renderChatInterface()}
               </motion.div>
             )}
           </AnimatePresence>
           <AnimatePresence>
-            {isLoadingSession && (sessionType === 'fascicolo' || sessionType === 'temporanea') && (
+            {showSessionLoader && (
               <motion.div
                 key="session-loading"
-                role="status"
-                aria-live="polite"
-                className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-neutral-50/95 text-neutral-500 backdrop-blur-sm dark:bg-neutral-950/95 dark:text-neutral-400"
-                initial={{ opacity: 0 }}
+                data-testid="session-loading-overlay"
+                className="absolute inset-0 z-30 flex"
+                initial={false}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
               >
-                <Loader2 size={28} className="animate-spin text-[#e0a32e]" aria-hidden="true" />
-                <span className="text-xs font-semibold uppercase tracking-widest">
-                  {sessionType === 'fascicolo'
-                    ? "Caricamento fascicolo..."
-                    : "Caricamento conversazione..."}
-                </span>
               </motion.div>
             )}
           </AnimatePresence>

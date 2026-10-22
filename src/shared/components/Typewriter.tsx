@@ -9,7 +9,7 @@ interface TypewriterProps {
   onComplete?: () => void;
 }
 
-export const Typewriter: React.FC<TypewriterProps> = ({ 
+const TypewriterBase: React.FC<TypewriterProps> = ({ 
   text, 
   speed = 50, 
   animate = true,
@@ -92,3 +92,13 @@ export const Typewriter: React.FC<TypewriterProps> = ({
     </div>
   );
 };
+
+// onComplete è letto via ref, quindi può essere ignorato nel confronto: evita di rifare il parsing markdown a ogni render del padre
+export const Typewriter = React.memo(
+  TypewriterBase,
+  (prev, next) =>
+    prev.text === next.text &&
+    prev.speed === next.speed &&
+    prev.animate === next.animate &&
+    prev.isStreaming === next.isStreaming
+);

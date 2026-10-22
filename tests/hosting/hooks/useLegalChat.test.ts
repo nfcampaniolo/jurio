@@ -275,7 +275,7 @@ describe("useLegalChat Orchestrator Suite", () => {
 
       const { result } = renderHook(() => useLegalChat());
 
-      await waitFor(() => expect(mockFetchFascicoloData).toHaveBeenCalledWith("fsc-200"));
+      await waitFor(() => expect(mockFetchFascicoloData).toHaveBeenCalledWith("fsc-200", null));
       expect(result.current.isLoadingSession).toBe(true);
 
       await act(async () => {
@@ -325,7 +325,7 @@ describe("useLegalChat Orchestrator Suite", () => {
       await waitFor(() => {
         expect(result.current.isLoadingSession).toBe(false);
       });
-      expect(mockFetchFascicoloData).not.toHaveBeenCalled();
+      expect(result.current.messages).toEqual([]);
     });
 
     test("riusa i messaggi in cache quando si cambia thread nello stesso fascicolo", async () => {

@@ -60,4 +60,5 @@ export interface DBThreadPayload {
   threadId: string;
   threadData: DBThreadData;
   messages: Message[];
+  messagesLoaded?: boolean;
 }

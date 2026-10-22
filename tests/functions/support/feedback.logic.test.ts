@@ -58,7 +58,7 @@ describe("feedback endpoint", () => {
     mocks.userGet.mockResolvedValue({ exists: true });
     mocks.validate.mockResolvedValue(undefined);
     mocks.add.mockResolvedValue(undefined);
-    mocks.getAll.mockResolvedValue([{ exists: true, ref: { id: "a$" } }, { exists: false, ref: { id: "missing$" } }]);
+    mocks.getAll.mockResolvedValue([{ exists: true, ref: { id: "sentence-a" } }, { exists: false, ref: { id: "missing" } }]);
     mocks.commit.mockResolvedValue(undefined);
   });
 
@@ -143,7 +143,7 @@ describe("feedback endpoint", () => {
 
     // Act
     await executeSubmitFeedback({
-      body: { isThumbsUp: true, ids: ["https://external.test/a$", "not-valid", "with/slash$"] },
+      body: { isThumbsUp: true, ids: ["https://external.test/a$", "not/valid", "with/slash$"] },
     } as never, ignored as never);
 
     // Assert
@@ -156,12 +156,12 @@ describe("feedback endpoint", () => {
     const res = response();
 
     // Act
-    await executeSubmitFeedback({ body: { isThumbsUp: true, ids: ["a$", "missing$"] } } as never, res as never);
+    await executeSubmitFeedback({ body: { isThumbsUp: true, ids: ["sentence-a", "missing"] } } as never, res as never);
 
     // Assert
-    expect(mocks.getAll).toHaveBeenCalledWith({ id: "a$" }, { id: "missing$" });
+    expect(mocks.getAll).toHaveBeenCalledWith({ id: "sentence-a" }, { id: "missing" });
     expect(mocks.batchUpdate).toHaveBeenCalledOnce();
-    expect(mocks.batchUpdate).toHaveBeenCalledWith({ id: "a$" }, { feedbacks: { increment: 1 } });
+    expect(mocks.batchUpdate).toHaveBeenCalledWith({ id: "sentence-a" }, { feedbacks: { increment: 1 } });
     expect(mocks.increment).toHaveBeenCalledWith(1);
     expect(mocks.commit).toHaveBeenCalledOnce();
     expect(res.json).toHaveBeenCalledWith({
@@ -171,11 +171,11 @@ describe("feedback endpoint", () => {
 
   it("does not commit a positive-feedback batch if every referenced document is missing", async () => {
     // Arrange
-    mocks.getAll.mockResolvedValueOnce([{ exists: false, ref: { id: "missing$" } }]);
+    mocks.getAll.mockResolvedValueOnce([{ exists: false, ref: { id: "missing" } }]);
     const res = response();
 
     // Act
-    await executeSubmitFeedback({ body: { isThumbsUp: true, ids: ["missing$"] } } as never, res as never);
+    await executeSubmitFeedback({ body: { isThumbsUp: true, ids: ["missing"] } } as never, res as never);
 
     // Assert
     expect(mocks.batchUpdate).not.toHaveBeenCalled();

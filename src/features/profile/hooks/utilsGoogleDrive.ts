@@ -35,7 +35,14 @@ export const loadScript = (src: string, id: string): Promise<void> => {
     const existing = document.getElementById(id);
 
     if (existing) {
-      resolve();
+      if (existing.dataset.loaded === "true") {
+        resolve();
+        return;
+      }
+      existing.addEventListener("load", () => resolve());
+      existing.addEventListener("error", () =>
+        reject(new Error(`Impossibile caricare lo script Google: ${src}`))
+      );
       return;
     }
 
@@ -47,6 +54,7 @@ export const loadScript = (src: string, id: string): Promise<void> => {
     script.defer = true;
 
     script.onload = () => {
+      script.dataset.loaded = "true";
       resolve();
     };
 

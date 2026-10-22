@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Busboy from "busboy";
 import { SpeechClient } from "@google-cloud/speech";
-import { withSecureApiEndpoint, validateUserPlanAndLimits, requireAppCheck, requireUidFromAuthHeader } from "../_utils";
+import { corsHandlerDomain, withSecureApiEndpoint, validateUserPlanAndLimits, requireAppCheck, requireUidFromAuthHeader } from "../_utils";
 import { getDb, getAdminStorage } from "../_deps";
 import { logSafeError } from "../_logging";
 // @ts-ignore
@@ -157,7 +157,15 @@ export async function executeSpeechToTextAgent(req: Request, res: Response): Pro
 }
 
 export async function executeExtractDocumentText(req: Request, res: Response): Promise<any> {
-  // 1. Validazione Metodo HTTP e CORS gestiti a monte nell'entry point o tramite wrapper
+  return corsHandlerDomain(req, res, () => extractDocumentTextHandler(req, res));
+}
+
+async function extractDocumentTextHandler(req: Request, res: Response): Promise<void> {
+  // 1. Validazione Metodo HTTP (il preflight CORS è gestito dal wrapper corsHandlerDomain)
+  if (req.method === "OPTIONS") {
+    res.status(204).end();
+    return;
+  }
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method Not Allowed" });
     return;

@@ -639,6 +639,23 @@
        RENDER
        ===================================================== */
 
+            const ORDINALI_SEZIONE = ["PRIMA", "SECONDA", "TERZA", "QUARTA", "QUINTA", "SESTA", "SETTIMA", "OTTAVA", "NONA", "DECIMA"];
+
+            /* Ordine: sezioni ordinali (Prima, Seconda...), poi Feriale, poi Sezioni Unite, poi le altre in ordine alfabetico */
+            const sezioneRank = (nome) => {
+                const n = String(nome).trim().toUpperCase();
+                const idx = ORDINALI_SEZIONE.findIndex((o) => n.startsWith(`${o} `));
+                if (idx !== -1) return idx;
+                if (n.includes("FERIALE")) return 100;
+                if (n.includes("UNITE")) return 101;
+                return 99;
+            };
+
+            const sortSezioni = (obj) =>
+                Object.entries(obj || {}).sort(
+                    (a, b) => sezioneRank(a[0]) - sezioneRank(b[0]) || a[0].localeCompare(b[0], "it")
+                );
+
             const renderUI = (dataConfig) => {
                 /* -----------------------------------------------
          HERO
@@ -791,7 +808,7 @@
                 if (listCivile) {
                     listCivile.innerHTML = "";
 
-                    for (const [sezione, valore] of Object.entries(dataConfig.per_sezione_cassazione.civili)) {
+                    for (const [sezione, valore] of sortSezioni(dataConfig.per_sezione_cassazione.civili)) {
                         listCivile.insertAdjacentHTML(
                             "beforeend",
                             `
@@ -821,7 +838,7 @@
                 if (listPenale) {
                     listPenale.innerHTML = "";
 
-                    for (const [sezione, valore] of Object.entries(dataConfig.per_sezione_cassazione.penali)) {
+                    for (const [sezione, valore] of sortSezioni(dataConfig.per_sezione_cassazione.penali)) {
                         listPenale.insertAdjacentHTML(
                             "beforeend",
                             `

@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/context/useAuth";
 import { fetchWithSecurity } from "@/config/apiClient";
@@ -20,6 +20,14 @@ export const useGoogleDrive = () => {
   const googleTokenRef = useRef<string | null>(null);
   const DOWNLOAD_CLOUD_ENDPOINT = getCloudUrl().DOWNLOAD_CLOUD_ENDPOINT;
   const isAuthenticated = Boolean(user);
+
+  // Precarica le librerie Google così il popup si apre subito al click
+  useEffect(() => {
+    if (!user) return;
+    loadGoogleLibraries().catch((error) => {
+      console.error("Precaricamento librerie Google fallito:", error);
+    });
+  }, [user]);
 
   const getGoogleAccessToken = async (): Promise<string | null> => {
     const { clientId } = getGoogleConfig();

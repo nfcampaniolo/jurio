@@ -38,6 +38,7 @@ vi.mock("@functions/_deps", () => ({
   getAdminStorage: mocks.getAdminStorage,
 }));
 vi.mock("@functions/_utils", () => ({
+  corsHandlerDomain: vi.fn((_req: unknown, _res: unknown, handler: () => Promise<void>) => handler()),
   withSecureApiEndpoint: mocks.secureEndpoint,
   validateUserPlanAndLimits: mocks.validate,
   requireAppCheck: mocks.requireAppCheck,
@@ -75,7 +76,7 @@ function audioRequest(contentType = "audio/mpeg", filename = "recording.mp3", bo
   };
 }
 
-function extractRequest(storagePath = "docs/contract.pdf", token = `${"a".repeat(64)}$`) {
+function extractRequest(storagePath = "docs/contract.pdf", token = "a".repeat(64)) {
   return {
     method: "POST",
     body: { storagePath },
