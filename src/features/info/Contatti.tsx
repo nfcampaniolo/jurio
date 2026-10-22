@@ -24,7 +24,7 @@ export default function Supporto() {
 
       <Header />
 
-      <main className="mx-auto w-full max-w-7xl px-5 py-12 sm:py-20">
+      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-7xl px-5 py-12 sm:py-20">
         <motion.div
           className="grid gap-12 lg:grid-cols-12 lg:gap-16"
           initial={reduceMotion ? false : { opacity: 0, y: 10 }}

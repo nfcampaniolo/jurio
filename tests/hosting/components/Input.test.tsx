@@ -4,8 +4,8 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { Input } from "@/shared/components/Input"; // <-- adegua il path se necessario
 
 describe("Input Component Suite", () => {
-  test("renderizza un elemento input con le classi di stile base", () => {
-    render(<Input placeholder="Inserisci testo..." />);
+  test("renderizza un elemento input con focus visibile e classi personalizzate", () => {
+    render(<Input placeholder="Inserisci testo..." className="text-sm" />);
 
     const inputElement = screen.getByPlaceholderText("Inserisci testo...");
     expect(inputElement).toBeInTheDocument();
@@ -16,9 +16,10 @@ describe("Input Component Suite", () => {
       "py-3",
       "rounded-xl",
       "border",
-      "focus:outline-none",
-      "focus:ring-2",
-      "focus:ring-yellow-500"
+      "focus-visible:outline-2",
+      "focus-visible:outline-offset-2",
+      "focus-visible:outline-(--color-primary)",
+      "text-sm"
     );
   });
 

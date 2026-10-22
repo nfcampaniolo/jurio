@@ -6,8 +6,8 @@
     --color-surface: #ffffff;
     --color-text: #1a1d21;
     /* Grigio istituzionale */
-    --color-primary: #e0a32e;
-    --color-primary-hover: #f0b541;
+    --color-primary: #8a5c16;
+    --color-primary-hover: #70470f;
     /* Neutri */
     --color-border: #d6d9de;
     --color-muted: #5f6672;
@@ -76,7 +76,7 @@ a { color: inherit; }
 img, video { max-width: 100%; }
 img { display: block; }
 button, a { -webkit-tap-highlight-color: transparent; }
-:focus-visible { outline: 3px solid rgba(154, 107, 37, .55); outline-offset: 4px; }
+:focus-visible { outline: 3px solid var(--color-primary); outline-offset: 4px; }
 ::selection { background: rgba(154, 107, 37, .18); }
 
 .skip-link {

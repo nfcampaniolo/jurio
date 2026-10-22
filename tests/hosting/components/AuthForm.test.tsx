@@ -8,20 +8,22 @@ import { render, screen, fireEvent } from "@/test/test-utils";
 vi.mock("@/shared/components/Input", () => ({
   Input: ({
     type,
+    id,
     placeholder,
     value,
     onChange,
     required,
   }: {
     type: string;
+    id?: string;
     placeholder?: string;
     value: string;
     onChange: (e: ChangeEvent<HTMLInputElement>) => void;
     required?: boolean;
   }) => (
     <input
-      aria-label={placeholder}
       type={type}
+      id={id}
       placeholder={placeholder}
       value={value}
       onChange={onChange}
@@ -162,7 +164,7 @@ describe("AuthForm", () => {
   test("typing: onChange email/password chiama setEmail/setPassword", () => {
     render(<AuthForm initialMode="login" />);
 
-    fireEvent.change(screen.getByLabelText("Email"), { target: { value: "a@b.com" } });
+    fireEvent.change(screen.getByLabelText("Indirizzo email"), { target: { value: "a@b.com" } });
     expect(setEmail).toHaveBeenCalledWith("a@b.com");
 
     fireEvent.change(screen.getByLabelText("Password"), { target: { value: "secret" } });
@@ -223,7 +225,7 @@ describe("AuthForm", () => {
 
     render(<AuthForm initialMode="login" />);
 
-    expect(screen.getByText("Credenziali non valide")).toBeInTheDocument();
+    expect(screen.getByRole("alert")).toHaveTextContent("Credenziali non valide");
   });
 
   test("loading: bottone submit mostra 'Elaborazione...' e reset password è disabled", () => {

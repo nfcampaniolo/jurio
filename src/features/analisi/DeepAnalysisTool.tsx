@@ -155,7 +155,7 @@ export const ApprofondimentoGiurisprudenziale: React.FC = () => {
           />
         </div>
 
-        <main className="flex-1 flex flex-col min-w-0 bg-(--color-bg) relative overflow-hidden print:overflow-visible print:h-auto print:block">
+        <main id="main-content" tabIndex={-1} className="flex-1 flex flex-col min-w-0 bg-(--color-bg) relative overflow-hidden print:overflow-visible print:h-auto print:block">
           <button 
             onClick={() => setSidebarAperta(!sidebarAperta)}
             className="absolute top-4 left-4 z-30 p-1.5 rounded-md bg-(--color-surface) border border-(--color-border) text-(--color-muted) hover:text-(--color-text) cursor-pointer print:hidden shadow-xs"

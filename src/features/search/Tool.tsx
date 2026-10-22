@@ -104,7 +104,7 @@ export const Tool = () => {
       {seoData}
       <Header />
       
-      <main className="px-4 min-h-[calc(100vh-200px)] flex flex-col bg-(--color-bg) transition-colors duration-300">
+      <main id="main-content" tabIndex={-1} className="px-4 min-h-[calc(100vh-200px)] flex flex-col bg-(--color-bg) transition-colors duration-300">
         <h1 className="sr-only">Ricerca Giurisprudenziale Avanzata con Intelligenza Artificiale</h1>
 
         {authLoading ? (

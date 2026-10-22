@@ -311,7 +311,7 @@ export const LegalChatPage = () => {
       <div className="flex flex-col h-dvh w-full bg-white dark:bg-neutral-950 font-sans overflow-hidden">
         <Header />
         
-        <main className="flex-1 relative flex overflow-hidden w-full">
+        <main id="main-content" tabIndex={-1} className="flex-1 relative flex overflow-hidden w-full">
           <AnimatePresence initial={false}>
             {sessionType === 'seleziona' && (
               <motion.div 

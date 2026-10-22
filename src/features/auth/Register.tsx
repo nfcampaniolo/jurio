@@ -84,10 +84,12 @@ export const Register: React.FC = () => {
         <div className="hidden lg:block mt-2 flex-1 max-h-[35vh] rounded-lg overflow-hidden border border-(--color-border) shadow-(--shadow-soft) bg-(--color-surface)">
           <video
             src="/demo2.mp4"
-            autoPlay
-            loop
+            autoPlay={!shouldReduceMotion}
+            loop={!shouldReduceMotion}
             muted
             playsInline
+            controls
+            preload="metadata"
             className="w-full h-full object-cover"
             aria-label="Video dimostrativo della piattaforma"
           />

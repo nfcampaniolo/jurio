@@ -15,8 +15,8 @@
   --color-text: #1a1d21;
 
   /* Grigio istituzionale */
-  --color-primary: #e0a32e;
-  --color-primary-hover: #f0b541;
+  --color-primary: #8a5c16;
+  --color-primary-hover: #70470f;
 
   /* Neutri */
   --color-border: #d6d9de;
@@ -75,7 +75,7 @@ body {
 /* Focus accessibile */
 :focus-visible {
   outline: 3px solid var(--color-primary);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 h1 em { color: var(--color-primary); font-style: italic; }
@@ -149,17 +149,8 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
-@layer base {
-  textarea:focus, 
-  input:focus {
-    outline: none !important;
-    box-shadow: none !important;
-  }
-}
-
 input,
 textarea,
 select {
   font-size: 16px;
 }
-

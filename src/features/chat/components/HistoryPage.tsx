@@ -122,7 +122,7 @@ export const HistoryPage = () => {
       <div className="flex flex-col min-h-dvh w-full bg-(--color-surface) font-sans">
         <Header />
         
-        <main className="flex-1 relative flex flex-col">
+        <main id="main-content" tabIndex={-1} className="flex-1 relative flex flex-col">
           {isLoadingData ? (
              <div className="flex flex-col items-center justify-center w-full h-[50vh] text-(--color-muted) gap-3">
                <Loader2 size={32} className="animate-spin text-(--color-text)" />

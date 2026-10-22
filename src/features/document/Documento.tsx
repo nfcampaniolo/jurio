@@ -67,7 +67,7 @@ export const Documento = () => {
       {seoData}
       <Header />
       
-      <main className="px-2 min-h-[calc(100vh-200px)] flex flex-col">
+      <main id="main-content" tabIndex={-1} className="px-2 min-h-[calc(100vh-200px)] flex flex-col">
         <h1 className="sr-only">Dettaglio e Analisi Documento Giurisprudenziale</h1>
 
         {isLoading ? (

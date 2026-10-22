@@ -57,7 +57,9 @@ export function AuthForm({ initialMode }: Props) {
 
       <div className="space-y-4 mt-2">
         {/* Campo Email */}
+        <label htmlFor="auth-email" className="sr-only">Indirizzo email</label>
         <Input
+          id="auth-email"
           type="email"
           placeholder="Email"
           value={email}
@@ -67,7 +69,9 @@ export function AuthForm({ initialMode }: Props) {
 
         {/* Campo Password */}
         <div className="relative">
+          <label htmlFor="auth-password" className="sr-only">Password</label>
           <Input
+            id="auth-password"
             type={showPassword ? "text" : "password"}
             placeholder="Password"
             value={password}
@@ -112,7 +116,7 @@ export function AuthForm({ initialMode }: Props) {
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            <div className="border-l-2 border-red-500/50 bg-red-500/5 px-3 py-2 mt-1">
+            <div role="alert" className="border-l-2 border-red-500/50 bg-red-500/5 px-3 py-2 mt-1">
               <p className="text-sm text-red-600 dark:text-red-400 font-medium leading-snug">
                 {error}
               </p>

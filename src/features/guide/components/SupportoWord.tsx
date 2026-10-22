@@ -44,7 +44,7 @@ export default function SupportoWord() {
 
       <Header />
 
-      <main className="mx-auto w-full max-w-4xl px-6 py-16 sm:py-24 text-(--color-text)">
+      <main id="main-content" tabIndex={-1} className="mx-auto w-full max-w-4xl px-6 py-16 sm:py-24 text-(--color-text)">
         <motion.article
           initial={reduceMotion ? false : { opacity: 0, y: 15 }}
           animate={reduceMotion ? false : { opacity: 1, y: 0 }}

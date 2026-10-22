@@ -130,28 +130,28 @@ export const Header: React.FC = () => {
   }, [isOpen]);
 
   return (
-    <header
-      className="relative border-b border-(--color-border) bg-(--color-surface) w-full z-50 px-2"
-      style={{ backdropFilter: "blur(10px)" }}
-    >
+    <>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-(--color-text) focus:px-4 focus:py-3 focus:text-(--color-bg) focus:outline-2 focus:outline-offset-2 focus:outline-(--color-primary)"
+      >
+        Salta al contenuto principale
+      </a>
+      <header
+        className="relative border-b border-(--color-border) bg-(--color-surface) w-full z-50 px-2"
+        style={{ backdropFilter: "blur(10px)" }}
+      >
       <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
         {/* Logo formale */}
-        <div
-          role="button"
-          tabIndex={0}
+        <Link
+          to="/"
           onClick={closeMenu}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              closeMenu();
-            }
-          }}
           className="text-2xl md:text-3xl lg:text-4xl font-serif font-bold outline-none cursor-pointer focus-visible:ring-1 focus-visible:ring-(--color-text) rounded-sm"
           style={{ fontFamily: 'var(--font-serif)', textDecoration: 'none', color: 'inherit' }}
           aria-label="Vai alla home"
         >
           Jurio
-        </div>
+        </Link>
         {/* Desktop nav */}
         <nav className="hidden xl:flex items-center gap-8" aria-label="Navigazione principale">
           {navItems.map((item) => (
@@ -214,7 +214,7 @@ export const Header: React.FC = () => {
           className="xl:hidden inline-flex items-center justify-center p-2 rounded-md text-(--color-text) hover:bg-(--color-bg) transition-colors outline-none"
           onClick={toggleMenu}
           aria-label={isOpen ? "Chiudi menu" : "Apri menu"}
-          aria-controls={menuId}
+          aria-controls={isOpen ? menuId : undefined}
           aria-expanded={isOpen}
         >
           {isOpen ? <FiX size={24} aria-hidden="true" focusable={false} /> : <FiMenu size={24} aria-hidden="true" focusable={false} />}
@@ -286,6 +286,7 @@ export const Header: React.FC = () => {
           </motion.nav>
         )}
       </AnimatePresence>
-    </header>
+      </header>
+    </>
   );
 };
