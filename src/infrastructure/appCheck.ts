@@ -48,10 +48,7 @@ export function initializeFirebaseAppCheck(): AppCheck | undefined {
         }
       );
 
-      console.info(
-        '🛡️ App Check DEBUG token configurato:',
-        debugToken
-      );
+      console.info('🛡️ App Check DEBUG token configurato.');
     }
   }
 

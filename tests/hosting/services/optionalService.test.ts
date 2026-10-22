@@ -31,11 +31,13 @@ const {
   mockFirebaseApp,
   mockGetAnalytics,
   mockIsSupported,
+  mockSetAnalyticsCollectionEnabled,
   mockGetPerformance,
 } = vi.hoisted(() => ({
   mockFirebaseApp: { name: "[FIREBASE_APP]" },
   mockGetAnalytics: vi.fn(),
   mockIsSupported: vi.fn(),
+  mockSetAnalyticsCollectionEnabled: vi.fn(),
   mockGetPerformance: vi.fn(),
 }));
 
@@ -49,6 +51,7 @@ vi.mock("firebase/analytics", () => ({
   __esModule: true,
   getAnalytics: mockGetAnalytics,
   isSupported: mockIsSupported,
+  setAnalyticsCollectionEnabled: mockSetAnalyticsCollectionEnabled,
 }));
 
 vi.mock("firebase/performance", () => ({
@@ -69,6 +72,8 @@ describe("Optional Services Suite (Analytics & Performance - Iubenda)", () => {
     mockIsSupported.mockResolvedValue(true);
     mockGetAnalytics.mockReturnValue(fakeAnalytics);
     mockGetPerformance.mockReturnValue(fakePerformance);
+    fakePerformance.instrumentationEnabled = false;
+    fakePerformance.dataCollectionEnabled = false;
 
     delete window._iub;
   });
@@ -106,20 +111,25 @@ describe("Optional Services Suite (Analytics & Performance - Iubenda)", () => {
   /* FIREBASE PERFORMANCE INITIALIZATION                                        */
   /* -------------------------------------------------------------------------- */
   describe("Inizializzazione Firebase Performance", () => {
-    test("inizializza Performance immediatamente e popola il getter getPerf()", async () => {
+    test("non inizializza Performance prima del consenso", async () => {
       const { initializeOptionalServices, getPerf } = await import(
         "@/infrastructure/optionalService"
       );
 
       await initializeOptionalServices();
 
-      await vi.waitFor(() => {
-        expect(mockGetPerformance).toHaveBeenCalledWith(mockFirebaseApp);
-        expect(getPerf()).toBe(fakePerformance);
-      });
+      expect(mockGetPerformance).not.toHaveBeenCalled();
+      expect(getPerf()).toBeNull();
     });
 
-    test("intercetta errori in initPerformance e mantiene getPerf() a null", async () => {
+    test("intercetta errori in initPerformance dopo il consenso e mantiene getPerf() a null", async () => {
+      window._iub = {
+        cs: {
+          api: {
+            getPreferences: () => ({ purposes: { 4: true } }),
+          },
+        },
+      };
       mockGetPerformance.mockImplementationOnce(() => {
         throw new Error("Performance non supportato");
       });
@@ -137,6 +147,41 @@ describe("Optional Services Suite (Analytics & Performance - Iubenda)", () => {
         );
         expect(getPerf()).toBeNull();
       });
+    });
+
+    test("disabilita la raccolta Analytics e Performance quando il consenso viene revocato", async () => {
+      const { initializeOptionalServices, getAnalyticsInstance, getPerf } =
+        await import("@/infrastructure/optionalService");
+
+      await initializeOptionalServices();
+      const callback =
+        window._iub?.csConfiguration?.callback
+          ?.onPreferenceExpressedOrNotNeeded;
+
+      callback?.({ purposes: { 4: true } });
+
+      await vi.waitFor(() => {
+        expect(getAnalyticsInstance()).toBe(fakeAnalytics);
+        expect(getPerf()).toBe(fakePerformance);
+      });
+
+      expect(fakePerformance.dataCollectionEnabled).toBe(true);
+      expect(fakePerformance.instrumentationEnabled).toBe(true);
+      expect(mockSetAnalyticsCollectionEnabled).toHaveBeenLastCalledWith(
+        fakeAnalytics,
+        true
+      );
+
+      callback?.({ purposes: { 4: false } });
+
+      expect(getAnalyticsInstance()).toBeNull();
+      expect(getPerf()).toBeNull();
+      expect(fakePerformance.dataCollectionEnabled).toBe(false);
+      expect(fakePerformance.instrumentationEnabled).toBe(false);
+      expect(mockSetAnalyticsCollectionEnabled).toHaveBeenLastCalledWith(
+        fakeAnalytics,
+        false
+      );
     });
   });
 
@@ -182,7 +227,7 @@ describe("Optional Services Suite (Analytics & Performance - Iubenda)", () => {
       await initializeOptionalServices();
 
       await vi.waitFor(() => {
-        expect(mockGetPerformance).toHaveBeenCalled();
+        expect(mockGetPerformance).not.toHaveBeenCalled();
       });
 
       expect(mockIsSupported).not.toHaveBeenCalled();

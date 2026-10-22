@@ -1,30 +1,16 @@
 import {  generateWelcomeEmail, generateTrialEmail, generateRequestEmail } from "./html"; 
-import { getAdminAuth, getDb } from "../../_deps";
-import { dispatchMailAndNotification } from "../_helper"
+import { dispatchMailAndNotification, getAuthEmailAndName } from "../_helper"
 import { EnqueueEmailArgs, EnqueueEmailArgsContact } from "../_interfaces";
 
-const db = getDb();
-
 export async function enqueueWelcomeEmail({ uid }: EnqueueEmailArgs): Promise<void> {
-  let email: string | null = null;
-  try {
-    const userRecord = await getAdminAuth().getUser(uid);
-    email = userRecord.email ?? null;
-  } catch (e) {
-    console.warn("[WELCOME] cannot fetch auth email", { uid, err: e });
-    return;
-  }
-  if (!email) return;
-
-  const userSnap = await db.collection("users").doc(uid).get();
-  const data = userSnap.exists ? (userSnap.data() as any) : null;
-  const nome = typeof data?.name === "string" && data.name.trim() ? data.name.trim() : "utente";
+  const user = await getAuthEmailAndName(uid, "WELCOME");
+  if (!user) return;
 
   const subject = "Benvenuto su Jurio";
-  const html = generateWelcomeEmail(nome);
+  const html = generateWelcomeEmail(user.name);
 
   await dispatchMailAndNotification({
-    to: email,
+    to: user.email,
     subject,
     html,
     notifications: {
@@ -38,25 +24,14 @@ export async function enqueueWelcomeEmail({ uid }: EnqueueEmailArgs): Promise<vo
 }
 
 export async function enqueueTrialEmail({ uid }: EnqueueEmailArgs): Promise<void> {
-  let email: string | null = null;
-  try {
-    const userRecord = await getAdminAuth().getUser(uid);
-    email = userRecord.email ?? null;
-  } catch (e) {
-    console.warn("[TRIAL] cannot fetch auth email", { uid, err: e });
-    return;
-  }
-  if (!email) return;
-
-  const userSnap = await db.collection("users").doc(uid).get();
-  const data = userSnap.exists ? (userSnap.data() as any) : null;
-  const nome = typeof data?.name === "string" && data.name.trim() ? data.name.trim() : "utente";
+  const user = await getAuthEmailAndName(uid, "TRIAL");
+  if (!user) return;
 
   const subject = "Periodo di Prova Jurio";
-  const html = generateTrialEmail(nome);
+  const html = generateTrialEmail(user.name);
 
   await dispatchMailAndNotification({
-    to: email,
+    to: user.email,
     subject,
     html,
     notifications: {

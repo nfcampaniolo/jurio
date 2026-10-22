@@ -4,6 +4,7 @@ import { validateUserPlanAndLimits, withSecureApiEndpoint} from "../../_utils";
 import { getDb } from "../../_deps";
 import { promptBuilderFlow, enhancePromptFlow } from "./flow";
 import { PromptFieldInput, PromptAgentRequestBody, EnhancePromptRequestBody, EnhancePromptMessage } from "../_interfaces";
+import { logSafeError } from "../../_logging";
 
 
 const db = getDb();
@@ -69,7 +70,7 @@ export async function executePromptAgent(req: Request, res: Response): Promise<a
       }
 
       if (clientDisconnected) {
-        console.warn(`[JURIO-PROMPT] Client disconnesso prematuramente: ${uid}`);
+        console.warn("[JURIO-PROMPT] Client disconnesso prematuramente");
         return;
       }
 
@@ -104,7 +105,7 @@ export async function executePromptAgent(req: Request, res: Response): Promise<a
 
     } catch (streamErr) {
       const msg = streamErr instanceof Error ? streamErr.message : "Internal error";
-      console.error(`[JURIO-PROMPT] Errore durante lo streaming per UID ${uid}:`, msg);
+      logSafeError("PROMPT_STREAM_FAILED", msg);
 
       const clientErrorMessage = "Si è verificato un errore durante la stesura del prompt.";
 

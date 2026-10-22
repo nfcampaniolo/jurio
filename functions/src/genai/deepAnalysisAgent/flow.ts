@@ -5,6 +5,7 @@ import { validaFonti, extractResearchSources, extractKnownSourceIds } from "./_u
 import { DeepAnalysisConfigSchema, ResearchSource, ConceptMapSchema, ResearchOutputWithConceptMapSchema, InquadramentoSchema, MappaDialetticaSchema, ResearchMappingSchema, ReportSintesiSchema} from "./_schema";
 import { userFileSearch, internalDatabaseSearch, doctrineSearch, webSearch } from "../tools/index";
 import { reportDeepAnalysisProgress } from "./_progress";
+import { logSafeError } from "../../_logging";
 import {
   generateWithVertexRetry,
   VertexAiTemporarilyUnavailableError,
@@ -40,6 +41,28 @@ const ResearchQueryPlanSchema = z.object({
     .nullable(),
 });
 
+const normalizedDocsSchema = z
+  .array(
+    z.union([
+      z.string(),
+      z.object({
+        id: z.string(),
+      }),
+    ])
+  )
+  .optional()
+  .default([])
+  .transform((items) =>
+    Array.from(
+      new Set(
+        items
+          .map((item) => (typeof item === "string" ? item : item.id))
+          .map((id) => id.trim())
+          .filter(Boolean)
+      )
+    ).slice(0, 50)
+  );
+
 type ResearchQueryPlan = z.infer<typeof ResearchQueryPlanSchema>;
 type ExternalSearchName =
   | "internalDatabaseSearch"
@@ -57,6 +80,41 @@ type ExternalSearchRequest = Exclude<
 
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error ?? "errore sconosciuto");
+}
+
+async function generateResearchMapping(
+  systemPrompt: string,
+  userPrompt: string,
+  phase: string,
+  flowName: string,
+  failureMessage: string
+): Promise<z.infer<typeof ResearchMappingSchema> | undefined> {
+  const startedAt = Date.now();
+  try {
+    const response = await ai.generate({
+      messages: [
+        { role: "system", content: [{ text: systemPrompt }] },
+        { role: "user", content: [{ text: userPrompt }] },
+      ],
+      output: { schema: ResearchMappingSchema },
+    });
+    const rawMapping = response?.output
+      ? ResearchMappingSchema.parse(response.output)
+      : undefined;
+
+    console.info(
+      "[DeepAnalysisTiming]",
+      JSON.stringify({ phase, durationMs: Date.now() - startedAt })
+    );
+    return rawMapping;
+  } catch (error: unknown) {
+    console.error(
+      "[DeepAnalysisTiming]",
+      JSON.stringify({ phase, durationMs: Date.now() - startedAt, failed: true })
+    );
+    logSafeError("DEEP_ANALYSIS_MAPPING_FAILED", error);
+    throw new Error(`${failureMessage}: ${getErrorMessage(error)}`);
+  }
 }
 
 async function collectResearchSources(params: {
@@ -131,7 +189,7 @@ async function collectResearchSources(params: {
         "[DeepAnalysisTiming]",
         JSON.stringify({ phase: "query_planning", durationMs: Date.now() - planningStartedAt, failed: true })
       );
-      console.error("[DeepAnalysisResearch] Errore pianificazione query:", error);
+      logSafeError("DEEP_ANALYSIS_QUERY_PLANNING_FAILED", error);
       throw new Error(
         `Errore durante la pianificazione delle ricerche: ${
           error instanceof Error ? error.message : "errore sconosciuto"
@@ -261,7 +319,7 @@ async function collectResearchSources(params: {
             failed: true,
           })
         );
-        console.error(`[DeepAnalysisResearch] Errore tool ${search.name}:`, error);
+        logSafeError("DEEP_ANALYSIS_TOOL_FAILED", error);
         return {
           toolResponse: {
             name: search.name,
@@ -331,27 +389,7 @@ export const researchAnalysisFlow = ai.defineFlow(
     name: "researchAnalysisFlow",
     inputSchema: z.object({
       prompt: z.string().min(1).max(20_000),
-      docs: z
-        .array(
-          z.union([
-            z.string(),
-            z.object({
-              id: z.string(),
-            }),
-          ])
-        )
-        .optional()
-        .default([])
-        .transform((items) =>
-          Array.from(
-            new Set(
-              items
-                .map((item) => (typeof item === "string" ? item : item.id))
-                .map((id) => id.trim())
-                .filter(Boolean)
-            )
-          ).slice(0, 50)
-        ),
+      docs: normalizedDocsSchema,
       userId: z.string().min(1),
       config: DeepAnalysisConfigSchema.optional().default({}),
       sessionId: z.string().optional(),
@@ -378,48 +416,13 @@ export const researchAnalysisFlow = ai.defineFlow(
       allSources,
     });
 
-    let rawMapping: z.infer<typeof ResearchMappingSchema> | undefined;
-
-    const mappingStartedAt = Date.now();
-    try {
-      const mappingResponse = await ai.generate({
-        messages: [
-          {
-            role: "system",
-            content: [{ text: mappingSystemPrompt }],
-          },
-          {
-            role: "user",
-            content: [
-              {
-                text: "Genera l'inquadramento e la mappa dialettica in formato strutturato.",
-              },
-            ],
-          },
-        ],
-        output: {
-          schema: ResearchMappingSchema,
-        },
-      });
-      if (mappingResponse?.output) {
-        rawMapping = ResearchMappingSchema.parse(mappingResponse.output);
-      }
-      console.info(
-        "[DeepAnalysisTiming]",
-        JSON.stringify({ phase: "research_mapping", durationMs: Date.now() - mappingStartedAt })
-      );
-    } catch (err: unknown) {
-      console.error(
-        "[DeepAnalysisTiming]",
-        JSON.stringify({ phase: "research_mapping", durationMs: Date.now() - mappingStartedAt, failed: true })
-      );
-      console.error("[ResearchAnalysisFlow] Mapping error:", err);
-      throw new Error(
-        `Errore durante la generazione della mappa dialettica: ${
-          getErrorMessage(err)
-        }`
-      );
-    }
+    const rawMapping = await generateResearchMapping(
+      mappingSystemPrompt,
+      "Genera l'inquadramento e la mappa dialettica in formato strutturato.",
+      "research_mapping",
+      "ResearchAnalysisFlow",
+      "Errore durante la generazione della mappa dialettica"
+    );
 
     if (!rawMapping) {
       throw new Error("Output della mappa dialettica vuoto.");
@@ -482,27 +485,7 @@ export const refineResearchFlow = ai.defineFlow(
       currentInquadramento: InquadramentoSchema,
       currentMappaDialettica: MappaDialetticaSchema,
       currentMappaConcettuale: ConceptMapSchema.nullable().optional(),
-      docs: z
-        .array(
-          z.union([
-            z.string(),
-            z.object({
-              id: z.string(),
-            }),
-          ])
-        )
-        .optional()
-        .default([])
-        .transform((items) =>
-          Array.from(
-            new Set(
-              items
-                .map((item) => (typeof item === "string" ? item : item.id))
-                .map((id) => id.trim())
-                .filter(Boolean)
-            )
-          ).slice(0, 50)
-        ),
+      docs: normalizedDocsSchema,
       userId: z.string().min(1),
       config: DeepAnalysisConfigSchema.optional().default({}),
       sessionId: z.string().optional(),
@@ -551,52 +534,17 @@ export const refineResearchFlow = ai.defineFlow(
       `Integro ${newSources.length} nuove fonti nella mappa dialettica.`
     );
 
-    let rawMapping: z.infer<typeof ResearchMappingSchema> | undefined;
-
-    const mappingStartedAt = Date.now();
-    try {
-      const mappingResponse = await ai.generate({
-        messages: [
-          {
-            role: "system",
-            content: [{ text: mappingSystemPrompt }],
-          },
-          {
-            role: "user",
-            content: [
-              {
-                text: JSON.stringify({
-                  currentInquadramento,
-                  currentMappaDialettica,
-                  nuoveFonti: newSources,
-                }),
-              },
-            ],
-          },
-        ],
-        output: {
-          schema: ResearchMappingSchema,
-        },
-      });
-      if (mappingResponse?.output) {
-        rawMapping = ResearchMappingSchema.parse(mappingResponse.output);
-      }
-      console.info(
-        "[DeepAnalysisTiming]",
-        JSON.stringify({ phase: "refine_mapping", durationMs: Date.now() - mappingStartedAt })
-      );
-    } catch (err: unknown) {
-      console.error(
-        "[DeepAnalysisTiming]",
-        JSON.stringify({ phase: "refine_mapping", durationMs: Date.now() - mappingStartedAt, failed: true })
-      );
-      console.error("[RefineResearchFlow] Mapping error:", err);
-      throw new Error(
-        `Errore durante l'aggiornamento della mappa dialettica: ${
-          getErrorMessage(err)
-        }`
-      );
-    }
+    const rawMapping = await generateResearchMapping(
+      mappingSystemPrompt,
+      JSON.stringify({
+        currentInquadramento,
+        currentMappaDialettica,
+        nuoveFonti: newSources,
+      }),
+      "refine_mapping",
+      "RefineResearchFlow",
+      "Errore durante l'aggiornamento della mappa dialettica"
+    );
 
     if (!rawMapping) {
       throw new Error("Output della mappa dialettica vuoto.");
@@ -819,7 +767,7 @@ export const generateSynthesisReportFlow = ai.defineFlow(
 
       return ReportSintesiSchema.parse(response.output);
     } catch (err: unknown) {
-      console.error("[GenerateSynthesisReportFlow] errore:", err);
+      logSafeError("DEEP_ANALYSIS_SYNTHESIS_FAILED", err);
       if (err instanceof VertexAiTemporarilyUnavailableError) {
         throw err;
       }

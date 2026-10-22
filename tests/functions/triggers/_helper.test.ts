@@ -49,7 +49,7 @@ describe("applyTeamVisibility", () => {
     await applyTeamVisibility(docRef as never, {});
 
     // Assert
-    expect(warn).toHaveBeenCalledWith("Campo utente 'user' non trovato nel doc document-1");
+    expect(warn).toHaveBeenCalledWith("Campo utente non trovato nel documento");
     expect(mocks.getDb).not.toHaveBeenCalled();
     expect(mocks.update).not.toHaveBeenCalled();
     warn.mockRestore();
@@ -116,7 +116,7 @@ describe("applyTeamVisibility", () => {
     await expect(applyTeamVisibility(docRef as never, { user: "user-1" })).resolves.toBeUndefined();
 
     // Assert
-    expect(error).toHaveBeenCalledWith("Errore in applyTeamVisibility per docs/document-1:", failure);
+    expect(error).toHaveBeenCalledWith("TEAM_VISIBILITY_UPDATE_FAILED", { errorType: "Error" });
     expect(mocks.update).not.toHaveBeenCalled();
     log.mockRestore();
     error.mockRestore();

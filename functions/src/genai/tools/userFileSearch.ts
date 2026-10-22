@@ -3,6 +3,7 @@ import { ai, CFG } from "../_config";
 import { safeIncrementRagCounter, createResearchEmbedding } from "./_helper";
 import { getSafeLimit, normalizeQuery, getDistance, chunkArray } from "./_utils";
 import { getDb } from "../../_deps";
+import { logSafeError } from "../../_logging";
 
 const db = getDb();
 
@@ -215,7 +216,7 @@ export const userFileSearch = ai.defineTool(
         sourceType: "document",
       }));
     } catch (error) {
-      console.error("[Tool userFileSearch]", error);
+      logSafeError("USER_FILE_SEARCH_FAILED", error);
       return [
         {
           error:

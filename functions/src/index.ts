@@ -1,4 +1,5 @@
 import { onRequest } from "firebase-functions/v2/https";
+import { logSafeError } from "./_logging";
 import { setGlobalOptions } from "firebase-functions/v2/options";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler"; 
@@ -371,7 +372,7 @@ export const weeklySentencesStatsCron = onSchedule(
       const stats = await computeAndSaveWeeklyStats();
       console.log(`✅ Statistiche salvate con successo. Totale documenti: ${stats.totale_documenti}`);
     } catch (error) {
-      console.error("❌ Errore durante il calcolo delle statistiche settimanali:", error);
+      logSafeError("WEEKLY_SENTENCE_STATS_FAILED", error);
       throw error; 
     }
   }
@@ -391,7 +392,7 @@ export const monthlyUsageStatsCron = onSchedule(
       const stats = await computeAndSaveMonthlyUsage();
       console.log(`✅ Consolidamento usage completato. Utenti processati: ${stats.utenti_processati}`);
     } catch (error) {
-      console.error("❌ Errore durante il consolidamento degli usage mensili:", error);
+      logSafeError("MONTHLY_USAGE_CONSOLIDATION_FAILED", error);
       throw error;
     }
   }

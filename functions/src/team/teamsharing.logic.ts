@@ -1,21 +1,15 @@
 import { Request, Response } from "express";
-import { withSecureApiEndpoint, validateUserPlanAndLimits } from "../_utils";
+import { withSecureApiEndpoint } from "../_utils";
 import { getDb } from "../_deps";
 import { VerifyVoucherRequestBody, VerifyVoucherResponse, SendTeamInviteEmailRequestBody, SendTeamInviteEmailResponse } from "./_interfaces";
 import { enqueueVoucherEmail } from "../email/team/logic";
+import { validateTeamUser } from "./_utils";
 
 const db = getDb();
 
 export async function executeVerifyVoucher(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (uid): Promise<void> => {
-    // 1. Verifica utente nel DB e validazione unificata piano/limiti (feature "teams")
-    const userSnap = await db.collection("register").doc(uid).get();
-    if (!userSnap.exists) {
-      res.status(404).json({ error: "Not Found" });
-      return;
-    }
-
-    await validateUserPlanAndLimits(uid, "teams", userSnap);
+    if (!(await validateTeamUser(uid, res))) return;
 
     // 2. Sanitizzazione e Type-Safety Input
     const body = (req.body ?? {}) as VerifyVoucherRequestBody;
@@ -63,14 +57,7 @@ export async function executeVerifyVoucher(req: Request, res: Response): Promise
 
 export async function executeSendTeamInviteEmail(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (callerUid): Promise<void> => {
-    // 1. Verifica utente nel DB e validazione unificata piano/limiti (feature "teams")
-    const userSnap = await db.collection("register").doc(callerUid).get();
-    if (!userSnap.exists) {
-      res.status(404).json({ error: "Not Found" });
-      return;
-    }
-
-    await validateUserPlanAndLimits(callerUid, "teams", userSnap);
+    if (!(await validateTeamUser(callerUid, res))) return;
 
     // 2. Sanitizzazione e Type-Safety Input
     const body = (req.body ?? {}) as SendTeamInviteEmailRequestBody;

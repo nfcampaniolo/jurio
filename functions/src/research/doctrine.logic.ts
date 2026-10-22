@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { FieldValue } from "firebase-admin/firestore";
-import { getOpenAIClient, authenticateRequest, applyFirestoreFilters, safeTruncateText, parseLimitParam } from "./_helper";
+import { getOpenAIClient, authenticateRequest, applyFirestoreFilters, safeTruncateText, parseLimitParam, handleVectorSearchError } from "./_helper";
 import { corsHandlerDomain, validateUserPlanAndLimits } from "../_utils";
 import { getDb } from "../_deps";
 
@@ -81,13 +81,7 @@ export async function executeVectorSearchDoctrine(req: Request, res: Response): 
       return res.status(200).json({ results });
 
     } catch (err: any) {
-      if (err.message === "UNAUTHORIZED") return res.status(401).json({ error: "Unauthorized" });
-      if (err.message === "NOT_FOUND") return res.status(404).json({ error: "Not Found" });
-      if (err.message === "FORBIDDEN") return res.status(403).json({ error: "Forbidden", message: "Piano non abilitato." });
-      if (err.message === "TOO_MANY_REQUESTS") return res.status(429).json({ error: "Too Many Requests", details: "Limite di utilizzo superato." });
-
-      console.error("[JURIO-SEARCH-DOCTRINE] Errore non gestito:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return handleVectorSearchError(res, err, "JURIO-SEARCH-DOCTRINE");
     }
   });
 }

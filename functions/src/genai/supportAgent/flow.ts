@@ -8,6 +8,7 @@ import { z } from 'genkit';
 import { ai } from "../_config";
 import { searchUserManual, type ManualSearchResult } from "../tools/support";
 import { ChatMessageSchema, EstraiMetadatiInputSchema, EstraiMetadatiOutputSchema, GeminiFallbackInputSchema, GeminiFallbackOutputSchema } from "./_schema";
+import { logSafeError } from "../../_logging";
 
 export const legalAgentSupport = ai.defineFlow(
   {
@@ -215,7 +216,7 @@ export const estraiMetadatiFlow = ai.defineFlow(
       return extractionResult.output || { dati_nuovi_o_aggiornati: [] };
 
     } catch (error) {
-      console.error("[estraiMetadatiFlow] Errore durante l'estrazione LLM:", error);
+      logSafeError("SUPPORT_METADATA_LLM_EXTRACTION_FAILED", error);
       // In caso di errore, restituiamo un array vuoto per non bloccare il flusso dell'app
       return { dati_nuovi_o_aggiornati: [] };
     }

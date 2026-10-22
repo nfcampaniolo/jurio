@@ -19,114 +19,88 @@ export type JurioFeatureType =
   | "cloud_files"
   ;
 
+type FeatureLimit = { perMinute: number; perDay: number };
+type PlanLimit = readonly [perMinute: number, perDay: number];
+
+function planLimits(entries: Record<string, PlanLimit>): Record<string, FeatureLimit> {
+  return Object.fromEntries(
+    Object.entries(entries).map(([plan, [perMinute, perDay]]) => [
+      plan,
+      { perMinute, perDay },
+    ])
+  );
+}
+
+const standardResearchLimits = planLimits({
+  prova: [20, 100],
+  admin: [20, 200],
+  business: [20, 200],
+  business_m: [20, 200],
+  personale: [20, 100],
+  personale_m: [20, 100],
+});
+const standardBusinessLimits = planLimits({
+  prova: [20, 100],
+  admin: [20, 200],
+  business: [20, 200],
+  business_m: [20, 200],
+});
+const legalAgentLimits = planLimits({
+  prova: [5, 20],
+  admin: [120, 50],
+  business: [20, 50],
+  business_m: [20, 50],
+});
+
 export const JURIO_USAGE_LIMITS = {
-
-  research: {
-    prova: { perMinute: 20, perDay: 100 },
-    admin: { perMinute: 20, perDay: 200 },
-    business: { perMinute: 20, perDay: 200 },
-    business_m: { perMinute: 20, perDay: 200 },
-    personale: { perMinute: 20, perDay: 100 },
-    personale_m: { perMinute: 20, perDay: 100 },
-  },
-
-  web: {
-    prova: { perMinute: 10, perDay: 10 },
-    admin: { perMinute: 10, perDay: 20 },
-    business: { perMinute: 10, perDay: 20 },
-    business_m: { perMinute: 10, perDay: 20 },
-  },
-
-  extract_document: {
-    prova: { perMinute: 20, perDay: 100 },
-    admin: { perMinute: 20, perDay: 200 },
-    business: { perMinute: 20, perDay: 200 },
-    business_m: { perMinute: 20, perDay: 200 },
-    personale: { perMinute: 20, perDay: 100 },
-    personale_m: { perMinute: 20, perDay: 100 },
-  },
-  
-  deep_analysis: {
-    prova: { perMinute: 5, perDay: 15 },
-    admin: { perMinute: 5, perDay: 30 },
-    business: { perMinute: 5, perDay: 30 },
-    business_m: { perMinute: 5, perDay: 30 },
-  },
-
-  speech_to_text: {
-    prova: { perMinute: 5, perDay: 20 },
-    admin: { perMinute: 60, perDay: 200 },
-    business: { perMinute: 20, perDay: 200 },
-    business_m: { perMinute: 20, perDay: 200 },
-  },
-
-  reasoning: {
-    prova: { perMinute: 5, perDay: 20 },
-    admin: { perMinute: 120, perDay: 50 },
-    business: { perMinute: 20, perDay: 50 },
-    business_m: { perMinute: 20, perDay: 50 },
-  },
-
-  legal_agent: {
-    prova: { perMinute: 5, perDay: 20 },
-    admin: { perMinute: 120, perDay: 50 },
-    business: { perMinute: 20, perDay: 50 },
-    business_m: { perMinute: 20, perDay: 50 },
-  },
-
-  support_public: {
-    global: { perMinute: 5, perDay: 30 },
-  },
-
-  prompting: {
-    prova: { perMinute: 5, perDay: 20 },
-    admin: { perMinute: 20, perDay: 100 },
-    business: { perMinute: 20, perDay: 100 },
-    business_m: { perMinute: 20, perDay: 100 },
-  },
-
-  prompt_enhancer: {
-    prova: { perMinute: 5, perDay: 20 },
-    admin: { perMinute: 5, perDay: 20 },
-    business: { perMinute: 5, perDay: 20 },
-    business_m: { perMinute: 5, perDay: 20 },
-  },
-
-  admin: {
-    admin: { perMinute: 60, perDay: 500 },
-  },
-
-  feedback: {
-    global: { perMinute: 15, perDay: 100 },
-  },
-
-  embedding: {
-    prova: { perMinute: 30, perDay: 300 },
-    admin: { perMinute: 30, perDay: 300 },
-    business: { perMinute: 30, perDay: 300 },
-    business_m: { perMinute: 30, perDay: 300 },
-  },
-
-  register: {
-    global: { perMinute: 5, perDay: 20 },
-  },
-
-  stripe_checkout: {
-    global: { perMinute: 5, perDay: 100 },
-  },
-
-  apply_coupon: {
-    global: { perMinute: 10, perDay: 30 },
-  },
-
-  teams: {
-    global: { perMinute: 10, perDay: 50 },
-  },
-  
-  cloud_files: {
-    global: { perMinute: 10, perDay: 50 },
-  }
-
+  research: standardResearchLimits,
+  web: planLimits({
+    prova: [10, 10],
+    admin: [10, 20],
+    business: [10, 20],
+    business_m: [10, 20],
+  }),
+  extract_document: standardBusinessLimits,
+  deep_analysis: planLimits({
+    prova: [5, 15],
+    admin: [5, 30],
+    business: [5, 30],
+    business_m: [5, 30],
+  }),
+  speech_to_text: planLimits({
+    prova: [5, 20],
+    admin: [60, 200],
+    business: [20, 200],
+    business_m: [20, 200],
+  }),
+  reasoning: legalAgentLimits,
+  legal_agent: legalAgentLimits,
+  support_public: planLimits({ global: [5, 30] }),
+  prompting: planLimits({
+    prova: [5, 20],
+    admin: [20, 100],
+    business: [20, 100],
+    business_m: [20, 100],
+  }),
+  prompt_enhancer: planLimits({
+    prova: [5, 20],
+    admin: [5, 20],
+    business: [5, 20],
+    business_m: [5, 20],
+  }),
+  admin: planLimits({ admin: [60, 500] }),
+  feedback: planLimits({ global: [15, 100] }),
+  embedding: planLimits({
+    prova: [30, 300],
+    admin: [30, 300],
+    business: [30, 300],
+    business_m: [30, 300],
+  }),
+  register: planLimits({ global: [5, 20] }),
+  stripe_checkout: planLimits({ global: [5, 100] }),
+  apply_coupon: planLimits({ global: [10, 30] }),
+  teams: planLimits({ global: [10, 50] }),
+  cloud_files: planLimits({ global: [10, 50] }),
 } satisfies Record<
   JurioFeatureType,
   Partial<Record<string, { perMinute: number; perDay: number }>>

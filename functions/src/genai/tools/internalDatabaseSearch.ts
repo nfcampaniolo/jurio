@@ -4,6 +4,7 @@ import { getSafeLimit, normalizeQuery, passesUiFilters, isSafeHttpUrl, getDistan
 import { safeIncrementRagCounter, mapToObject, createResearchEmbedding} from "./_helper";
 import { makeRiferimentiNormativiKeys } from "../../_riferimenti_normativi";
 import { getDb } from "../../_deps";
+import { logSafeError } from "../../_logging";
 
 const db = getDb();
 const MAX_VECTOR_FETCH = Math.max(CFG.limits.vectorFetchLimit, 10);
@@ -243,7 +244,7 @@ export const internalDatabaseSearch = ai.defineTool(
 
       return results;
     } catch (error) {
-      console.error("[Tool internalDatabaseSearch]", error);
+      logSafeError("INTERNAL_DATABASE_SEARCH_FAILED", error);
       return [
         {
           error:
@@ -335,7 +336,7 @@ export const analyzeDistinguishingFacts = ai.defineTool(
 
       return results;
     } catch (error) {
-      console.error("[Tool analyzeDistinguishingFacts]", error);
+      logSafeError("DISTINGUISHING_FACTS_ANALYSIS_FAILED", error);
       return [
         {
           error:

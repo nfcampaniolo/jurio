@@ -4,6 +4,7 @@ import { validateUserPlanAndLimits } from "../../_utils";
 import { safeIncrementRagCounter, createResearchEmbedding } from "./_helper";
 import { getSafeLimit, normalizeQuery, getHostname, isSafeHttpUrl, getDistance, normalizePrecedenti, serializeFirestoreDate } from "./_utils";
 import { getDb } from "../../_deps";
+import { logSafeError } from "../../_logging";
 
 const db = getDb();
 
@@ -120,7 +121,7 @@ export const webSearch = ai.defineTool(
 
       return results;
     } catch (error) {
-      console.error("[Tool webSearch]", error);
+      logSafeError("WEB_SEARCH_FAILED", error);
       return [
         {
           error: "Servizio di ricerca web non raggiungibile.",
@@ -290,7 +291,7 @@ export const doctrineSearch = ai.defineTool(
 
       return results;
     } catch (error) {
-      console.error("[Tool doctrineSearch]", error);
+      logSafeError("DOCTRINE_SEARCH_FAILED", error);
       return [
         {
           error:

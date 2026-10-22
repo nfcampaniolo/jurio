@@ -2,6 +2,7 @@ import { Router } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpServer } from "../server";
 import { getDb } from "../../_deps";
+import { logSafeError } from "../../_logging";
 
 const db = getDb();
 export const mcpRouter = Router();
@@ -71,7 +72,7 @@ mcpRouter.use(async (req, res) => {
     await server.connect(transport);
     await transport.handleRequest(req, res, req.body);
   } catch (error) {
-    console.error("[JURIO-MCP] Errore durante l'autenticazione o esecuzione MCP:", error);
+    logSafeError("MCP_AUTHENTICATION_OR_EXECUTION_FAILED", error);
     if (!res.headersSent) res.status(500).json({ error: "MCP server error" });
     return;
   }

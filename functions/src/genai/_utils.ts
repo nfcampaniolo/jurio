@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
 import { getDb } from "../_deps";
 import { FieldValue } from "firebase-admin/firestore";
+import { logSafeError } from "../_logging";
 
 const db = getDb();
 
@@ -35,6 +36,6 @@ export async function incrementRagCounter(collectionName: string, documentIds: s
     await batch.commit();
     console.log(`[JURIO-RAG-UPDATE] Aggiornati ${documentIds.length} documenti nella collection '${collectionName}'.`);
   } catch (error) {
-    console.error(`[JURIO-RAG-UPDATE] Errore durante l'incremento del campo rag:`, error);
+    logSafeError("RAG_COUNTER_UPDATE_FAILED", error);
   }
 }

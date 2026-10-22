@@ -317,7 +317,7 @@ export const validaFonti = (fonti: any[]) => {
       continue;
     }
     if (item.fonte === "interna" && validUrl) {
-      console.warn(`[Validazione] Scartata fonte interna non valida (era URL): ${id}`);
+      console.warn("[Validazione] Scartata fonte interna non valida (era URL)");
       continue;
     }
     // Preserva escluso, nuova e qualsiasi altro campo passato nel payload

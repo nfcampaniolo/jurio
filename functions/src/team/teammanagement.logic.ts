@@ -1,23 +1,17 @@
 import { Request, Response } from "express";
 import { FieldValue, WriteBatch, Query } from "firebase-admin/firestore";
-import { withSecureApiEndpoint, validateUserPlanAndLimits } from "../_utils";
-import { updateUserDocuments, removeUserVisibilityFromDocuments } from "./_utils";
+import { withSecureApiEndpoint } from "../_utils";
+import { updateUserDocuments, removeUserVisibilityFromDocuments, validateTeamUser } from "./_utils";
 import { getDb } from "../_deps";
 import { DeleteTeamRequestBody, DeleteTeamResponse, ShareAllTeamDocumentsRequestBody, ShareAllTeamDocumentsResponse } from "./_interfaces";
 import { enqueueCloseTeamEmail } from "../email/team/logic";
+import { logSafeError } from "../_logging";
 
 const db = getDb();
 
 export async function executeDeleteTeam(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (requesterUid): Promise<void> => {
-    // 1. Verifica utente nel DB e validazione unificata piano/limiti (feature "teams")
-    const userSnap = await db.collection("register").doc(requesterUid).get();
-    if (!userSnap.exists) {
-      res.status(404).json({ error: "Not Found" });
-      return;
-    }
-
-    await validateUserPlanAndLimits(requesterUid, "teams", userSnap);
+    if (!(await validateTeamUser(requesterUid, res))) return;
 
     // 2. Sanitizzazione e Type-Safety Input
     const body = (req.body ?? {}) as DeleteTeamRequestBody;
@@ -124,7 +118,7 @@ export async function executeDeleteTeam(req: Request, res: Response): Promise<an
         email: allMemberEmails, 
         teamName: teamNameStr 
       }).catch(mailErr => {
-        console.error(`[JURIO-DELETE-TEAM] Errore nell'invio delle email di chiusura team:`, mailErr);
+        logSafeError("TEAM_CLOSURE_EMAIL_FAILED", mailErr);
       });
     }
 
@@ -140,14 +134,7 @@ export async function executeDeleteTeam(req: Request, res: Response): Promise<an
 
 export async function executeShareAllTeamDocuments(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (callerUid): Promise<void> => {
-    // 1. Verifica utente nel DB e validazione unificata piano/limiti (feature "teams")
-    const userSnap = await db.collection("register").doc(callerUid).get();
-    if (!userSnap.exists) {
-      res.status(404).json({ error: "Not Found" });
-      return;
-    }
-
-    await validateUserPlanAndLimits(callerUid, "teams", userSnap);
+    if (!(await validateTeamUser(callerUid, res))) return;
 
     // 2. Sanitizzazione e Type-Safety Input
     const body = (req.body ?? {}) as ShareAllTeamDocumentsRequestBody;

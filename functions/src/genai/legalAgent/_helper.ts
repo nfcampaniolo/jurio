@@ -1,4 +1,5 @@
 import { CFG } from "../_config";
+import { logSafeError } from "../../_logging";
 import { ToolContext, ExecutionProfile } from "./_schema";
 import { userFileSearch, internalDatabaseSearch, webSearch } from "../tools/index";
 import {
@@ -94,7 +95,7 @@ export async function executeRequestedTools(
           },
         };
       } catch (error) {
-        console.error(`[Orchestrator] Errore tool ${req.name}:`, error);
+        logSafeError("LEGAL_AGENT_TOOL_FAILED", error);
 
         return {
           toolResponse: {
@@ -226,7 +227,7 @@ export async function executeDeterministicRetrieval(
         preRetrievalOutput = await userFileSearch({ query: input.prompt }, { context: toolContext });
       }
     } catch (err: unknown) {
-      console.warn("Errore pre-retrieval deterministico:", err);
+      logSafeError("LEGAL_AGENT_PRERETRIEVAL_FAILED", err);
     }
   }
 
@@ -322,7 +323,7 @@ export function extractAndFormatSources(
       processItems(rawOutputs, defaultDeterministicType);
     }
   } catch (parseError) {
-    console.warn("⚠️ Errore parsing fonti:", parseError);
+    logSafeError("LEGAL_AGENT_SOURCE_PARSING_FAILED", parseError);
   }
 
   return Array.from(fontiUniche.values())

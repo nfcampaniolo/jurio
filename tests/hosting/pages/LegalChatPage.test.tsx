@@ -44,6 +44,7 @@ vi.mock("lucide-react", () => ({
   PanelRight: () => <svg data-testid="icon-panel-right" />,
   X: () => <svg data-testid="icon-x" />,
   FolderPlus: () => <svg data-testid="icon-folder-plus" />,
+  Loader2: () => <svg data-testid="icon-loader" />,
 }));
 
 /* ---------- mock child components ---------- */
@@ -330,6 +331,7 @@ let mockLegalChatState = {
   threadTitle: "Thread Principale",
   archiveDocs: [],
   isLoadingData: false,
+  isLoadingSession: false,
   processFilesParallel: mockProcessFilesParallel,
   isProcessingFiles: false,
   handleSourceClick: mockHandleSourceClick,
@@ -402,6 +404,7 @@ describe("LegalChatPage Suite", () => {
       threadTitle: "Thread Principale",
       archiveDocs: [],
       isLoadingData: false,
+      isLoadingSession: false,
       processFilesParallel: mockProcessFilesParallel,
       isProcessingFiles: false,
       handleSourceClick: mockHandleSourceClick,
@@ -475,6 +478,16 @@ describe("LegalChatPage Suite", () => {
     expect(screen.getByTestId("message-timeline")).toBeInTheDocument();
     expect(screen.getByTestId("chat-input-wrapper")).toBeInTheDocument();
     expect(screen.getByTestId("right-sidebar")).toBeInTheDocument();
+  });
+
+  test("mostra un indicatore durante il caricamento della sessione", () => {
+    mockLegalChatState.sessionType = "fascicolo";
+    mockLegalChatState.isLoadingSession = true;
+
+    render(<LegalChatPage />);
+
+    expect(screen.getByRole("status")).toHaveTextContent("Caricamento fascicolo...");
+    expect(screen.getByTestId("icon-loader")).toBeInTheDocument();
   });
 
   test("gestisce le azioni del workspace documentale (quote, semaforo, distinguish)", () => {

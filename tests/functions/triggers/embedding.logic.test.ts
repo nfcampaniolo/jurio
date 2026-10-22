@@ -260,7 +260,7 @@ describe("embedding trigger handlers", () => {
 
     // Assert
     expect(mocks.update).toHaveBeenLastCalledWith({
-      isEmbeddingFailed: true, errorDetails: "embedding unavailable",
+      isEmbeddingFailed: true, errorDetails: "Embedding failed",
     });
     expect(error).toHaveBeenCalledOnce();
     error.mockRestore();

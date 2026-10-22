@@ -89,7 +89,10 @@ describe("Firebase App Check Service Suite", () => {
     ).toBe("debug-token-guid-456");
 
     expect(console.info).toHaveBeenCalledWith(
-      "🛡️ App Check DEBUG token configurato:",
+      "🛡️ App Check DEBUG token configurato."
+    );
+    expect(console.info).not.toHaveBeenCalledWith(
+      expect.anything(),
       "debug-token-guid-456"
     );
     expect(instance).toBe(fakeAppCheckInstance);

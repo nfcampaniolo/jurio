@@ -1,9 +1,31 @@
 import type{ MonthlyUsageReportData } from "./_interfaces";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { DispatchMailArgs } from "./_interfaces";
-import { getDb } from "../_deps";
+import { getAdminAuth, getDb } from "../_deps";
+import { logSafeWarning } from "../_logging";
 
 const db = getDb();
+
+export async function getAuthEmailAndName(
+  uid: string,
+  context: string
+): Promise<{ email: string; name: string } | null> {
+  let email: string | null;
+  try {
+    email = (await getAdminAuth().getUser(uid)).email ?? null;
+  } catch (error) {
+    logSafeWarning(`${context}_AUTH_EMAIL_LOOKUP_FAILED`, error);
+    return null;
+  }
+  if (!email) return null;
+
+  const userSnap = await db.collection("users").doc(uid).get();
+  const name = userSnap.exists ? userSnap.data()?.name : undefined;
+  return {
+    email,
+    name: typeof name === "string" && name.trim() ? name.trim() : "utente",
+  };
+}
 
 export async function dispatchMailAndNotification({
   to,

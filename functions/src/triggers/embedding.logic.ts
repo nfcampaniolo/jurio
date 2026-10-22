@@ -3,8 +3,17 @@ import { FieldValue, QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { getDb } from "../_deps";
 import { applyTeamVisibility } from "./_helper";
 import OpenAI from "openai";
+import { logSafeError } from "../_logging";
 
 const db = getDb();
+
+function createEmbedding(input: string | string[]) {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY }).embeddings.create({
+    model: "text-embedding-3-small",
+    input,
+    dimensions: 1536,
+  });
+}
 
 export async function handleEmbeddingCreation(
   event: FirestoreEvent<QueryDocumentSnapshot | undefined, { docId: string }>
@@ -14,8 +23,6 @@ export async function handleEmbeddingCreation(
 
   const data = snap.data();
   if (!data || data.isEmbeddingFinished || data.isEmbeddingFailed) return;
-
-  const docId = event.params.docId;
 
   // Selezione del testo
   let textToEmbed = data.summary || data.massima || data.sintesi;
@@ -31,12 +38,7 @@ export async function handleEmbeddingCreation(
   }
 
   try {
-    const oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const response = await oaClient.embeddings.create({
-      model: "text-embedding-3-small", 
-      input: textToEmbed.trim(),
-      dimensions: 1536
-    });
+    const response = await createEmbedding(textToEmbed.trim());
     
     const embedding = response.data[0].embedding;
 
@@ -48,9 +50,9 @@ export async function handleEmbeddingCreation(
       ...(Array.isArray(data.testo_integrale) ? { testo_integrale: FieldValue.delete() } : {})
     });
 
-    console.log(`✅ Embedding creato per sentence: ${docId}`);
+    console.log("Embedding creato per sentenza");
   } catch (error) {
-    console.error(`❌ Error embedding sentence ${docId}:`, error);
+    logSafeError("SENTENCE_EMBEDDING_FAILED", error);
     await snap.ref.update({ isEmbeddingFailed: true });
   }
 }
@@ -64,8 +66,6 @@ export async function handleEmbeddingManualCreation(
   const data = snap.data();
   if (!data || data.isEmbeddingFinished || data.isEmbeddingFailed) return;
 
-  const docId = event.params.docId;
-
   // Selezione del testo
   let textToEmbed = data.text;
 
@@ -75,12 +75,7 @@ export async function handleEmbeddingManualCreation(
   }
 
   try {
-    const oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const response = await oaClient.embeddings.create({
-      model: "text-embedding-3-small", 
-      input: textToEmbed.trim(),
-      dimensions: 1536
-    });
+    const response = await createEmbedding(textToEmbed.trim());
     
     const embedding = response.data[0].embedding;
 
@@ -89,9 +84,9 @@ export async function handleEmbeddingManualCreation(
       embedding: FieldValue.vector(embedding),
       lastVectorizedAt: FieldValue.serverTimestamp(),
     });
-    console.log(`✅ Embedding creato per sentence: ${docId}`);
+    console.log("Embedding creato per sentenza");
   } catch (error) {
-    console.error(`❌ Error embedding sentence ${docId}:`, error);
+    logSafeError("MANUAL_SENTENCE_EMBEDDING_FAILED", error);
     await snap.ref.update({ isEmbeddingFailed: true });
   }
 }
@@ -133,12 +128,7 @@ export async function handleEmbeddingDocumentCreation(
   const fullInputArray = [...inputsToEmbed, ...chunksToEmbed];
 
   try {
-    const oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-    const response = await oaClient.embeddings.create({
-      model: "text-embedding-3-small", 
-      input: fullInputArray,
-      dimensions: 1536
-    });
+    const response = await createEmbedding(fullInputArray);
     const embeddingsResult = response.data.map(d => d.embedding);
 
     const batch = db.batch();
@@ -181,11 +171,11 @@ export async function handleEmbeddingDocumentCreation(
     });
 
     await batch.commit();
-    console.log(`✅ Documento ${parentId} completato con ${chunksToEmbed.length} chunk.`);
+    console.log(`Documento completato con ${chunksToEmbed.length} chunk`);
     await applyTeamVisibility(snap.ref, snap.data())
 
   } catch (error) {
-    console.error(`❌ Critical error embedding document ${parentId}:`, error);
+    logSafeError("DOCUMENT_EMBEDDING_FAILED", error);
     await snap.ref.update({ isEmbeddingFailed: true });
   }
 }
@@ -206,19 +196,13 @@ export async function handleChunkEmbedding(
   // 2. Controllo presenza testo
   const textToEmbed = data.text;
   if (!textToEmbed || typeof textToEmbed !== "string") {
-    console.warn(`Chunk ${event.params.docId} non contiene testo valido.`);
+    console.warn("Chunk ignorato: testo non valido");
     return;
   }
 
   try {
-    const oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
     // 3. Generazione Embedding (Singolo input)
-    const response = await oaClient.embeddings.create({
-      model: "text-embedding-3-small",
-      input: textToEmbed,
-      dimensions: 1536
-    });
+    const response = await createEmbedding(textToEmbed);
 
     const vector = response.data[0].embedding;
 
@@ -229,15 +213,15 @@ export async function handleChunkEmbedding(
       isEmbeddingFailed: FieldValue.delete() // Rimuoviamo eventuali flag di errore precedenti
     });
 
-    console.log(`✅ Embedding creato con successo per il chunk: ${event.params.docId}`);
+    console.log("Embedding creato per chunk");
     await applyTeamVisibility(snap.ref, snap.data())
   } catch (error) {
-    console.error(`❌ Errore embedding per chunk ${event.params.docId}:`, error);
+    logSafeError("CHUNK_EMBEDDING_FAILED", error);
     
     // Segnamo il fallimento per evitare loop infiniti e per monitoraggio
     await snap.ref.update({ 
       isEmbeddingFailed: true,
-      errorDetails: error instanceof Error ? error.message : "Unknown error"
+      errorDetails: "Embedding failed"
     });
   }
 }

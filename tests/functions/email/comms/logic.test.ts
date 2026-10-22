@@ -16,7 +16,8 @@ vi.mock("../../../../functions/src/_deps", () => ({
   getAdminAuth: () => ({ getUser: mocks.getUser }),
   getDb: () => mocks.db,
 }));
-vi.mock("../../../../functions/src/email/_helper", () => ({
+vi.mock("../../../../functions/src/email/_helper", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../../functions/src/email/_helper")>()),
   dispatchMailAndNotification: mocks.dispatch,
 }));
 vi.mock("../../../../functions/src/email/comms/html", () => ({

@@ -266,15 +266,28 @@ describe("useLegalChat Orchestrator Suite", () => {
           messages: [{ id: "msg-1", role: "user", content: "Clausola 4 valida?" } as never],
         },
       ];
-      mockFetchFascicoloData.mockResolvedValueOnce(mockThreadsPayload);
+      let resolveFascicolo!: (threads: DBThreadPayload[]) => void;
+      mockFetchFascicoloData.mockReturnValueOnce(
+        new Promise<DBThreadPayload[]>((resolve) => {
+          resolveFascicolo = resolve;
+        })
+      );
 
       const { result } = renderHook(() => useLegalChat());
+
+      await waitFor(() => expect(mockFetchFascicoloData).toHaveBeenCalledWith("fsc-200"));
+      expect(result.current.isLoadingSession).toBe(true);
+
+      await act(async () => {
+        resolveFascicolo(mockThreadsPayload);
+      });
 
       await waitFor(() => {
         expect(result.current.sessionTitle).toBe("Contenzioso Banca Intesa");
       });
 
       expect(result.current.sessionType).toBe("fascicolo");
+      expect(result.current.isLoadingSession).toBe(false);
       expect(result.current.isReadOnly).toBe(true);
       expect(result.current.activeThreadId).toBe("thr-1");
       expect(result.current.threadTitle).toBe("Analisi Clausole Vessatorie");
@@ -300,6 +313,18 @@ describe("useLegalChat Orchestrator Suite", () => {
         expect.objectContaining({ id: "thr-new", title: "Nuova conversazione" }),
       ]);
       expect(result.current.messages).toEqual([]);
+      expect(mockFetchFascicoloData).not.toHaveBeenCalled();
+      expect(result.current.isLoadingSession).toBe(false);
+    });
+
+    test("termina il caricamento quando il fascicolo non è presente nell'archivio", async () => {
+      mockParams.fascicoloId = "fsc-missing";
+
+      const { result } = renderHook(() => useLegalChat());
+
+      await waitFor(() => {
+        expect(result.current.isLoadingSession).toBe(false);
+      });
       expect(mockFetchFascicoloData).not.toHaveBeenCalled();
     });
 

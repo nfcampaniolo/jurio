@@ -70,7 +70,7 @@ export async function executeReasoning(req: Request, res: Response): Promise<any
             const content = publicPromptDoc.data()?.content;
             customPromptText = typeof content === "string" ? content : undefined;
           } else {
-            console.warn(`[JURIO-REASONING] Prompt ID ${safePromptId} non trovato per utente ${uid}. Fallback default.`);
+            console.warn("[JURIO-REASONING] Prompt personalizzato non trovato. Fallback default.");
           }
         }
       }
@@ -95,7 +95,7 @@ export async function executeReasoning(req: Request, res: Response): Promise<any
 export async function executeAdminDoctrineUpload(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (uid): Promise<void> => {
     const reqId = randomUUID().slice(0, 6);
-    console.log(`[DOCTRINE-${reqId}] Inizio elaborazione POST. IP: ${req.ip}`);
+    console.log(`[DOCTRINE-${reqId}] Inizio elaborazione POST`);
 
     // 1. Controllo utente e validazione unificata piano/limiti (feature "admin")
     const userSnap = await db.collection("register").doc(uid).get();
@@ -105,7 +105,7 @@ export async function executeAdminDoctrineUpload(req: Request, res: Response): P
 
     const planId = String(userSnap.data()?.planId ?? "");
     if (planId !== "admin") {
-      console.warn(`[DOCTRINE-${reqId}] Accesso negato per UID ${uid}. PlanId: ${planId}`);
+      console.warn(`[DOCTRINE-${reqId}] Accesso negato per piano non amministrativo`);
       res.status(403).json({
         error: "Forbidden: Only admins can upload doctrine documents.",
       });
@@ -113,7 +113,7 @@ export async function executeAdminDoctrineUpload(req: Request, res: Response): P
     }
 
     await validateUserPlanAndLimits(uid, "admin", userSnap);
-    console.log(`[DOCTRINE-${reqId}] Auth e quote superate per admin UID: ${uid}`);
+    console.log(`[DOCTRINE-${reqId}] Autenticazione e quote superate`);
 
     // 2. Lettura e validazione payload
     const extractedText =
@@ -174,7 +174,7 @@ export async function executeAdminDoctrineUpload(req: Request, res: Response): P
     }
 
     try {
-      console.log(`[DOCTRINE-${reqId}] URL: ${sourceUrl} | Testo: ${extractedText.length} caratteri`);
+      console.log(`[DOCTRINE-${reqId}] URL presente: ${Boolean(sourceUrl)} | Testo: ${extractedText.length} caratteri`);
 
       const previousVersion = await db
         .collection("doctrine")
@@ -245,7 +245,7 @@ export async function executeAdminDoctrineUpload(req: Request, res: Response): P
       }
 
       // 4. Rimozione documenti esistenti (stesso sourceUrl)
-      console.log(`[DOCTRINE-${reqId}] Ricerca documenti esistenti con sourceUrl: ${sourceUrl}`);
+      console.log(`[DOCTRINE-${reqId}] Ricerca documenti esistenti`);
       const existingDocsSnap = await db
         .collection("doctrine")
         .where("sourceUrl", "==", sourceUrl)

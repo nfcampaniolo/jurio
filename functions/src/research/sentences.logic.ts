@@ -1,12 +1,13 @@
 import { Request, Response } from "express";
 import { FieldValue } from "firebase-admin/firestore";
-import { getOpenAIClient, authenticateRequest, applyFirestoreFilters, safeTruncateText, parseLimitParam } from "./_helper";
+import { getOpenAIClient, authenticateRequest, applyFirestoreFilters, safeTruncateText, parseLimitParam, handleVectorSearchError } from "./_helper";
 import { corsHandlerDomain, validateUserPlanAndLimits,  } from "../_utils";
 import { incrementRagCounter } from "../genai/_utils";
 import { SearchRequestBody, FilterInput, ScoredJurioItem, JurioSentenceDoc} from "./_interfaces";
 import { getKeywordStems, calculateMatchScore, applyHighlightWithRegex, generateHighlightRegex } from "./_utils";
 import { getDb } from "../_deps";
 import { legalGeminiFallbackFlow } from '../genai/supportAgent/flow';
+import { logSafeError } from "../_logging";
 
 const db = getDb();
 
@@ -167,7 +168,7 @@ export async function executeVectorSearchJurio(req: Request, res: Response): Pro
             }
           }
         } catch (geminiErr) {
-          console.error(`[JURIO-SEARCH] Errore fallback Genkit per UID ${uid}:`, geminiErr);
+          logSafeError("SEARCH_GEMINI_FALLBACK_FAILED", geminiErr);
         }
       }
 
@@ -187,7 +188,7 @@ export async function executeVectorSearchJurio(req: Request, res: Response): Pro
       
       if (extractedIds.length > 0) {
         incrementRagCounter(collectionName, extractedIds).catch(err => 
-          console.error("[JURIO-SEARCH] Errore incremento contatore RAG:", err)
+          logSafeError("SEARCH_RAG_COUNTER_UPDATE_FAILED", err)
         );
       }
 
@@ -206,13 +207,7 @@ export async function executeVectorSearchJurio(req: Request, res: Response): Pro
       });
 
     } catch (err: any) {
-      if (err.message === "UNAUTHORIZED") return res.status(401).json({ error: "Unauthorized" });
-      if (err.message === "NOT_FOUND") return res.status(404).json({ error: "Not Found" });
-      if (err.message === "FORBIDDEN") return res.status(403).json({ error: "Forbidden", message: "Piano non abilitato." });
-      if (err.message === "TOO_MANY_REQUESTS") return res.status(429).json({ error: "Too Many Requests", details: "Limite di utilizzo superato." });
-
-      console.error("[JURIO-SEARCH] Errore non gestito:", err);
-      return res.status(500).json({ error: "Internal Server Error" });
+      return handleVectorSearchError(res, err, "JURIO-SEARCH");
     }
   });
 }

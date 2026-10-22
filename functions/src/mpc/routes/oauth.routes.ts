@@ -2,6 +2,7 @@ import { Router } from "express";
 import { randomBytes, createHash } from "crypto";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { getDb } from "../../_deps";
+import { logSafeError } from "../../_logging";
 
 const db = getDb();
 export const oauthRouter = Router();
@@ -51,7 +52,7 @@ oauthRouter.post("/register", async (req, res) => {
       token_endpoint_auth_method: "client_secret_post",
     });
   } catch (err) {
-    console.error("[JURIO-MCP] Errore registrazione client:", err);
+    logSafeError("MCP_CLIENT_REGISTRATION_FAILED", err);
     res.status(500).json({ error: "server_error" });
   }
 });
@@ -133,7 +134,7 @@ oauthRouter.get("/authorize", async (req, res) => {
 
     res.redirect(302, loginUrl.toString());
   } catch (err) {
-    console.error("[JURIO-MCP] Errore in /authorize:", err);
+    logSafeError("MCP_AUTHORIZATION_FAILED", err);
     if (!res.headersSent) {
       res.status(500).send("Internal server error");
     }
@@ -240,7 +241,7 @@ oauthRouter.post("/token", async (req, res) => {
       expires_in: expiresInSeconds,
     });
   } catch (err) {
-    console.error("[JURIO-MCP] Errore scambio token:", err);
+    logSafeError("MCP_TOKEN_EXCHANGE_FAILED", err);
     if (!res.headersSent) {
       res.status(500).json({ error: "server_error" });
     }

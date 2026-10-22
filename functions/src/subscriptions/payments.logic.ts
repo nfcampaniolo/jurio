@@ -13,6 +13,7 @@ import { getDb } from "../_deps";
 import { CheckoutSessionRequestBody } from "./_interfaces";
 import { queuePurchaseEmailOnceStripe } from "../email/plans/logic";
 import { tryScheduleDowngradeTask } from "../schedules/schedule.logic";
+import { logSafeError } from "../_logging";
 
 const db = getDb();
 
@@ -164,8 +165,7 @@ export async function executeStripeWebhook(req: Request, res: Response): Promise
     try { 
       event = stripe.webhooks.constructEvent(rawBody, sig, webhookSecret); 
     } catch (err: unknown) {
-      const errMessage = err instanceof Error ? err.message : "Invalid signature";
-      console.warn(`[JURIO-WEBHOOK] Fallimento verifica firma Stripe: ${errMessage}`);
+      console.warn("[JURIO-WEBHOOK] Fallimento verifica firma Stripe");
       res.status(400).json({ error: "Invalid signature" }); 
       return; 
     }
@@ -190,7 +190,7 @@ export async function executeStripeWebhook(req: Request, res: Response): Promise
     const planId = session.metadata?.planId ? String(session.metadata.planId) : "";
 
     if (!uid || !planId) {
-      console.warn(`[JURIO-WEBHOOK] Evento ${event.id} ricevuto senza metadata 'uid' o 'planId'.`);
+      console.warn("[JURIO-WEBHOOK] Evento ricevuto senza metadata richiesti");
       await eventRef.set({ type: event.type, missing: true, createdAt: Timestamp.now() }, { merge: true });
       res.status(200).json({ received: true, skipped: "missing_metadata" }); 
       return;
@@ -233,7 +233,7 @@ export async function executeStripeWebhook(req: Request, res: Response): Promise
       try {
         await tryScheduleDowngradeTask(uid, out.expireSec);
       } catch (taskErr) {
-        console.error(`[JURIO-WEBHOOK] Impossibile pianificare il task di downgrade per l'utente ${uid}:`, taskErr);
+        logSafeError("WEBHOOK_DOWNGRADE_TASK_SCHEDULE_FAILED", taskErr);
       }
     }
 
@@ -256,7 +256,7 @@ export async function executeStripeWebhook(req: Request, res: Response): Promise
         paidCurrency: session.currency || expectedCurrency,
       });
     } catch (emailErr) {
-      console.error(`[JURIO-WEBHOOK] Errore nell'accodamento email di acquisto per event ${event.id}:`, emailErr);
+      logSafeError("WEBHOOK_PURCHASE_EMAIL_ENQUEUE_FAILED", emailErr);
     }
 
     // 7. Risposta di successo a Stripe
@@ -265,7 +265,7 @@ export async function executeStripeWebhook(req: Request, res: Response): Promise
   } catch (err: unknown) {
     // 8. Anti Information Disclosure
     const msg = err instanceof Error ? err.message : "Internal error";
-    console.error(`[JURIO-WEBHOOK] Errore critico nell'elaborazione del webhook Stripe:`, msg);
+    logSafeError("STRIPE_WEBHOOK_PROCESSING_FAILED", msg);
     
     res.status(500).json({ error: "Webhook handler failed" });
   }

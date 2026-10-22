@@ -2,7 +2,8 @@ import {  generatePurchaseEmail, generateDowngradeEmail, generateMonthlyReportEm
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { getDb, getAdminAuth } from "../../_deps";
 import { EnqueuePurchaseEmailArgs, NotificationPayload, QueuePurchaseStripeArgs, EnqueueEmailArgs, EnqueueMonthlyUsageEmailArgs } from "../_interfaces"
-import { dispatchMailAndNotification, fmtRome } from "../_helper";
+import { dispatchMailAndNotification, fmtRome, getAuthEmailAndName } from "../_helper";
+import { logSafeError } from "../../_logging";
 
 const db = getDb();
 
@@ -65,35 +66,19 @@ export async function queuePurchaseEmailOnceStripe(args: QueuePurchaseStripeArgs
 
     await sessionRef.set({ purchaseEmailSentAt: FieldValue.serverTimestamp() }, { merge: true });
   } catch (e) {
-    console.error("[STRIPE] queuePurchaseEmailOnceStripe failed", {
-      requestId: args.requestId,
-      uid: args.uid,
-      sessionId: args.sessionId,
-      err: e,
-    });
+    logSafeError("STRIPE_PURCHASE_EMAIL_ENQUEUE_FAILED", e);
   }
 }
 
 export async function enqueueDowngradeEmail({ uid }: EnqueueEmailArgs): Promise<void> {
-  let email: string | null = null;
-  try {
-    const userRecord = await getAdminAuth().getUser(uid);
-    email = userRecord.email ?? null;
-  } catch (e) {
-    console.warn("[DOWNGRADE] cannot fetch auth email", { uid, err: e });
-    return;
-  }
-  if (!email) return;
-
-  const userSnap = await db.collection("users").doc(uid).get();
-  const data = userSnap.exists ? (userSnap.data() as any) : null;
-  const nome = typeof data?.name === "string" && data.name.trim() ? data.name.trim() : "utente";
+  const user = await getAuthEmailAndName(uid, "DOWNGRADE");
+  if (!user) return;
 
   const subject = "Piano Jurio scaduto";
-  const html = generateDowngradeEmail(nome);
+  const html = generateDowngradeEmail(user.name);
 
   await dispatchMailAndNotification({
-    to: email,
+    to: user.email,
     subject,
     html,
     notifications: {

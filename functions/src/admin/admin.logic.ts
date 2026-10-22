@@ -1,32 +1,18 @@
 import { Request, Response } from "express";
 import { FieldValue } from "firebase-admin/firestore";
-import { withSecureApiEndpoint, validateUserPlanAndLimits } from "../_utils";
-import {runCleanupDuplicates, runUpdateFonte, runUpdateMetadata } from "./_helper";
+import { withSecureApiEndpoint } from "../_utils";
+import { requireAdminUser, runCleanupDuplicates, runUpdateFonte, runUpdateMetadata } from "./_helper";
 import { MaintenanceTaskBody, ProgressCallback, MergeCategoryRequestBody, ManualContentRequestBody, AdminNotificationRequestBody } from "./_interfaces";
 import { dispatchMailAndNotification } from "../email/_helper";
 import { NotificationType } from "../email/_interfaces";
 import { getDb } from "../_deps";
+import { logSafeError } from "../_logging";
 
 const db = getDb();
 
 export async function executeAdminMaintenanceTask(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (uid): Promise<void> => {
-    // 1. Controllo utente e autorizzazione esplicita per ruolo Admin
-    const userSnap = await db.collection("register").doc(uid).get();
-    if (!userSnap.exists) {
-      res.status(404).json({ error: "Not Found" });
-      return;
-    }
-
-    const planId = String(userSnap.data()?.planId ?? "");
-    if (planId !== "admin") {
-      console.warn(`[JURIO-ADMIN] Tentativo bloccato di avvio task da utente non admin: ${uid}`);
-      res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti." });
-      return;
-    }
-
-    // 2. Validazione unificata limiti e consumo quote per la feature "admin"
-    await validateUserPlanAndLimits(uid, "admin", userSnap);
+    if (!(await requireAdminUser(uid, res, "JURIO-ADMIN"))) return;
 
     // 3. Preparazione Server-Sent Events (SSE)
     res.setHeader("Content-Type", "text/event-stream");
@@ -44,7 +30,7 @@ export async function executeAdminMaintenanceTask(req: Request, res: Response): 
           res.write(`data: ${JSON.stringify({ message: msg, ...data })}\n\n`);
         }
       } catch (e) {
-        console.error(`[JURIO-ADMIN] Impossibile serializzare dati progresso:`, e);
+        logSafeError("ADMIN_PROGRESS_SERIALIZATION_FAILED", e);
       }
     };
 
@@ -84,22 +70,7 @@ export async function executeAdminMaintenanceTask(req: Request, res: Response): 
 
 export async function executeAdminMergeCategoryTask(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (uid): Promise<void> => {
-    // 1. Verifica utente nel DB e controllo privilegi amministrativi espliciti
-    const userSnap = await db.collection("register").doc(uid).get();
-    if (!userSnap.exists) {
-      res.status(404).json({ error: "Not Found" });
-      return;
-    }
-
-    const planId = String(userSnap.data()?.planId ?? "");
-    if (planId !== "admin") {
-      console.warn(`[JURIO-MERGE] Tentativo bloccato da utente non admin: ${uid}`);
-      res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti." });
-      return;
-    }
-
-    // 2. Validazione unificata limiti e consumo quote per la feature "admin"
-    await validateUserPlanAndLimits(uid, "admin", userSnap);
+    if (!(await requireAdminUser(uid, res, "JURIO-MERGE"))) return;
 
     // 3. Sanitizzazione e Type-Safety Input
     const body = (req.body ?? {}) as MergeCategoryRequestBody;
@@ -180,22 +151,7 @@ export async function executeAdminMergeCategoryTask(req: Request, res: Response)
 
 export async function executeAdminUploadManualContentTask(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (uid): Promise<void> => {
-    // 1. Controllo utente e autorizzazione esplicita per il ruolo Admin
-    const userSnap = await db.collection("register").doc(uid).get();
-    if (!userSnap.exists) {
-      res.status(404).json({ error: "Not Found" });
-      return;
-    }
-
-    const planId = String(userSnap.data()?.planId ?? "");
-    if (planId !== "admin") {
-      console.warn(`[JURIO-MANUAL] Tentativo bloccato da utente non admin: ${uid}`);
-      res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti." });
-      return;
-    }
-
-    // 2. Validazione unificata limiti e consumo quote per la feature "admin"
-    await validateUserPlanAndLimits(uid, "admin", userSnap);
+    if (!(await requireAdminUser(uid, res, "JURIO-MANUAL"))) return;
 
     // 3. Estrazione e sanitizzazione payload
     const body = (req.body ?? {}) as ManualContentRequestBody;
@@ -260,22 +216,7 @@ export async function executeAdminUploadManualContentTask(req: Request, res: Res
 
 export async function executeSendAdminNotification(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (adminUid): Promise<void> => {
-    // 1. Controllo utente e autorizzazione esplicita per ruolo Admin
-    const userSnap = await db.collection("register").doc(adminUid).get();
-    if (!userSnap.exists) {
-      res.status(404).json({ error: "Not Found" });
-      return;
-    }
-
-    const planId = String(userSnap.data()?.planId ?? "");
-    if (planId !== "admin") {
-      console.warn(`[JURIO-NOTIF] Tentativo bloccato da utente non admin: ${adminUid}`);
-      res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti" });
-      return;
-    }
-
-    // 2. Validazione unificata limiti e consumo quote per la feature "admin"
-    await validateUserPlanAndLimits(adminUid, "admin", userSnap);
+    if (!(await requireAdminUser(adminUid, res, "JURIO-NOTIF"))) return;
 
     // 3. Sanitizzazione e Type-Safety del payload
     const body = (req.body ?? {}) as AdminNotificationRequestBody;

@@ -83,7 +83,7 @@ describe("team email logic", () => {
       await enqueueVoucherEmail({ email: "new@example.com", voucherCode: "XYZ" });
 
       // Assert
-      expect(log).toHaveBeenCalledOnce();
+      expect(log).toHaveBeenCalledWith("TEAM_EMAIL_ENQUEUE_FAILED", { errorType: "Error" });
       expect(mocks.dispatch).toHaveBeenCalledWith({
         to: "new@example.com",
         subject: "Invito a unirti a un Workspace su Jurio",

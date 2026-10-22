@@ -1,8 +1,21 @@
 import { randomInt } from "node:crypto";
+import { Response } from "express";
 import { FieldValue, WriteBatch } from "firebase-admin/firestore";
 import { getDb} from "../_deps";
+import { validateUserPlanAndLimits } from "../_utils";
 
 const db = getDb();
+
+export async function validateTeamUser(uid: string, res: Response): Promise<boolean> {
+  const userSnap = await db.collection("register").doc(uid).get();
+  if (!userSnap.exists) {
+    res.status(404).json({ error: "Not Found" });
+    return false;
+  }
+
+  await validateUserPlanAndLimits(uid, "teams", userSnap);
+  return true;
+}
 
 export async function removeUserVisibilityFromDocuments(uidDelete: string) {
   const collectionsToUpdate = ["fascicoli", "documents", "document_chunks"];

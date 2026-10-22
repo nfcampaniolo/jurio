@@ -2,6 +2,7 @@ import { Response } from "express";
 import * as admin from "firebase-admin";
 import { getDb, sanitize } from "../../_deps";
 import { FieldValue } from "firebase-admin/firestore";
+import { logSafeError } from "../../_logging";
 
 const db = getDb();
 
@@ -208,9 +209,9 @@ export async function processFascicoloDocs(
     if (pendingDocs.length === 0) return;
 
     await Promise.all(pendingDocs.map((doc) => addFascicoloIdToDocAndChunks(doc, fascicoloId)));
-    console.log(`[Successo] FascicoloId ${fascicoloId} associato a ${pendingDocs.length} documenti e relativi chunks.`);
+    console.log(`[Successo] Associazione completata per ${pendingDocs.length} documenti e relativi chunks`);
   } catch (error) {
-    console.error("Errore durante l'esecuzione di processFascicoloDocs:", error);
+    logSafeError("LEGAL_AGENT_DOCUMENT_PROCESSING_FAILED", error);
     throw error;
   }
 }

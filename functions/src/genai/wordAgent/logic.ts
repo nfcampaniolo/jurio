@@ -5,6 +5,26 @@ import { wordQuoteFlow, wordReviewFlow } from "./flow";
 
 const db = getDb();
 
+async function streamFlowResponse<T, Output>(
+  flowStream: { stream: AsyncIterable<T>; output: Promise<Output> },
+  res: Response,
+  isClientDisconnected: () => boolean
+): Promise<void> {
+  for await (const chunk of flowStream.stream) {
+    if (isClientDisconnected() || res.writableEnded) break;
+    res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
+  }
+
+  if (isClientDisconnected()) return;
+
+  const finalOutput = await flowStream.output;
+  if (!res.writableEnded) {
+    res.write(`data: ${JSON.stringify({ result: finalOutput })}\n\n`);
+    res.write("data: [DONE]\n\n");
+    res.end();
+  }
+}
+
 export async function executeWordAgent(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (uid): Promise<void> => {
     let clientDisconnected = false;
@@ -49,21 +69,7 @@ export async function executeWordAgent(req: Request, res: Response): Promise<any
         userId: uid
       });
 
-      for await (const chunk of flowStream.stream) {
-        if (clientDisconnected || res.writableEnded) break;
-        res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
-      }
-
-      if (clientDisconnected) return;
-
-      const finalOutput = await flowStream.output;
-      // const sanitizedResult = sanitize(finalOutput); // Scompatta con la tua funzione se definita
-
-      if (!res.writableEnded) {
-        res.write(`data: ${JSON.stringify({ result: finalOutput })}\n\n`);
-        res.write(`data: [DONE]\n\n`);
-        res.end();
-      }
+      await streamFlowResponse(flowStream, res, () => clientDisconnected);
       return;
     } 
 
@@ -81,21 +87,7 @@ export async function executeWordAgent(req: Request, res: Response): Promise<any
         userId: uid 
       });
 
-      for await (const chunk of flowStream.stream) {
-        if (clientDisconnected || res.writableEnded) break;
-        res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
-      }
-
-      if (clientDisconnected) return;
-
-      const finalOutput = await flowStream.output;
-      // const sanitizedResult = sanitize(finalOutput);
-
-      if (!res.writableEnded) {
-        res.write(`data: ${JSON.stringify({ result: finalOutput })}\n\n`);
-        res.write(`data: [DONE]\n\n`);
-        res.end();
-      }
+      await streamFlowResponse(flowStream, res, () => clientDisconnected);
       return;
     }
 

@@ -157,7 +157,7 @@ describe("Firestore trigger handlers", () => {
 
     // Assert
     await expect(result).rejects.toBe(failure);
-    expect(error).toHaveBeenCalledWith("Errore critico durante l'esecuzione di enqueueContactEmail:", failure);
+    expect(error).toHaveBeenCalledWith("CONTACT_EMAIL_ENQUEUE_FAILED", { errorType: "Error" });
     error.mockRestore();
   });
 });

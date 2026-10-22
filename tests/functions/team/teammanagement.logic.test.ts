@@ -28,7 +28,8 @@ vi.mock("@functions/_utils", () => ({
   withSecureApiEndpoint: mocks.secure,
   validateUserPlanAndLimits: mocks.validate,
 }));
-vi.mock("@functions/team/_utils", () => ({
+vi.mock("@functions/team/_utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@functions/team/_utils")>()),
   updateUserDocuments: mocks.updateDocs,
   removeUserVisibilityFromDocuments: mocks.removeVisibility,
 }));

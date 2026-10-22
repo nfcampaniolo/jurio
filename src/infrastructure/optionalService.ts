@@ -2,14 +2,14 @@ import type { Analytics } from "firebase/analytics";
 import type { FirebasePerformance } from "firebase/performance";
 import { firebaseApp } from "@/infrastructure/firebase";
 
-// --- TIPIZZAZIONE IUBENDA ---
 interface IubendaPreferences {
   purposes?: Record<number, boolean>;
-  // Iubenda restituisce anche id, timestamp, ecc., ma a noi interessano solo i purposes
 }
 
 interface IubendaCallbacks {
-  onPreferenceExpressedOrNotNeeded?: (preference: IubendaPreferences) => void;
+  onPreferenceExpressedOrNotNeeded?: (
+    preference: IubendaPreferences
+  ) => void;
 }
 
 interface IubendaCSConfiguration {
@@ -32,81 +32,211 @@ declare global {
     _iub?: IubendaObject;
   }
 }
-// ----------------------------
 
 let analyticsInstance: Analytics | null = null;
-let perfInstance: FirebasePerformance | null = null;
+let performanceInstance: FirebasePerformance | null = null;
+let measurementConsent = false;
+let consentRevision = 0;
+let analyticsInitRevision: number | null = null;
+let performanceInitRevision: number | null = null;
+let analyticsInitPromise: Promise<void> | null = null;
+let performanceInitPromise: Promise<void> | null = null;
+let analyticsCollectionSetter:
+  | typeof import("firebase/analytics").setAnalyticsCollectionEnabled
+  | null = null;
+let registeredCallback: IubendaCallbacks | null = null;
 
-async function initAnalytics() {
-  if (analyticsInstance) return; 
-  try {
-    const { getAnalytics, isSupported } = await import("firebase/analytics");
-    if (await isSupported()) {
-      analyticsInstance = getAnalytics(firebaseApp);
-      console.log("🔥 Firebase Analytics inizializzato");
+async function initAnalytics(): Promise<void> {
+  if (!measurementConsent || analyticsInstance) return;
+
+  if (analyticsInitPromise) {
+    await analyticsInitPromise;
+    if (
+      measurementConsent &&
+      !analyticsInstance &&
+      analyticsInitRevision !== consentRevision
+    ) {
+      await initAnalytics();
     }
-  } catch (error) {
-    console.error("Errore durante l'inizializzazione di Analytics:", error);
+    return;
+  }
+
+  if (analyticsInitRevision === consentRevision) return;
+
+  const requestedRevision = consentRevision;
+  analyticsInitRevision = requestedRevision;
+  const initialization = (async () => {
+    try {
+      const {
+        getAnalytics,
+        isSupported,
+        setAnalyticsCollectionEnabled,
+      } = await import("firebase/analytics");
+
+      analyticsCollectionSetter = setAnalyticsCollectionEnabled;
+
+      if (
+        !measurementConsent ||
+        consentRevision !== requestedRevision ||
+        !(await isSupported()) ||
+        !measurementConsent ||
+        consentRevision !== requestedRevision
+      ) {
+        return;
+      }
+
+      analyticsInstance = getAnalytics(firebaseApp);
+      setAnalyticsCollectionEnabled(analyticsInstance, true);
+      console.log("🔥 Firebase Analytics inizializzato");
+    } catch (error) {
+      console.error(
+        "Errore durante l'inizializzazione di Analytics:",
+        error
+      );
+    }
+  })();
+
+  analyticsInitPromise = initialization;
+  try {
+    await initialization;
+  } finally {
+    if (analyticsInitPromise === initialization) {
+      analyticsInitPromise = null;
+    }
+  }
+
+  if (
+    measurementConsent &&
+    !analyticsInstance &&
+    consentRevision !== requestedRevision
+  ) {
+    await initAnalytics();
   }
 }
 
-async function initPerformance() {
-  if (perfInstance) return;
-  try {
-    const { getPerformance } = await import("firebase/performance");
-    perfInstance = getPerformance(firebaseApp);
-    console.log("⚡ Firebase Performance inizializzato");
-  } catch (error) {
-    console.error("Errore durante l'inizializzazione di Performance:", error);
+async function initPerformance(): Promise<void> {
+  if (!measurementConsent || performanceInstance) return;
+
+  if (performanceInitPromise) {
+    await performanceInitPromise;
+    if (
+      measurementConsent &&
+      !performanceInstance &&
+      performanceInitRevision !== consentRevision
+    ) {
+      await initPerformance();
+    }
+    return;
   }
+
+  if (performanceInitRevision === consentRevision) return;
+
+  const requestedRevision = consentRevision;
+  performanceInitRevision = requestedRevision;
+  const initialization = (async () => {
+    try {
+      const { getPerformance } = await import("firebase/performance");
+
+      if (
+        !measurementConsent ||
+        consentRevision !== requestedRevision
+      ) {
+        return;
+      }
+
+      performanceInstance = getPerformance(firebaseApp);
+      performanceInstance.instrumentationEnabled = true;
+      performanceInstance.dataCollectionEnabled = true;
+      console.log("⚡ Firebase Performance inizializzato");
+    } catch (error) {
+      console.error(
+        "Errore durante l'inizializzazione di Performance:",
+        error
+      );
+    }
+  })();
+
+  performanceInitPromise = initialization;
+  try {
+    await initialization;
+  } finally {
+    if (performanceInitPromise === initialization) {
+      performanceInitPromise = null;
+    }
+  }
+
+  if (
+    measurementConsent &&
+    !performanceInstance &&
+    consentRevision !== requestedRevision
+  ) {
+    await initPerformance();
+  }
+}
+
+async function applyMeasurementPreferences(
+  preferences?: IubendaPreferences
+): Promise<void> {
+  const hasMeasurementConsent = preferences?.purposes?.[4] === true;
+
+  if (measurementConsent !== hasMeasurementConsent) {
+    measurementConsent = hasMeasurementConsent;
+    consentRevision += 1;
+    analyticsInitRevision = null;
+    performanceInitRevision = null;
+  }
+
+  if (!measurementConsent) {
+    if (analyticsInstance && analyticsCollectionSetter) {
+      analyticsCollectionSetter(analyticsInstance, false);
+    }
+    if (performanceInstance) {
+      performanceInstance.instrumentationEnabled = false;
+      performanceInstance.dataCollectionEnabled = false;
+    }
+    return;
+  }
+
+  await Promise.all([initAnalytics(), initPerformance()]);
+}
+
+function registerConsentCallback(callbacks: IubendaCallbacks): void {
+  if (registeredCallback === callbacks) return;
+
+  const originalCallback =
+    callbacks.onPreferenceExpressedOrNotNeeded;
+
+  callbacks.onPreferenceExpressedOrNotNeeded = (preferences) => {
+    const currentPreferences =
+      preferences ?? window._iub?.cs?.api?.getPreferences();
+    void applyMeasurementPreferences(currentPreferences);
+    originalCallback?.(preferences);
+  };
+
+  registeredCallback = callbacks;
 }
 
 export async function initializeOptionalServices(): Promise<void> {
   if (typeof window === "undefined") return;
 
-  // Suggerimento critico: valuta se mettere anche initPerformance sotto consenso
-  void initPerformance(); 
-
-  // Funzione che controlla il consenso (Purpose 4 = Statistiche)
-  const checkAndInitAnalytics = (preferences?: IubendaPreferences) => {
-    // Se ci vengono passate le preferenze usiamo quelle, altrimenti proviamo a leggerle dall'API
-    const prefs = preferences ?? window._iub?.cs?.api?.getPreferences();
-    const hasMeasurementConsent = prefs?.purposes?.[4] === true;
-
-    if (hasMeasurementConsent) {
-      void initAnalytics();
-    }
-  };
-
-  // CASO 1: L'utente aveva già dato il consenso in passato e la pagina è stata ricaricata
-  // Corrisponde al tuo vecchio: if (window.Cookiebot && window.Cookiebot.consent)
-  if (window._iub?.cs?.api?.getPreferences) {
-    checkAndInitAnalytics();
-  }
-
-  // CASO 2: L'utente non ha ancora interagito col banner (nuovo utente)
-  // Inizializziamo in modo sicuro l'oggetto di configurazione se lo script di Iubenda non l'ha ancora fatto
   window._iub = window._iub ?? {};
-  window._iub.csConfiguration = window._iub.csConfiguration ?? {};
-  window._iub.csConfiguration.callback = window._iub.csConfiguration.callback ?? {};
+  window._iub.csConfiguration =
+    window._iub.csConfiguration ?? {};
+  window._iub.csConfiguration.callback =
+    window._iub.csConfiguration.callback ?? {};
 
-  // Salviamo l'eventuale callback già presente per non sovrascrivere logiche interne di Iubenda
-  const originalCallback = window._iub.csConfiguration.callback.onPreferenceExpressedOrNotNeeded;
-  
-  // Corrisponde al tuo vecchio: window.addEventListener("CookiebotOnAccept", checkAndInitAnalytics)
-  window._iub.csConfiguration.callback.onPreferenceExpressedOrNotNeeded = function (preference: IubendaPreferences) {
-    checkAndInitAnalytics(preference);
-    
-    if (typeof originalCallback === "function") {
-      originalCallback(preference);
-    }
-  };
+  registerConsentCallback(
+    window._iub.csConfiguration.callback
+  );
+
+  const preferences = window._iub.cs?.api?.getPreferences();
+  await applyMeasurementPreferences(preferences);
 }
 
 export function getAnalyticsInstance(): Analytics | null {
-  return analyticsInstance;
+  return measurementConsent ? analyticsInstance : null;
 }
 
 export function getPerf(): FirebasePerformance | null {
-  return perfInstance;
+  return measurementConsent ? performanceInstance : null;
 }

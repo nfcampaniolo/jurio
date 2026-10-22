@@ -4,6 +4,7 @@ import { ai } from "../_config";
 import { internalDatabaseSearch, webSearch } from "../tools/index";
 import { FonteSchema, ReviewListSchema } from "./_schema";
 import { buildQuoteSystemPrompt, buildReviewSystemPrompt } from "./_prompts";
+import { logSafeError } from "../../_logging";
 
 export const wordQuoteFlow = ai.defineFlow(
   {
@@ -65,7 +66,7 @@ export const wordQuoteFlow = ai.defineFlow(
       };
 
     } catch (error) {
-      console.error("Errore wordQuoteFlow:", error);
+      logSafeError("WORD_QUOTE_FLOW_FAILED", error);
       throw new Error("Si è verificato un errore durante la ricerca o la generazione della citazione.");
     }
   }
@@ -157,7 +158,7 @@ export const wordReviewFlow = ai.defineFlow(
       return { tesi: tesiNormalizzate } as ReviewOutput;
 
     } catch (error) {
-      console.error("Errore wordReviewFlow:", error);
+      logSafeError("WORD_REVIEW_FLOW_FAILED", error);
       throw new Error("Si è verificato un errore durante l'analisi di conformità.");
     }
   }
@@ -188,7 +189,7 @@ export function estraiFontiDalRisultato(response: any) {
       });
     });
   } catch (parseError) {
-    console.warn("⚠️ Errore non bloccante durante il parsing delle fonti:", parseError);
+    logSafeError("WORD_REVIEW_SOURCE_PARSING_FAILED", parseError);
   }
 
   return Array.from(fontiUniche.values()).map(f => {

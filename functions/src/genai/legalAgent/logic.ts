@@ -4,6 +4,7 @@ import { validateUserPlanAndLimits, withSecureApiEndpoint } from "../../_utils";
 import { getDb, sanitize } from "../../_deps";
 import { legalAgentFlow } from "./flow";
 import { extractMetadataFromThread } from "../supportAgent/_metadata";
+import { logSafeError } from "../../_logging";
 import { 
   setupLegalAgentSse, 
   sendLegalAgentSse, 
@@ -55,7 +56,7 @@ export async function executeLegalAgent(req: Request, res: Response): Promise<an
       // Predispone i metadati del caso dall'intera chat importata; un errore non blocca la conversione.
       // Attesa limitata: la risposta non deve restare bloccata sulla chiamata al modello.
       const extraction = extractMetadataFromThread(new_fascicolo_uuid, old_chat_uuid).catch((error) => {
-        console.error("[legalAgent] Errore estrazione metadati dopo migrazione:", error);
+        logSafeError("LEGAL_AGENT_METADATA_MIGRATION_FAILED", error);
       });
       await Promise.race([extraction, new Promise((resolve) => setTimeout(resolve, 8000))]);
       res.status(200).json({ success: true });
@@ -106,7 +107,7 @@ export async function executeLegalAgent(req: Request, res: Response): Promise<an
     if (isFascicolo && fascicoloId && normalizedDocs.length > 0) {
       backgroundTasks.push(
         processFascicoloDocs(fascicoloId, normalizedDocs).catch((error) => {
-          console.error("[legalAgent] Errore processFascicoloDocs:", error);
+          logSafeError("LEGAL_AGENT_DOCUMENT_PROCESSING_FAILED", error);
         })
       );
     }
@@ -159,7 +160,7 @@ export async function executeLegalAgent(req: Request, res: Response): Promise<an
       }
 
       if (clientDisconnected) {
-        console.warn(`[legalAgent] Client disconnesso prematuramente: ${uid}`);
+        console.warn("[legalAgent] Client disconnesso prematuramente");
         return; 
       }
 
@@ -184,14 +185,14 @@ export async function executeLegalAgent(req: Request, res: Response): Promise<an
           isFirstMessage,
           contextTitle: context?.title,
         }).catch((error) => {
-          console.error("[legalAgent] Errore persistenza:", error);
+          logSafeError("LEGAL_AGENT_PERSISTENCE_FAILED", error);
         })
       );
 
       await Promise.all(backgroundTasks);
     } catch (streamErr) {
       const msg = streamErr instanceof Error ? streamErr.message : "Internal error";
-      console.error("[legalAgent] ERRORE DURANTE LO STREAMING:", streamErr);
+      logSafeError("LEGAL_AGENT_STREAM_FAILED", streamErr);
 
       // Se gli header SSE sono già partiti, inviamo l'errore come evento SSE
       if (res.headersSent && !res.writableEnded) {

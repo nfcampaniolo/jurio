@@ -1,12 +1,30 @@
 import { Request, Response } from "express";
 import OpenAI from "openai";
-import { withSecureApiEndpoint, validateUserPlanAndLimits } from "../_utils";
-import { getDb } from "../_deps";
+import { withSecureApiEndpoint } from "../_utils";
+import { requireAdminUser } from "./_helper";
 import { PROMPT_MASSIMAZIONE } from "../genai/documentAnalysisAgent/_prompts";
 import { MAX_INPUT_CHARS_DOCUMENT } from "../_constants";
 import { ReasoningAdminRequestBody, ReasoningAdminResponse } from "./_interfaces";
+import { logSafeError } from "../_logging";
 
-const db = getDb();
+async function generateMassimazioneJson(
+  client: OpenAI,
+  model: string,
+  question: string
+): Promise<Record<string, unknown>> {
+  const response = await client.chat.completions.create({
+    model,
+    messages: [
+      { role: "system", content: "Agisci come un esperto redattore giuridico. Restituisci esclusivamente JSON valido." },
+      { role: "user", content: `${PROMPT_MASSIMAZIONE}\n\nTESTO DA ANALIZZARE:\n${question}` },
+    ],
+    response_format: { type: "json_object" },
+  });
+
+  const rawContent = response.choices[0]?.message?.content ?? "";
+  const cleanJson = rawContent.replace(/```json/gi, "").replace(/```/g, "").trim();
+  return JSON.parse(cleanJson);
+}
 
 export async function executeReasoningAdmin(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (uid): Promise<void> => {
@@ -23,19 +41,7 @@ export async function executeReasoningAdmin(req: Request, res: Response): Promis
       return; 
     }
 
-    // 2. Controllo utente nel DB e verifica ruolo Admin
-    const userSnap = await db.collection("register").doc(uid).get();
-    if (!userSnap.exists) { 
-      res.status(404).json({ error: "Not Found" }); 
-      return; 
-    }
-
-    const planId = String(userSnap.data()?.planId ?? "");
-    if (planId !== "admin") {
-      console.warn(`[JURIO-REASONING-ADMIN] Accesso negato per utente non admin: ${uid}`);
-      res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti." });
-      return;
-    }
+    if (!(await requireAdminUser(uid, res, "JURIO-REASONING-ADMIN"))) return;
 
     // 3. Logica di business: blocco preventivo per sentenze in oscuramento
     const normalizedText = question.replace(/\s+/g, ' ').toLowerCase();
@@ -49,9 +55,6 @@ export async function executeReasoningAdmin(req: Request, res: Response): Promis
       });
       return;
     }
-
-    // 4. Validazione unificata limiti e consumo quote per la feature "admin"
-    await validateUserPlanAndLimits(uid, "admin", userSnap);
 
     let parsedJson: Record<string, unknown> | null = null;
     let providerUsed = "";
@@ -67,24 +70,12 @@ export async function executeReasoningAdmin(req: Request, res: Response): Promis
         baseURL: "https://api.deepseek.com",
       });
 
-      const dsResponse = await dsClient.chat.completions.create({
-        model: "deepseek-chat", 
-        messages: [
-          { role: "system", content: "Agisci come un esperto redattore giuridico. Restituisci esclusivamente JSON valido." },
-          { role: "user", content: `${PROMPT_MASSIMAZIONE}\n\nTESTO DA ANALIZZARE:\n${question}` },
-        ],
-        response_format: { type: "json_object" },
-      });
-
-      const rawContent = dsResponse.choices[0]?.message?.content ?? "";
-      const cleanJson = rawContent.replace(/```json/gi, "").replace(/```/g, "").trim();
-      
-      parsedJson = JSON.parse(cleanJson);
+      parsedJson = await generateMassimazioneJson(dsClient, "deepseek-chat", question);
       providerUsed = "deepseek";
       modelUsed = "deepseek-chat";
 
     } catch (dsError) {
-      console.warn(`[JURIO-REASONING-ADMIN] DeepSeek fallito per UID ${uid}. Fallback su OpenAI. Errore log:`, dsError);
+      logSafeError("REASONING_DEEPSEEK_FAILED_FALLING_BACK_TO_OPENAI", dsError);
       
       // TENTATIVO 2: OPENAI FALLBACK
       if (!process.env.OPENAI_API_KEY) {
@@ -94,20 +85,7 @@ export async function executeReasoningAdmin(req: Request, res: Response): Promis
       }
 
       const oaClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-      
-      const oaResponse = await oaClient.chat.completions.create({
-        model: "gpt-4o-mini", 
-        messages: [
-          { role: "system", content: "Agisci come un esperto redattore giuridico. Restituisci esclusivamente JSON valido." },
-          { role: "user", content: `${PROMPT_MASSIMAZIONE}\n\nTESTO DA ANALIZZARE:\n${question}` },
-        ],
-        response_format: { type: "json_object" },
-      });
-
-      const rawContent = oaResponse.choices[0]?.message?.content ?? "";
-      const cleanJson = rawContent.replace(/```json/gi, "").replace(/```/g, "").trim();
-
-      parsedJson = JSON.parse(cleanJson);
+      parsedJson = await generateMassimazioneJson(oaClient, "gpt-4o-mini", question);
       providerUsed = "openai_fallback";
       modelUsed = "gpt-4o-mini";
     }

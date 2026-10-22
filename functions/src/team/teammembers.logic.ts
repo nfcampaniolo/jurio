@@ -1,24 +1,18 @@
 import { Request, Response } from "express";
-import { withSecureApiEndpoint, validateUserPlanAndLimits } from "../_utils";
+import { withSecureApiEndpoint } from "../_utils";
 import { getDb, getAdminAuth, getAdmin } from "../_deps";
 import { FieldValue } from "firebase-admin/firestore";
 import { AssignTeamSeatRequestBody, AssignTeamSeatResponse,  RemoveTeamMemberRequestBody, RemoveTeamMemberResponse } from "./_interfaces";
 import { enqueueWelcomeTeamEmail, enqueueRemoveTeamEmail } from "../email/team/logic";
-import { updateUserDocuments, removeUserVisibilityFromDocuments } from "./_utils";
+import { updateUserDocuments, removeUserVisibilityFromDocuments, validateTeamUser } from "./_utils";
+import { logSafeError } from "../_logging";
 
 const db = getDb();
 const admin = getAdmin();
 
 export async function executeAssignTeamSeat(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (callerUid): Promise<void> => {
-    // 1. Verifica utente nel DB e validazione unificata piano/limiti (feature "teams")
-    const userSnap = await db.collection("register").doc(callerUid).get();
-    if (!userSnap.exists) {
-      res.status(404).json({ error: "Not Found" });
-      return;
-    }
-
-    await validateUserPlanAndLimits(callerUid, "teams", userSnap);
+    if (!(await validateTeamUser(callerUid, res))) return;
 
     // 2. Sanitizzazione e Type-Safety Input
     const body = (req.body ?? {}) as AssignTeamSeatRequestBody;
@@ -192,7 +186,7 @@ export async function executeAssignTeamSeat(req: Request, res: Response): Promis
         email: out.targetEmail, 
         teamName: out.teamName 
       }).catch(mailErr => {
-        console.error(`[JURIO-SEAT] Errore nell'invio dell'email di benvenuto team per ${out.targetEmail}:`, mailErr);
+        logSafeError("TEAM_WELCOME_EMAIL_FAILED", mailErr);
       });
     }
 
@@ -203,14 +197,7 @@ export async function executeAssignTeamSeat(req: Request, res: Response): Promis
 
 export async function executeRemoveTeamMember(req: Request, res: Response): Promise<any> {
   return withSecureApiEndpoint(req, res, async (requesterUid): Promise<void> => {
-    // 1. Verifica utente nel DB e validazione unificata piano/limiti (feature "teams")
-    const userSnap = await db.collection("register").doc(requesterUid).get();
-    if (!userSnap.exists) {
-      res.status(404).json({ error: "Not Found" });
-      return;
-    }
-
-    await validateUserPlanAndLimits(requesterUid, "teams", userSnap);
+    if (!(await validateTeamUser(requesterUid, res))) return;
 
     // 2. Sanitizzazione e Type-Safety Input
     const body = (req.body ?? {}) as RemoveTeamMemberRequestBody;
@@ -298,7 +285,7 @@ export async function executeRemoveTeamMember(req: Request, res: Response): Prom
         email: targetEmail, 
         teamName: teamNameStr 
       }).catch(mailErr => {
-        console.error(`[JURIO-REMOVE-MEMBER] Errore nell'invio email di rimozione a ${targetEmail}:`, mailErr);
+        logSafeError("TEAM_MEMBER_REMOVAL_EMAIL_FAILED", mailErr);
       });
     }
 

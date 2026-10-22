@@ -1,5 +1,6 @@
 import { FieldValue, DocumentReference } from "firebase-admin/firestore";
 import { getDb} from "../_deps";
+import { logSafeError } from "../_logging";
 
 export async function applyTeamVisibility(
   docRef: DocumentReference, 
@@ -9,7 +10,7 @@ export async function applyTeamVisibility(
   // 1. Recuperiamo l'ID dell'utente dal documento appena creato
   const userId = data.user;
   if (!userId) {
-    console.warn(`Campo utente 'user' non trovato nel doc ${docRef.id}`);
+    console.warn("Campo utente non trovato nel documento");
     return;
   }
 
@@ -35,16 +36,16 @@ export async function applyTeamVisibility(
           await docRef.update({
             visibleTo: FieldValue.arrayUnion(...teamMembers)
           });
-          console.log(`Aggiunti ${teamMembers.length} membri a visibleTo per ${docRef.path}`);
+          console.log(`Visibilità team aggiornata per ${teamMembers.length} membri`);
         }
       } else {
         // L'utente ha un team, ma il team non ha come default la condivisione.
-        console.log(`Il team ${teamDoc.id} ha visibility_default = "${teamData.visibility_default}". Nessuna condivisione applicata.`);
+        console.log("Nessuna condivisione applicata: visibilità team non abilitata");
       }
     } else {
-      console.log(`Nessun team trovato per l'utente ${userId}`);
+      console.log("Nessun team trovato per l'utente");
     }
   } catch (error) {
-    console.error(`Errore in applyTeamVisibility per ${docRef.path}:`, error);
+    logSafeError("TEAM_VISIBILITY_UPDATE_FAILED", error);
   }
 }

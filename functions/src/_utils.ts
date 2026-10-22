@@ -5,6 +5,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getDb, getAdminAuth} from "./_deps";
 import { Request, Response } from "express";
 import { JurioFeatureType, ALLOWED_ORIGINS, ALLOWED_PLANS, JURIO_USAGE_LIMITS } from "./_constants";
+import { logSafeError } from "./_logging";
 
 const db = getDb();
 const auth = getAdminAuth();
@@ -19,7 +20,7 @@ export const corsHandlerDomain = cors({
     if (ALLOWED_ORIGINS.includes(origin)) {
       return callback(null, true);
     }
-    console.error(`[CORS] Bloccato origin non autorizzato: ${origin}`);
+    console.error("[CORS] Origine non autorizzata");
     return callback(new Error(`Not allowed by CORS: ${origin}`));
   },
   methods: ["POST", "OPTIONS"],
@@ -94,7 +95,7 @@ export function dayKeyRome(d = new Date()): string {
 
 function handleApiError(res: Response, err: unknown): void {
   const msg = err instanceof Error ? err.message : "Internal error";
-  console.error("[API Error] ERRORE CRITICO:", err);
+  logSafeError("API_REQUEST_FAILED", err);
 
   if (res.headersSent && !res.writableEnded) {
     try {
@@ -185,7 +186,7 @@ export async function validateUserPlanAndLimits(
       consumeDailyFeature(uid, type, limits.perDay),
     ]);
   } catch (error) {
-    console.warn(`[${type}] Rate limit superato per utente ${uid}`);
+    console.warn(`[${type}] Rate limit superato`);
     throw new Error("TOO_MANY_REQUESTS");
   }
 }

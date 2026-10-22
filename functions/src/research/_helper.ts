@@ -1,11 +1,42 @@
-import { Request } from "express";
+import { Request, Response } from "express";
 import { OpenAI } from "openai";
 import { Timestamp } from "firebase-admin/firestore";
 import { requireAppCheck, requireUidFromAuthHeader } from "../_utils";
 import { getDb } from "../_deps";
+import { logSafeError } from "../_logging";
 
 const db = getDb();
 let oaClient: OpenAI | null = null;
+
+export function handleVectorSearchError(
+  res: Response,
+  error: unknown,
+  context: string
+): void {
+  const message =
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof error.message === "string"
+      ? error.message
+      : "";
+
+  if (message === "UNAUTHORIZED") {
+    res.status(401).json({ error: "Unauthorized" });
+  } else if (message === "NOT_FOUND") {
+    res.status(404).json({ error: "Not Found" });
+  } else if (message === "FORBIDDEN") {
+    res.status(403).json({ error: "Forbidden", message: "Piano non abilitato." });
+  } else if (message === "TOO_MANY_REQUESTS") {
+    res.status(429).json({
+      error: "Too Many Requests",
+      details: "Limite di utilizzo superato.",
+    });
+  } else {
+    logSafeError("RESEARCH_REQUEST_FAILED", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+}
 
 /**
  * Inizializza o restituisce il client OpenAI (Lazy Loading).

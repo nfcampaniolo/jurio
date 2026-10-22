@@ -164,7 +164,7 @@ export async function executeDownloadCloudFile(req: Request, res: Response): Pro
       });
 
       if (!msRes.ok) {
-        console.warn(`[JURIO-CLOUD-DOWNLOAD] Errore risposto da Microsoft Graph API per file ${fileId}: ${msRes.status}`);
+        console.warn(`[JURIO-CLOUD-DOWNLOAD] Microsoft Graph API ha risposto con HTTP ${msRes.status}`);
         res.status(502).json({ error: "Bad Gateway: Impossibile scaricare il file da Microsoft." });
         return;
       }

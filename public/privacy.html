@@ -37,12 +37,12 @@
     service: {
       hosting: "Google Cloud",
       payment: "Stripe",
-      ai: "Google Gemini API",
+      ai: "Google Vertex AI/Gemini, OpenAI API, DeepSeek API (flussi amministrativi) e Google Cloud Speech-to-Text",
       analytics: "Google Analytics (soggetto a consenso cookie)",
       aiTraining:
-        "Jurio utilizza la Gemini Developer API in modalità a pagamento. In tale configurazione, i prompt e le risposte inviati tramite l'API non vengono utilizzati da Google per migliorare i propri prodotti, secondo i termini e le condizioni applicabili al servizio.",
+        "In base alla funzionalità richiesta, i testi, i documenti, le query o l'audio necessari possono essere trasmessi ai servizi AI indicati. Le condizioni di conservazione, uso dei dati e localizzazione dipendono dal servizio, dall'account e dai termini applicabili; non viene formulata una garanzia generale di zero retention o di esclusione dall'addestramento per tutti i fornitori.",
       internationalTransfers:
-        "I dati possono essere trattati e conservati su infrastrutture Google situate anche al di fuori dello Spazio Economico Europeo. Gli eventuali trasferimenti internazionali sono effettuati secondo le garanzie previste dalla normativa applicabile e dai termini di trattamento dei dati di Google."
+        "Le regioni di trattamento dipendono dal servizio e dall'ambiente. Il bucket Storage predefinito di produzione, jurio-it.firebasestorage.app, è in EUR4; nel progetto di sviluppo è presente un bucket Storage in US-WEST1, la cui separazione effettiva dai dati di produzione deve essere verificata. Eventuali trasferimenti fuori dallo Spazio Economico Europeo e le relative garanzie dipendono dai fornitori, dalle configurazioni e dagli accordi applicabili."
     },
 
     retention: {
@@ -160,8 +160,8 @@
             <section>
               <h2>Fornitori e destinatari</h2>
               <p>
-                Per erogare il servizio il Titolare può avvalersi di fornitori tecnici che trattano dati per suo conto,
-                ove ne ricorrano i presupposti e previa adozione delle misure contrattuali previste dall'art. 28 GDPR.
+                Per erogare le funzionalità richieste, alcuni dati possono essere comunicati ai fornitori tecnici indicati.
+                Il ruolo di ciascun fornitore e le condizioni di trattamento dipendono dal servizio e dagli accordi applicabili.
               </p>
               <ul>
                 <li><strong>Hosting / infrastruttura:</strong> <span data-config="service.hosting"></span></li>

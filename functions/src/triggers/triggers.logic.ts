@@ -2,6 +2,7 @@ import { FirestoreEvent, Change, DocumentSnapshot, QueryDocumentSnapshot } from 
 import { getAdminStorage } from "../_deps";
 import { applyTeamVisibility } from "./_helper";
 import { enqueueContactEmail }  from "../email/comms/logic";
+import { logSafeError } from "../_logging";
 
 export async function handleFileCreation(
   event: FirestoreEvent<Change<DocumentSnapshot> | undefined, Record<string, string>>
@@ -30,11 +31,11 @@ export async function handleGenerateStaticStatsJson(
 
   // 1. Filtriamo solo i documenti che ci interessano
   if (data.type !== "weekly_sentences_stats") {
-    console.log(`Documento ${event.params.docId} ignorato: non è una statistica settimanale.`);
+    console.log("Documento ignorato: non è una statistica settimanale.");
     return;
   }
 
-  console.log(`Elaborazione nuove statistiche dal documento: ${event.params.docId}`);
+  console.log("Elaborazione nuove statistiche settimanali");
 
   // 2. Formattiamo la data per il frontend (es: "31 Maggio 2026")
   const createdAtDate = data.createdAt?.toDate ? data.createdAt.toDate() : new Date();
@@ -87,9 +88,9 @@ export async function handleGenerateStaticStatsJson(
     });
 
     await file.makePublic();
-    console.log(`Successo! dataConfig.json sovrascritto e reso pubblico: ${file.publicUrl()}`);
+    console.log("dataConfig.json aggiornato e pubblicato");
   } catch (error) {
-    console.error("Errore durante il salvataggio su Cloud Storage:", error);
+    logSafeError("STATIC_STATS_UPLOAD_FAILED", error);
     throw error; // Rilanciamo l'errore per garantire il corretto retry della Cloud Function in caso di fallimento
   }
 }
@@ -117,7 +118,7 @@ export async function handleProcessContacts(
     typeof data.message === "string" && data.message.trim() !== "";
 
   if (!hasRequiredFields) {
-    console.warn(`Documento ${docId} ignorato: campi obbligatori mancanti o malformati.`, data);
+    console.warn("Ticket contatti ignorato: campi obbligatori mancanti o malformati");
     return;
   }
 
@@ -131,9 +132,9 @@ export async function handleProcessContacts(
       id: docId
     });
 
-    console.log(`Email processata correttamente per il ticket: ${docId}`);
+    console.log("Email del ticket contatti processata");
   } catch (error) {
-    console.error("Errore critico durante l'esecuzione di enqueueContactEmail:", error);
+    logSafeError("CONTACT_EMAIL_ENQUEUE_FAILED", error);
     throw error;
   }
 }

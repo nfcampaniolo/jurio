@@ -2,6 +2,7 @@ import {  generateVoucherInviteEmail, generateWelcomeEmailTeam, generateTeamClos
 import { getAdminAuth } from "../../_deps";
 import { dispatchMailAndNotification } from "../_helper"
 import { EnqueueTeamEmailArgs, NotificationPayload, EnqueueCloseTeamEmailArgs, EnqueueVoucherEmailArgs } from "../_interfaces";
+import { logSafeInfo } from "../../_logging";
 
 export async function enqueueVoucherEmail({ 
   email, 
@@ -10,7 +11,7 @@ export async function enqueueVoucherEmail({
 }: EnqueueVoucherEmailArgs): Promise<void> {
   
   if (!email || !voucherCode) {
-    console.warn("[MAIL] Impossibile accodare l'email del voucher: email o voucherCode mancanti", { email, voucherCode });
+    console.warn("VOUCHER_EMAIL_DATA_MISSING");
     return;
   }
 
@@ -31,7 +32,7 @@ export async function enqueueVoucherEmail({
       link: "/profilo/team" // Aggiusta se hai una rotta specifica per il voucher
     });
   } catch (error) {
-    console.log(error);
+    logSafeInfo("TEAM_EMAIL_ENQUEUE_FAILED", error);
   }
 
   await dispatchMailAndNotification({

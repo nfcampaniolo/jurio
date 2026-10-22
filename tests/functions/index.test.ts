@@ -351,7 +351,7 @@ describe("functions/src/index", () => {
 
     // Assert
     await expect(result).rejects.toBe(failure);
-    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining("statistiche settimanali"), failure);
+    expect(errorLog).toHaveBeenCalledWith("WEEKLY_SENTENCE_STATS_FAILED", { errorType: "Error" });
   });
 
   it("runs the monthly usage aggregation and logs the processed user count", async () => {
@@ -380,6 +380,6 @@ describe("functions/src/index", () => {
 
     // Assert
     await expect(result).rejects.toBe(failure);
-    expect(errorLog).toHaveBeenCalledWith(expect.stringContaining("consolidamento degli usage mensili"), failure);
+    expect(errorLog).toHaveBeenCalledWith("MONTHLY_USAGE_CONSOLIDATION_FAILED", { errorType: "Error" });
   });
 });

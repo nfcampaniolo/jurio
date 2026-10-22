@@ -33,10 +33,12 @@ describe("Analytics Service Suite", () => {
     vi.clearAllMocks();
     vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    mockInitializeOptionalServices.mockResolvedValue(undefined);
-    mockGetAnalyticsInstance.mockReturnValue(fakeAnalyticsInstance);
+    mockGetAnalyticsInstance.mockReturnValue(null);
+    mockInitializeOptionalServices.mockImplementation(async () => {
+      mockGetAnalyticsInstance.mockReturnValue(fakeAnalyticsInstance);
+    });
 
-    // Import dinamico per garantire un modulo isolato con cachedAnalytics resettato ad undefined
+    // Import dinamico per garantire un modulo isolato per ciascun test.
     const analyticsModule = await import("@/infrastructure/analytics");
     trackEvent = analyticsModule.trackEvent;
   });
@@ -53,7 +55,7 @@ describe("Analytics Service Suite", () => {
       });
 
       expect(mockInitializeOptionalServices).toHaveBeenCalledTimes(1);
-      expect(mockGetAnalyticsInstance).toHaveBeenCalledTimes(1);
+      expect(mockGetAnalyticsInstance).toHaveBeenCalledTimes(3);
       expect(mockLogEvent).toHaveBeenCalledWith(
         fakeAnalyticsInstance,
         "login",
@@ -109,14 +111,36 @@ describe("Analytics Service Suite", () => {
   });
 
   describe("Meccanismo di Caching del Singleton", () => {
-    test("riutilizza l'istanza in cache senza re-invocare initializeOptionalServices nelle chiamate successive", async () => {
+    test("recupera l'istanza inizializzata senza ripetere l'inizializzazione nelle chiamate successive", async () => {
       await trackEvent("sentence_opened", { source: "search" });
       await trackEvent("document_opened", { source: "profile" });
       await trackEvent("sentence_saved", {});
 
       expect(mockInitializeOptionalServices).toHaveBeenCalledTimes(1);
-      expect(mockGetAnalyticsInstance).toHaveBeenCalledTimes(1);
+      expect(mockGetAnalyticsInstance).toHaveBeenCalledTimes(7);
       expect(mockLogEvent).toHaveBeenCalledTimes(3);
+    });
+
+    test("inizia a inviare eventi dopo che il consenso viene concesso nella stessa sessione", async () => {
+      mockInitializeOptionalServices.mockImplementation(async () => {});
+
+      await trackEvent("login", {
+        method: "email",
+        success: true,
+      });
+      expect(mockLogEvent).not.toHaveBeenCalled();
+
+      mockGetAnalyticsInstance.mockReturnValue(fakeAnalyticsInstance);
+      await trackEvent("sign_up", {
+        method: "email",
+        success: true,
+      });
+
+      expect(mockLogEvent).toHaveBeenCalledWith(
+        fakeAnalyticsInstance,
+        "sign_up",
+        { method: "email", success: true }
+      );
     });
   });
 
@@ -137,35 +161,37 @@ describe("Analytics Service Suite", () => {
       expect(mockLogEvent).not.toHaveBeenCalled();
     });
 
-    test("salva in cache il valore null a seguito di fallimento ed evita tentativi ripetuti", async () => {
+    test("ritenta l'inizializzazione dopo un errore senza conservare null in cache", async () => {
       mockInitializeOptionalServices.mockRejectedValueOnce(new Error("Network offline"));
 
-      // Primo tentativo: fallisce e memorizza cachedAnalytics = null
+      // Primo tentativo: fallisce senza memorizzare un risultato negativo.
       await trackEvent("free_trial_start", {});
 
       expect(mockInitializeOptionalServices).toHaveBeenCalledTimes(1);
       expect(mockLogEvent).not.toHaveBeenCalled();
 
-      // Secondo tentativo: cachedAnalytics è null (diverso da undefined), quindi ritorna subito null
       await trackEvent("sign_up", {
         method: "apple",
         success: true,
       });
 
-      expect(mockInitializeOptionalServices).toHaveBeenCalledTimes(1);
-      expect(mockGetAnalyticsInstance).not.toHaveBeenCalled();
-      expect(mockLogEvent).not.toHaveBeenCalled();
+      expect(mockInitializeOptionalServices).toHaveBeenCalledTimes(2);
+      expect(mockLogEvent).toHaveBeenCalledWith(
+        fakeAnalyticsInstance,
+        "sign_up",
+        { method: "apple", success: true }
+      );
     });
 
     test("non invoca logEvent se getAnalyticsInstance restituisce null pur senza generare errori", async () => {
-      mockGetAnalyticsInstance.mockReturnValueOnce(null);
+      mockInitializeOptionalServices.mockImplementation(async () => {});
 
       await trackEvent("password_reset_requested", {
         method: "email",
       });
 
       expect(mockInitializeOptionalServices).toHaveBeenCalledTimes(1);
-      expect(mockGetAnalyticsInstance).toHaveBeenCalledTimes(1);
+      expect(mockGetAnalyticsInstance).toHaveBeenCalledTimes(2);
       expect(mockLogEvent).not.toHaveBeenCalled();
     });
   });

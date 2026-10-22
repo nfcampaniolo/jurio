@@ -1,5 +1,6 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { getDb } from "../../_deps";
+import { logSafeError } from "../../_logging";
 
 export type DeepAnalysisProgressStatus = "running" | "completed" | "error";
 
@@ -29,6 +30,6 @@ export async function reportDeepAnalysisProgress(
         { merge: true }
       );
   } catch (error) {
-    console.error("[DeepAnalysisProgress] Aggiornamento stato non riuscito:", error);
+    logSafeError("DEEP_ANALYSIS_PROGRESS_UPDATE_FAILED", error);
   }
 }

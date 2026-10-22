@@ -31,7 +31,8 @@ vi.mock("@functions/_utils", () => ({
   withSecureApiEndpoint: mocks.secure,
   validateUserPlanAndLimits: mocks.validate,
 }));
-vi.mock("@functions/admin/_helper", () => ({
+vi.mock("@functions/admin/_helper", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@functions/admin/_helper")>()),
   runCleanupDuplicates: mocks.runCleanupDuplicates,
   runUpdateFonte: mocks.runUpdateFonte,
   runUpdateMetadata: mocks.runUpdateMetadata,

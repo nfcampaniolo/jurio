@@ -26,6 +26,7 @@ export const useLegalChat = (initialData?: {
   const navigate = useNavigate();
   const { chatId, fascicoloId, threadId } = useParams();
   const isNewFascicolo = Boolean(initialData?.isNewFascicolo);
+  const routeEntityKey = chatId ? `chat:${chatId}` : fascicoloId ? `fascicolo:${fascicoloId}` : null;
 
   // Stati
   // Parte già dal tipo giusto in base alla rotta, per evitare il passaggio dalla schermata di selezione (flash)
@@ -75,6 +76,8 @@ export const useLegalChat = (initialData?: {
   const [pastFascicoli, setPastFascicoli] = useState<PastFascicolo[]>([]);
   const [pastChats, setPastChats] = useState<PastChat[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isLoadingSession, setIsLoadingSession] = useState(Boolean(routeEntityKey && !isNewFascicolo));
+  const [hasLoadedUserData, setHasLoadedUserData] = useState(false);
   const [isProcessingFiles, setIsProcessingFiles] = useState(false);
   const [showTitleModal, setShowTitleModal] = useState(false);
   const [denyOpen, setDenyOpen] = useState(false);
@@ -107,6 +110,7 @@ export const useLegalChat = (initialData?: {
     const fetchUserData = async () => {
       if (!user?.uid) return;
       setIsLoadingData(true);
+      setHasLoadedUserData(false);
       try {
         const [docsRes, fascicoliRes, chatsRes] = await Promise.all([ listDocumentsByUser(user.uid), listFascicoliByUser(user.uid), listChatsByUser(user.uid) ]);
         setArchiveDocs(docsRes.map(doc => ({
@@ -115,7 +119,10 @@ export const useLegalChat = (initialData?: {
           type: "pdf", dataSentenza: doc.dataSentenza || undefined, fascicoloIds: doc.fascicoloIds || undefined, user: doc.user
         })));
         setPastFascicoli(fascicoliRes); setPastChats(chatsRes);           
-      } catch (error) { console.error(error); } finally { setIsLoadingData(false); }
+      } catch (error) { console.error(error); } finally {
+        setIsLoadingData(false);
+        setHasLoadedUserData(true);
+      }
     };
     void fetchUserData();
   }, [user?.uid]);
@@ -127,6 +134,7 @@ export const useLegalChat = (initialData?: {
 
   const loadPastChat = useCallback(async (chat: PastChat) => {
     setIsLoadingData(true);
+    setIsLoadingSession(true);
     setMessages([]);
     const getTime = (ts: unknown): number => {
       if (!ts) return 0;
@@ -142,11 +150,18 @@ export const useLegalChat = (initialData?: {
       });
       setSessionTitle(chat.title); setMessages(sortedMessages.map((m: Message) => ({ ...m, isHistorical: true })));
       setAttachedDocs([]); void navigate(`/chat/${chat.id}`);
-    } catch (error) { console.error(`[❌ ChatLoad] Errore`); console.error(error);} finally { setIsLoadingData(false); }
+    } catch (error) {
+      console.error(`[❌ ChatLoad] Errore`);
+      console.error(error);
+    } finally {
+      setIsLoadingData(false);
+      if (loadedEntityRef.current === `chat:${chat.id}`) setIsLoadingSession(false);
+    }
   }, [navigate]);
 
   const loadPastFascicolo = useCallback(async (fascicolo: PastFascicolo) => {
     setIsLoadingData(true);
+    setIsLoadingSession(true);
     setMessages([]);
     try {
       const threadsData = await fetchFascicoloData(fascicolo.id);
@@ -177,7 +192,13 @@ export const useLegalChat = (initialData?: {
         setThreads([{ id: newThreadUid, title: "Nuova conversazione", createdAt: new Date() }]);
         setMessages([]); setThreadTitle("Nuova conversazione"); void navigate(`/fascicolo/${fascicolo.id}/${newThreadUid}`);
       }
-    } catch (error) { toast.error("Errore nel caricamento."); console.error(error);} finally { setIsLoadingData(false); }
+    } catch (error) {
+      toast.error("Errore nel caricamento.");
+      console.error(error);
+    } finally {
+      setIsLoadingData(false);
+      if (loadedEntityRef.current === `fascicolo:${fascicolo.id}`) setIsLoadingSession(false);
+    }
   }, [threadId, navigate]);
 
   useEffect(() => {
@@ -189,16 +210,17 @@ export const useLegalChat = (initialData?: {
     if (!chatId && !fascicoloId) {
       setSessionType('seleziona');
       setIsSetupComplete(false);
+      setIsLoadingSession(false);
       loadedEntityRef.current = null;
       loadedThreadRef.current = null;
       setIsReadOnly(false);
       return;
     }
-    const routeEntityKey = chatId ? `chat:${chatId}` : `fascicolo:${fascicoloId}`;
     if (isNewFascicolo && fascicoloId && threadId) {
       const threadKey = `${fascicoloId}:${threadId}`;
       setSessionType("fascicolo");
       setIsSetupComplete(true);
+      setIsLoadingSession(false);
       setIsReadOnly(false);
       setActiveThreadId(threadId);
       setThreads((currentThreads) => {
@@ -220,36 +242,46 @@ export const useLegalChat = (initialData?: {
       return;
     }
     if (loadedEntityRef.current && loadedEntityRef.current !== routeEntityKey) {
+      setIsLoadingSession(true);
       loadedEntityRef.current = null;
       loadedThreadRef.current = null;
       setMessages([]);
     }
-    if (isLoadingData) return;
+    if (isLoadingData || !hasLoadedUserData) return;
 
     if (chatId) {
       setSessionType('temporanea'); setIsSetupComplete(true); setIsReadOnly(false);
       const entityKey = `chat:${chatId}`;
-      if (loadedEntityRef.current !== entityKey && pastChats.length > 0) {
+      if (loadedEntityRef.current !== entityKey) {
         const chatToLoad = pastChats.find(c => c.id === chatId);
         if (chatToLoad) {
+          setIsLoadingSession(true);
           loadedEntityRef.current = entityKey;
           loadedThreadRef.current = null;
           void loadPastChat(chatToLoad);
+        } else {
+          setIsLoadingSession(false);
         }
       }
     } else if (fascicoloId) {
       setSessionType('fascicolo'); setIsSetupComplete(true);
       if (threadId) setActiveThreadId(threadId);
       const entityKey = `fascicolo:${fascicoloId}`;
-      if (loadedEntityRef.current !== entityKey && pastFascicoli.length > 0) {
+      if (loadedEntityRef.current !== entityKey) {
         const fascicoloToLoad = pastFascicoli.find(f => f.id === fascicoloId);
         if (fascicoloToLoad) {
+          setIsLoadingSession(true);
           loadedEntityRef.current = entityKey;
           loadedThreadRef.current = null;
           setIsReadOnly(fascicoloToLoad.user !== user?.uid);
           void loadPastFascicolo(fascicoloToLoad);
         }
-        else { setMessages([]); setThreadTitle(""); setIsReadOnly(false); }
+        else {
+          setMessages([]);
+          setThreadTitle("");
+          setIsReadOnly(false);
+          setIsLoadingSession(false);
+        }
       } else if (loadedEntityRef.current === entityKey && threadId) {
         const threadKey = `${fascicoloId}:${threadId}`;
         if (loadedThreadRef.current !== threadKey) {
@@ -262,6 +294,7 @@ export const useLegalChat = (initialData?: {
           } else {
             setMessages([]);
             setThreadTitle("");
+            setIsLoadingSession(true);
             void fetchFascicoloData(fascicoloId).then((threadsData: DBThreadPayload[]) => {
               if (loadedEntityRef.current !== entityKey || loadedThreadRef.current !== threadKey) return;
               for (const thread of threadsData) {
@@ -281,6 +314,10 @@ export const useLegalChat = (initialData?: {
             }).catch((error: unknown) => {
               console.error("[ChatLoad] Errore caricamento thread:", error);
               toast.error("Errore nel caricamento della conversazione.");
+            }).finally(() => {
+              if (loadedEntityRef.current === entityKey && loadedThreadRef.current === threadKey) {
+                setIsLoadingSession(false);
+              }
             });
           }
         }
@@ -289,11 +326,13 @@ export const useLegalChat = (initialData?: {
   }, [
     chatId, 
     fascicoloId, 
+    routeEntityKey,
     threadId, 
     isLoadingData, 
     pastChats, 
     pastFascicoli, 
     user?.uid, 
+    hasLoadedUserData,
     loadPastChat, 
     loadPastFascicolo,
     activeThreadId,
@@ -367,7 +406,7 @@ export const useLegalChat = (initialData?: {
     messagesEndRef, handleSendMessage, toggleDocSelection, removeAttachment, loadPastFascicolo, loadPastChat,
     seo: getSeoData(), startTempChat, startFascicoloSetup, finalizeFascicoloCreation, convertChatToFascicolo, closeSession,
     createNewThread, sessionTitle, setSessionTitle, threadTitle, setThreadTitle, 
-    threads, activeThreadId, archiveDocs, pastFascicoli, pastChats, isLoadingData, processFilesParallel, isProcessingFiles,
+    threads, activeThreadId, archiveDocs, pastFascicoli, pastChats, isLoadingData, isLoadingSession, processFilesParallel, isProcessingFiles,
     handleSourceClick, showTitleModal, setShowTitleModal, startThread, denyOpen,
     renameFascicolo, renameChat, deleteChat, deleteFascicolo, deleteThread, renameThread,
     handleToggleFascicoloLink, handleDeleteDocumento, handleRenameDocumento,

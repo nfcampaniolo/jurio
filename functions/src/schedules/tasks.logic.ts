@@ -5,6 +5,7 @@ import { calculateReportData } from "../email/_helper";
 import { enqueueMonthlyUsageEmail } from "../email/plans/logic";
 import { SEZIONI_CASSAZIONE_CIVILE, SEZIONI_CASSAZIONE_PENALE } from "../_constants";
 import { enqueueDowngradeEmail } from "../email/plans/logic";
+import { logSafeError } from "../_logging";
 
 export type DowngradeTxResult = {
   skipped: "user_not_found" | "register_not_found" | "no_current_expire" | "outdated_task" | null;
@@ -252,7 +253,7 @@ export async function computeAndSaveMonthlyUsage() {
       }
     } catch (error) {
       // In caso l'utente sia stato cancellato da Auth o non abbia un'email
-      console.warn(`⚠️ Impossibile inviare l'email per l'uid ${task.uid}. Utente non trovato in Auth?`);
+      console.warn("Impossibile inviare l'email: utente non trovato in Auth");
     }
   }
 
@@ -360,7 +361,7 @@ export async function executeTasksDowngrade(req: Request, res: Response): Promis
       alreadyEmailed: txOut.alreadyEmailed,
     });
   } catch (e) {
-    console.error("[TASKS_DOWNGRADE] error", e);
+    logSafeError("TASKS_DOWNGRADE_FAILED", e);
     res.status(500).json({ error: "Internal error" });
   }
 }

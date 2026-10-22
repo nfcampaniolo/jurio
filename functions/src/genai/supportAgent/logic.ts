@@ -9,6 +9,7 @@ import { MessageDoc, SupportRequestBody, GenerateEmbeddingRequestBody, GenerateE
 import { FirestoreEvent, QueryDocumentSnapshot } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import { getDb } from "../../_deps";
+import { logSafeError } from "../../_logging";
 
 const db = getDb();
 // Il trigger parte dal messaggio utente ma l'estrazione analizza l'intero thread
@@ -54,12 +55,12 @@ export async function executeSupport(req: Request, res: Response): Promise<any> 
       enforcePublicRateLimit(req, "support_public")
     ]);
     if (appCheckResult.status === "rejected") {
-      console.warn(`[JURIO-SUPPORT] Accesso fallito AppCheck: ${req.ip}`);
+      console.warn("[JURIO-SUPPORT] Accesso fallito AppCheck");
       res.status(401).json({ error: "Unauthorized" });
       return;
     }
     if (rateLimitResult.status === "rejected") {
-      console.warn(`[JURIO-SUPPORT] Rate limit superato: ${req.ip}`);
+      console.warn("[JURIO-SUPPORT] Rate limit superato");
       res.status(429).json({ error: "Too Many Requests" });
       return;
     }
@@ -133,7 +134,7 @@ export async function executeSupport(req: Request, res: Response): Promise<any> 
       if (clientDisconnected) return; // Ignora se il client ha chiuso volontariamente la connessione
 
       const msg = err instanceof Error ? err.message : "Internal error";
-      console.error(`[JURIO-SUPPORT] Errore durante lo streaming del flow: ${msg}`);
+      logSafeError("SUPPORT_STREAM_FAILED", msg);
 
       // Anti Information Disclosure sullo stream SSE
       if (res.headersSent && !res.writableEnded) {
@@ -207,11 +208,11 @@ export async function executeUpdateMetadataFromChat(
 
     // Protezione da costi eccessivi: contesto limitato agli ultimi MAX_CONTEXT_CHARS caratteri
     const updated = await extractAndSaveFascicoloMetadata(fascicoloId, chatContext.slice(-MAX_CONTEXT_CHARS));
-    console.log(`[JURIO-METADATA] Fascicolo ${fascicoloId}: analizzati ${historySnap.size} messaggi, chiavi aggiornate: ${updated}`);
+    console.log(`[JURIO-METADATA] Analizzati ${historySnap.size} messaggi, chiavi aggiornate: ${updated}`);
 
   } catch (error) {
     // Nessun rethrow: un errore (es. 429) non deve far rieseguire il trigger in loop
-    console.error(`[JURIO-METADATA] Errore estrazione metadati per fascicolo ${fascicoloId}`, error);
+    logSafeError("SUPPORT_METADATA_EXTRACTION_FAILED", error);
   }
 }
 

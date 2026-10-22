@@ -210,13 +210,7 @@ export type EventParamsMap = {
   };
 };
 
-let cachedAnalytics: Analytics | null | undefined;
-
 async function getAnalyticsSafe(): Promise<Analytics | null> {
-  if (cachedAnalytics !== undefined) {
-    return cachedAnalytics;
-  }
-
   try {
     const {
       initializeOptionalServices,
@@ -225,19 +219,22 @@ async function getAnalyticsSafe(): Promise<Analytics | null> {
       "@/infrastructure/optionalService"
     );
 
+    const existingAnalytics = getAnalyticsInstance();
+    if (existingAnalytics) {
+      return existingAnalytics;
+    }
+
     await initializeOptionalServices();
 
-    cachedAnalytics = getAnalyticsInstance();
+    return getAnalyticsInstance();
   } catch (error) {
     console.warn(
       "Firebase Analytics non disponibile:",
       error
     );
 
-    cachedAnalytics = null;
+    return null;
   }
-
-  return cachedAnalytics;
 }
 
 export function trackEvent<K extends keyof EventParamsMap>(
@@ -258,6 +255,11 @@ export async function trackEvent(
   const { logEvent } = await import(
     "firebase/analytics"
   );
+
+  const currentAnalytics = await getAnalyticsSafe();
+  if (currentAnalytics !== analytics) {
+    return;
+  }
 
   logEvent(
     analytics,

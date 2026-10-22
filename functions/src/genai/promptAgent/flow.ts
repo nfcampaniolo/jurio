@@ -1,5 +1,6 @@
 import { z } from 'genkit';
 import { ai } from "../_config";
+import { logSafeError } from "../../_logging";
 import { PromptFieldSchema, PromptOutputSchema } from "./_schema";
 import {
   PROMPT_BUILDER_SYSTEM_PROMPT,
@@ -95,7 +96,7 @@ export const promptBuilderFlow = ai.defineFlow(
       return { result: generatedPrompt };
 
     } catch (error) {
-      console.error("Errore promptBuilderFlow:", error);
+      logSafeError("PROMPT_BUILDER_FLOW_FAILED", error);
       throw new Error("Si è verificato un errore durante la generazione del prompt architetturale.");
     }
   }

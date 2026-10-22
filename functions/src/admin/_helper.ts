@@ -1,19 +1,64 @@
 import { Timestamp, QueryDocumentSnapshot, DocumentReference, FieldValue } from "firebase-admin/firestore";
+import { Response } from "express";
 import { ProgressCallback, SentenceDoc } from "./_interfaces";
 import { generateUrn, generateEcli, extractSubcats } from "./_utils";
 import { getDb } from "../_deps";
+import { validateUserPlanAndLimits } from "../_utils";
+import { logSafeError } from "../_logging";
 
 const db = getDb();
+const QUERY_PAGE_SIZE = 200;
 
-export async function runCleanupDuplicates(onProgress: ProgressCallback): Promise<{ deletedCount: number }> {
+export async function requireAdminUser(
+  uid: string,
+  res: Response,
+  context: string
+): Promise<boolean> {
+  const userSnap = await db.collection("register").doc(uid).get();
+  if (!userSnap.exists) {
+    res.status(404).json({ error: "Not Found" });
+    return false;
+  }
+
+  if (String(userSnap.data()?.planId ?? "") !== "admin") {
+    console.warn(`[${context}] Accesso negato a utente non admin`);
+    res.status(403).json({ error: "Forbidden", details: "Privilegi insufficienti." });
+    return false;
+  }
+
+  await validateUserPlanAndLimits(uid, "admin", userSnap);
+  return true;
+}
+
+async function forEachTodaySentencePage(
+  onPage: (docs: QueryDocumentSnapshot[], pageCount: number) => void | Promise<void>
+): Promise<void> {
   const midnight = new Date();
   midnight.setHours(0, 0, 0, 0);
   const midnightTs = Timestamp.fromDate(midnight);
-  
-  const QUERY_PAGE_SIZE = 200; 
-  let deletedCount = 0;
-  let pageCount = 0;
   let lastDoc: QueryDocumentSnapshot | null = null;
+  let pageCount = 0;
+
+  while (true) {
+    let query = db.collection("sentences")
+      .where("createdAt", ">", midnightTs)
+      .orderBy("createdAt", "asc")
+      .limit(QUERY_PAGE_SIZE);
+
+    if (lastDoc) query = query.startAfter(lastDoc);
+
+    const snap = await query.get();
+    if (snap.empty) break;
+    pageCount++;
+    lastDoc = snap.docs[snap.docs.length - 1];
+
+    await onPage(snap.docs, pageCount);
+    if (snap.size < QUERY_PAGE_SIZE) break;
+  }
+}
+
+export async function runCleanupDuplicates(onProgress: ProgressCallback): Promise<{ deletedCount: number }> {
+  let deletedCount = 0;
 
   // Memoria per tenere traccia di quelli già visti in questa sessione
   const seenUrns = new Set<string>();
@@ -23,23 +68,12 @@ export async function runCleanupDuplicates(onProgress: ProgressCallback): Promis
 
   const bulkWriter = db.bulkWriter();
   bulkWriter.onWriteError((error) => {
-    console.error(`[BulkWriter Error] Errore eliminazione ${error.documentRef.path}:`, error.message);
-    return false; 
+    logSafeError("ADMIN_BULK_DELETE_FAILED", error);
+    return false;
   });
 
-  while (true) {
-    let query = db.collection("sentences")
-      .where("createdAt", ">", midnightTs)
-      .orderBy("createdAt", "asc")
-      .limit(QUERY_PAGE_SIZE);
-      
-    if (lastDoc) query = query.startAfter(lastDoc);
-
-    const snap = await query.get();
-    if (snap.empty) break;
-    pageCount++;
-
-    snap.docs.forEach((d) => {
+  await forEachTodaySentencePage((docs, pageCount) => {
+    docs.forEach((d) => {
       const docData = d.data() as any;
       const urn = docData.urn ? String(docData.urn).trim() : "";
       const ecli = docData.ecli ? String(docData.ecli).trim() : "";
@@ -60,16 +94,12 @@ export async function runCleanupDuplicates(onProgress: ProgressCallback): Promis
       }
     });
 
-    lastDoc = snap.docs[snap.docs.length - 1];
-
     onProgress(`Scansionata pagina #${pageCount} (Pulizia)`, { 
       step: 2, 
       pagesScanned: pageCount, 
       queuedDeletionsSoFar: deletedCount 
     });
-
-    if (snap.size < QUERY_PAGE_SIZE) break; 
-  }
+  });
   
   // Attendiamo che svuoti tutta la coda di eliminazioni
   await bulkWriter.close();
@@ -87,15 +117,7 @@ export async function runUpdateFonte(params: any, onProgress: ProgressCallback):
   if (sezione?.trim()) baseUpdateData.sezione = sezione.trim();
   if (organo_giudicante?.trim()) baseUpdateData.organo_giudicante = organo_giudicante.trim();
 
-  const midnight = new Date();
-  midnight.setHours(0, 0, 0, 0);
-  const midnightTs = Timestamp.fromDate(midnight);
-  
-  // Utilizzato solo per la paginazione della query di lettura
-  const QUERY_PAGE_SIZE = 200; 
   let updatedCount = 0;
-  let pageCount = 0;
-  let lastDoc: QueryDocumentSnapshot | null = null;
 
   onProgress("Avvio aggiornamento Fonte e URN/ECLI...", { step: 1, action: "start" });
 
@@ -104,23 +126,12 @@ export async function runUpdateFonte(params: any, onProgress: ProgressCallback):
 
   // Opzionale: Gestione degli errori sui singoli documenti per evitare il blocco totale
   bulkWriter.onWriteError((error) => {
-    console.error(`[BulkWriter Error] Errore sul documento ${error.documentRef.path}:`, error.message);
+    logSafeError("ADMIN_BULK_WRITE_FAILED", error);
     return false; // Ritorna false per NON riprovare l'operazione se fallisce a livello di regole/validazione
   });
 
-  while (true) {
-    let query = db.collection("sentences")
-      .where("createdAt", ">", midnightTs)
-      .orderBy("createdAt", "asc")
-      .limit(QUERY_PAGE_SIZE);
-      
-    if (lastDoc) query = query.startAfter(lastDoc);
-
-    const snap = await query.get();
-    if (snap.empty) break;
-    pageCount++;
-
-    snap.docs.forEach((d) => {
+  await forEachTodaySentencePage((docs, pageCount) => {
+    docs.forEach((d) => {
       const docData = d.data() as SentenceDoc;
       const docUpdateData: Record<string, string> = { ...baseUpdateData };
       let needsUpdate = Object.keys(docUpdateData).length > 0;
@@ -142,17 +153,13 @@ export async function runUpdateFonte(params: any, onProgress: ProgressCallback):
       }
     });
 
-    lastDoc = snap.docs[snap.docs.length - 1];
-
     // Aggiorna il progresso basandosi sui blocchi letti e messi in coda
     onProgress(`Scansionata pagina #${pageCount}`, { 
       step: 1, 
       pagesScanned: pageCount, 
       queuedUpdatesSoFar: updatedCount 
     });
-
-    if (snap.size < QUERY_PAGE_SIZE) break; 
-  }
+  });
   
   // 3. CRUCIALE: Attendiamo che il bulkWriter svuoti la coda e completi i flussi verso il server
   await bulkWriter.close();
@@ -167,34 +174,14 @@ export async function runUpdateMetadata(onProgress: ProgressCallback): Promise<a
   const taxonomyRef = db.collection("meta").doc("taxonomy");
   const magistrateRef = db.collection("meta").doc("magistrate");
 
-  const midnight = new Date();
-  midnight.setHours(0, 0, 0, 0);
-  const midnightTs = Timestamp.fromDate(midnight);
-
-  const QUERY_PAGE_SIZE = 200;
-  let lastDoc: QueryDocumentSnapshot | null = null;
-  
   // USIAMO DELLE MAPPE: chiave = nome, valore = conteggio occorrenze di OGGI
   const foundSubcats = new Map<string, number>();
   const foundPresidenti = new Map<string, number>();
   const foundRelatori = new Map<string, number>();
   
   let scanned = 0;
-  let pageCount = 0;
-
-  while (true) {
-    let query = db.collection("sentences")
-      .where("createdAt", ">", midnightTs)
-      .orderBy("createdAt", "asc")
-      .limit(QUERY_PAGE_SIZE);
-      
-    if (lastDoc) query = query.startAfter(lastDoc);
-
-    const snap = await query.get();
-    if (snap.empty) break;
-
-    pageCount++;
-    for (const d of snap.docs) {
+  await forEachTodaySentencePage((docs, pageCount) => {
+    for (const d of docs) {
       scanned++;
       const data = d.data();
       
@@ -214,16 +201,12 @@ export async function runUpdateMetadata(onProgress: ProgressCallback): Promise<a
       }
     }
 
-    lastDoc = snap.docs[snap.docs.length - 1];
-    
     onProgress(`Scansione sentenze in corso: lette ${scanned} (Pagina #${pageCount})`, { 
       step: 2, 
       scannedSoFar: scanned, 
       pagesScanned: pageCount 
     });
-    
-    if (snap.size < QUERY_PAGE_SIZE) break;
-  }
+  });
 
   onProgress("Verifica e Salvataggio metadati e contatori...", { step: 2, action: "saving" });
 

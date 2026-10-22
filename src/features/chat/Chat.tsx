@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { PanelRight, X, FolderPlus } from "lucide-react";
+import { PanelRight, X, FolderPlus, Loader2 } from "lucide-react";
 import { Helmet } from "@dr.pogodin/react-helmet";
 
 // --- Componenti Esistenti ---
@@ -58,6 +58,7 @@ export const LegalChatPage = () => {
     threadTitle, 
     archiveDocs,
     isLoadingData,
+    isLoadingSession,
     processFilesParallel,
     isProcessingFiles,
     handleSourceClick,
@@ -301,10 +302,10 @@ export const LegalChatPage = () => {
               <motion.div 
                 key="seleziona" 
                 className="w-full h-full" 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.24, ease: "easeOut" }}
               >
                 <SelectionScreen 
                   startTempChat={startTempChat}
@@ -317,12 +318,33 @@ export const LegalChatPage = () => {
               <motion.div 
                 key="chat" 
                 className="w-full h-full" 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.24, ease: "easeOut" }}
               >
                 {renderChatInterface()}
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {isLoadingSession && (sessionType === 'fascicolo' || sessionType === 'temporanea') && (
+              <motion.div
+                key="session-loading"
+                role="status"
+                aria-live="polite"
+                className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-4 bg-neutral-50/95 text-neutral-500 backdrop-blur-sm dark:bg-neutral-950/95 dark:text-neutral-400"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+              >
+                <Loader2 size={28} className="animate-spin text-[#e0a32e]" aria-hidden="true" />
+                <span className="text-xs font-semibold uppercase tracking-widest">
+                  {sessionType === 'fascicolo'
+                    ? "Caricamento fascicolo..."
+                    : "Caricamento conversazione..."}
+                </span>
               </motion.div>
             )}
           </AnimatePresence>

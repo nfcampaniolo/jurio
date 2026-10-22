@@ -40,7 +40,7 @@ export async function extractAndSaveFascicoloMetadata(
   if (updatedKeys === 0) return 0;
 
   await fascicoloRef.update(updatePayload);
-  console.log(`[JURIO-METADATA] Aggiornate ${updatedKeys} chiavi per fascicolo ${fascicoloId}`);
+  console.log(`[JURIO-METADATA] Aggiornate ${updatedKeys} chiavi`);
   return updatedKeys;
 }
 

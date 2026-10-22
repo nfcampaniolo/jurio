@@ -10,6 +10,7 @@ import { getDb } from "../_deps";
 import { GetRegisterResponse, GetPriceRequestBody, GetPriceResponse, ApplyCouponRequestBody, ApplyCouponResponse } from "./_interfaces";
 import { enqueueWelcomeEmail, enqueueTrialEmail } from "../email/comms/logic";
 import { scheduleDowngradeTask } from "../schedules/schedule.logic"
+import { logSafeError } from "../_logging";
 
 const db = getDb();
 
@@ -59,7 +60,7 @@ export async function executeGetRegister(req: Request, res: Response): Promise<a
         enqueueWelcomeEmail({ uid }),
         enqueueTrialEmail({ uid })
       ]).catch(emailErr => {
-        console.error(`[JURIO-REGISTER] Errore nell'accodamento email per UID ${uid}:`, emailErr);
+        logSafeError("REGISTRATION_EMAIL_ENQUEUE_FAILED", emailErr);
       });
     }
 
@@ -80,7 +81,7 @@ export async function executeGetRegister(req: Request, res: Response): Promise<a
           expireSec: out.expireSec,
         });
       } catch (taskErr) {
-        console.error(`[JURIO-REGISTER] Impossibile pianificare il task di downgrade per UID ${uid}:`, taskErr);
+        logSafeError("REGISTRATION_DOWNGRADE_TASK_SCHEDULE_FAILED", taskErr);
       }
     }
 
@@ -106,7 +107,7 @@ export async function executeGetPrice(req: Request, res: Response): Promise<void
       try {
         await requireAppCheck(req);
       } catch (appCheckError) {
-        console.warn(`[JURIO-PRICE] Fallimento AppCheck per IP: ${req.ip}`);
+        console.warn("[JURIO-PRICE] Fallimento AppCheck");
         res.status(401).json({ error: "Unauthorized" });
         return;
       }
@@ -121,7 +122,7 @@ export async function executeGetPrice(req: Request, res: Response): Promise<void
           consumeDailyFeature(`ip_${clientIp}`, "stripe_checkout", limits.perDay),
         ]);
       } catch (rateLimitError: unknown) {
-        console.warn(`[JURIO-PRICE] Rate limit superato per IP: ${clientIp}`);
+        console.warn("[JURIO-PRICE] Rate limit superato");
         res.status(429).json({ error: "Too Many Requests" });
         return;
       }
@@ -179,7 +180,7 @@ export async function executeGetPrice(req: Request, res: Response): Promise<void
     } catch (err: unknown) {
       // 7. Anti Information Disclosure
       const msg = err instanceof Error ? err.message : "Internal error";
-      console.error(`[JURIO-PRICE] Errore critico nel recupero prezzo:`, msg);
+      logSafeError("PRICE_LOOKUP_FAILED", msg);
       
       res.status(500).json({ error: "Internal Server Error" });
     }

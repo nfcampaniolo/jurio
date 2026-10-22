@@ -3,6 +3,7 @@ import { CFG } from "../_config";
 import { getKeywordStems, calculateMatchScore, applyHighlight } from "../../research/_utils";
 import { incrementRagCounter } from "../_utils";
 import { validateUserPlanAndLimits } from "../../_utils";
+import { logSafeError } from "../../_logging";
 
 export async function safeIncrementRagCounter(
   collection: string,
@@ -14,7 +15,7 @@ export async function safeIncrementRagCounter(
   try {
     await incrementRagCounter(collection, ids);
   } catch (error) {
-    console.error(`[RAG] Errore incrementRagCounter(${collection}):`, error);
+    logSafeError("RAG_COUNTER_UPDATE_FAILED", error);
   }
 }
 

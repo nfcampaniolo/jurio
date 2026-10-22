@@ -19,7 +19,8 @@ vi.mock("@functions/_utils", () => ({
   corsHandlerDomain: mocks.cors,
   validateUserPlanAndLimits: mocks.validate,
 }));
-vi.mock("@functions/research/_helper", () => ({
+vi.mock("@functions/research/_helper", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@functions/research/_helper")>()),
   getOpenAIClient: () => ({ embeddings: { create: mocks.embeddingCreate } }),
   authenticateRequest: mocks.auth,
   applyFirestoreFilters: (query: unknown) => query,

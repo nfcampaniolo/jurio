@@ -3,6 +3,7 @@ import { ai } from "../_config";
 import { getExecutionProfile, generateChatTitle, prepareContextAndMessages, appendOrchestrationRule, extractAndFormatSources, appendRetrievalContext, extractToolName, executeRequestedTools } from "./_helper";
 import { FlowChunkPayload, ToolContext } from "./_schema";
 import { userFileSearch, internalDatabaseSearch, webSearch, dynamicTools } from "../tools/index";
+import { logSafeError } from "../../_logging";
 
 interface ToolResponseContext {
   toolResponse?: {
@@ -70,7 +71,7 @@ export const legalAgentFlow = ai.defineFlow(
         if (e?.code === 'ERR_INVALID_STATE' || e?.message?.includes('already closed')) {
           // Client disconnesso prematuramente: ignoriamo l'errore
         } else {
-          console.warn("[legalAgentFlow] Errore non critico in sendChunk:", e);
+          logSafeError("LEGAL_AGENT_CHUNK_SEND_FAILED", e);
         }
       }
     };
@@ -135,7 +136,7 @@ export const legalAgentFlow = ai.defineFlow(
           appendRetrievalContext(messages, retrievalText, "Documentazione Allegata");
         }
       } catch (e) {
-        console.warn("Errore lettura documenti iniziali:", e);
+        logSafeError("LEGAL_AGENT_INITIAL_DOCUMENT_READ_FAILED", e);
       } finally {
         markStage("preRetrievalMs", preRetrievalStart);
       }
@@ -254,7 +255,7 @@ export const legalAgentFlow = ai.defineFlow(
       }
 
     } catch (error: unknown) {
-      console.error("[legalAgentFlow] Errore ai.generate:", error);
+      logSafeError("LEGAL_AGENT_GENERATION_FAILED", error);
       const msg = isQuotaError(error)
         ? "Il servizio AI è temporaneamente sovraccarico. Riprova tra qualche istante."
         : "Il motore neurale ha incontrato un errore imprevisto durante l'elaborazione.";

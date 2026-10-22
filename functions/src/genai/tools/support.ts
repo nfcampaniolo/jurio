@@ -3,6 +3,7 @@ import { ai, CFG } from "../_config";
 import { normalizeQuery, getDistance } from "./_utils";
 import { createEmbedding } from "./_helper";
 import { getDb } from "../../_deps";
+import { logSafeError } from "../../_logging";
 
 const db = getDb();
 const MAX_VECTOR_FETCH = Math.max(CFG.limits.vectorFetchLimit, 10);
@@ -71,7 +72,7 @@ export async function searchUserManual(query: string): Promise<ManualSearchResul
 
     return results;
   } catch (error) {
-    console.error("[Tool userManualSearch]", error);
+    logSafeError("USER_MANUAL_SEARCH_FAILED", error);
     return [{ error: "Errore durante la ricerca nel manuale di Jurio." }];
   }
 }

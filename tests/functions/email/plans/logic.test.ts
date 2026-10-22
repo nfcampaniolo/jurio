@@ -45,7 +45,8 @@ vi.mock("../../../../functions/src/_deps", () => ({
   getDb: mocks.getDb,
   getAdminAuth: () => ({ getUser: mocks.getUser, getUserByEmail: mocks.getUserByEmail }),
 }));
-vi.mock("../../../../functions/src/email/_helper", () => ({
+vi.mock("../../../../functions/src/email/_helper", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../../../functions/src/email/_helper")>()),
   dispatchMailAndNotification: mocks.dispatch,
   fmtRome: mocks.fmtRome,
 }));
@@ -159,9 +160,7 @@ describe("plans email logic", () => {
       await logic.queuePurchaseEmailOnceStripe(args);
 
       // Assert
-      expect(log).toHaveBeenCalledWith("[STRIPE] queuePurchaseEmailOnceStripe failed", expect.objectContaining({
-        requestId: "req-1", uid: "uid", sessionId: "session-1", err: error,
-      }));
+      expect(log).toHaveBeenCalledWith("STRIPE_PURCHASE_EMAIL_ENQUEUE_FAILED", { errorType: "Error" });
       expect(mocks.sessionSet).not.toHaveBeenCalled();
 
       // Arrange

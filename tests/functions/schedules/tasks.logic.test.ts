@@ -375,7 +375,7 @@ describe("scheduled aggregation and downgrade tasks", () => {
     await executeTasksDowngrade({ method: "POST", body: { uid: "user-1", expireSec: 2 } } as never, res as never);
 
     // Assert
-    expect(error).toHaveBeenCalledWith("[TASKS_DOWNGRADE] error", failure);
+    expect(error).toHaveBeenCalledWith("TASKS_DOWNGRADE_FAILED", { errorType: "Error" });
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({ error: "Internal error" });
     error.mockRestore();

@@ -3,6 +3,7 @@ import Busboy from "busboy";
 import { SpeechClient } from "@google-cloud/speech";
 import { withSecureApiEndpoint, validateUserPlanAndLimits, requireAppCheck, requireUidFromAuthHeader } from "../_utils";
 import { getDb, getAdminStorage } from "../_deps";
+import { logSafeError } from "../_logging";
 // @ts-ignore
 import pdfExtract from "pdf-extraction";
 
@@ -146,7 +147,7 @@ export async function executeSpeechToTextAgent(req: Request, res: Response): Pro
         .join(" ")
         .trim() ?? "";
 
-    console.log(`[JURIO-STT] Trascrizione completata per UID: ${uid} (bytes: ${fileBuffer.length})`);
+    console.log("[JURIO-STT] Trascrizione completata");
 
     res.status(200).json({
       success: true,
@@ -211,7 +212,7 @@ export async function executeExtractDocumentText(req: Request, res: Response): P
         await requireAppCheck(req);
         uid = await requireUidFromAuthHeader(req);
       } catch {
-        console.warn(`[JURIO-EXTRACT] Fallimento Auth/AppCheck per IP: ${req.ip}`);
+        console.warn("[JURIO-EXTRACT] Fallimento Auth/AppCheck");
         res.status(401).json({ error: "Unauthorized" });
         return;
       }
@@ -274,8 +275,7 @@ export async function executeExtractDocumentText(req: Request, res: Response): P
     });
 
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Internal error";
-    console.error(`[JURIO-EXTRACT] Errore estrazione testo:`, msg);
+    logSafeError("DOCUMENT_TEXT_EXTRACTION_FAILED", err);
     
     res.status(500).json({ 
       error: "Internal Server Error"

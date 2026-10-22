@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => {
 });
 
 vi.mock("@functions/_deps", () => ({ getDb: () => mocks.db }));
+vi.mock("@functions/_utils", () => ({ validateUserPlanAndLimits: vi.fn() }));
 vi.mock("node:crypto", async (importOriginal) => {
   const actual = await importOriginal<typeof import("node:crypto")>();
   return {

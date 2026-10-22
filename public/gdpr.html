@@ -37,13 +37,10 @@
       },
       infrastructure: {
         hosting: "Google Cloud / Firebase",
-        hostingLocation: "Unione Europea",
-        aiProvider: "Google Gemini API",
+        hostingLocation: "Il bucket Storage predefinito di produzione, jurio-it.firebasestorage.app, è in EUR4; il progetto di sviluppo include un bucket Storage in US-WEST1, la cui effettiva separazione dai dati di produzione è da verificare.",
+        aiProvider: "Google Vertex AI/Gemini, OpenAI API, DeepSeek API (flussi amministrativi) e Google Cloud Speech-to-Text",
         paymentGateway: "Stripe"
       },
-      retention: {
-        logs: "6 mesi"
-      }
     };
   </script>
 
@@ -116,19 +113,19 @@
             </ul>
             
             <div class="ai-policy-box">
-              <strong style="display: block; margin-bottom: 0.5rem; color: var(--color-primary);">Policy sull'Addestramento AI (Zero Data Retention)</strong>
-              I dati inseriti nei prompt di ricerca <strong>NON vengono utilizzati</strong> in alcun modo da Jurio o dai suoi fornitori (<span data-config="infrastructure.aiProvider"></span>) per l'addestramento (training) dei modelli linguistici, garantendo la totale riservatezza sui casi studio affrontati dai professionisti e il rispetto del segreto professionale.
+              <strong style="display: block; margin-bottom: 0.5rem; color: var(--color-primary);">Servizi di Intelligenza Artificiale</strong>
+              In base alla funzionalità richiesta, i testi, i quesiti, i documenti, le query o l'audio necessari possono essere comunicati ai fornitori indicati nella sezione sui servizi tecnici (<span data-config="infrastructure.aiProvider"></span>). Il ruolo di ciascun fornitore e le condizioni di trattamento dipendono dal servizio, dall'account e dagli accordi applicabili. Non viene formulata una garanzia generale di zero retention o di esclusione dall'addestramento valida per tutti i fornitori.
             </div>
           </section>
 
           <section class="legal-section">
             <h2>4. Sub-Responsabili e Trasferimento dei Dati</h2>
             <p>
-              Per garantire elevati standard di sicurezza, Jurio si avvale di infrastrutture cloud fornite da terze parti selezionate, che agiscono nel rispetto dell'Art. 28 del GDPR:
+              Jurio utilizza fornitori tecnici per hosting, pagamenti e funzionalità AI. Il ruolo e le condizioni applicabili a ciascun fornitore dipendono dal servizio e dagli accordi pertinenti:
             </p>
             <ul class="legal-list">
-              <li><strong>Hosting e Database:</strong> infrastruttura ospitata su <span data-config="infrastructure.hosting"></span> in data center situati in <span data-config="infrastructure.hostingLocation"></span>.</li>
-              <li><strong>Modelli AI:</strong> fornitura del servizio linguistico tramite <span data-config="infrastructure.aiProvider"></span> (tramite API commerciali protette).</li>
+              <li><strong>Hosting e Database:</strong> infrastruttura ospitata su <span data-config="infrastructure.hosting"></span>. Le regioni variano per servizio e ambiente: <span data-config="infrastructure.hostingLocation"></span></li>
+              <li><strong>Servizi AI e vocali:</strong> Google Vertex AI/Gemini per funzionalità generative, OpenAI API per embedding e fallback, DeepSeek API in specifici flussi amministrativi e Google Cloud Speech-to-Text per la trascrizione audio. I dati inviati dipendono dalla funzionalità utilizzata e dai relativi accordi applicabili.</li>
               <li><strong>Gestione Pagamenti:</strong> transazioni elaborate interamente dal gateway sicuro <span data-config="infrastructure.paymentGateway"></span>. Nessun dato completo della carta di credito viene mai archiviato sui nostri server.</li>
             </ul>
           </section>
@@ -141,7 +138,7 @@
             <ul class="legal-list">
               <li><strong>Dati dell'Account e dei Progetti:</strong> conservati fino alla cancellazione volontaria dell'account da parte dell'utente.</li>
               <li><strong>Dati Amministrativi:</strong> conservati per 10 anni in conformità agli obblighi di legge italiani (art. 2220 c.c.).</li>
-              <li><strong>Log di sicurezza:</strong> mantenuti per un periodo massimo di <span data-config="retention.logs"></span>, finalizzati esclusivamente al monitoraggio delle anomalie e alla prevenzione delle frodi.</li>
+              <li><strong>Log di sicurezza:</strong> conservati per il tempo necessario al monitoraggio delle anomalie, alla prevenzione degli abusi e alla gestione tecnica, secondo le configurazioni effettive dei servizi.</li>
             </ul>
           </section>
 
