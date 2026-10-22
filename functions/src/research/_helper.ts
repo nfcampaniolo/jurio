@@ -63,7 +63,7 @@ export async function authenticateRequest(req: Request): Promise<AuthResult> {
   const authHeader = typeof req.headers.authorization === "string" ? req.headers.authorization : "";
   const token = authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length).trim() : "";
 
-  const isOpaqueOAuthToken = /^[a-f0-9]{64}\$/i.test(token);
+  const isOpaqueOAuthToken = /^[a-f0-9]{64}$/i.test(token);
 
   if (isOpaqueOAuthToken) {
     const tokenSnap = await db.collection("oauth_tokens").doc(token).get();

@@ -65,7 +65,7 @@ export async function executeSubmitFeedback(req: Request, res: Response): Promis
 
     // 3. Logica Feedback Positivo
     if (isThumbsUp) {
-      const validDbIds = ids.filter(id => !id.includes("/") && /^[a-zA-Z0-9_-]+\$/.test(id));
+      const validDbIds = ids.filter(id => !id.includes("/") && /^[a-zA-Z0-9_-]+$/.test(id));
       
       if (validDbIds.length === 0) {
         res.status(200).json({ success: true, message: "Feedback ignorato: IDs non validi o link esterni." });

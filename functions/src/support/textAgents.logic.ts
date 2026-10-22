@@ -177,7 +177,7 @@ export async function executeExtractDocumentText(req: Request, res: Response): P
     let uid = "";
     const authHeader = typeof req.headers.authorization === "string" ? req.headers.authorization : "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice("Bearer ".length).trim() : "";
-    const isOpaqueOAuthToken = /^[a-f0-9]{64}\$/.test(token);
+    const isOpaqueOAuthToken = /^[a-f0-9]{64}$/.test(token);
 
     if (isOpaqueOAuthToken) {
       const tokenSnap = await db.collection("oauth_tokens").doc(token).get();

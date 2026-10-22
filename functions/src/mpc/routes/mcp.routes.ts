@@ -27,7 +27,7 @@ mcpRouter.use(async (req, res) => {
   const token = authHeader.replace("Bearer ", "").trim();
 
   try {
-    if (!/^[a-f0-9]{64}\$/.test(token)) {
+    if (!/^[a-f0-9]{64}$/.test(token)) {
       res.set("WWW-Authenticate", 'Bearer realm="jurio", error="invalid_token"');
       res.status(401).json({ error: "unauthorized", message: "Token non valido." });
       return;

@@ -131,7 +131,7 @@ export const wordReviewFlow = ai.defineFlow(
         return { tesi: [] };
       }
 
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\$/i;
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
       const tesiNormalizzate = response.output.tesi.map((item, index) => {
         const fontiPulite = (item.fonti || []).filter((f: any) => {
