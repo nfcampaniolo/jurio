@@ -9,6 +9,11 @@ import { InquadramentoSchema, MappaDialetticaSchema } from "./_schema";
 import { researchAnalysisFlow, refineResearchFlow, generateSynthesisReportFlow } from "./flow";
 import { reportDeepAnalysisProgress } from "./_progress";
 import { logSafeError } from "../../_logging";
+import {
+  createDeepAnalysisCorrelationId,
+  getSafeErrorType,
+  logDeepAnalysisEvent,
+} from "./_observability";
 const db = getDb();
 
 /**
@@ -215,6 +220,12 @@ export async function executeDeepAnalysis(req: Request, res: Response): Promise<
       jobId: job.id,
       sessionId: normalizedSessionId,
     });
+    logDeepAnalysisEvent("job_queued", {
+      correlationId: job.id,
+      action: job.action,
+      phase: "queue",
+      status: "queued",
+    });
   });
 }
 
@@ -247,13 +258,42 @@ export async function processDeepAnalysisJob(sessionId: string): Promise<void> {
   });
 
   if (!job) return;
+  const correlationId = createDeepAnalysisCorrelationId(job.id);
+  const startedAt = Date.now();
+  const attempt = (job.attemptCount ?? 0) + 1;
   const uid = job.userId;
+  logDeepAnalysisEvent("job_started", {
+    correlationId,
+    action: job.action,
+    phase: "job",
+    status: "started",
+    attempt,
+    queueWaitMs: job.createdAt instanceof admin.firestore.Timestamp
+      ? Date.now() - job.createdAt.toMillis()
+      : undefined,
+  });
   if (job.terminal) {
     await finishDeepAnalysisJob(sessionRef, uid, sessionId, job.id, "failed");
+    logDeepAnalysisEvent("job_finished", {
+      correlationId,
+      action: job.action,
+      phase: "job",
+      status: "failed",
+      attempt,
+      durationMs: Date.now() - startedAt,
+    });
     return;
   }
   if (job.resultReady) {
     await finishDeepAnalysisJob(sessionRef, uid, sessionId, job.id, "completed");
+    logDeepAnalysisEvent("job_finished", {
+      correlationId,
+      action: job.action,
+      phase: "job",
+      status: "completed",
+      attempt,
+      durationMs: Date.now() - startedAt,
+    });
     return;
   }
 
@@ -272,6 +312,7 @@ export async function processDeepAnalysisJob(sessionId: string): Promise<void> {
         userId: uid,
         config: resolvedConfig,
         sessionId,
+        correlationId,
       });
       const now = admin.firestore.FieldValue.serverTimestamp();
       await sessionRef.set(sanitize({
@@ -307,6 +348,7 @@ export async function processDeepAnalysisJob(sessionId: string): Promise<void> {
         userId: uid,
         config: resolvedConfig,
         sessionId,
+        correlationId,
       });
       await sessionRef.set(sanitize({
         inquadramento: output.inquadramento,
@@ -327,6 +369,7 @@ export async function processDeepAnalysisJob(sessionId: string): Promise<void> {
         mappaConcettuale: session.mappaConcettuale ?? undefined,
         userId: uid,
         sessionId,
+        correlationId,
       });
       await sessionRef.update(sanitize({
         sintesiStrategica: output,
@@ -337,6 +380,15 @@ export async function processDeepAnalysisJob(sessionId: string): Promise<void> {
     }
   } catch (error) {
     logSafeError("DEEP_ANALYSIS_JOB_FAILED", error);
+    logDeepAnalysisEvent("phase_failed", {
+      correlationId,
+      action: job.action,
+      phase: "job",
+      status: "failed",
+      attempt,
+      durationMs: Date.now() - startedAt,
+      errorType: getSafeErrorType(error),
+    });
     status = "failed";
     await reportDeepAnalysisProgress(
       sessionId,
@@ -346,6 +398,14 @@ export async function processDeepAnalysisJob(sessionId: string): Promise<void> {
     );
   }
   await finishDeepAnalysisJob(sessionRef, uid, sessionId, job.id, status);
+  logDeepAnalysisEvent("job_finished", {
+    correlationId,
+    action: job.action,
+    phase: "job",
+    status,
+    attempt,
+    durationMs: Date.now() - startedAt,
+  });
 }
 
 async function finishDeepAnalysisJob(

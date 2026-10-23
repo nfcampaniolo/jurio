@@ -10,7 +10,7 @@ import { logSafeError } from "../_logging";
 
 const db = getDb();
 
-export async function executeAdminMaintenanceTask(req: Request, res: Response): Promise<any> {
+export async function executeAdminMaintenanceTask(req: Request, res: Response): Promise<void> {
   return withSecureApiEndpoint(req, res, async (uid): Promise<void> => {
     if (!(await requireAdminUser(uid, res, "JURIO-ADMIN"))) return;
 
@@ -19,8 +19,8 @@ export async function executeAdminMaintenanceTask(req: Request, res: Response): 
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
-    if (typeof (res as any).flushHeaders === "function") {
-      (res as any).flushHeaders();
+    if (typeof res.flushHeaders === "function") {
+      res.flushHeaders();
     }
 
     // Callback SSE Tipizzata e Sicura
@@ -68,7 +68,7 @@ export async function executeAdminMaintenanceTask(req: Request, res: Response): 
   });
 }
 
-export async function executeAdminMergeCategoryTask(req: Request, res: Response): Promise<any> {
+export async function executeAdminMergeCategoryTask(req: Request, res: Response): Promise<void> {
   return withSecureApiEndpoint(req, res, async (uid): Promise<void> => {
     if (!(await requireAdminUser(uid, res, "JURIO-MERGE"))) return;
 
@@ -149,7 +149,7 @@ export async function executeAdminMergeCategoryTask(req: Request, res: Response)
   });
 }
 
-export async function executeAdminUploadManualContentTask(req: Request, res: Response): Promise<any> {
+export async function executeAdminUploadManualContentTask(req: Request, res: Response): Promise<void> {
   return withSecureApiEndpoint(req, res, async (uid): Promise<void> => {
     if (!(await requireAdminUser(uid, res, "JURIO-MANUAL"))) return;
 
@@ -214,7 +214,7 @@ export async function executeAdminUploadManualContentTask(req: Request, res: Res
   });
 }
 
-export async function executeSendAdminNotification(req: Request, res: Response): Promise<any> {
+export async function executeSendAdminNotification(req: Request, res: Response): Promise<void> {
   return withSecureApiEndpoint(req, res, async (adminUid): Promise<void> => {
     if (!(await requireAdminUser(adminUid, res, "JURIO-NOTIF"))) return;
 
@@ -246,7 +246,7 @@ export async function executeSendAdminNotification(req: Request, res: Response):
       return;
     }
 
-    let targetEmails: string[] = [];
+    const targetEmails: string[] = [];
     let targetUids: string[] = [];
     let useGlobalBroadcast = false;
 

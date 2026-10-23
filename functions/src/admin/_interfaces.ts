@@ -10,10 +10,15 @@ export interface ManualContentRequestBody {
 export interface MaintenanceTaskBody {
   limit?: number;
   collectionName?: string;
+  newFonte?: string;
+  newFonteLogo?: string;
+  materia?: string;
+  sezione?: string;
+  organo_giudicante?: string;
   [key: string]: unknown; 
 }
 
-export type ProgressCallback = (message: string, progressData: any) => void;
+export type ProgressCallback = (message: string, progressData: Record<string, unknown>) => void;
 
 export interface SentenceDoc {
   ecli?: string;

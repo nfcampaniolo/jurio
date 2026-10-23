@@ -6,6 +6,12 @@ import { DeepAnalysisConfigSchema, ResearchSource, ConceptMapSchema, ResearchOut
 import { userFileSearch, internalDatabaseSearch, doctrineSearch, webSearch } from "../tools/index";
 import { reportDeepAnalysisProgress } from "./_progress";
 import { logSafeError } from "../../_logging";
+import {
+  createDeepAnalysisCorrelationId,
+  getSafeErrorType,
+  logDeepAnalysisEvent,
+  type DeepAnalysisPhase,
+} from "./_observability";
 import { getDb } from "../../_deps";
 import {
   generateWithVertexRetry,
@@ -86,9 +92,9 @@ function getErrorMessage(error: unknown): string {
 async function generateResearchMapping(
   systemPrompt: string,
   userPrompt: string,
-  phase: string,
-  flowName: string,
+  phase: DeepAnalysisPhase,
   failureMessage: string,
+  correlationId: string,
   useFullModel = false
 ): Promise<z.infer<typeof ResearchMappingSchema> | undefined> {
   const startedAt = Date.now();
@@ -119,16 +125,21 @@ async function generateResearchMapping(
       ? ResearchMappingSchema.parse(response.output)
       : undefined;
 
-    console.info(
-      "[DeepAnalysisTiming]",
-      JSON.stringify({ phase, durationMs: Date.now() - startedAt })
-    );
+    logDeepAnalysisEvent("phase_finished", {
+      correlationId,
+      phase,
+      status: "completed",
+      durationMs: Date.now() - startedAt,
+    });
     return rawMapping;
   } catch (error: unknown) {
-    console.error(
-      "[DeepAnalysisTiming]",
-      JSON.stringify({ phase, durationMs: Date.now() - startedAt, failed: true })
-    );
+    logDeepAnalysisEvent("phase_failed", {
+      correlationId,
+      phase,
+      status: "failed",
+      durationMs: Date.now() - startedAt,
+      errorType: getSafeErrorType(error),
+    });
     logSafeError("DEEP_ANALYSIS_MAPPING_FAILED", error);
     throw new Error(`${failureMessage}: ${getErrorMessage(error)}`);
   }
@@ -140,10 +151,12 @@ async function collectResearchSources(params: {
   docs: string[];
   knownIds?: string[];
   userId: string;
+  action: "start_research" | "refine_research";
   sessionId?: string;
+  correlationId: string;
   config: z.infer<typeof DeepAnalysisConfigSchema>;
 }): Promise<ResearchSource[]> {
-  const { prompt, directive, docs, knownIds, userId, sessionId, config } = params;
+  const { prompt, directive, docs, knownIds, userId, action, sessionId, correlationId, config } = params;
   const { confidenceLevel, sourceWeb, sourceInternalDB, sourceDoctrine, webLimit } = config;
   const hasUserDocs = docs.length > 0;
   const enabledNames: ExternalSearchName[] = [
@@ -220,15 +233,22 @@ async function collectResearchSources(params: {
         throw new Error("Il pianificatore non ha restituito query strutturate.");
       }
       plan = ResearchQueryPlanSchema.parse(response.output);
-      console.info(
-        "[DeepAnalysisTiming]",
-        JSON.stringify({ phase: "query_planning", durationMs: Date.now() - planningStartedAt })
-      );
+      logDeepAnalysisEvent("phase_finished", {
+        correlationId,
+        action,
+        phase: "query_planning",
+        status: "completed",
+        durationMs: Date.now() - planningStartedAt,
+      });
     } catch (error) {
-      console.error(
-        "[DeepAnalysisTiming]",
-        JSON.stringify({ phase: "query_planning", durationMs: Date.now() - planningStartedAt, failed: true })
-      );
+      logDeepAnalysisEvent("phase_failed", {
+        correlationId,
+        action,
+        phase: "query_planning",
+        status: "failed",
+        durationMs: Date.now() - planningStartedAt,
+        errorType: getSafeErrorType(error),
+      });
       logSafeError("DEEP_ANALYSIS_QUERY_PLANNING_FAILED", error);
       throw new Error(
         `Errore durante la pianificazione delle ricerche: ${
@@ -350,15 +370,15 @@ async function collectResearchSources(params: {
       const startedAt = Date.now();
       try {
         const output = await executeResearchTool(search, context);
-        console.info(
-          "[DeepAnalysisTiming]",
-          JSON.stringify({
-            phase: "tool_search",
-            tool: search.name,
-            durationMs: Date.now() - startedAt,
-            resultCount: Array.isArray(output) ? output.length : null,
-          })
-        );
+        logDeepAnalysisEvent("tool_search_finished", {
+          correlationId,
+          action,
+          phase: "tool_search",
+          status: "completed",
+          tool: search.name,
+          durationMs: Date.now() - startedAt,
+          resultCount: Array.isArray(output) ? output.length : undefined,
+        });
         return {
           toolResponse: {
             name: search.name,
@@ -366,15 +386,15 @@ async function collectResearchSources(params: {
           },
         };
       } catch (error) {
-        console.error(
-          "[DeepAnalysisTiming]",
-          JSON.stringify({
-            phase: "tool_search",
-            tool: search.name,
-            durationMs: Date.now() - startedAt,
-            failed: true,
-          })
-        );
+        logDeepAnalysisEvent("tool_search_failed", {
+          correlationId,
+          action,
+          phase: "tool_search",
+          status: "failed",
+          tool: search.name,
+          durationMs: Date.now() - startedAt,
+          errorType: getSafeErrorType(error),
+        });
         logSafeError("DEEP_ANALYSIS_TOOL_FAILED", error);
         return {
           toolResponse: {
@@ -403,7 +423,7 @@ async function collectResearchSources(params: {
     `Ricerca completata: ${results.length} strumenti consultati.`
   );
 
-  return extractResearchSources([
+  const sources = extractResearchSources([
     {
       content: [
         ...results.map((result) => ({ toolResponse: result.toolResponse })),
@@ -413,6 +433,14 @@ async function collectResearchSources(params: {
       ],
     },
   ]);
+  logDeepAnalysisEvent("phase_finished", {
+    correlationId,
+    action,
+    phase: "tool_search",
+    status: "completed",
+    sourceCount: sources.length,
+  });
+  return sources;
 }
 
 // Riassunto e questioni giuridiche dell'allegato, sempre disponibili anche se la ricerca per paragrafi non trova nulla
@@ -525,16 +553,20 @@ export const researchAnalysisFlow = ai.defineFlow(
       userId: z.string().min(1),
       config: DeepAnalysisConfigSchema.optional().default({}),
       sessionId: z.string().optional(),
+      correlationId: z.string().optional(),
     }),
     outputSchema: ResearchOutputWithConceptMapSchema,
   },
-  async ({ prompt, docs, userId, config, sessionId }) => {
+  async ({ prompt, docs, userId, config, sessionId, correlationId: inputCorrelationId }) => {
+    const correlationId = createDeepAnalysisCorrelationId(inputCorrelationId);
     try {
       const allSources = await collectResearchSources({
         prompt,
         docs,
         userId,
+        action: "start_research",
         sessionId,
+        correlationId,
         config,
       });
       await reportDeepAnalysisProgress(
@@ -554,8 +586,8 @@ export const researchAnalysisFlow = ai.defineFlow(
       mappingSystemPrompt,
       mappingUserPrompt,
       "research_mapping",
-      "ResearchAnalysisFlow",
-      "Errore durante la generazione della mappa dialettica"
+      "Errore durante la generazione della mappa dialettica",
+      correlationId
     );
 
     if (!rawMapping) {
@@ -571,8 +603,8 @@ export const researchAnalysisFlow = ai.defineFlow(
         mappingSystemPrompt,
         `${mappingUserPrompt}\nATTENZIONE: il tentativo precedente non ha collegato alcuna fonte alle tesi. Valuta massima, contenuto ed estratti di ciascuna fonte dell'elenco e associa a ogni tesi gli ID pertinenti. Se nessuna fonte è pertinente per un orientamento, restituisci null per quell'orientamento.`,
         "research_mapping_retry",
-        "ResearchAnalysisFlow",
         "Errore durante la generazione della mappa dialettica",
+        correlationId,
         true
       );
       if (retried) {
@@ -627,6 +659,7 @@ export const refineResearchFlow = ai.defineFlow(
       userId: z.string().min(1),
       config: DeepAnalysisConfigSchema.optional().default({}),
       sessionId: z.string().optional(),
+      correlationId: z.string().optional(),
     }),
     outputSchema: ResearchOutputWithConceptMapSchema,
   },
@@ -640,7 +673,9 @@ export const refineResearchFlow = ai.defineFlow(
     userId,
     config,
     sessionId,
+    correlationId: inputCorrelationId,
   }) => {
+    const correlationId = createDeepAnalysisCorrelationId(inputCorrelationId);
     const knownIds = extractKnownSourceIds(
       currentMappaConcettuale,
       currentMappaDialettica
@@ -652,7 +687,9 @@ export const refineResearchFlow = ai.defineFlow(
       docs,
       knownIds,
       userId,
+      action: "refine_research",
       sessionId,
+      correlationId,
       config,
     });
 
@@ -680,8 +717,8 @@ export const refineResearchFlow = ai.defineFlow(
         nuoveFonti: newSources,
       }),
       "refine_mapping",
-      "RefineResearchFlow",
-      "Errore durante l'aggiornamento della mappa dialettica"
+      "Errore durante l'aggiornamento della mappa dialettica",
+      correlationId
     );
 
     if (!rawMapping) {
@@ -803,6 +840,7 @@ export const generateSynthesisReportFlow = ai.defineFlow(
       mappaConcettuale: ConceptMapSchema.nullable().optional(),
       userId: z.string().min(1),
       sessionId: z.string().optional(),
+      correlationId: z.string().optional(),
     }), 
     outputSchema: ReportSintesiSchema,
   },
@@ -812,7 +850,9 @@ export const generateSynthesisReportFlow = ai.defineFlow(
     mappaDialettica,
     mappaConcettuale,
     sessionId,
+    correlationId: inputCorrelationId,
   }) => {
+    const correlationId = createDeepAnalysisCorrelationId(inputCorrelationId);
 
     const filterActiveSources = (
       fonti: NonNullable<z.infer<typeof MappaDialetticaSchema>["orientamentoFavorevole"]>["fonti"] | undefined
@@ -853,6 +893,7 @@ export const generateSynthesisReportFlow = ai.defineFlow(
     );
 
     const systemPrompt = buildSynthesisReportSystemPrompt(quesitoOriginale);
+    const synthesisStartedAt = Date.now();
 
     try {
       await reportDeepAnalysisProgress(
@@ -860,7 +901,6 @@ export const generateSynthesisReportFlow = ai.defineFlow(
         "synthesis",
         "Sto redigendo la sintesi strategica sulle fonti verificate."
       );
-      const startedAt = Date.now();
       const response = await generateWithVertexRetry(
         () =>
           ai.generate({
@@ -894,10 +934,12 @@ export const generateSynthesisReportFlow = ai.defineFlow(
           );
         }
       );
-      console.info(
-        "[DeepAnalysisTiming]",
-        JSON.stringify({ phase: "synthesis", durationMs: Date.now() - startedAt })
-      );
+      logDeepAnalysisEvent("phase_finished", {
+        correlationId,
+        phase: "synthesis",
+        status: "completed",
+        durationMs: Date.now() - synthesisStartedAt,
+      });
 
       if (!response?.output) {
         throw new Error("Generazione del report fallita: output vuoto.");
@@ -905,6 +947,13 @@ export const generateSynthesisReportFlow = ai.defineFlow(
 
       return ReportSintesiSchema.parse(response.output);
     } catch (err: unknown) {
+      logDeepAnalysisEvent("phase_failed", {
+        correlationId,
+        phase: "synthesis",
+        status: "failed",
+        durationMs: Date.now() - synthesisStartedAt,
+        errorType: getSafeErrorType(err),
+      });
       logSafeError("DEEP_ANALYSIS_SYNTHESIS_FAILED", err);
       if (err instanceof VertexAiTemporarilyUnavailableError) {
         throw err;

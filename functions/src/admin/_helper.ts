@@ -1,6 +1,6 @@
 import { Timestamp, QueryDocumentSnapshot, DocumentReference, FieldValue } from "firebase-admin/firestore";
 import { Response } from "express";
-import { ProgressCallback, SentenceDoc } from "./_interfaces";
+import { MaintenanceTaskBody, ProgressCallback, SentenceDoc } from "./_interfaces";
 import { generateUrn, generateEcli, extractSubcats } from "./_utils";
 import { getDb } from "../_deps";
 import { validateUserPlanAndLimits } from "../_utils";
@@ -74,7 +74,7 @@ export async function runCleanupDuplicates(onProgress: ProgressCallback): Promis
 
   await forEachTodaySentencePage((docs, pageCount) => {
     docs.forEach((d) => {
-      const docData = d.data() as any;
+      const docData = d.data() as SentenceDoc;
       const urn = docData.urn ? String(docData.urn).trim() : "";
       const ecli = docData.ecli ? String(docData.ecli).trim() : "";
 
@@ -108,7 +108,7 @@ export async function runCleanupDuplicates(onProgress: ProgressCallback): Promis
   return { deletedCount };
 }
 
-export async function runUpdateFonte(params: any, onProgress: ProgressCallback): Promise<{ updatedSentences: number; }> {
+export async function runUpdateFonte(params: MaintenanceTaskBody, onProgress: ProgressCallback): Promise<{ updatedSentences: number; }> {
   const { newFonte, newFonteLogo, materia, sezione, organo_giudicante } = params;
   const baseUpdateData: Record<string, string> = {}; 
   if (newFonte?.trim()) baseUpdateData.fonte = newFonte.trim();
@@ -168,7 +168,12 @@ export async function runUpdateFonte(params: any, onProgress: ProgressCallback):
   return { updatedSentences: updatedCount };
 }
 
-export async function runUpdateMetadata(onProgress: ProgressCallback): Promise<any> {
+export async function runUpdateMetadata(onProgress: ProgressCallback): Promise<{
+  scanned: number;
+  newSubcats: number;
+  newPres: number;
+  newRel: number;
+}> {
   onProgress("Avvio aggiornamento Metadati (Taxonomy e Magistrati)...", { step: 2, action: "start" });
 
   const taxonomyRef = db.collection("meta").doc("taxonomy");

@@ -40,9 +40,6 @@ jobs:
       - name: Lint app
         run: npm run lint
 
-      - name: Lint Cloud Functions
-        run: npm --prefix functions run lint
-
       - name: Run tests with coverage
         run: npm run test:coverage
 

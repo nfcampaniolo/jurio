@@ -188,7 +188,7 @@ export async function validateUserPlanAndLimits(
       consumePerMinuteFeature(uid, type, limits.perMinute),
       consumeDailyFeature(uid, type, limits.perDay),
     ]);
-  } catch (error) {
+  } catch {
     console.warn(`[${type}] Rate limit superato`);
     throw new Error("TOO_MANY_REQUESTS");
   }
