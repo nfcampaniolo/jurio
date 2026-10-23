@@ -6,7 +6,9 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // Il lint root copre l'app web. Functions hanno un progetto separato e una build TypeScript dedicata in CI;
+  // Word è un add-in separato e non fa parte del package web.
+  globalIgnores(['dist/**', 'coverage/**', 'functions/**', 'word/**']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
