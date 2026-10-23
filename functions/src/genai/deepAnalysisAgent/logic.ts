@@ -369,7 +369,7 @@ async function finishDeepAnalysisJob(
     "progress.updatedAt": admin.firestore.FieldValue.serverTimestamp(),
     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
-  writeDeepAnalysisNotification(uid, sessionId, jobId, status, batch);
+  void writeDeepAnalysisNotification(uid, sessionId, jobId, status, batch);
   await batch.commit();
 }
 

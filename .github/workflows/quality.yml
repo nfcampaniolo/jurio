@@ -1,0 +1,53 @@
+name: Quality Checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, test, and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+
+      - name: Install app dependencies
+        run: npm ci
+
+      - name: Install Cloud Functions dependencies
+        run: npm ci --prefix functions
+
+      - name: Lint app
+        run: npm run lint
+
+      - name: Lint Cloud Functions
+        run: npm --prefix functions run lint
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Build production app
+        run: npm run build:prod
+
+      - name: Type-check Cloud Functions
+        run: npm --prefix functions run build
