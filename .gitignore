@@ -40,9 +40,8 @@ firebase-export/
 *.sln
 *.sw?
 
-# Nascondi la cartella word e scripts
+# Nascondi la cartella word
 word/
-scripts/
 compilance/
 posts/
 jurio-openai-plugin/
