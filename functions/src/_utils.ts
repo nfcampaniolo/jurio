@@ -28,7 +28,7 @@ export const corsHandlerDomain = cors({
   allowedHeaders: ["Content-Type", "Authorization", "X-Firebase-AppCheck"], 
 });
 
-export async function requireAppCheck(req: any): Promise<void> {
+export async function requireAppCheck(req: Request): Promise<void> {
   // Ignora il controllo se le funzioni girano nell'emulatore locale
   if (process.env.FUNCTIONS_EMULATOR === "true") return;
   const appCheckToken = req.headers["x-firebase-appcheck"];
@@ -37,12 +37,12 @@ export async function requireAppCheck(req: any): Promise<void> {
   }
   try {
     await getAppCheck().verifyToken(appCheckToken);
-  } catch (err) {
+  } catch {
     throw new Error("Invalid App Check token");
   }
 }
 
-export async function requireUidFromAuthHeader(req: any): Promise<string> {
+export async function requireUidFromAuthHeader(req: Request): Promise<string> {
   const h = req.headers?.authorization;
   if (!h || typeof h !== "string" || !h.startsWith("Bearer ")) {
     throw new Error("Missing Authorization Bearer token");
@@ -101,7 +101,9 @@ function handleApiError(res: Response, err: unknown): void {
   if (res.headersSent && !res.writableEnded) {
     try {
       res.end();
-    } catch (_) {}
+    } catch {
+      // La risposta potrebbe essere già stata chiusa dal client.
+    }
     return;
   }
 
@@ -138,7 +140,7 @@ export async function withSecureApiEndpoint(
   req: Request,
   res: Response,
   handler: (uid: string) => Promise<void>
-): Promise<any> {
+): Promise<void> {
   return corsHandlerDomain(req, res, async (): Promise<void> => {
     if (req.method === "OPTIONS") {
       res.status(204).end();

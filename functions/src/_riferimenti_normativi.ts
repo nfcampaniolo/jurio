@@ -88,10 +88,10 @@ export function detectSource(text: string): Source {
   if (/\bcedu\b/.test(t) || /convenzione europea dei diritti dell['’]uomo/.test(t)) return { kind: "cedu" };
 
   const eu2 = t.match(/\breg\.\s*(ue|ce|cee)\s*(?:n\.?\s*)?(\d+)(?:\s*\/\s*(\d{4}))?\b/);
-  if (eu2) return { kind: "eu", eu: "reg", no: eu2[2], year: eu2[3], scheme: eu2[1] as any };
+  if (eu2) return { kind: "eu", eu: "reg", no: eu2[2], year: eu2[3], scheme: eu2[1] as "ue" | "ce" | "cee" };
 
   const eu1 = t.match(/\b(reg\.|regolamento|dir\.|direttiva)(?:\s*\((ue|ce|cee)\)|\s+(ue|ce|cee))?\s*(?:n\.?\s*)?(\d+)(?:\s*\/\s*(\d{4}))?\b/);
-  if (eu1) return { kind: "eu", eu: eu1[1].startsWith("dir") ? "dir" : "reg", no: eu1[4], year: eu1[5], scheme: (eu1[2] ?? eu1[3]) as any };
+  if (eu1) return { kind: "eu", eu: eu1[1].startsWith("dir") ? "dir" : "reg", no: eu1[4], year: eu1[5], scheme: (eu1[2] ?? eu1[3]) as "ue" | "ce" | "cee" | undefined };
 
   if (/disp\.\s*att\.\s*cod\.\s*proc\.\s*civ\./.test(t)) return { kind: "code", code: "dispatt_cpc" };
   if (/disp\.\s*att\.\s*cod\.\s*proc\.\s*pen\./.test(t)) return { kind: "code", code: "dispatt_cpp" };

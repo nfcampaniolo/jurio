@@ -56,7 +56,7 @@ export function sanitize<T>(obj: T): T {
   }
   return Object.fromEntries(
     Object.entries(obj as Record<string, unknown>)
-      .filter(([_, v]) => v !== undefined)
+      .filter((entry) => entry[1] !== undefined)
       .map(([k, v]) => [k, sanitize(v)])
   ) as T;
 }
