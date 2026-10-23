@@ -6,6 +6,7 @@ import type { DocumentoGiurisprudenziale } from "@/interfaces/interfaces";
 /* ---------- tipi mock hook usePdfAnalyzer ---------- */
 interface MockPdfAnalyzerHook {
   file: File | null;
+  sourceFiles: File[];
   dragActive: boolean;
   loading: boolean;
   progress: string | null;
@@ -15,6 +16,7 @@ interface MockPdfAnalyzerHook {
   analyzeReason: Mock<(promptId: string) => void>;
   handleDrag: Mock<(e: React.DragEvent<HTMLElement>) => void>;
   setFile: Mock<(file: File | null) => void>;
+  setSourceFiles: Mock<(files: File[]) => void>;
   setExtractedText: Mock<(text: string | null) => void>;
   setAnalysisResult: Mock<(res: string | null) => void>;
   validatePdf: Mock<(files: FileList) => boolean>;
@@ -29,6 +31,7 @@ interface MockPdfAnalyzerHook {
 const { mockPdfAnalyzerState, mockVectorSearch, mockTrackEvent } = vi.hoisted(() => ({
   mockPdfAnalyzerState: {
     file: null,
+    sourceFiles: [],
     dragActive: false,
     loading: false,
     progress: null,
@@ -38,6 +41,7 @@ const { mockPdfAnalyzerState, mockVectorSearch, mockTrackEvent } = vi.hoisted(()
     analyzeReason: vi.fn<(promptId: string) => void>(),
     handleDrag: vi.fn<(e: React.DragEvent<HTMLElement>) => void>(),
     setFile: vi.fn<(file: File | null) => void>(),
+    setSourceFiles: vi.fn<(files: File[]) => void>(),
     setExtractedText: vi.fn<(text: string | null) => void>(),
     setAnalysisResult: vi.fn<(res: string | null) => void>(),
     validatePdf: vi.fn<(files: FileList) => boolean>(() => true),
@@ -245,6 +249,7 @@ describe("Upload Component Suite", () => {
     vi.clearAllMocks();
 
     mockPdfAnalyzerState.file = null;
+    mockPdfAnalyzerState.sourceFiles = [];
     mockPdfAnalyzerState.loading = false;
     mockPdfAnalyzerState.progress = null;
     mockPdfAnalyzerState.extractedText = null;
@@ -287,11 +292,7 @@ describe("Upload Component Suite", () => {
     fireEvent.click(selectCloudFileBtn);
 
     expect(mockPdfAnalyzerState.validatePdf).toHaveBeenCalledWith([expect.any(File)]);
-    expect(mockPdfAnalyzerState.setFile).toHaveBeenCalledWith(
-      expect.objectContaining({ name: "sentenza_drive.pdf" })
-    );
-    expect(mockPdfAnalyzerState.setExtractedText).toHaveBeenCalledWith("");
-    expect(mockPdfAnalyzerState.setAnalysisResult).toHaveBeenCalledWith(null);
+    expect(mockPdfAnalyzerState.setFile).not.toHaveBeenCalled();
     expect(screen.queryByTestId("mock-cloud-picker-modal")).toBeNull();
   });
 
@@ -344,7 +345,7 @@ describe("Upload Component Suite", () => {
     expect(screen.getByTestId("mock-extracted-text-modal")).toBeInTheDocument();
   });
 
-  test("renderizza MassimaCard e VectorSearchResults quando analysisResult e file sono valorizzati", () => {
+  test("mostra l'elenco dei documenti e apre il contenuto completo nel modal", () => {
     const dummyFile = new File(["pdf"], "sentenza.pdf", { type: "application/pdf" });
     const dummyAnalysis = JSON.stringify({
       massima: "In tema di contratti bancari...",
@@ -356,8 +357,30 @@ describe("Upload Component Suite", () => {
 
     render(<Upload />);
 
+    expect(screen.getByRole("heading", { name: "Documenti individuati" })).toBeInTheDocument();
+    expect(screen.queryByTestId("mock-massima-card")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Apri documento" }));
+
+    expect(screen.getByRole("dialog", { name: "Documento completo" })).toBeInTheDocument();
     expect(screen.getByTestId("mock-massima-card")).toBeInTheDocument();
     expect(screen.getByTestId("mock-vector-search-results")).toBeInTheDocument();
+  });
+
+  test("elenca tutti i documenti estratti e il modal mostra quello selezionato", () => {
+    mockPdfAnalyzerState.file = new File(["pdf"], "raccolta.pdf", { type: "application/pdf" });
+    mockPdfAnalyzerState.analysisResult = JSON.stringify([
+      { numero_sentenza: "10/2026", organo_giudicante: "CORTE DI CASSAZIONE", massima: "Prima massima" },
+      { numero_sentenza: "20/2026", organo_giudicante: "TRIBUNALE DI ROMA", massima: "Seconda massima" },
+    ]);
+
+    render(<Upload />);
+
+    expect(screen.getByText("2 documenti")).toBeInTheDocument();
+    expect(screen.getByText("Prima massima")).toBeInTheDocument();
+    expect(screen.getByText("Seconda massima")).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole("button", { name: "Apri documento" })[1]);
+
+    expect(screen.getByTestId("mock-massima-card")).toHaveTextContent("20/2026");
   });
 
   test("esegue la ricerca vettoriale basata su massima e fattispecie e riutilizza la cache alla seconda richiesta", async () => {
@@ -375,6 +398,7 @@ describe("Upload Component Suite", () => {
     mockVectorSearch.mockResolvedValueOnce({ allMatches: mockMatches });
 
     render(<Upload />);
+    fireEvent.click(screen.getByRole("button", { name: "Apri documento" }));
 
     const searchBtn = screen.getByRole("button", { name: "Avvia Ricerca Vettoriale" });
 
@@ -400,6 +424,7 @@ describe("Upload Component Suite", () => {
     mockPdfAnalyzerState.analysisResult = JSON.stringify({ massima: "Massima test" });
 
     render(<Upload />);
+    fireEvent.click(screen.getByRole("button", { name: "Apri documento" }));
 
     const openDocBtn = screen.getByRole("button", { name: "Apri Sentenza" });
     fireEvent.click(openDocBtn);

@@ -7,6 +7,7 @@ import { vectorSearch } from "@/features/search/hooks/vectorSearch";
 import type { DocumentoGiurisprudenziale } from "@/interfaces/interfaces";
 import { trackEvent } from "@/infrastructure/analytics";
 import { usePdfAnalyzer } from "@/features/profile/hooks/usePdfAnalyzer";
+import { FiX } from "react-icons/fi";
 import { Loader2 } from "lucide-react";
 import { FaCloud } from "react-icons/fa";
 
@@ -21,6 +22,7 @@ import { PromptSelector } from "@/shared/components/PromptSelector"; // Controll
 export const Upload: React.FC = () => {
   const {
     file,
+    sourceFiles,
     dragActive,
     loading,
     progress,
@@ -30,6 +32,7 @@ export const Upload: React.FC = () => {
     analyzeReason,
     handleDrag,
     setFile,
+    setSourceFiles,
     setExtractedText,
     setAnalysisResult,
     validatePdf,
@@ -45,15 +48,24 @@ export const Upload: React.FC = () => {
   const progressRef = useRef(0);
 
   const [isCloudModalOpen, setIsCloudModalOpen] = useState(false);
+  const [sourceFileUrl, setSourceFileUrl] = useState<string | null>(null);
   const [visibleAllMatches, setVisibleAllMatches] = useState<DocumentoGiurisprudenziale[]>([]);
   const [isSearchingVector, setIsSearchingVector] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const searchCache = useRef<DocumentoGiurisprudenziale[] | null>(null);
+  const [selectedDocumentIndex, setSelectedDocumentIndex] = useState<number | null>(null);
 
   // --- STATO SINGOLO PER IL PROMPT (Tutto il resto lo fa PromptSelector) ---
   const [selectedPromptId, setSelectedPromptId] = useState<string>("default");
 
-  const parsedResult = analysisResult ? JSON.parse(analysisResult) : null;
+  const parsedPayload = analysisResult ? JSON.parse(analysisResult) : null;
+  const parsedResults = Array.isArray(parsedPayload)
+    ? parsedPayload as DocumentoGiurisprudenziale[]
+    : parsedPayload ? [parsedPayload as DocumentoGiurisprudenziale] : [];
+  const parsedResult = selectedDocumentIndex === null ? null : parsedResults[selectedDocumentIndex] ?? null;
+  const documentSourceFile = parsedResult
+    ? sourceFiles.find((sourceFile) => sourceFile.name === parsedResult.nome_file) || file
+    : file;
   const hasMassima = !!parsedResult?.massima;
   const hasFattispecie = !!parsedResult?.fattispecie_rilevante;
 
@@ -110,7 +122,7 @@ export const Upload: React.FC = () => {
   }, [loading]);
 
   useEffect(() => {
-      if (showText || denyOpen || isCloudModalOpen) {
+      if (showText || denyOpen || isCloudModalOpen || selectedDocumentIndex !== null) {
         document.body.style.overflow = "hidden";
       } else {
         document.body.style.overflow = "unset";
@@ -118,7 +130,36 @@ export const Upload: React.FC = () => {
       return () => {
         document.body.style.overflow = "unset";
       };
-  }, [showText, denyOpen, isCloudModalOpen]);
+  }, [showText, denyOpen, isCloudModalOpen, selectedDocumentIndex]);
+
+  useEffect(() => {
+    setSelectedDocumentIndex(null);
+  }, [analysisResult]);
+
+  useEffect(() => {
+    if (!documentSourceFile) {
+      setSourceFileUrl(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(documentSourceFile);
+    setSourceFileUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [documentSourceFile]);
+
+  useEffect(() => {
+    if (selectedDocumentIndex === null) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setSelectedDocumentIndex(null);
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedDocumentIndex]);
+
+  useEffect(() => {
+    setVisibleAllMatches([]);
+    setHasSearched(false);
+    searchCache.current = null;
+  }, [selectedDocumentIndex]);
 
   const handleVectorSearch = async () => {
     if (hasSearched) return;
@@ -180,10 +221,6 @@ export const Upload: React.FC = () => {
         return;
       }
 
-      setFile(fileObj);
-      setExtractedText("");
-      setAnalysisResult(null);
-
       setVisibleAllMatches([]);
       setHasSearched(false);
       searchCache.current = null;
@@ -205,7 +242,7 @@ export const Upload: React.FC = () => {
             Analizza un documento
           </h1>
           <p className="text-xs sm:text-sm text-(--color-muted) font-light leading-relaxed mb-4">
-            Carica un provvedimento giurisprudenziale (sentenza, ordinanza o decreto) in
+            Carica fino a 10 provvedimenti giurisprudenziali (sentenze, ordinanze o decreti) in
             <strong className="font-semibold text-(--color-text)"> qualsiasi formato (inclusi PDF, Word, EML, PPT, XLSX, immagini o tracce audio MP3)</strong>, trascinandolo qui, selezionandolo dal computer o importandolo direttamente dal tuo Cloud.
           </p>
 
@@ -224,6 +261,7 @@ export const Upload: React.FC = () => {
         <div className="flex-1">
           <UploadDropzone
             file={file}
+            sourceFiles={sourceFiles}
             dragActive={dragActive}
             loading={loading}
             progress={progress}
@@ -232,6 +270,7 @@ export const Upload: React.FC = () => {
             handleDrag={(e) => handleDrag(e as React.DragEvent<HTMLElement>)}
             validateFile={validatePdf}
             setFile={setFile}
+            setSourceFiles={setSourceFiles}
             setExtractedText={setExtractedText}
             setAnalysisResult={setAnalysisResult}
             setShowText={setShowText}
@@ -303,27 +342,54 @@ export const Upload: React.FC = () => {
         onSelectFile={handleSelectCloudFile}
       />
 
+      {parsedResults.length > 0 && (
+        <section className="mt-10 rounded-lg border border-(--color-border) bg-(--color-surface) p-5 text-left shadow-(--shadow-soft)" aria-label="Documenti estratti">
+          <div className="mb-4 flex items-baseline justify-between gap-3">
+            <h2 className="text-lg font-medium text-(--color-text)" style={{ fontFamily: "var(--font-serif)" }}>Documenti individuati</h2>
+            <span className="text-xs text-(--color-muted)">{parsedResults.length} {parsedResults.length === 1 ? "documento" : "documenti"}</span>
+          </div>
+          <ul className="divide-y divide-(--color-border)">
+            {parsedResults.map((doc, index) => {
+              const title = [doc.organo_giudicante, doc.numero_sentenza, doc.data_sentenza]
+                .filter(Boolean).join(" · ") || doc.nome_file || `Documento ${index + 1}`;
+              return (
+                <li key={`${doc.numero_sentenza || doc.nome_file || "documento"}-${index}`} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm font-semibold text-(--color-text)">{title}</h3>
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-(--color-muted)">{doc.massima || doc.summary || "Documento giuridico estratto"}</p>
+                  </div>
+                  <button type="button" onClick={() => setSelectedDocumentIndex(index)} className="shrink-0 rounded-md bg-(--color-text) px-4 py-2 text-xs font-bold uppercase tracking-widest text-(--color-surface) hover:opacity-90">
+                    Apri documento
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       <AnimatePresence>
         {parsedResult && file && (
-          <motion.div
-            key="massimaCard"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.4 }}
-            className="mt-10"
-          >
-            <MassimaCard result={parsedResult} file={URL.createObjectURL(file)} />
-            
-            <VectorSearchResults
-              hasMassima={hasMassima}
-              hasFattispecie={hasFattispecie}
-              isSearchingVector={isSearchingVector}
-              hasSearched={hasSearched}
-              visibleAllMatches={visibleAllMatches}
-              handleVectorSearch={handleVectorSearch}
-              handleClick={handleClick}
-            />
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <button type="button" aria-label="Chiudi documento" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedDocumentIndex(null)} />
+            <motion.div role="dialog" aria-modal="true" aria-label="Documento completo" initial={{ opacity: 0, y: 16, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 16, scale: 0.98 }} className="relative z-10 flex max-h-[92vh] w-full max-w-7xl flex-col overflow-hidden rounded-lg border border-(--color-border) bg-(--color-bg) shadow-2xl">
+              <header className="flex shrink-0 items-center justify-between border-b border-(--color-border) bg-(--color-surface) px-5 py-3">
+                <h2 className="text-sm font-semibold text-(--color-text)">Documento completo {parsedResults.length > 1 ? `(${(selectedDocumentIndex ?? 0) + 1} di ${parsedResults.length})` : ""}</h2>
+                <button type="button" onClick={() => setSelectedDocumentIndex(null)} aria-label="Chiudi modale" className="rounded-md p-2 text-(--color-muted) hover:bg-(--color-bg) hover:text-(--color-text)"><FiX size={18} /></button>
+              </header>
+              <div className="overflow-y-auto p-3 sm:p-6">
+                <MassimaCard result={parsedResult} file={sourceFileUrl} />
+                <VectorSearchResults
+                  hasMassima={hasMassima}
+                  hasFattispecie={hasFattispecie}
+                  isSearchingVector={isSearchingVector}
+                  hasSearched={hasSearched}
+                  visibleAllMatches={visibleAllMatches}
+                  handleVectorSearch={handleVectorSearch}
+                  handleClick={handleClick}
+                />
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -231,6 +231,11 @@ Restituisci esclusivamente un JSON valido conforme allo schema, senza markdown t
 
 export const REASONING_SYSTEM_PROMPT = `Agisci come un esperto analista di documenti. Restituisci esclusivamente JSON valido.`;
 
+export const buildMultiDocumentPromptSuffix = (maxDocuments: number) => `
+
+ESTRAZIONE DI DOCUMENTI MULTIPLI (ISTRUZIONE PRIORITARIA):
+Il testo fornito può contenere più documenti giuridici autonomi. Individua i documenti distinti e restituisci un oggetto JSON con la proprietà "documents", contenente un array di massimo ${maxDocuments} oggetti. Ogni elemento deve rispettare integralmente lo schema del documento sopra riportato e le regole di analisi già indicate. Mantieni l'ordine in cui i documenti compaiono nel testo. Non creare duplicati e non suddividere un singolo provvedimento in più documenti. Se il testo contiene un solo documento, restituisci un array con un solo elemento. Se non contiene documenti analizzabili, restituisci {"documents": []}. Non aggiungere altri campi.`;
+
 export function buildReasoningUserPrompt(params: {
   promptToUse: string;
   question: string;

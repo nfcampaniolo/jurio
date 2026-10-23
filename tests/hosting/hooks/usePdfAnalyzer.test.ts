@@ -162,7 +162,7 @@ describe("usePdfAnalyzer Hook Suite", () => {
       expect(mockToast.error).not.toHaveBeenCalled();
     });
 
-    test("validateFile blocca il caricamento di più di un documento alla volta", () => {
+    test("validateFile accetta il caricamento di più documenti fino a 10", () => {
       const { result } = renderHook(() => usePdfAnalyzer());
       const fileList = createMockFileList([
         new File(["1"], "doc1.pdf", { type: "application/pdf" }),
@@ -174,12 +174,67 @@ describe("usePdfAnalyzer Hook Suite", () => {
         isValid = result.current.validateFile(fileList);
       });
 
-      expect(isValid).toBe(false);
-      expect(mockToast.error).toHaveBeenCalledWith("Puoi caricare un solo documento per volta.");
+      expect(isValid).toBe(true);
+      expect(mockToast.error).not.toHaveBeenCalled();
+    });
+
+    test("validateFile rifiuta più di 10 documenti", () => {
+      const { result } = renderHook(() => usePdfAnalyzer());
+      const files = createMockFileList(Array.from({ length: 11 }, (_, index) =>
+        new File([String(index)], `doc-${index}.pdf`, { type: "application/pdf" })
+      ));
+
+      expect(result.current.validateFile(files)).toBe(false);
+      expect(mockToast.error).toHaveBeenCalledWith("Puoi caricare al massimo 10 documenti per volta.");
     });
   });
 
   describe("Estrazione Testo e OCR (uploadAndAnalyze)", () => {
+    test("estrae in parallelo e conserva i marcatori dei file selezionati", async () => {
+      const firstFile = new File(["first"], "primo.pdf", { type: "application/pdf" });
+      const secondFile = new File(["second"], "secondo.pdf", { type: "application/pdf" });
+      const { result } = renderHook(() => usePdfAnalyzer());
+
+      await act(async () => {
+        await result.current.uploadAndAnalyze([firstFile, secondFile]);
+      });
+
+      expect(mockExtractTextFromFile).toHaveBeenCalledTimes(2);
+      expect(result.current.sourceFiles.map((file) => file.name)).toEqual(["primo.pdf", "secondo.pdf"]);
+      expect(result.current.extractedText).toContain("INIZIO DOCUMENTO: primo.pdf");
+      expect(result.current.extractedText).toContain("INIZIO DOCUMENTO: secondo.pdf");
+    });
+
+    test("analizza i file selezionati con richieste separate e salva ogni risultato sul file corretto", async () => {
+      const firstFile = new File(["first"], "primo.pdf", { type: "application/pdf" });
+      const secondFile = new File(["second"], "secondo.pdf", { type: "application/pdf" });
+      mockFetchWithSecurity
+        .mockResolvedValueOnce({
+          ok: true,
+          headers: new Headers({ "content-type": "application/json" }),
+          json: vi.fn().mockResolvedValue({ message: { documents: [{ massima: "Prima", numero_sentenza: "1/2026" }] } }),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          headers: new Headers({ "content-type": "application/json" }),
+          json: vi.fn().mockResolvedValue({ message: { documents: [{ massima: "Seconda", numero_sentenza: "2/2026" }] } }),
+        });
+      const { result } = renderHook(() => usePdfAnalyzer());
+
+      await act(async () => {
+        await result.current.uploadAndAnalyze([firstFile, secondFile]);
+      });
+      await act(async () => {
+        await result.current.executeAnalysis();
+      });
+
+      expect(mockFetchWithSecurity).toHaveBeenCalledTimes(2);
+      expect(mockLoadSentence).toHaveBeenCalledWith(firstFile, expect.any(String), "users/usr_flv_2026/documents");
+      expect(mockLoadSentence).toHaveBeenCalledWith(secondFile, expect.any(String), "users/usr_flv_2026/documents");
+      expect(JSON.parse(result.current.analysisResult || "[]").map((doc: { nome_file: string }) => doc.nome_file))
+        .toEqual(["primo.pdf", "secondo.pdf"]);
+    });
+
     test("interrompe l'analisi e traccia errore se l'utente non è autenticato", async () => {
       mockAuthState.user = null;
       const { result } = renderHook(() => usePdfAnalyzer());
@@ -255,7 +310,7 @@ describe("usePdfAnalyzer Hook Suite", () => {
       });
 
       expect(mockToast.error).toHaveBeenCalledWith(
-        "Errore nell'analisi del file: Impossibile estrarre testo sufficiente da questo formato."
+        "Errore nell'analisi di nota.docx: Impossibile estrarre testo sufficiente da questo formato."
       );
       expect(result.current.extractedText).toBeNull();
     });
@@ -273,8 +328,7 @@ describe("usePdfAnalyzer Hook Suite", () => {
       });
 
       expect(mockToast.error).toHaveBeenCalledWith(
-        expect.stringContaining("Il documento è troppo lungo"),
-        expect.any(Object)
+        expect.stringMatching(/^Il documento enciclopedia\.pdf supera il limite di .+ caratteri\.$/)
       );
       expect(result.current.extractedText).toBeNull();
       expect(mockTrackEvent).toHaveBeenCalledWith(
@@ -333,7 +387,42 @@ describe("usePdfAnalyzer Hook Suite", () => {
 
       expect(result.current.isDuplicateModalOpen).toBe(false);
       expect(mockFetchWithSecurity).toHaveBeenCalled();
+      expect(mockFetchWithSecurity).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ extractMultiple: true, maxDocuments: 10 })
+      );
       expect(mockLoadMaxima).toHaveBeenCalled();
+    });
+
+    test("estrae e salva al massimo 10 documenti, restituendoli come elenco", async () => {
+      const documents = Array.from({ length: 11 }, (_, index) => ({
+        tipo_documento: "sentenza",
+        numero_sentenza: `${index + 1}/2026`,
+        massima: `Massima ${index + 1}`,
+      }));
+      mockFetchWithSecurity.mockResolvedValueOnce({
+        ok: true,
+        headers: new Headers({ "content-type": "application/json" }),
+        json: vi.fn().mockResolvedValue({ message: { documents } }),
+      });
+
+      const { result } = renderHook(() => usePdfAnalyzer());
+      const file = new File(["bytes"], "raccolta.pdf", { type: "application/pdf" });
+      act(() => {
+        result.current.setFile(file);
+        result.current.setExtractedText("Testo contenente più provvedimenti da analizzare.");
+      });
+
+      await act(async () => {
+        await result.current.executeAnalysis();
+      });
+
+      expect(mockLoadMaxima).toHaveBeenCalledTimes(10);
+      expect(mockLoadSentence).toHaveBeenCalledTimes(10);
+      expect(JSON.parse(result.current.analysisResult || "[]")).toHaveLength(10);
+      expect(JSON.parse(result.current.analysisResult || "[]")[0]).toEqual(
+        expect.objectContaining({ numero_sentenza: "1/2026", nome_file: "raccolta.pdf" })
+      );
     });
   });
 
@@ -516,7 +605,10 @@ describe("usePdfAnalyzer Hook Suite", () => {
       expect(mockDeleteDocument).toHaveBeenCalledWith("documents", "doc-old-duplicate-id");
       expect(result.current.duplicateId).toBeNull();
       expect(mockToast.success).toHaveBeenCalledWith("Documento precedente sovrascritto con successo.");
-      expect(result.current.analysisResult).toBe(JSON.stringify(serverPayload));
+      expect(result.current.analysisResult).toBe(JSON.stringify([{
+        ...serverPayload,
+        nome_file: "sentenza_appello.pdf",
+      }]));
     });
   });
 

@@ -43,11 +43,15 @@ export interface DeepAnalysisJob {
 export interface ReasoningRequestBody {
   question?: unknown;
   promptId?: unknown;
+  extractMultiple?: unknown;
+  maxDocuments?: unknown;
 }
 
 export interface ReasoningFlowInput {
   question: string;
   customPrompt?: string;
+  extractMultiple?: boolean;
+  maxDocuments?: number;
 }
 
 export interface ReasoningFlowOutput {

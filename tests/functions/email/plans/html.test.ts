@@ -79,7 +79,7 @@ describe("plans email HTML", () => {
 
     // Assert
     expect(result).toContain("settembre 2026");
-    expect(result).toContain("105 minuti");
+    expect(result).toContain("81 minuti");
     expect(result).toContain("Ricerca Giurisprudenziale");
     expect(result).toContain("Ricerca Giurisprudenziale Approfondita");
     expect(result).toContain("Sintesi e Drafting");

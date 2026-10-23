@@ -18,6 +18,10 @@ export async function executeReasoning(req: Request, res: Response): Promise<any
     const body = (req.body ?? {}) as ReasoningRequestBody;
     const question = typeof body.question === "string" ? body.question.trim() : "";
     const promptId = typeof body.promptId === "string" ? body.promptId.trim() : null;
+    const extractMultiple = body.extractMultiple === true;
+    const requestedMaxDocuments = typeof body.maxDocuments === "number" && Number.isInteger(body.maxDocuments)
+      ? Math.min(10, Math.max(1, body.maxDocuments))
+      : 10;
 
     if (!question) {
       res.status(400).json({ error: "Bad Request: Invalid or missing 'question'" });
@@ -43,7 +47,8 @@ export async function executeReasoning(req: Request, res: Response): Promise<any
     await validateUserPlanAndLimits(uid, "reasoning", snap);
 
     // 4. Controllo limite massimo di 100 documenti
-    if (docsCountSnap && docsCountSnap.data().count >= 100) {
+    const currentDocsCount = docsCountSnap?.data().count ?? 0;
+    if (currentDocsCount >= 100) {
       res.status(403).json({
         error: "document_limit_reached",
         details: "Hai già raggiunto il limite massimo di 100 documenti analizzati.",
@@ -80,6 +85,8 @@ export async function executeReasoning(req: Request, res: Response): Promise<any
     const parsedJson = (await reasoningFlow({
       question,
       customPrompt: customPromptText,
+      extractMultiple,
+      maxDocuments: Math.min(requestedMaxDocuments, Math.max(1, 100 - currentDocsCount)),
     })) as ReasoningFlowOutput;
 
     // 7. Risposta al client

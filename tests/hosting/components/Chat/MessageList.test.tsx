@@ -236,9 +236,7 @@ describe("MessageList", () => {
     expect(screen.getByText("Normattiva")).toBeInTheDocument();
     expect(screen.getByTestId("icon-globe")).toBeInTheDocument();
 
-    expect(
-      screen.getByText("Cass. Civ.: Ordinanza 1024/2026")
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cass. Civ." })).toBeInTheDocument();
     expect(screen.getByTestId("icon-book-open")).toBeInTheDocument();
 
     // Verifica Feedback con sourceIds corretti
@@ -266,7 +264,7 @@ describe("MessageList", () => {
       { _type: "web_search", link: "https://example.com" } as Source,
       // Giurisprudenza con solo numero_sentenza senza organo -> 'Sent. n. 5544/2025'
       { documento_id: "doc-sent-only", numero_sentenza: "5544/2025" } as Source,
-      // Giurisprudenza con organo_giudicante e numero_sentenza -> 'CdS: n. 123'
+    // Giurisprudenza con organo_giudicante e numero_sentenza -> 'CdS n. 123'
       { documento_id: "doc-sent-organo", organo_giudicante: "CdS", numero_sentenza: "123" } as Source,
       // Giurisprudenza senza identificativo né numero -> 'Documento'
       { documento_id: "doc-empty-title" } as Source,
@@ -284,7 +282,7 @@ describe("MessageList", () => {
     expect(screen.getByText("Altalex")).toBeInTheDocument();
     expect(screen.getByText("Fonte Web")).toBeInTheDocument();
     expect(screen.getByText("Sent. n. 5544/2025")).toBeInTheDocument();
-    expect(screen.getByText("CdS: n. 123")).toBeInTheDocument();
+    expect(screen.getByText("CdS n. 123")).toBeInTheDocument();
     expect(screen.getByText("Documento")).toBeInTheDocument();
   });
 

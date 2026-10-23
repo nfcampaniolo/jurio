@@ -1,6 +1,6 @@
 import { z } from 'genkit';
 import { ai } from "../_config";
-import { REASONING_SYSTEM_PROMPT, buildReasoningUserPrompt, PROMPT_MASSIMAZIONE, PROMPT_DOTTRINA, buildDoctrineSystemPrompt, buildDoctrineUserPrompt } from "./_prompts";
+import { REASONING_SYSTEM_PROMPT, buildReasoningUserPrompt, PROMPT_MASSIMAZIONE, PROMPT_DOTTRINA, buildMultiDocumentPromptSuffix, buildDoctrineSystemPrompt, buildDoctrineUserPrompt } from "./_prompts";
 import { DoctrineOutputSchema } from "./_schema";
 import { chunkText, safeParseJson, generateWithRetry } from "./_helper";
 
@@ -13,16 +13,21 @@ export const reasoningFlow = ai.defineFlow(
     inputSchema: z.object({
       question: z.string(),
       customPrompt: z.string().optional(),
+      extractMultiple: z.boolean().optional(),
+      maxDocuments: z.number().int().min(1).max(10).optional(),
     }),
     outputSchema: z.any(),
   },
   async (input) => {
     const promptToUse = input.customPrompt ? input.customPrompt : PROMPT_MASSIMAZIONE;
+    const effectivePrompt = input.extractMultiple
+      ? `${promptToUse}\n${buildMultiDocumentPromptSuffix(input.maxDocuments ?? 10)}`
+      : promptToUse;
 
     const response = await ai.generate({
       system: REASONING_SYSTEM_PROMPT,
       prompt: buildReasoningUserPrompt({
-        promptToUse,
+        promptToUse: effectivePrompt,
         question: input.question,
       }),
       output: {

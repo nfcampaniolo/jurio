@@ -182,7 +182,7 @@ describe("SourcesSection Component Suite", () => {
 
     render(<SourcesSection {...defaultProps} messages={messages} />);
 
-    expect(screen.getByText("Cass. Civ. Sez. III: n. 12345/2026")).toBeInTheDocument();
+    expect(screen.getByText("Cass. Civ. Sez. III n. 12345/2026")).toBeInTheDocument();
     expect(screen.getByText("Sentenza n. 12345/2026")).toBeInTheDocument();
     expect(screen.getByText("48% match")).toBeInTheDocument();
 

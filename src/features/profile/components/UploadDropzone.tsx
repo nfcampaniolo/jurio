@@ -4,6 +4,7 @@ import type { DocumentoGiurisprudenziale } from "@/interfaces/interfaces";
 
 interface UploadDropzoneProps {
   file: File | null;
+  sourceFiles: File[];
   dragActive: boolean;
   loading: boolean;
   progress: string | null;
@@ -12,6 +13,7 @@ interface UploadDropzoneProps {
   handleDrag: (e: React.SyntheticEvent) => void;
   validateFile: (files: FileList) => void; // Rinominato per coerenza
   setFile: (file: File | null) => void;
+  setSourceFiles: (files: File[]) => void;
   setExtractedText: (text: string | null) => void;
   setAnalysisResult: (res: string | null) => void;
   setShowText: (show: boolean) => void;
@@ -21,6 +23,7 @@ interface UploadDropzoneProps {
 
 export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
   file,
+  sourceFiles,
   dragActive,
   loading,
   progress,
@@ -29,6 +32,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
   handleDrag,
   validateFile,
   setFile,
+  setSourceFiles,
   setExtractedText,
   setAnalysisResult,
   setShowText,
@@ -75,16 +79,16 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
         {!file ? (
           <>
             <p className="text-base font-medium text-(--color-text) tracking-tight">
-              Trascina qui il file
+              Trascina qui fino a 10 documenti
             </p>
             <p className="mt-1 text-xs text-(--color-muted) font-light">
               oppure{" "}
               <span className="text-(--color-text) font-bold underline underline-offset-2">
-                seleziona un file
+                seleziona i file
               </span>
             </p>
             <p className="mt-3 text-[10px] font-bold uppercase tracking-widest text-(--color-muted)">
-              Qualsiasi formato accettato • 1 file alla volta
+              Qualsiasi formato accettato • massimo 10 file
             </p>
           </>
         ) : (
@@ -92,10 +96,12 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
             <div className="flex items-center justify-between gap-3 rounded-md border border-(--color-border) bg-(--color-bg) px-4 py-3">
               <div className="min-w-0 text-left">
                 <p className="truncate text-xs font-medium text-(--color-text) tracking-tight">
-                  {file.name}
+                  {sourceFiles.length > 1 ? `${sourceFiles.length} documenti selezionati` : file.name}
                 </p>
                 <p className="mt-0.5 text-[10px] font-light text-(--color-muted)">
-                  {(file.size / 1024).toFixed(1)} KB
+                  {sourceFiles.length > 1
+                    ? sourceFiles.map((sourceFile) => sourceFile.name).join(", ")
+                    : `${(file.size / 1024).toFixed(1)} KB`}
                 </p>
               </div>
               {!loading && (
@@ -104,6 +110,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
                   onClick={(e) => {
                     e.stopPropagation();
                     setFile(null);
+                    setSourceFiles([]);
                     setExtractedText(null);
                     setAnalysisResult(null);
                     setShowText(false);
@@ -142,6 +149,7 @@ export const UploadDropzone: React.FC<UploadDropzoneProps> = ({
 
         <input
           type="file"
+          multiple
           ref={inputRef}
           className="hidden"
           /* Attributo accept rimosso per supportare tutti i tipi di file */

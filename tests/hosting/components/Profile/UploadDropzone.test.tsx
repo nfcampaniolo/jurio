@@ -21,6 +21,7 @@ describe("UploadDropzone Component Suite", () => {
   const mockHandleDrag = vi.fn<(e: React.SyntheticEvent) => void>();
   const mockValidateFile = vi.fn<(files: FileList) => void>();
   const mockSetFile = vi.fn<(file: File | null) => void>();
+  const mockSetSourceFiles = vi.fn<(files: File[]) => void>();
   const mockSetExtractedText = vi.fn<(text: string | null) => void>();
   const mockSetAnalysisResult = vi.fn<(res: string | null) => void>();
   const mockSetShowText = vi.fn<(show: boolean) => void>();
@@ -42,6 +43,7 @@ describe("UploadDropzone Component Suite", () => {
 
     const defaultProps: React.ComponentProps<typeof UploadDropzone> = {
       file: null,
+      sourceFiles: [],
       dragActive: false,
       loading: false,
       progress: null,
@@ -50,6 +52,7 @@ describe("UploadDropzone Component Suite", () => {
       handleDrag: mockHandleDrag,
       validateFile: mockValidateFile,
       setFile: mockSetFile,
+      setSourceFiles: mockSetSourceFiles,
       setExtractedText: mockSetExtractedText,
       setAnalysisResult: mockSetAnalysisResult,
       setShowText: mockSetShowText,
@@ -65,10 +68,10 @@ describe("UploadDropzone Component Suite", () => {
     renderDropzone();
 
     expect(screen.getByTestId("fi-upload-cloud")).toBeInTheDocument();
-    expect(screen.getByText("Trascina qui il file")).toBeInTheDocument();
-    expect(screen.getByText("seleziona un file")).toBeInTheDocument();
+    expect(screen.getByText("Trascina qui fino a 10 documenti")).toBeInTheDocument();
+    expect(screen.getByText("seleziona i file")).toBeInTheDocument();
     expect(
-      screen.getByText("Qualsiasi formato accettato • 1 file alla volta")
+      screen.getByText("Qualsiasi formato accettato • massimo 10 file")
     ).toBeInTheDocument();
 
     const dropzoneBtn = screen.getByRole("button");
@@ -111,6 +114,7 @@ describe("UploadDropzone Component Suite", () => {
 
     const dropzone = screen.getByRole("button");
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(fileInput.multiple).toBe(true);
     const inputClickSpy = vi.spyOn(fileInput, "click").mockImplementation(() => {});
 
     // 1. Click del mouse
@@ -148,6 +152,7 @@ describe("UploadDropzone Component Suite", () => {
     fireEvent.click(removeBtn);
 
     expect(mockSetFile).toHaveBeenCalledWith(null);
+    expect(mockSetSourceFiles).toHaveBeenCalledWith([]);
     expect(mockSetExtractedText).toHaveBeenCalledWith(null);
     expect(mockSetAnalysisResult).toHaveBeenCalledWith(null);
     expect(mockSetShowText).toHaveBeenCalledWith(false);

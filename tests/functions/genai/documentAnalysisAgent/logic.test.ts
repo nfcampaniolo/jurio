@@ -70,7 +70,12 @@ describe("document-analysis endpoint", () => {
     const res = { status: vi.fn().mockReturnThis(), json: vi.fn() };
     await executeReasoning(req as never, res as never);
     expect(mocks.validate).toHaveBeenCalledWith("u1", "reasoning", userSnap);
-    expect(mocks.reasoning).toHaveBeenCalledWith({ question: "explain this", customPrompt: undefined });
+    expect(mocks.reasoning).toHaveBeenCalledWith({
+      question: "explain this",
+      customPrompt: undefined,
+      extractMultiple: false,
+      maxDocuments: 10,
+    });
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
       message: { sintesi: "answer" }, status: "SENT_BY_BOT", model: "gemini-3.5-flash", provider: "google",

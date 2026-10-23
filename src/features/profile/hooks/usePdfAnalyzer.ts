@@ -7,6 +7,8 @@ import { trackEvent } from "@/infrastructure/analytics";
 import { withTrace } from "@/infrastructure/perf";
 import { fetchWithSecurity } from "@/config/apiClient";
 import { extractTextFromFile, getFileType, type DocumentFileType, ocrFileWithTesseract, extractTextFromMedia } from "@/shared/services/extractors";  
+import { checkDuplicateDocument, deleteDocument, loadMaxima } from "@/shared/services/document";
+import { loadSentence } from "@/shared/services/storage";
 
 /* ===========================
    COSTANTI
@@ -27,6 +29,8 @@ export const usePdfAnalyzer = () => {
   const { user } = useAuth();
 
   const [file, setFile] = useState<File | null>(null);
+  const [sourceFiles, setSourceFiles] = useState<File[]>([]);
+  const [sourceTexts, setSourceTexts] = useState<Record<string, string>>({});
   const [dragActive, setDragActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<string | null>(null);
@@ -37,11 +41,12 @@ export const usePdfAnalyzer = () => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
   const [duplicateId, setDuplicateId] = useState<string | null>(null);
+  const [duplicateIdsByName, setDuplicateIdsByName] = useState<Record<string, string>>({});
 
   const validateFile = (files: FileList) => {
     if (!files || files.length === 0) return false;
-    if (files.length > 1) {
-      toast.error("Puoi caricare un solo documento per volta.");
+    if (files.length > 10) {
+      toast.error("Puoi caricare al massimo 10 documenti per volta.");
       return false;
     }
     
@@ -50,12 +55,18 @@ export const usePdfAnalyzer = () => {
     return true;
   };
 
-  const uploadAndAnalyze = async (selectedFile: File) => {
+  const uploadAndAnalyze = async (selectedFilesInput: File | File[]) => {
+    const selectedFiles = Array.isArray(selectedFilesInput) ? selectedFilesInput.slice(0, 10) : [selectedFilesInput];
+    if (selectedFiles.length === 0) return;
+    const selectedFile = selectedFiles[0];
     setLoading(true);
     setProgress(null);
     setExtractedText(null);
     setAnalysisResult(null);
     setFile(selectedFile);
+    setSourceFiles(selectedFiles);
+    setSourceTexts({});
+    setDuplicateIdsByName({});
 
     if (!user) {
       setLoading(false);
@@ -63,88 +74,67 @@ export const usePdfAnalyzer = () => {
       return;
     }
 
-    const docType: DocumentFileType = getFileType(selectedFile);
-    const fileSizeKb = Math.round(selectedFile.size / 1024);
-
-    try {
-      let finalExtractedText = "";
-
-      // 1. PATH AUDIO/VIDEO
-      if (docType === "audio" || docType === "video" || selectedFile.name.match(/\.(mp3|mp4|wav|webm|mkv|mov|m4a)$/i)) {
-        setProgress("Estrazione e trascrizione in corso...");
-        finalExtractedText = await extractTextFromMedia(selectedFile);
-      }
-          
-      // 2. PATH IMMAGINI
-      else if (docType === "image") {
-        setProgress("Immagine rilevata: OCR in corso...");
-        finalExtractedText = await processWithTesseract(selectedFile, fileSizeKb);
-      } 
-      
-      // 3. PATH DOCUMENTI E ALTRI FORMATI
-      else {
-        setProgress("Estrazione testo dal documento...");
-        const text = await withTrace(
-          "doc_extract_text",
-          { kind: docType, size_kb: fileSizeKb },
-          () => extractTextFromFile(selectedFile)
-        );
-
-        if (text.trim().length < 50 && docType === "pdf") {
-          setProgress("Documento scannerizzato rilevato: avvio OCR...");
-          finalExtractedText = await processWithTesseract(selectedFile, fileSizeKb);
-        } else if (text.trim().length < 50) {
-           throw new Error("Impossibile estrarre testo sufficiente da questo formato.");
+    setProgress(selectedFiles.length > 1 ? `Estrazione di ${selectedFiles.length} documenti in parallelo...` : null);
+    const extractedParts = (await Promise.all(selectedFiles.map(async (currentFile) => {
+      const docType: DocumentFileType = getFileType(currentFile);
+      const fileSizeKb = Math.round(currentFile.size / 1024);
+      try {
+        let finalExtractedText = "";
+        if (docType === "audio" || docType === "video" || currentFile.name.match(/\.(mp3|mp4|wav|webm|mkv|mov|m4a)$/i)) {
+          if (selectedFiles.length === 1) setProgress("Estrazione e trascrizione in corso...");
+          finalExtractedText = await extractTextFromMedia(currentFile);
+        } else if (docType === "image") {
+          if (selectedFiles.length === 1) setProgress("Immagine rilevata: OCR in corso...");
+          finalExtractedText = await processWithTesseract(currentFile, fileSizeKb);
         } else {
-          finalExtractedText = text;
+          if (selectedFiles.length === 1) setProgress("Estrazione testo dal documento...");
+          const text = await withTrace("doc_extract_text", { kind: docType, size_kb: fileSizeKb }, () => extractTextFromFile(currentFile));
+          if (text.trim().length < 50 && docType === "pdf") {
+            if (selectedFiles.length === 1) setProgress("Documento scannerizzato rilevato: avvio OCR...");
+            finalExtractedText = await processWithTesseract(currentFile, fileSizeKb);
+          } else if (text.trim().length < 50) {
+            throw new Error("Impossibile estrarre testo sufficiente da questo formato.");
+          } else {
+            finalExtractedText = text;
+          }
         }
+        if (finalExtractedText.length > MAX_CHARS) {
+          toast.error(`Il documento ${currentFile.name} supera il limite di ${MAX_CHARS.toLocaleString()} caratteri.`);
+          void trackEvent("document_uploaded", { file_type: docType, file_size_kb: fileSizeKb, source: dragActive ? "dragdrop" : "desktop", success: false, error_type: "max_chars_exceeded" });
+          return null;
+        }
+        void trackEvent("document_uploaded", { file_type: docType, file_size_kb: fileSizeKb, source: dragActive ? "dragdrop" : "desktop", success: true });
+        return { name: currentFile.name, text: finalExtractedText };
+      } catch (err) {
+        console.error("Errore analisi file/OCR:", err);
+        toast.error(`Errore nell'analisi di ${currentFile.name}: ${err instanceof Error ? err.message : "Errore sconosciuto"}`);
+        void trackEvent("document_uploaded", { file_type: docType, file_size_kb: fileSizeKb, source: dragActive ? "dragdrop" : "desktop", success: false, error_type: err instanceof Error ? err.message : "unknown_error" });
+        void trackEvent("analytics_error", { name: "uploadAndAnalyze", reason: err instanceof Error ? err.message : "unknown_error" });
+        return null;
       }
-
-      if (finalExtractedText.length > MAX_CHARS) {
-        toast.error(
-          `Il documento è troppo lungo (${finalExtractedText.length.toLocaleString()} caratteri).\n` +
-          `Il limite massimo è ${MAX_CHARS.toLocaleString()} caratteri.`,
-          { duration: 6000 }
-        );
-        void trackEvent("document_uploaded", {
-          file_type: docType,
-          file_size_kb: fileSizeKb,
-          source: dragActive ? "dragdrop" : "desktop",
-          success: false,
-          error_type: "max_chars_exceeded",
-        });
-        return;
+    }))).filter((part): part is { name: string; text: string } => part !== null);
+    if (extractedParts.length > 0) {
+      const combinedText = extractedParts.length === 1
+        ? extractedParts[0].text
+        : extractedParts.map(({ name, text }) => `\n\n===== INIZIO DOCUMENTO: ${name} =====\n${text}\n===== FINE DOCUMENTO: ${name} =====`).join("\n");
+      setSourceTexts(Object.fromEntries(extractedParts.map(({ name, text }) => [name, text])));
+      if (combinedText.length > MAX_CHARS) {
+        toast.error(`Il testo complessivo supera il limite di ${MAX_CHARS.toLocaleString()} caratteri. Carica meno documenti o file più brevi.`);
+        setSourceFiles(extractedParts.map(({ name }) => selectedFiles.find((item) => item.name === name)).filter((item): item is File => !!item));
+        setFile(extractedParts.map(({ name }) => selectedFiles.find((item) => item.name === name)).find((item): item is File => !!item) || null);
+        setExtractedText(null);
+      } else {
+        setSourceFiles(extractedParts.map(({ name }) => selectedFiles.find((item) => item.name === name)).filter((item): item is File => !!item));
+        setFile(extractedParts.map(({ name }) => selectedFiles.find((item) => item.name === name)).find((item): item is File => !!item) || null);
+        setExtractedText(combinedText);
       }
-
-      setExtractedText(finalExtractedText);
-      setProgress(null);
-
-      void trackEvent("document_uploaded", {
-        file_type: docType,
-        file_size_kb: fileSizeKb,
-        source: dragActive ? "dragdrop" : "desktop",
-        success: true,
-      });
-
-    } catch (err) {
-      console.error("Errore analisi file/OCR:", err);
-      toast.error(`Errore nell'analisi del file: ${err instanceof Error ? err.message : "Errore sconosciuto"}`);
-      setProgress(null);
-
-      void trackEvent("document_uploaded", {
-        file_type: docType,
-        file_size_kb: fileSizeKb,
-        source: dragActive ? "dragdrop" : "desktop",
-        success: false,
-        error_type: err instanceof Error ? err.message : "unknown_error",
-      });
-      void trackEvent("analytics_error", {
-        name: "uploadAndAnalyze",
-        reason: err instanceof Error ? err.message : "unknown_error",
-      });
-    } finally {
-      setLoading(false);
+    } else {
+      setSourceFiles([]);
+      setSourceTexts({});
+      setFile(null);
     }
+    setProgress(null);
+    setLoading(false);
   };
 
   const processWithTesseract = async (selectedFile: File, fileSizeKb: number): Promise<string> => {
@@ -185,15 +175,18 @@ export const usePdfAnalyzer = () => {
     }
 
     try {
-      if (file && file.name) {
-        const { checkDuplicateDocument } = await import("@/shared/services/document");
-        // ATTENZIONE: checkDuplicateDocument ora deve restituire l'ID (stringa) o null/false
-        const existingDocId = await checkDuplicateDocument(user.uid, file.name);
-        if (existingDocId) {
-          // Salviamo l'id nello stato!
-          setDuplicateId(existingDocId);
+      const duplicateIds: Record<string, string> = {};
+      const filesToCheck = sourceFiles.length > 0 ? sourceFiles : file ? [file] : [];
+      if (filesToCheck.length > 0) {
+        for (const sourceFile of filesToCheck) {
+          const existingDocId = await checkDuplicateDocument(user.uid, sourceFile.name);
+          if (existingDocId) duplicateIds[sourceFile.name] = existingDocId;
+        }
+        if (Object.keys(duplicateIds).length > 0) {
+          setDuplicateIdsByName(duplicateIds);
+          setDuplicateId(Object.values(duplicateIds)[0]);
           setIsDuplicateModalOpen(true);
-          return; 
+          return;
         }
       }
       
@@ -206,28 +199,57 @@ export const usePdfAnalyzer = () => {
     }
   };
   
-  const executeAnalysis = async (promptId?:string, overwriteId?: string, ) => {
-    if (!extractedText || !user) return;
-    const { loadMaxima } = await import("@/shared/services/document");
-    const { loadSentence } = await import("@/shared/services/storage");
+  const executeAnalysis = async (promptId?: string, overwriteId?: string) => {
+    const filesToAnalyze = sourceFiles.length > 0 ? sourceFiles : file ? [file] : [];
+    if (!extractedText || !user || filesToAnalyze.length === 0) return;
 
+    setLoading(true);
+    setProgress(filesToAnalyze.length > 1 ? `Analisi di ${filesToAnalyze.length} documenti in parallelo...` : "Analisi in corso…");
+    setAnalysisResult(null);
+
+    const baseLimit = Math.floor(10 / filesToAnalyze.length);
+    const extraSlots = 10 % filesToAnalyze.length;
+    try {
+      const resultsByFile = await Promise.all(filesToAnalyze.map((sourceFile, index) => {
+        const sourceText = sourceTexts[sourceFile.name] || (filesToAnalyze.length === 1 ? extractedText : "");
+        const maxDocuments = baseLimit + (index < extraSlots ? 1 : 0);
+        const duplicateForSource = duplicateIdsByName[sourceFile.name] || (filesToAnalyze.length === 1 ? overwriteId : undefined);
+        return executeAnalysisForSource(promptId, duplicateForSource, sourceFile, sourceText, maxDocuments);
+      }));
+
+      const allResults = resultsByFile.flatMap((results) => results || []).slice(0, 10);
+      setAnalysisResult(allResults.length > 0 ? JSON.stringify(allResults) : null);
+      if (Object.keys(duplicateIdsByName).length > 0 || overwriteId) {
+        setDuplicateIdsByName({});
+        setDuplicateId(null);
+      }
+    } finally {
+      setLoading(false);
+      setProgress(null);
+    }
+  };
+
+  const executeAnalysisForSource = async (
+    promptId: string | undefined,
+    overwriteId: string | undefined,
+    analysisFile: File,
+    analysisText: string,
+    maxDocuments: number
+  ): Promise<DocumentoGiurisprudenziale[] | undefined> => {
+    if (!analysisText || !user) return;
     const startedAt = performance.now();
     
     // TYPE CASTING AGGIORNATO E CORRETTO
-    const docType: DocumentFileType = file ? getFileType(file) : "other";
-
-    setLoading(true);
-    setProgress("Analisi in corso…");
-    setAnalysisResult(null);
+    const docType: DocumentFileType = getFileType(analysisFile);
 
     try {
       const { res, payload } = await withTrace(
         "reason_analyze",
         {
-          input_len: extractedText.length,
+          input_len: analysisText.length,
         },
         async () => {
-          const requestBody: Record<string, string> = { question: extractedText };
+          const requestBody: Record<string, string | boolean | number> = { question: analysisText, extractMultiple: true, maxDocuments };
           console.log(promptId);
           if (promptId && promptId!=="default") {
             requestBody.promptId = promptId;
@@ -351,15 +373,12 @@ export const usePdfAnalyzer = () => {
       }
 
       // ===== SUCCESS PATH =====
-      let messageStr: string;
       let messageObj: { warning?: string } & Record<string, unknown>;
 
       if (typeof payload.message === "string") {
-        messageStr = payload.message;
-
         let parsed: unknown;
         try {
-          parsed = JSON.parse(messageStr);
+          parsed = JSON.parse(payload.message);
         } catch {
           toast.error("Errore nell'analisi del file. Si prega di riprovare.");
           void trackEvent("sentence_processed", {
@@ -385,18 +404,6 @@ export const usePdfAnalyzer = () => {
         messageObj = parsed as { warning?: string } & Record<string, unknown>;
       } else if (typeof payload.message === "object" && payload.message !== null) {
         messageObj = payload.message as { warning?: string } & Record<string, unknown>;
-        try {
-          messageStr = JSON.stringify(messageObj);
-        } catch {
-          toast.error("Risposta non valida dal server.");
-          void trackEvent("sentence_processed", {
-            input_type: docType,
-            success: false,
-            processing_time_ms: Math.round(performance.now() - startedAt),
-            error_type: "message_json_stringify_failed",
-          });
-          return;
-        }
       } else {
         toast.error("Risposta non valida dal server.");
         void trackEvent("sentence_processed", {
@@ -408,7 +415,13 @@ export const usePdfAnalyzer = () => {
         return;
       }
 
-      if (messageObj.warning === "input_non_sentenza") {
+      const returnedDocuments = Array.isArray(messageObj.documents)
+        ? messageObj.documents.slice(0, maxDocuments)
+        : [messageObj];
+
+      if (messageObj.warning === "input_non_sentenza" || returnedDocuments.some((doc) =>
+        typeof doc === "object" && doc !== null && (doc as { warning?: string }).warning === "input_non_sentenza"
+      )) {
         toast.error("Il testo caricato non sembra un documento giurisprudenziale.\nControlla il file e riprova.", {
           duration: 5000,
           style: { whiteSpace: "pre-line", maxWidth: "350px", lineHeight: "1.5" },
@@ -423,57 +436,48 @@ export const usePdfAnalyzer = () => {
         return;
       }
 
-      setAnalysisResult(messageStr);
-
-      let parsedResult: DocumentoGiurisprudenziale;
-      try {
-        const raw = messageObj as Partial<DocumentoGiurisprudenziale>;
-        parsedResult = {
-          ...raw,
-          nome_file: file?.name || "documento_senza_nome",
-        } as DocumentoGiurisprudenziale;
-      } catch {
-        toast.error("Errore nell'analisi del file. Si prega di riprovare.");
+      const validDocuments = returnedDocuments.filter((doc): doc is Record<string, unknown> =>
+        typeof doc === "object" && doc !== null && !Array.isArray(doc)
+      );
+      if (validDocuments.length === 0) {
+        toast.error("Non sono stati individuati documenti analizzabili nel file.");
         void trackEvent("sentence_processed", {
           input_type: docType,
           success: false,
           processing_time_ms: Math.round(performance.now() - startedAt),
-          error_type: "parsed_result_build_failed",
+          error_type: "no_documents_found",
         });
         return;
       }
-
-      const newId = uuidv4();
-      if (!file) return;
-
       const uid = user.uid;
-      const documentToSave = {
-        ...parsedResult,
-        ...(promptId && promptId !== "default" ? { promptId: promptId } : {}),
-      };
-      
-      // 1. SALVATAGGIO DEL NUOVO DOCUMENTO
-      await withTrace(
-        "doc_save_firestore_storage",
-        { input_type: docType },
-        async () => {
-          await loadMaxima(newId, documentToSave, uid, "documents", extractedText || "");
-          await loadSentence(file, newId, `users/${uid}/documents`);
-        }
-      );
+      const parsedResults = validDocuments.map((raw) => {
+        const documentData = { ...raw };
+        delete documentData.source_file;
+        return {
+          ...documentData,
+          nome_file: analysisFile.name || "documento_senza_nome",
+        } as DocumentoGiurisprudenziale;
+      });
 
-      // 2. SOVRASCRITTURA: ELIMINAZIONE DEL VECCHIO DOCUMENTO (Se richiesto)
+      await withTrace("doc_save_firestore_storage", { input_type: docType, document_count: parsedResults.length }, async () => {
+        for (const parsedResult of parsedResults) {
+          const newId = uuidv4();
+          const documentToSave = {
+            ...parsedResult,
+            ...(promptId && promptId !== "default" ? { promptId } : {}),
+          };
+          await loadMaxima(newId, documentToSave, uid, "documents", analysisText);
+          await loadSentence(analysisFile, newId, `users/${uid}/documents`);
+        }
+      });
+
       if (overwriteId) {
         try {
-          const { deleteDocument } = await import("@/shared/services/document"); 
-          // Assicurati che "deleteDocument" accetti l'ID del documento da eliminare.
-          await deleteDocument("documents",overwriteId);
-          
-          setDuplicateId(null); // Puliamo lo stato del duplicato
+          await deleteDocument("documents", overwriteId);
           toast.success("Documento precedente sovrascritto con successo.");
         } catch (delErr) {
-          console.error("Errore durante l'eliminazione del vecchio documento:", delErr);
-          toast.error("Il nuovo documento è stato analizzato, ma si è verificato un errore nell'eliminare il duplicato.");
+          console.error("Errore durante l'eliminazione del documento duplicato:", delErr);
+          toast.error("Documento salvato, ma non è stato possibile eliminare il duplicato precedente.");
         }
       }
 
@@ -482,6 +486,8 @@ export const usePdfAnalyzer = () => {
         success: true,
         processing_time_ms: Math.round(performance.now() - startedAt),
       });
+
+      return parsedResults;
 
     } catch (err) {
       console.error(err);
@@ -498,14 +504,11 @@ export const usePdfAnalyzer = () => {
         name: "analyzeReason",
         reason: err instanceof Error ? err.message : "unknown_error",
       });
-    } finally {
-      setLoading(false);
-      setProgress(null);
     }
   };
 
   const handleFiles = (files: FileList) => {
-    if (files.length) void uploadAndAnalyze(files[0]);
+    if (files.length) void uploadAndAnalyze(Array.from(files).slice(0, 10));
   };
   
   const handleDrag = (e: React.DragEvent<HTMLElement>) => {
@@ -524,6 +527,8 @@ export const usePdfAnalyzer = () => {
 
   return {
     file,
+    sourceFiles,
+    setSourceFiles,
     dragActive,
     loading,
     progress,
