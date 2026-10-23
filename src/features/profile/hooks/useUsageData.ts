@@ -48,10 +48,10 @@ const PLAN_LIMITS: Record<string, PlanLimits> = {
 
 // Costanti per il calcolo del tempo (in minuti)
 export const TIME_MULTIPLIERS = {
-  research: 10,
-  analysis: 30,
+  research: 7,
+  analysis: 10,
   synthesis: 15,
-  deepAnalysis: 60,
+  deepAnalysis: 45,
 };
 
 // Utility Typescript sicura per estrarre numeri

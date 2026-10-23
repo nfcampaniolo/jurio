@@ -30,6 +30,21 @@ interface AnalysisPromptSectionProps {
   isProcessing: boolean;
 }
 
+const promptExamples = [
+  {
+    label: "Contratto",
+    prompt: "Analizza gli orientamenti giurisprudenziali sulla validità e sull'interpretazione della clausola [indicare la clausola], considerando i fatti rilevanti e le possibili eccezioni.",
+  },
+  {
+    label: "Responsabilità",
+    prompt: "Ricostruisci gli orientamenti favorevoli e contrari sulla responsabilità per [indicare la condotta o il danno], evidenziando i presupposti probatori e le decisioni più recenti.",
+  },
+  {
+    label: "Procedura",
+    prompt: "Esamina i termini, i presupposti e le conseguenze processuali applicabili a [indicare la questione], distinguendo gli orientamenti consolidati dai contrasti.",
+  },
+];
+
 export const AnalysisPromptSection: React.FC<AnalysisPromptSectionProps> = ({
   prompt,
   setPrompt,
@@ -105,7 +120,7 @@ export const AnalysisPromptSection: React.FC<AnalysisPromptSectionProps> = ({
     <section className="group relative bg-(--color-surface) border border-(--color-border) rounded-lg p-5 sm:p-6 shadow-(--shadow-soft) overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-0 group-hover:opacity-90 group-focus-within:opacity-90 transition-opacity duration-200 z-20 pointer-events-none" />
       
-      <div className="flex items-center justify-between pb-5">
+      <div className="flex items-center justify-between gap-3 pb-4">
         <h3 className="text-sm font-medium tracking-tight" style={{ fontFamily: "var(--font-serif)" }}>
           Istruzioni di Analisi
         </h3>
@@ -136,16 +151,35 @@ export const AnalysisPromptSection: React.FC<AnalysisPromptSectionProps> = ({
           </button>
 
         </div>
+
       </div>
       
       <textarea
         ref={textAreaRef}
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
-        placeholder="Descrivi l'analisi legale, la ricerca giurisprudenziale profonda o l'atto che vuoi elaborare..."
-        className="w-full min-h-32.5 p-4 bg-(--color-bg) border border-(--color-border) rounded-md text-xs sm:text-sm font-light text-(--color-text) placeholder:text-(--color-muted) focus:border-(--color-text) outline-none resize-none transition-all shadow-xs leading-relaxed"
+        aria-label="Descrivi la questione giuridica da approfondire"
+        placeholder="Descrivi la questione: fatti rilevanti, problema giuridico e risultato che vuoi ottenere..."
+        className="w-full min-h-32.5 p-4 bg-(--color-bg) border border-(--color-border) rounded-md text-xs sm:text-sm font-light text-(--color-text) placeholder:text-(--color-muted) hover:border-(--color-primary) focus:border-(--color-primary) outline-none resize-none transition-all shadow-xs leading-relaxed"
         disabled={isProcessing}
       />
+
+      {!prompt.trim() && (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-(--color-muted)">Esempi:</span>
+          {promptExamples.map((example) => (
+            <button
+              key={example.label}
+              type="button"
+              disabled={isProcessing}
+              onClick={() => setPrompt(example.prompt)}
+              className="rounded-full border border-(--color-border) px-3 py-1.5 text-[11px] text-(--color-muted) transition hover:border-(--color-primary) hover:text-(--color-primary) disabled:opacity-50"
+            >
+              {example.label}
+            </button>
+          ))}
+        </div>
+      )}
     </section>
   );
 };

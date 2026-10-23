@@ -115,6 +115,7 @@ export const internalDatabaseSearch = ai.defineTool(
             id: doc.id,
             caseNumber: data.numero_sentenza ?? "",
             court: data.organo_giudicante ?? "",
+            sezione: data.sezione ?? "",
             ecli: data.ecli ?? "",
             urn: data.urn ?? "",
             summary: data.summary || data.massima || "",
@@ -172,6 +173,7 @@ export const internalDatabaseSearch = ai.defineTool(
             id: doc.id,
             caseNumber: data.numero_sentenza ?? "",
             court: data.organo_giudicante ?? "",
+            sezione: data.sezione ?? "",
             summary: data.summary || data.massima || "",
             sourceUrl: isSafeHttpUrl(data.sourceUrl) ? data.sourceUrl : null,
             _distance: 0,
@@ -226,6 +228,7 @@ export const internalDatabaseSearch = ai.defineTool(
             id: doc.id,
             caseNumber: data.numero_sentenza ?? "",
             court: data.organo_giudicante ?? "",
+            sezione: data.sezione ?? "",
             summary: data.summary || data.massima || "",
             sourceUrl: isSafeHttpUrl(data.sourceUrl) ? data.sourceUrl : null,
             _distance: rawDistance,
@@ -321,6 +324,7 @@ export const analyzeDistinguishingFacts = ai.defineTool(
             id: doc.id,
             caseNumber: data.numero_sentenza ?? "",
             court: data.organo_giudicante ?? "",
+            sezione: data.sezione ?? "",
             caseFacts:
               data.fattispecie_rilevante ||
               "Fatti non separati - deducibili dalla massima",

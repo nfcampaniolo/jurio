@@ -1,4 +1,4 @@
-import { motion, type Variants } from "framer-motion";
+import { motion, type Variants, useReducedMotion } from "framer-motion";
 import { Scale, MessageSquare, FolderPlus, FolderOpen, Loader2, ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Footer } from "@/shared/components/Footer";
@@ -35,6 +35,7 @@ export const SelectionScreen = ({
   isLoadingData 
 }: SelectionScreenProps) => {
   const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
 
   return (
     <section aria-labelledby="selection-screen-heading" className="w-full h-full overflow-y-auto bg-(--color-bg) scroll-smooth">
@@ -48,7 +49,12 @@ export const SelectionScreen = ({
         >
           
           {/* HEADER SEZIONE */}
-          <motion.div variants={itemVariants} className="text-center max-w-4xl mb-14">
+          <motion.div
+            initial={reduceMotion ? false : { opacity: 0, y: 18, filter: "blur(7px)" }}
+            animate={reduceMotion ? false : { opacity: 1, y: 0, filter: "blur(0px)" }}
+            transition={{ duration: 0.52, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+            className="text-center max-w-4xl mb-14"
+          >
             <div className="mb-6 flex justify-center">
               <span className="inline-flex items-center justify-center w-14 h-14 rounded-lg border border-(--color-border) bg-(--color-surface) text-(--color-text)">
                 <Scale size={26} className="opacity-80" />

@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { BookOpen, Search } from "lucide-react";
 import type { Message, Source } from "@/interfaces/interfaces";
+import { getSourceCitationLabel } from "../utils/sourceCitationLabel";
 
 interface SourcesSectionProps {
   messages: Message[];
@@ -70,15 +71,9 @@ export const SourcesSection: React.FC<SourcesSectionProps> = ({
             const isWeb = source._type === 'web_search';
             const sourceId = source.documento_id || source._id_interno || source.url_riferimento || source.link || source.identificativo || `src-${idx}`;
             
-            const organoPrefix = source.organo_giudicante ? `${source.organo_giudicante}: ` : '';
             const sourceType = isWeb 
               ? (source.fonte_web || source.fonte || 'Web') 
-              : (source.identificativo 
-                  ? `${organoPrefix} ${source.identificativo}`.trim() 
-                  : (source.numero_sentenza 
-                      ? `${organoPrefix || 'Sent.'} n. ${source.numero_sentenza}`.trim() 
-                      : '')
-                );
+              : getSourceCitationLabel(source, "");
                 
             const scoreValue = source.match_percentage || source.relevance || (source._matchCount ? Math.min(Math.round(source._matchCount * 12), 98) : (isWeb ? 95 : 85));
             const relevanceScore = scoreValue ? `${scoreValue}% match` : "";
@@ -111,9 +106,11 @@ export const SourcesSection: React.FC<SourcesSectionProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between gap-1.5 mb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm bg-(--color-bg) border border-(--color-border) text-(--color-text)">
-                    {sourceType}
-                  </span>
+                  {sourceType && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm bg-(--color-bg) border border-(--color-border) text-(--color-text)">
+                      {sourceType}
+                    </span>
+                  )}
                   <span className="text-[10px] font-light text-(--color-muted) italic">
                     {relevanceScore}
                   </span>

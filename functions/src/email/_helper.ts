@@ -72,6 +72,13 @@ export async function dispatchMailAndNotification({
   await batch.commit();
 }
 
+const TIME_SAVED_MINUTES = {
+  research: 7,
+  analysis: 10,
+  synthesis: 15,
+  deepAnalysis: 45,
+};
+
 export function calculateReportData(rawUsage: Record<string, number>, targetMonthStr: string): MonthlyUsageReportData {
   const haFattoPrompting = (rawUsage['prompting'] || 0) > 0;
   const interazioniCount = rawUsage['legal_agent'] || 0;
@@ -79,17 +86,17 @@ export function calculateReportData(rawUsage: Record<string, number>, targetMont
   const analisiCount = (rawUsage['review_agent'] || 0) + 
                        (rawUsage['reasoning'] || 0) + 
                        (rawUsage['speech_to_text'] || 0);
-  const analisiTime = analisiCount * 30;
+  const analisiTime = analisiCount * TIME_SAVED_MINUTES.analysis;
   
   const ricercaCount = (rawUsage['research_agent'] || 0) + 
                        (rawUsage['research'] || 0);
-  const ricercaTime = ricercaCount * 10;
+  const ricercaTime = ricercaCount * TIME_SAVED_MINUTES.research;
   
   const sintesiCount = rawUsage['drafting_agent'] || 0;
-  const sintesiTime = sintesiCount * 15;
+  const sintesiTime = sintesiCount * TIME_SAVED_MINUTES.synthesis;
 
   const deepAnalysisCount = rawUsage['deep_analysis'] || 0;
-  const deepAnalysisTime = deepAnalysisCount * 60;
+  const deepAnalysisTime = deepAnalysisCount * TIME_SAVED_MINUTES.deepAnalysis;
 
   return {
     mese: targetMonthStr,

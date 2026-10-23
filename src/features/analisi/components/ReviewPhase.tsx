@@ -164,6 +164,7 @@ export const ReviewPhase: React.FC<Props> = ({
         orientamentoFavorevole={mappa?.orientamentoFavorevole}
         orientamentoContrario={mappa?.orientamentoContrario}
         onToggleEsclusione={toggleEsclusionePrecedente}
+        nodiMappa={activeSession.mappaConcettuale?.nodes}
       />
 
       {/* PUNTI APERTI */}

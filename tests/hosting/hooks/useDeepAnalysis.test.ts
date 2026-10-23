@@ -295,7 +295,8 @@ describe("useDeepAnalysisSession Hook Suite", () => {
     expect(mockedFetchWithSecurity).toHaveBeenCalledTimes(1);
 
     expect(toast.success).toHaveBeenCalledWith(
-      "Mappa dialettica generata. Revisiona gli orientamenti."
+      "Analisi avviata. Puoi chiudere la pagina: riceverai una notifica quando sarà pronta.",
+      { duration: 6000 }
     );
   });
 
@@ -391,7 +392,8 @@ describe("useDeepAnalysisSession Hook Suite", () => {
     expect(data).toBeDefined();
 
     expect(toast.success).toHaveBeenCalledWith(
-      "Mappa dialettica aggiornata con successo!"
+      "Approfondimento avviato. Ti avviseremo quando la mappa sarà aggiornata.",
+      { duration: 6000 }
     );
   });
 
@@ -440,13 +442,11 @@ describe("useDeepAnalysisSession Hook Suite", () => {
       await result.current.avviaGenerazioneSintesi();
     });
 
-    await waitFor(() => {
-      expect(result.current.isCompleted).toBe(true);
-    });
-
     expect(toast.success).toHaveBeenCalledWith(
-      "Sintesi strategica generata con successo."
+      "Generazione della sintesi avviata. Riceverai una notifica quando sarà pronta.",
+      { duration: 6000 }
     );
+    expect(result.current.isCompleted).toBe(false);
   });
 
   test("elimina correttamente una sessione tramite eliminaSessione", async () => {

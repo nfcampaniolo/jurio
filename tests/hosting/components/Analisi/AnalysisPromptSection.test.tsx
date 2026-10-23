@@ -64,7 +64,7 @@ describe("AnalysisPromptSection Component Suite", () => {
     ).toBeInTheDocument();
 
     const textarea = screen.getByPlaceholderText(
-      /descrivi l'analisi legale, la ricerca giurisprudenziale profonda/i
+      /descrivi la questione: fatti rilevanti, problema giuridico/i
     );
     expect(textarea).toBeInTheDocument();
     expect(textarea).toHaveValue("Test quesito giuridico");
@@ -79,7 +79,7 @@ describe("AnalysisPromptSection Component Suite", () => {
     render(<AnalysisPromptSection {...defaultProps} setPrompt={setPromptMock} />);
 
     const textarea = screen.getByPlaceholderText(
-      /descrivi l'analisi legale, la ricerca giurisprudenziale profonda/i
+      /descrivi la questione: fatti rilevanti, problema giuridico/i
     );
     fireEvent.change(textarea, { target: { value: "Nuova analisi di Cassazione" } });
 
@@ -90,12 +90,23 @@ describe("AnalysisPromptSection Component Suite", () => {
     render(<AnalysisPromptSection {...defaultProps} isProcessing={true} />);
 
     const textarea = screen.getByPlaceholderText(
-      /descrivi l'analisi legale, la ricerca giurisprudenziale profonda/i
+      /descrivi la questione: fatti rilevanti, problema giuridico/i
     );
     const micButton = screen.getByRole("button", { name: /detta/i });
 
     expect(textarea).toBeDisabled();
     expect(micButton).toBeDisabled();
+  });
+
+  test("inserisce un esempio guidato quando l'utente seleziona un modello di quesito", () => {
+    const setPromptMock = vi.fn();
+    render(<AnalysisPromptSection {...defaultProps} setPrompt={setPromptMock} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Contratto" }));
+
+    expect(setPromptMock).toHaveBeenCalledWith(
+      expect.stringContaining("validità e sull'interpretazione della clausola")
+    );
   });
 
   test("mostra un alert se il browser non supporta la SpeechRecognition API", () => {

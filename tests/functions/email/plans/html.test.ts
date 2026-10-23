@@ -67,11 +67,11 @@ describe("plans email HTML", () => {
       mese: "settembre 2026",
       haFattoPrompting: true,
       interazioniCount: 2,
-      ricerca: { count: 3, timeSavedMinutes: 30 },
+      ricerca: { count: 3, timeSavedMinutes: 21 },
       analisi: { count: 0, timeSavedMinutes: 0 },
       sintesi: { count: 1, timeSavedMinutes: 15 },
-      deepAnalysis: { count: 1, timeSavedMinutes: 60 },
-      totalTimeSavedMinutes: 105,
+      deepAnalysis: { count: 1, timeSavedMinutes: 45 },
+      totalTimeSavedMinutes: 81,
     };
 
     // Act
@@ -81,6 +81,7 @@ describe("plans email HTML", () => {
     expect(result).toContain("settembre 2026");
     expect(result).toContain("105 minuti");
     expect(result).toContain("Ricerca Giurisprudenziale");
+    expect(result).toContain("Ricerca Giurisprudenziale Approfondita");
     expect(result).toContain("Sintesi e Drafting");
     expect(result).toContain("prompting libero");
     expect(result).not.toContain("Analisi Documentale");

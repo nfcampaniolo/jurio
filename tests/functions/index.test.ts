@@ -227,7 +227,7 @@ describe("functions/src/index", () => {
     const exportedRegistrations = Object.entries(functions).filter(([name]) => name !== "default");
 
     // Act / Assert
-    expect(exportedRegistrations).toHaveLength(44);
+    expect(exportedRegistrations).toHaveLength(46);
     for (const [name, registration] of exportedRegistrations) {
       const registrationDetails = registration as unknown as { kind: string; handler: unknown };
       expect(registrationDetails, `${name} is registered`).toMatchObject({

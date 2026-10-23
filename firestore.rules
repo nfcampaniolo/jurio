@@ -264,8 +264,13 @@ service cloud.firestore {
 
     match /deep_analysis_sessions/{sessionId} {
       allow read: if isVisibleTo() || isOwner();
-      allow create: if isOwnerOnCreate();
-      allow update, delete: if isOwner();
+      allow create: if isOwnerOnCreate()
+        && !request.resource.data.keys().hasAny(['job']);
+      allow update: if isOwner()
+        && !request.resource.data.diff(resource.data)
+             .affectedKeys()
+             .hasAny(['job']);
+      allow delete: if isOwner();
     }
   }
 }

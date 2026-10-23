@@ -8,7 +8,8 @@ import { app } from "./mpc/app";
 import { executeVectorSearchJurio } from "./research/sentences.logic";
 import { executeVectorSearchDoctrine } from "./research/doctrine.logic";
 import { executeLegalAgent } from "./genai/legalAgent/logic";
-import { executeDeepAnalysis } from "./genai/deepAnalysisAgent/logic";
+import { executeDeepAnalysis, processDeepAnalysisJob } from "./genai/deepAnalysisAgent/logic";
+import { getDb } from "./_deps";
 import { executeSupport, executeUpdateMetadataFromChat, executeGenerateEmbedding } from "./genai/supportAgent/logic";
 import { executeReasoning, executeAdminDoctrineUpload } from "./genai/documentAnalysisAgent/logic";
 import { executePromptAgent, executeEnhancePromptAgent } from "./genai/promptAgent/logic";
@@ -97,6 +98,52 @@ export const deepAnalysisAgent = onRequest(
   },
    async (req, res) => {
     return executeDeepAnalysis(req, res);
+  }
+);
+
+export const processDeepAnalysis = onDocumentWritten(
+  {
+    document: "deep_analysis_sessions/{sessionId}",
+    secrets: ["GOOGLE_GENAI_API_KEY", "OPENAI_API_KEY", "TAVILY_API_KEY"],
+    timeoutSeconds: 540,
+    memory: "2GiB",
+    retry: false,
+  },
+  async (event) => {
+    const job = event.data?.after.data()?.job;
+    if (!job || job.status !== "queued") return;
+    await processDeepAnalysisJob(event.params.sessionId);
+  }
+);
+
+export const recoverDeepAnalysisJobs = onSchedule(
+  {
+    schedule: "every 5 minutes",
+    timeoutSeconds: 540,
+    memory: "1GiB",
+  },
+  async () => {
+    const db = getDb();
+    const [queued, processing] = await Promise.all([
+      db.collection("deep_analysis_sessions")
+        .where("job.status", "==", "queued")
+        .limit(10)
+        .get(),
+      db.collection("deep_analysis_sessions")
+        .where("job.status", "==", "processing")
+        .limit(10)
+        .get(),
+    ]);
+    const candidates = [
+      ...queued.docs,
+      ...processing.docs.filter((snapshot) => {
+        const startedAt = snapshot.data().job?.startedAt;
+        return !startedAt || Date.now() - startedAt.toMillis() >= 10 * 60 * 1000;
+      }),
+    ];
+    for (const session of candidates) {
+      await processDeepAnalysisJob(session.id);
+    }
   }
 );
 

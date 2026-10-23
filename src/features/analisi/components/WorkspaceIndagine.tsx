@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
+import toast from "react-hot-toast";
 import { useDeepAnalysisSession } from "../hooks/useDeepAnalysis";
 import { ReportSintesi } from "./ReportSintesi";
-import { ExecutionLogModal, type LogStep } from "./ExecutionLogModal";
 import { WorkspaceHeader } from "./WorkspaceHeader";
 import { DraftPhase } from "./DraftPhase";
 import { ReviewPhase } from "./ReviewPhase";
@@ -33,8 +33,6 @@ export const WorkspaceIndagine: React.FC<Props> = ({
     avviaRicercaPrecedenti,
     avviaIntegrazioneRicerca,
     avviaGenerazioneSintesi,
-    isLogModalOpen,
-    setIsLogModalOpen,
     isCompleted,
     isAccessDenied
   } = useDeepAnalysisSession(sessioneId);
@@ -46,9 +44,7 @@ export const WorkspaceIndagine: React.FC<Props> = ({
   const [mostraHitlBox, setMostraHitlBox] = useState(false);
   const [direttivaPersonalizzata, setDirettivaPersonalizzata] = useState("");
   const [messaggioEsito, setMessaggioEsito] = useState<{ tipo: 'info' | 'success'; testo: string } | null>(null);
-  const [logModalTitle, setLogModalTitle] = useState("");
-  const [executionSteps, setExecutionSteps] = useState<LogStep[]>([]);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const previousJobRef = useRef<{ id: string; status: string } | null>(null);
 
   const titoloEditabile = titoloLocale !== null ? titoloLocale : (activeSession?.title || "Approfondimento Giurisprudenziale");
   const quesito = quesitoLocale !== null ? quesitoLocale : (activeSession?.promptOriginale || "");
@@ -74,37 +70,20 @@ export const WorkspaceIndagine: React.FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSession?.id]);
 
-  const progress = activeSession?.progress;
-
   useEffect(() => {
-    if (!progress || !isLogModalOpen) return;
+    const job = activeSession?.job;
+    if (!job) return;
 
-    const progressStepId = `backend-${progress.phase}`;
-    const status: LogStep["status"] =
-      progress.status === "error"
-        ? "error"
-        : progress.status === "completed"
-          ? "success"
-          : "pending";
-
-    setExecutionSteps((previous) => {
-      const hasStep = previous.some((step) => step.id === progressStepId);
-      const steps = previous.map((step) =>
-        step.status === "pending" && step.id !== progressStepId
-          ? { ...step, status: "success" as const }
-          : step
-      );
-      const nextStep: LogStep = {
-        id: progressStepId,
-        timestamp: new Date().toLocaleTimeString(),
-        message: progress.message,
-        status,
-      };
-
-      if (!hasStep) return [...steps, nextStep];
-      return steps.map((step) => (step.id === progressStepId ? nextStep : step));
-    });
-  }, [progress, isLogModalOpen]);
+    const previous = previousJobRef.current;
+    if (previous?.id === job.id && previous.status !== job.status) {
+      if (job.status === "completed") {
+        toast.success("Il risultato dell'approfondimento è pronto.");
+      } else if (job.status === "failed") {
+        toast.error("L'elaborazione non è riuscita. Puoi riprovare dall'indagine.");
+      }
+    }
+    previousJobRef.current = { id: job.id, status: job.status };
+  }, [activeSession?.job]);
 
   const handleSalvaTitolo = async () => {
     setIsEditingTitle(false);
@@ -121,41 +100,12 @@ export const WorkspaceIndagine: React.FC<Props> = ({
 
   const handleEseguiRicercaConLog = async () => {
     if (!quesito.trim()) return;
-
-    abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
-
-    setLogModalTitle("Costruzione Mappa Dialettica Iniziale");
-    setIsLogModalOpen(true);
-
-    const ora = new Date().toLocaleTimeString();
-    setExecutionSteps([
-      { id: '1', timestamp: ora, message: "Inizializzazione parametri di ricerca e filtri di confidenza...", status: "success" },
-      { id: '2', timestamp: ora, message: "Invio della richiesta al backend e attesa dell'avanzamento...", status: "pending" }
-    ]);
-
     try {
-      await avviaRicercaPrecedenti(quesito, configurazione, attachedDocs, onSessionCreated, signal);
-
-      setExecutionSteps(prev => [
-        ...prev.map(s => s.status === "pending" ? { ...s, status: "success" as const } : s),
-        { id: '4', timestamp: new Date().toLocaleTimeString(), message: "Mappa Dialettica completata e persistita su Firestore.", status: "success" }
-      ]);
-
-      setTimeout(() => setIsLogModalOpen(false), 850);
+      await avviaRicercaPrecedenti(quesito, configurazione, attachedDocs, onSessionCreated);
     } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : "Errore imprevisto durante l'indagine.";
       console.error("Dettaglio errore:", err);
-
-      setExecutionSteps((prev) => [
-        ...prev.map((s) => s.status === "pending" ? { ...s, status: "error" as const } : s),
-        {
-          id: "err",
-          timestamp: new Date().toLocaleTimeString(),
-          message: `Fallito: ${errorMsg}`,
-          status: "error" as const,
-        },
-      ]);
+      toast.error(errorMsg);
     }
   };
 
@@ -166,88 +116,17 @@ export const WorkspaceIndagine: React.FC<Props> = ({
     setDirettivaPersonalizzata("");
     setMessaggioEsito(null);
 
-    abortControllerRef.current = new AbortController();
-    const signal = abortControllerRef.current.signal;
-
-    setLogModalTitle("Approfondimento Mirato in Corso");
-    setIsLogModalOpen(true);
-
-    const ora = new Date().toLocaleTimeString();
-    setExecutionSteps([
-      { id: '1', timestamp: ora, message: `Ricevuta direttiva: "${direttivaInvio}"`, status: "success" },
-      { id: '2', timestamp: ora, message: "Estrazione ID già acquisiti ed esclusione duplicati...", status: "success" },
-      { id: '3', timestamp: ora, message: "Esecuzione ricerca mirata con i tool di backend...", status: "pending" }
-    ]);
-
-    const fontiFavOld = activeSession?.mappaDialettica?.orientamentoFavorevole?.fonti || [];
-    const fontiContOld = activeSession?.mappaDialettica?.orientamentoContrario?.fonti || [];
-    
-    const oldIds = new Set([
-      ...fontiFavOld.map((f: { id: string }) => f.id),
-      ...fontiContOld.map((f: { id: string }) => f.id)
-    ]);
-
     try {
-      const result = await avviaIntegrazioneRicerca(direttivaInvio, signal);
-
-      setExecutionSteps(prev => [
-        ...prev.map(s => s.id === '3' ? { ...s, status: 'success' as const } : s),
-        { id: '4', timestamp: new Date().toLocaleTimeString(), message: "Merge delle fonti e validazione schema Zod completati.", status: "success" }
-      ]);
-
-      const mappaAggiornata = result?.mappaDialettica || result;
-      const fontiFavNew = mappaAggiornata?.orientamentoFavorevole?.fonti || [];
-      const fontiContNew = mappaAggiornata?.orientamentoContrario?.fonti || [];
-
-      const tutteLeNuoveFonti = [...fontiFavNew, ...fontiContNew];
-      const fontiEffettivamenteNuove = tutteLeNuoveFonti.filter((f: { id: string }) => !oldIds.has(f.id));
-      const aggiunte = fontiEffettivamenteNuove.length;
-
-      if (aggiunte === 0) {
-        setMessaggioEsito({
-          tipo: 'info',
-          testo: "L'Approfondimento è completato, ma non sono emerse nuove fonti o argomentazioni inedite rispetto a quelle già mappate."
-        });
-      } else {
-        setMessaggioEsito({
-          tipo: 'success',
-          testo: `Approfondimento completato con successo: integrati ${aggiunte} nuovi elementi/fonti nella mappa.`
-        });
-      }
-
-      setTimeout(() => setIsLogModalOpen(false), 850);
+      await avviaIntegrazioneRicerca(direttivaInvio);
+      setMessaggioEsito({ tipo: "info", testo: "Approfondimento avviato. Puoi continuare a usare Jurio; riceverai una notifica al completamento." });
     } catch (err: unknown) {
       console.error(err);
       const errorMsg = err instanceof Error ? err.message : "Errore imprevisto durante l'approfondimento.";
-      
-      setExecutionSteps((prev) => [
-        ...prev.map((s) => s.status === "pending" ? { ...s, status: "error" as const } : s),
-        {
-          id: "err",
-          timestamp: new Date().toLocaleTimeString(),
-          message: `Fallito: ${errorMsg}`,
-          status: "error" as const,
-        },
-      ]);
+      toast.error(errorMsg);
     }
   };
 
   const handleGeneraSintesi = async () => {
-    setLogModalTitle("Redazione della Sintesi Strategica");
-    setExecutionSteps([
-      {
-        id: "synthesis-start",
-        timestamp: new Date().toLocaleTimeString(),
-        message: "Preparazione delle fonti approvate per la sintesi finale...",
-        status: "success",
-      },
-      {
-        id: "synthesis-pending",
-        timestamp: new Date().toLocaleTimeString(),
-        message: "Generazione del report strategico in corso...",
-        status: "pending",
-      },
-    ]);
     await avviaGenerazioneSintesi();
   };
 
@@ -260,12 +139,6 @@ export const WorkspaceIndagine: React.FC<Props> = ({
     <div className="flex-1 flex flex-col h-full overflow-hidden relative print:h-auto print:overflow-visible print:block">
       {/* 🛡️ Access Gate attivabile in caso di 401/403 o permessi negati */}
       {isAccessDenied && <AccessDenied />}
-
-      <ExecutionLogModal
-        isOpen={isLogModalOpen}
-        title={logModalTitle}
-        steps={executionSteps}
-      />
 
       <div className="print:hidden">
         <WorkspaceHeader
@@ -287,7 +160,31 @@ export const WorkspaceIndagine: React.FC<Props> = ({
               setQuesito={setQuesitoLocale}
               isProcessing={isProcessing}
               onEseguiRicerca={handleEseguiRicercaConLog}
+              configurazione={configurazione}
+              documentiAllegatiCount={attachedDocs.length}
             />
+          )}
+          {(activeSession?.job?.status === "queued" || activeSession?.job?.status === "processing") && (
+            <section className="flex items-start gap-3 rounded-xl border border-blue-500/30 bg-blue-500/5 p-4" role="status" aria-live="polite">
+              <div className="mt-0.5 h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-blue-500" />
+              <div>
+                <p className="text-sm font-medium text-(--color-text)">
+                  {activeSession.job.status === "queued" ? "Analisi in coda" : "Analisi in corso"}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-(--color-muted)">
+                  {activeSession.progress?.message || "Stiamo elaborando la tua indagine."}
+                  {" "}Puoi chiudere questa pagina: il lavoro prosegue sui nostri server.
+                </p>
+              </div>
+            </section>
+          )}
+          {activeSession?.job?.status === "failed" && (
+            <section className="rounded-xl border border-red-500/30 bg-red-500/5 p-4" role="alert">
+              <p className="text-sm font-medium text-(--color-text)">Elaborazione non completata</p>
+              <p className="mt-1 text-xs text-(--color-muted)">
+                {activeSession.progress?.message || "Puoi riprovare l'analisi o la sintesi."}
+              </p>
+            </section>
           )}
           {activeSession?.status === "review" && activeSession?.mappaDialettica && !isCompleted &&(
             <ReviewPhase

@@ -10,6 +10,11 @@ export function normalizeText(value: unknown): string {
     .trim();
 }
 
+function truncate(value: unknown, max: number): string {
+  const text = normalizeText(value);
+  return text.length > max ? `${text.slice(0, max)}…` : text;
+}
+
 export function stableId(prefix: string, value: string): string {
   let hash = 2166136261;
   for (let i = 0; i < value.length; i++) {
@@ -126,13 +131,14 @@ export function extractResearchSources(messages: any[]): ResearchSource[] {
           sourceId,
           source: "internal",
           kind: "provvedimento",
-          label: item.numero_sentenza
-            ? `Sentenza ${item.numero_sentenza}`
+          label: (item.caseNumber ?? item.numero_sentenza)
+            ? `Sentenza ${item.caseNumber ?? item.numero_sentenza}`
             : "Provvedimento",
           url: typeof item.sourceUrl === "string" ? item.sourceUrl : null,
           metadata: {
-            numero_sentenza: item.numero_sentenza ?? "",
-            organo_giudicante: item.organo_giudicante ?? "",
+            numero_sentenza: item.caseNumber ?? item.numero_sentenza ?? "",
+            organo_giudicante: item.court ?? item.organo_giudicante ?? "",
+            massima: truncate(item.summary ?? item.legalPrinciple, 1200),
             type: item._type,
           },
           normeCitate: normalizeArray(
@@ -162,18 +168,22 @@ export function extractResearchSources(messages: any[]): ResearchSource[] {
           source: "doctrine",
           kind: "dottrina",
           label:
+            normalizeText(item.title) ||
             normalizeText(item.titolo) ||
             normalizeText(item.tematica) ||
             "Documento Doctrine",
           url,
           metadata: {
-            materia: item.materia ?? "",
-            tipo_orientamento: item.tipo_orientamento ?? "",
-            data_documento: item.data_documento ?? "",
-            pagine: item.pagine ?? "",
+            materia: item.subject ?? item.materia ?? "",
+            tipo_orientamento: item.guidanceType ?? item.tipo_orientamento ?? "",
+            data_documento: item.documentDate ?? item.data_documento ?? "",
+            pagine: item.pages ?? item.pagine ?? "",
+            contenuto: truncate(item.content ?? item.summary, 1500),
           },
-          normeCitate: normalizeArray(item.norme_citate),
-          precedentiCitati: normalizePrecedenti(item.precedenti_citati),
+          normeCitate: normalizeArray(item.citedNorms ?? item.norme_citate),
+          precedentiCitati: normalizePrecedenti(
+            item.citedPrecedents ?? item.precedenti_citati
+          ),
         });
         continue;
       }
@@ -195,10 +205,11 @@ export function extractResearchSources(messages: any[]): ResearchSource[] {
           sourceId: url,
           source: "web",
           kind: "web",
-          label: normalizeText(item.titolo) || url,
+          label: normalizeText(item.title ?? item.titolo) || url,
           url,
           metadata: {
-            fonte: item.fonte ?? "",
+            fonte: item.source ?? item.fonte ?? "",
+            contenuto: truncate(item.content ?? item.summary, 1800),
           },
           normeCitate: [],
           precedentiCitati: [],
@@ -206,10 +217,36 @@ export function extractResearchSources(messages: any[]): ResearchSource[] {
         continue;
       }
 
+      if (item._type === "document_summary" && typeof item.documentId === "string") {
+        const registryKey = `document:${item.documentId}`;
+        const existing = registry.get(registryKey);
+        const riassunto = truncate(item.summary, 2000);
+        const questioni = truncate(item.legalIssues, 1500);
+        if (existing) {
+          existing.metadata.riassunto = riassunto;
+          existing.metadata.questioniGiuridiche = questioni;
+          if (item.fileName) existing.label = normalizeText(item.fileName);
+        } else {
+          registry.set(registryKey, {
+            nodeId: stableId("document", item.documentId),
+            sourceId: item.documentId,
+            source: "document",
+            kind: "documento",
+            label: normalizeText(item.fileName) || "Documento utente",
+            url: null,
+            metadata: { riassunto, questioniGiuridiche: questioni, estratti: [] },
+            normeCitate: [],
+            precedentiCitati: [],
+          });
+        }
+        continue;
+      }
+
       if (item._type === "document_chunk") {
         const docId =
-          typeof item.documento_id === "string" && item.documento_id.trim().length > 0
-            ? item.documento_id.trim()
+          typeof (item.documentId ?? item.documento_id) === "string" &&
+          String(item.documentId ?? item.documento_id).trim().length > 0
+            ? String(item.documentId ?? item.documento_id).trim()
             : typeof item.id === "string"
             ? item.id
             : null;
@@ -223,8 +260,8 @@ export function extractResearchSources(messages: any[]): ResearchSource[] {
 
         const nuovoEstratto = {
           chunkId: item.id ?? "",
-          testo: item.testo_paragrafo ?? "",
-          posizione: item.posizione_originale ?? 0,
+          testo: item.paragraphText ?? item.testo_paragrafo ?? "",
+          posizione: item.originalPosition ?? item.posizione_originale ?? 0,
           score: item._score ?? 0,
         };
 
@@ -243,10 +280,12 @@ export function extractResearchSources(messages: any[]): ResearchSource[] {
             sourceId: docId,
             source: "document",
             kind: "documento",
-            label: normalizeText(item.nome_file) || "Documento utente",
+            label:
+              normalizeText(item.fileName ?? item.nome_file) ||
+              "Documento utente",
             url: null,
             metadata: {
-              posizione: item.posizione_originale ?? 0,
+              posizione: item.originalPosition ?? item.posizione_originale ?? 0,
               estratti: [nuovoEstratto],
             },
             normeCitate: [],
@@ -304,12 +343,20 @@ export const isUrl = (val: string) => {
   }
 };
 
-export const validaFonti = (fonti: any[]) => {
+export const validaFonti = (
+  fonti: any[],
+  knownSources: { nodeId: string; sourceId: string; kind?: string; label?: string; url?: string | null }[] = []
+) => {
   if (!Array.isArray(fonti)) return [];
+  const nodeToSource = new Map(
+    knownSources.map((source) => [source.nodeId, source.sourceId])
+  );
   const fontiValide = [];
   for (const item of fonti) {
     if (!item || !item.id || !item.fonte) continue;
-    const id = String(item.id).trim();
+    const rawId = String(item.id).trim();
+    // Il modello può restituire l'id del nodo della mappa (prov_xxx) invece dell'id reale del provvedimento
+    const id = nodeToSource.get(rawId) ?? rawId;
     const validUrl = isUrl(id);
     
     if (item.fonte === "web" && !validUrl) {
@@ -321,7 +368,17 @@ export const validaFonti = (fonti: any[]) => {
       continue;
     }
     // Preserva escluso, nuova e qualsiasi altro campo passato nel payload
-    fontiValide.push({ ...item, id });
+    const known = knownSources.find((source) => source.sourceId === id) as
+      | { kind?: string; label?: string; url?: string | null }
+      | undefined;
+    const tipo = item.fonte === "web" ? "web" : known?.kind;
+    fontiValide.push({
+      ...item,
+      id,
+      ...(tipo ? { tipoFonte: tipo } : {}),
+      ...(known?.label && item.fonte !== "web" ? { titolo: known.label } : {}),
+      ...(known?.url && item.fonte !== "web" ? { url: known.url } : {}),
+    });
   }
   return fontiValide;
 };

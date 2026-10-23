@@ -4,6 +4,7 @@ import { Check, Copy, Scale, Globe, BookOpen } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Typewriter } from "@/shared/components/Typewriter";
 import { type Source, type Message } from "@/interfaces/interfaces";
+import { getSourceCitationLabel } from "../utils/sourceCitationLabel";
 import { FeedbackComponent } from "@/shared/components/FeedbackComponent";
 
 interface MessageListProps {
@@ -136,21 +137,16 @@ export const MessageList = ({
                       {msg.sources.map((s: Source, idx: number) => {
                         const isWeb = s._type === 'web_search';
                         const sId = s.documento_id || s._id_interno || s.url_riferimento || s.link || `inline-src-${idx}`;
-                        const organoPrefix = s.organo_giudicante ? `${s.organo_giudicante}: ` : '';
-
                         const sTitle = isWeb 
                           ? (s.fonte_web || s.fonte || 'Fonte Web') 
-                          : (s.identificativo 
-                              ? `${organoPrefix}${s.identificativo}`.trim() 
-                              : (s.numero_sentenza 
-                                  ? `${organoPrefix || 'Sent.'} n. ${s.numero_sentenza}`.trim() 
-                                  : 'Documento'));
+                          : getSourceCitationLabel(s);
                         
                         const isActive = activeSourceId === sId;
 
                         return (
                           <button 
                             key={`${sId}-${idx}`} 
+                            aria-label={sTitle || "Apri fonte"}
                             onClick={(e) => handleSourceClick(e, s)}
                             onMouseEnter={() => setActiveSourceId(sId)} 
                             onMouseLeave={() => setActiveSourceId(null)} 
@@ -163,7 +159,7 @@ export const MessageList = ({
                             <span className="shrink-0 text-[#e0a32e]">
                               {isWeb ? <Globe size={11} /> : <BookOpen size={11} />}
                             </span>
-                            <span className="truncate flex-1 min-w-0 max-w-35 sm:max-w-45">{sTitle}</span>
+                            {sTitle && <span className="truncate flex-1 min-w-0 max-w-35 sm:max-w-45">{sTitle}</span>}
                           </button>
                         );
                       })}

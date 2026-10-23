@@ -38,7 +38,7 @@ describe("AnalysisSettingsSection Component Suite", () => {
     expect(screen.getByText("Tipologia di Fonti")).toBeInTheDocument();
     expect(screen.getByText("Banca Dati Interna")).toBeInTheDocument();
     expect(screen.getByText("Ricerca Web")).toBeInTheDocument();
-    expect(screen.getByText("Livello di Confidenza")).toBeInTheDocument();
+    expect(screen.getByText("Soglia di Pertinenza")).toBeInTheDocument();
     expect(screen.getByText("80%")).toBeInTheDocument();
   });
 
@@ -66,17 +66,17 @@ describe("AnalysisSettingsSection Component Suite", () => {
 
     // Inizialmente la descrizione della confidenza non è visibile
     expect(
-      screen.queryByText(/rappresenta la soglia minima di similarità semantica/i)
+      screen.queryByText(/è la soglia minima di similarità semantica/i)
     ).not.toBeInTheDocument();
 
-    // Trova i bottoni delle info e clicca sul secondo (Confidenza)
+    // Trova i bottoni delle info e clicca sul secondo (pertinenza)
     const infoButtons = screen.getAllByRole("button").filter(
       (btn) => btn.querySelector("svg.lucide-info")
     );
     fireEvent.click(infoButtons[1]);
 
     expect(
-      screen.getByText(/rappresenta la soglia minima di similarità semantica/i)
+      screen.getByText(/è la soglia minima di similarità semantica/i)
     ).toBeInTheDocument();
   });
 

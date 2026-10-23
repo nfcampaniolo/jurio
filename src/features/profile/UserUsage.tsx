@@ -260,7 +260,7 @@ export default function UserUsage() {
 
               <div className="flex items-center gap-1.5 text-[0.7rem] border-t sm:border-t-0 pt-2 sm:pt-0 border-(--color-border)/50">
                 <FiInfo size={12} className="shrink-0 text-(--color-primary)" />
-                <span>Base calcolo: Deep (60m), Analisi (30m), Ricerca (10m), Redazione (15m).</span>
+                <span>Base calcolo: Deep Analysis (45m), Analisi (10m), Ricerca (7m), Redazione (15m).</span>
               </div>
             </div>
           </>

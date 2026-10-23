@@ -73,22 +73,31 @@ export default function QuoteUtilizzo() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3.5">
           <div className="relative p-4 rounded-lg border border-(--color-border) bg-(--color-surface) shadow-xs space-y-1 overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-70" />
             <span className="text-md font-bold uppercase tracking-widest text-(--color-muted) block mt-0.5">Ricerca Giurisprudenziale</span>
-            <h3 className="font-medium text-(--color-text) text-md  tracking-tight" >~10 minuti risparmiati</h3>
+            <h3 className="font-medium text-(--color-text) text-md  tracking-tight" >~7 minuti risparmiati</h3>
             <p className="text-md text-(--color-muted) font-light leading-relaxed">
-              Per ogni indagine condotta da <code>research_agent</code> e modulo di ricerca approfondita.
+              Per ogni indagine condotta da <code>research_agent</code>.
             </p>
           </div>
 
           <div className="relative p-4 rounded-lg border border-(--color-border) bg-(--color-surface) shadow-xs space-y-1 overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-70" />
             <span className="text-md font-bold uppercase tracking-widest text-(--color-muted) block mt-0.5">Analisi, Reasoning & OCR</span>
-            <h3 className="font-medium text-(--color-text) text-md  tracking-tight" >~30 minuti risparmiati</h3>
+            <h3 className="font-medium text-(--color-text) text-md  tracking-tight" >~10 minuti risparmiati</h3>
             <p className="text-md text-(--color-muted) font-light leading-relaxed">
               Per ogni elaborazione di <code>review_agent</code>, catene di <code>reasoning</code> e trascrizioni <code>speech_to_text</code>.
+            </p>
+          </div>
+
+          <div className="relative p-4 rounded-lg border border-(--color-border) bg-(--color-surface) shadow-xs space-y-1 overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-(--color-primary) opacity-70" />
+            <span className="text-md font-bold uppercase tracking-widest text-(--color-muted) block mt-0.5">Analisi Giurisprudenziale Approfondita</span>
+            <h3 className="font-medium text-(--color-text) text-md tracking-tight">~45 minuti risparmiati</h3>
+            <p className="text-md text-(--color-muted) font-light leading-relaxed">
+              Per ogni elaborazione completata dal modulo <code>deep_analysis</code>.
             </p>
           </div>
 

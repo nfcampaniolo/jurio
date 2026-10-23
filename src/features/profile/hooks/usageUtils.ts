@@ -9,6 +9,7 @@ export interface UsageDoc {
   reasoning?: number;
   speech_to_text?: number;
   research?: number;
+  deep_analysis?: number;
 }
 
 /**
@@ -26,8 +27,9 @@ export const formatMonth = (yyyyMm: string): string => {
  * Calcola il tempo totale risparmiato in minuti in base alle metriche aziendali
  */
 export const calculateTimeSaved = (usage: UsageDoc): number => {
-  const ricerca = ((usage.research_agent || 0) + (usage.research || 0)) * 10;
-  const analisi = ((usage.review_agent || 0) + (usage.reasoning || 0) + (usage.speech_to_text || 0)) * 30;
+  const ricerca = ((usage.research_agent || 0) + (usage.research || 0)) * 7;
+  const analisi = ((usage.review_agent || 0) + (usage.reasoning || 0) + (usage.speech_to_text || 0)) * 10;
   const sintesi = (usage.drafting_agent || 0) * 15;
-  return ricerca + analisi + sintesi;
+  const deepAnalysis = (usage.deep_analysis || 0) * 45;
+  return ricerca + analisi + sintesi + deepAnalysis;
 };

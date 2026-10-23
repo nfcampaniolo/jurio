@@ -69,18 +69,19 @@ describe("PrecedenteCard Component Suite", () => {
     expect(screen.getByText("88/100")).toBeInTheDocument();
   });
 
-  test("non renderizza nulla se la fonte interna non è reperita (documento nullo o errore)", () => {
+  test("mantiene visibile la fonte interna quando il provvedimento non è reperibile", () => {
     mockedUsePrecedente.mockReturnValue({
       precedente: null,
       loading: false,
       error: "Not found",
     });
 
-    const { container } = render(
+    render(
       <PrecedenteCard precedente={defaultPrecedente} onToggleEsclusione={vi.fn()} />
     );
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByText("Provvedimento cass-1234")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Apri il provvedimento/ })).toHaveAttribute("href", "https://jurio.it/giurisprudenza/cass-1234");
   });
 
   test("mostra lo stato di caricamento durante il recupero del documento interno", () => {

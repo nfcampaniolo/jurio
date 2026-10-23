@@ -21,6 +21,12 @@ export const WorkspaceHeader: React.FC<Props> = ({
   handleSalvaTitolo,
   isProcessing,
 }) => {
+  const jobLabel = activeSession?.job?.action === "generate_synthesis"
+    ? "Sintesi strategica..."
+    : activeSession?.job?.action === "refine_research"
+      ? "Approfondimento..."
+      : "Ricerca giurisprudenziale...";
+
   return (
     <div className="flex shrink-0 items-center justify-between border-b border-(--color-border) bg-(--color-surface) px-4 py-4 sm:px-8 lg:px-16">
       <div className="group flex min-w-0 items-center gap-2">
@@ -71,7 +77,7 @@ export const WorkspaceHeader: React.FC<Props> = ({
       <div className="flex shrink-0 items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-(--color-muted)">
         {isProcessing ? (
           <span className="flex items-center gap-1.5 text-blue-500">
-            <Loader2 size={12} className="animate-spin" /> Elaborazione Mappa...
+            <Loader2 size={12} className="animate-spin" /> {jobLabel}
           </span>
         ) : activeSession?.status === "draft" ? (
           <span>Impostazione</span>

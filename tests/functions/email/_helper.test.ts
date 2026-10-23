@@ -146,11 +146,11 @@ describe("email helper", () => {
         mese: "settembre 2026",
         haFattoPrompting: true,
         interazioniCount: 4,
-        ricerca: { count: 5, timeSavedMinutes: 50 },
-        analisi: { count: 6, timeSavedMinutes: 180 },
+        ricerca: { count: 5, timeSavedMinutes: 35 },
+        analisi: { count: 6, timeSavedMinutes: 60 },
         sintesi: { count: 4, timeSavedMinutes: 60 },
-        deepAnalysis: { count: 2, timeSavedMinutes: 120 },
-        totalTimeSavedMinutes: 410,
+        deepAnalysis: { count: 2, timeSavedMinutes: 90 },
+        totalTimeSavedMinutes: 245,
       });
     });
 
@@ -166,11 +166,11 @@ describe("email helper", () => {
         mese: "ottobre 2026",
         haFattoPrompting: false,
         interazioniCount: 0,
-        ricerca: { count: -1, timeSavedMinutes: -10 },
+        ricerca: { count: -1, timeSavedMinutes: -7 },
         analisi: { count: 0, timeSavedMinutes: 0 },
         sintesi: { count: 0, timeSavedMinutes: 0 },
         deepAnalysis: { count: 0, timeSavedMinutes: 0 },
-        totalTimeSavedMinutes: -10,
+        totalTimeSavedMinutes: -7,
       });
     });
   });

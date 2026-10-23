@@ -64,9 +64,14 @@ describe("deep-analysis request helpers", () => {
     expect(res.json).toHaveBeenLastCalledWith({ error: "Bad Request", details: "SessionId mancante o non valido." });
   });
 
-  it("starts research with normalized input and persists the session payload", async () => {
+  it("enqueues research as a job and returns 202", async () => {
     const userSnap = { exists: true };
-    const sessionRef = { get: vi.fn().mockResolvedValue({ exists: false }), set: vi.fn().mockResolvedValue(undefined) };
+    const tx = {
+      get: vi.fn().mockResolvedValue({ exists: false, data: () => undefined }),
+      set: vi.fn(),
+    };
+    const sessionRef = { get: vi.fn().mockResolvedValue({ exists: false }) };
+    mocks.db.runTransaction = vi.fn(async (fn: (t: typeof tx) => Promise<void>) => fn(tx));
     mocks.db.collection.mockImplementation((name: string) => name === "register"
       ? { doc: () => ({ get: vi.fn().mockResolvedValue(userSnap) }) }
       : { doc: () => sessionRef });
@@ -75,17 +80,12 @@ describe("deep-analysis request helpers", () => {
       body: { action: "start_research", sessionId: " session-1 ", prompt: "  question ", docs: [" d1 ", { id: "d2" }] },
     } as never, res as never);
     expect(mocks.validate).toHaveBeenCalledWith("u1", "deep_analysis", userSnap);
-    expect(mocks.research).toHaveBeenCalledWith(expect.objectContaining({
-      prompt: "question", docs: ["d1", "d2"], userId: "u1",
-    }));
-    expect(sessionRef.set).toHaveBeenCalledWith(expect.objectContaining({
-      user: "u1", promptOriginale: "question", documentiAllegati: ["d1", "d2"], fontiUsate: ["source-1"],
+    expect(mocks.research).not.toHaveBeenCalled();
+    expect(tx.set).toHaveBeenCalledWith(sessionRef, expect.objectContaining({
+      user: "u1", promptOriginale: "question", documentiAllegati: ["d1", "d2"],
+      job: expect.objectContaining({ status: "queued", action: "start_research" }),
     }), { merge: true });
-    expect(sessionRef.set).toHaveBeenCalledWith(expect.objectContaining({
-      progress: expect.objectContaining({ phase: "completed", status: "completed" }),
-    }), { merge: true });
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true, status: "review" }));
+    expect(res.status).toHaveBeenCalledWith(202);
   });
 
   it("returns a not-found response when refinement targets an absent session", async () => {

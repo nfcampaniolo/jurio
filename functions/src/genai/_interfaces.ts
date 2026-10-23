@@ -24,6 +24,21 @@ export interface DeepAnalysisRequestBody {
   config?: Partial<DeepAnalysisConfig>;
 }
 
+export interface DeepAnalysisJob {
+  id: string;
+  userId: string;
+  action: NonNullable<DeepAnalysisRequestBody["action"]>;
+  status: "queued" | "processing" | "completed" | "failed";
+  attemptCount?: number;
+  resultReady?: boolean;
+  prompt?: string;
+  direttivaHitl?: string;
+  docs?: string[];
+  config?: Partial<DeepAnalysisConfig>;
+  createdAt?: unknown;
+  startedAt?: unknown;
+}
+
 //REASONING
 export interface ReasoningRequestBody {
   question?: unknown;

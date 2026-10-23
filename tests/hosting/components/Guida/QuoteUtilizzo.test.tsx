@@ -95,19 +95,23 @@ describe("Guida - QuoteUtilizzo Component Suite", () => {
 
     // Stime tempo risparmiato
     expect(
+      screen.getByRole("heading", { name: "~7 minuti risparmiati", level: 3 })
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole("heading", { name: "~10 minuti risparmiati", level: 3 })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "~30 minuti risparmiati", level: 3 })
+      screen.getByRole("heading", { name: "~15 minuti risparmiati", level: 3 })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "~15 minuti risparmiati", level: 3 })
+      screen.getByRole("heading", { name: "~45 minuti risparmiati", level: 3 })
     ).toBeInTheDocument();
 
     // Micro-agenti
     expect(screen.getByText("research_agent")).toBeInTheDocument();
     expect(screen.getByText("review_agent")).toBeInTheDocument();
     expect(screen.getByText("drafting_agent")).toBeInTheDocument();
+    expect(screen.getByText("deep_analysis")).toBeInTheDocument();
 
     // Rate Limiting
     expect(

@@ -11,6 +11,9 @@ export interface DeepAnalysisConfig {
 export interface PrecedenteReperito {
   id: string;
   fonte: "interna" | "web";
+  tipoFonte?: "provvedimento" | "dottrina" | "documento" | "web";
+  titolo?: string;
+  url?: string;
   gradoPertinenza: number;
   escluso?: boolean;
   nuova?: boolean;
@@ -54,6 +57,14 @@ export interface DeepAnalysisSession {
   userId: string;
   title: string;
   status: SessionStatus;
+  job?: {
+    id: string;
+    action: "start_research" | "refine_research" | "generate_synthesis";
+    status: "queued" | "processing" | "completed" | "failed";
+    createdAt?: Date;
+    startedAt?: Date;
+    completedAt?: Date;
+  };
   progress?: {
     phase: string;
     message: string;
@@ -74,6 +85,10 @@ export interface DeepAnalysisSession {
   // Nuova struttura della mappa dialettica
   mappaDialettica?: MappaDialettica;
   
+  mappaConcettuale?: {
+    nodes?: { id: string; sourceId?: string | null }[];
+  };
+
   // Campo di compatibilità retroattiva (opzionale)
   precedentiReperiti?: PrecedenteReperito[];
   

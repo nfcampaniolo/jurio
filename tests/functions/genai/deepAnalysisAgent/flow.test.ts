@@ -7,6 +7,15 @@ const mocks = vi.hoisted(() => ({
   webSearch: vi.fn(),
   userFileSearch: vi.fn(),
 }));
+vi.mock("@functions/_deps", () => ({
+  getDb: () => ({
+    collection: () => ({ doc: (id: string) => ({ id }) }),
+    getAll: async (...refs: Array<{ id: string }>) => refs.map((ref) => ({
+      id: ref.id,
+      data: () => ({ user: "u1", nome_file: "atto.pdf", summary: "riassunto allegato", extract_legal_issues: "questioni" }),
+    })),
+  }),
+}));
 vi.mock("@functions/genai/_config", () => ({ ai: { defineFlow: (_config: unknown, handler: unknown) => handler, generate: mocks.generate } }));
 vi.mock("@functions/genai/tools/index", () => ({
   internalDatabaseSearch: mocks.internalSearch, doctrineSearch: mocks.doctrineSearch,
@@ -70,12 +79,44 @@ describe("deep-analysis flows", () => {
       expect.objectContaining({ context: expect.objectContaining({ docs: ["doc-1", "doc-2"] }) })
     );
     expect(mocks.userFileSearch).toHaveBeenCalledWith(
-      { query: "Quesito giuridico" },
+      { query: expect.stringContaining("Quesito giuridico") },
       expect.objectContaining({ context: expect.objectContaining({ docs: ["doc-1", "doc-2"] }) })
     );
   });
 
-  it("caps enabled external searches at two", async () => {
+  it("retries the mapping with the full model when no found source is linked to the theses", async () => {
+    const inq = { qualificazioneGiuridica: "Q", fattispecieEstratta: "F", normeRiferimento: [] };
+    mocks.generate
+      .mockResolvedValueOnce({ output: {
+        internalDatabaseSearch: { searchType: "semantic", query: "penale art 1384" },
+        doctrineSearch: null, webSearch: null,
+      } })
+      .mockResolvedValueOnce({ output: {
+        inquadramento: inq,
+        mappaDialettica: {
+          orientamentoFavorevole: { titoloTesi: "T", argomentazioneLogica: "A", fonti: [{ id: "inventato", fonte: "interna", gradoPertinenza: 80 }] },
+          orientamentoContrario: null, puntiAperti: [],
+        },
+      } })
+      .mockResolvedValueOnce({ output: {
+        inquadramento: inq,
+        mappaDialettica: {
+          orientamentoFavorevole: { titoloTesi: "T", argomentazioneLogica: "A", fonti: [{ id: "sent-1", fonte: "interna", gradoPertinenza: 85 }] },
+          orientamentoContrario: null, puntiAperti: [],
+        },
+      } });
+    mocks.internalSearch.mockResolvedValue([{ _type: "giurisprudenza_semantica", id: "sent-1", caseNumber: "1/2024", summary: "massima" }]);
+    const handler = researchAnalysisFlow as unknown as (input: unknown) => Promise<unknown>;
+    const result = await handler({
+      prompt: "Q", docs: [], userId: "u1",
+      config: { confidenceLevel: 80, sourceWeb: false, sourceInternalDB: true, sourceDoctrine: false, webLimit: 5 },
+    }) as { mappaDialettica: { orientamentoFavorevole: { fonti: Array<{ id: string }> } | null } };
+    expect(mocks.generate).toHaveBeenCalledTimes(3);
+    expect(mocks.generate.mock.calls[2][0].model).toBe("vertexai/gemini-3.5-flash");
+    expect(result.mappaDialettica.orientamentoFavorevole?.fonti.map((f) => f.id)).toEqual(["sent-1"]);
+  });
+
+  it("limits external searches to two without starving enabled web search", async () => {
     mocks.generate
       .mockResolvedValueOnce({ output: {
         internalDatabaseSearch: { searchType: "semantic", query: "precedenti giuridici" },
@@ -99,8 +140,36 @@ describe("deep-analysis flows", () => {
     });
 
     expect(mocks.internalSearch).toHaveBeenCalledTimes(1);
-    expect(mocks.doctrineSearch).toHaveBeenCalledTimes(1);
-    expect(mocks.webSearch).not.toHaveBeenCalled();
+    expect(mocks.doctrineSearch).not.toHaveBeenCalled();
+    expect(mocks.webSearch).toHaveBeenCalledTimes(1);
+  });
+
+  it("runs web search when enabled even if the planner omits it", async () => {
+    mocks.generate
+      .mockResolvedValueOnce({ output: {
+        internalDatabaseSearch: { searchType: "semantic", query: "articolo 1384 codice civile" },
+        doctrineSearch: null,
+        webSearch: null,
+      } })
+      .mockResolvedValueOnce({ output: {
+        inquadramento: { qualificazioneGiuridica: "Q", fattispecieEstratta: "F", normeRiferimento: [] },
+        mappaDialettica: { orientamentoFavorevole: null, orientamentoContrario: null, puntiAperti: [] },
+      } });
+    mocks.internalSearch.mockResolvedValue([]);
+    mocks.webSearch.mockResolvedValue([]);
+    const handler = researchAnalysisFlow as unknown as (input: unknown) => Promise<unknown>;
+
+    await handler({
+      prompt: "Riduzione della penale ex art. 1384 c.c.", docs: [], userId: "u1",
+      config: { confidenceLevel: 80, sourceWeb: true, sourceInternalDB: true, sourceDoctrine: true, webLimit: 5 },
+    });
+
+    expect(mocks.webSearch).toHaveBeenCalledWith(
+      { query: "Riduzione della penale ex art. 1384 c.c.", focus: "all" },
+      expect.anything()
+    );
+    expect(mocks.internalSearch).toHaveBeenCalledTimes(1);
+    expect(mocks.doctrineSearch).not.toHaveBeenCalled();
   });
 
   it("rejects report generation when the model provides no structured output", async () => {
@@ -146,17 +215,17 @@ describe("deep-analysis flows", () => {
     }) as { inquadramento: { qualificazioneGiuridica: string }; mappaDialettica: { orientamentoFavorevole: { fonti: Array<{ id: string; nuova?: boolean }> }; puntiAperti: string[] } };
     expect(result.inquadramento.qualificazioneGiuridica).toBe("già");
     expect(result.mappaDialettica.orientamentoFavorevole.fonti).toEqual([
-      { id: "new-source", fonte: "interna", gradoPertinenza: 90, nuova: true },
+      { id: "new-source", fonte: "interna", gradoPertinenza: 90, nuova: true, tipoFonte: "provvedimento", titolo: "Sentenza 12/2024" },
     ]);
     expect(result.mappaDialettica.puntiAperti).toEqual(["aperto", "nuovo"]);
   });
 
   it("converts mapping failures into a descriptive research error", async () => {
-    mocks.generate.mockRejectedValueOnce(new Error("provider unavailable"));
+    mocks.generate.mockRejectedValue(new Error("provider down"));
     const handler = researchAnalysisFlow as unknown as (input: unknown) => Promise<unknown>;
     await expect(handler({
       prompt: "Q", docs: [], userId: "u1",
       config: { confidenceLevel: 80, sourceWeb: false, sourceInternalDB: false, sourceDoctrine: false, webLimit: 5 },
-    })).rejects.toThrow("Errore durante la generazione della mappa dialettica: provider unavailable");
+    })).rejects.toThrow("Errore durante la generazione della mappa dialettica: provider down");
   });
 });

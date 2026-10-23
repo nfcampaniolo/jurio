@@ -13,6 +13,7 @@ export interface Source {
   title?: string;
   numero_sentenza?: string;
   organo_giudicante?: string | null;
+  sezione?: string | null;
   data_pubblicazione?: string | null;
   posizione_originale?: number | null;
   timestamp?: string;

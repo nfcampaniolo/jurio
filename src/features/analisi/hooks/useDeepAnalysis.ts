@@ -17,10 +17,8 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
   
   const [sessionsList, setSessionsList] = useState<DeepAnalysisSession[]>([]);
   const [activeSession, setActiveSession] = useState<DeepAnalysisSession | null>(null);
-  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isCompleted, setCompleted] = useState(false);
   const [isAccessDenied, setIsAccessDenied] = useState(false);
 
   // 1. Fetch Lista Sessioni (Sidebar)
@@ -59,7 +57,6 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
             console.error("Errore snapshot sessioni:", error);
             if (error.code === "permission-denied") {
               setIsAccessDenied(true);
-              setIsLogModalOpen(false);
             }
             setLoading(false);
           }
@@ -115,7 +112,6 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
         (error) => {
           if (error.code === "permission-denied") {
             setIsAccessDenied(true);
-            setIsLogModalOpen(false); // Chiusura modale aggiunta
           }
         }
       );
@@ -199,7 +195,6 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
   const checkUnauthorized = (res: Response, errorDetail: string) => {
     if (res.status === 401 || res.status === 403 || errorDetail.includes("unauthorized") || errorDetail.includes("forbidden") || errorDetail.includes("access_denied")) {
       setIsAccessDenied(true);
-      setIsLogModalOpen(false); // Chiusura modale aggiunta
       return true;
     }
     return false;
@@ -209,8 +204,7 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
     prompt: string, 
     config: DeepAnalysisConfig, 
     docs: AttachedDocument[],
-    onSessionCreated: (id: string) => void,
-    signal?: AbortSignal
+    onSessionCreated: (id: string) => void
   ) => {
     if (!user) return;
     setIsProcessing(true);
@@ -240,8 +234,7 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
         sessionId, 
         prompt, 
         config, 
-        docs,
-        signal
+        docs
       });
 
       if (!res.ok) {
@@ -257,7 +250,7 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
         throw new Error(errorDetail || "Errore durante l'indagine.");
       }
 
-      toast.success("Mappa dialettica generata. Revisiona gli orientamenti.");
+      toast.success("Analisi avviata. Puoi chiudere la pagina: riceverai una notifica quando sarà pronta.", { duration: 6000 });
     } catch (err: unknown) {
       const error = err as Error;
       if (error.name === 'AbortError' || error.message?.includes('aborted')) {
@@ -277,8 +270,7 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
   };
 
   const avviaIntegrazioneRicerca = async (
-    direttivaHitl: string,
-    signal?: AbortSignal
+    direttivaHitl: string
   ) => {
     if (!activeSessionId || !user) return null;
     setIsProcessing(true);
@@ -286,8 +278,7 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
       const res = await fetchWithSecurity(EP_URL, {
         action: "refine_research",
         sessionId: activeSessionId,
-        direttivaHitl: direttivaHitl,
-        signal
+        direttivaHitl
       });
 
       if (!res.ok) {
@@ -304,8 +295,8 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
       }
 
       const data = await res.json();
-      toast.success("Mappa dialettica aggiornata con successo!");
-      return data; 
+      toast.success("Approfondimento avviato. Ti avviseremo quando la mappa sarà aggiornata.", { duration: 6000 });
+      return data;
     } catch (err: unknown) {
       const error = err as Error;
       if (error.name === 'AbortError' || error.message?.includes('aborted')) {
@@ -327,7 +318,6 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
   const avviaGenerazioneSintesi = async () => {
     if (!activeSessionId || !activeSession) return;
     setIsProcessing(true);
-    setIsLogModalOpen(true);
     try {
       const res = await fetchWithSecurity(EP_URL, {
         action: "generate_synthesis",
@@ -350,8 +340,7 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
         throw new Error(errorDetail || "Errore durante la generazione della sintesi.");
       }
 
-      toast.success("Sintesi strategica generata con successo.");
-      setCompleted(true);
+      toast.success("Generazione della sintesi avviata. Riceverai una notifica quando sarà pronta.", { duration: 6000 });
     } catch (err: unknown) {
       const error = err as Error;
       if (error.message === "ACCESS_DENIED") {
@@ -366,7 +355,6 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
       }
     } finally {
       setIsProcessing(false);
-      setIsLogModalOpen(false);
     }
   };
 
@@ -374,15 +362,13 @@ export function useDeepAnalysisSession(activeSessionId: string | null) {
     sessionsList, 
     activeSession, 
     loading, 
-    isProcessing,
+    isProcessing: isProcessing || activeSession?.job?.status === "queued" || activeSession?.job?.status === "processing",
     updateTitle, 
     toggleEsclusionePrecedente, 
     avviaRicercaPrecedenti,
     avviaIntegrazioneRicerca,
     avviaGenerazioneSintesi,
-    isLogModalOpen,
-    setIsLogModalOpen,
-    isCompleted,
+    isCompleted: activeSession?.status === "completed",
     isAccessDenied,
     setIsAccessDenied
   };

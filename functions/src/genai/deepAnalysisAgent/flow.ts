@@ -6,6 +6,7 @@ import { DeepAnalysisConfigSchema, ResearchSource, ConceptMapSchema, ResearchOut
 import { userFileSearch, internalDatabaseSearch, doctrineSearch, webSearch } from "../tools/index";
 import { reportDeepAnalysisProgress } from "./_progress";
 import { logSafeError } from "../../_logging";
+import { getDb } from "../../_deps";
 import {
   generateWithVertexRetry,
   VertexAiTemporarilyUnavailableError,
@@ -87,17 +88,33 @@ async function generateResearchMapping(
   userPrompt: string,
   phase: string,
   flowName: string,
-  failureMessage: string
+  failureMessage: string,
+  useFullModel = false
 ): Promise<z.infer<typeof ResearchMappingSchema> | undefined> {
   const startedAt = Date.now();
   try {
-    const response = await ai.generate({
-      messages: [
-        { role: "system", content: [{ text: systemPrompt }] },
-        { role: "user", content: [{ text: userPrompt }] },
-      ],
-      output: { schema: ResearchMappingSchema },
-    });
+    const generateWithModel = (model: string) =>
+      generateWithVertexRetry(
+        () =>
+          ai.generate({
+            model,
+            messages: [
+              { role: "system", content: [{ text: systemPrompt }] },
+              { role: "user", content: [{ text: userPrompt }] },
+            ],
+            output: { schema: ResearchMappingSchema },
+          }),
+        async () => undefined
+      );
+    // Il lite è più stabile su Vertex; in caso di errore si ripiega sul modello completo
+    const response = useFullModel
+      ? await generateWithModel("vertexai/gemini-3.5-flash")
+      : await generateWithModel("vertexai/gemini-3.5-flash-lite").catch(
+          (liteError: unknown) => {
+            logSafeError("DEEP_ANALYSIS_MAPPING_LITE_FAILED", liteError);
+            return generateWithModel("vertexai/gemini-3.5-flash");
+          }
+        );
     const rawMapping = response?.output
       ? ResearchMappingSchema.parse(response.output)
       : undefined;
@@ -135,6 +152,20 @@ async function collectResearchSources(params: {
     sourceWeb ? "webSearch" : null,
   ].filter((name): name is ExternalSearchName => name !== null);
 
+  const attachedSummaries = await loadAttachedDocumentSummaries(docs, userId);
+  const attachedContext = attachedSummaries
+    .map((item) =>
+      [item.fileName, item.summary, item.legalIssues]
+        .filter(Boolean)
+        .join(" — ")
+        .slice(0, 2500)
+    )
+    .join("\n\n");
+  // Un quesito generico ("sul documento allegato") non contiene il tema: lo si ricava dall'allegato
+  const searchBase = attachedContext
+    ? `${directive ?? prompt}\n${attachedContext}`
+    : directive ?? prompt;
+
   let plan: ResearchQueryPlan = {
     internalDatabaseSearch: null,
     doctrineSearch: null,
@@ -155,11 +186,14 @@ async function collectResearchSources(params: {
       docsLength: docs.length,
       docs,
       knownIds,
+      attachedContext,
     });
 
     const planningStartedAt = Date.now();
     try {
-      const response = await ai.generate({
+      const response = await generateWithVertexRetry(() => ai.generate({
+        // Pianificazione di query strutturate: il modello lite è più rapido e stabile
+        model: "vertexai/gemini-3.5-flash-lite",
         messages: [
           { role: "system", content: [{ text: plannerPrompt }] },
           {
@@ -174,6 +208,12 @@ async function collectResearchSources(params: {
           },
         ],
         output: { schema: ResearchQueryPlanSchema },
+      }), async (retryNumber, delayMs) => {
+        await reportDeepAnalysisProgress(
+          sessionId,
+          "planning",
+          `Vertex AI è momentaneamente occupato. Nuovo tentativo ${retryNumber}/2 tra ${Math.round(delayMs / 1000)} secondi.`
+        );
       });
 
       if (!response?.output) {
@@ -211,12 +251,28 @@ async function collectResearchSources(params: {
           input: plan.doctrineSearch,
         }
       : null,
-    sourceWeb && plan.webSearch
-      ? { name: "webSearch" as const, input: plan.webSearch }
+    // La Web è una fonte esplicitamente attivata dall'utente: non dipendere
+    // dalla scelta facoltativa del pianificatore per eseguirla.
+    sourceWeb
+      ? {
+          name: "webSearch" as const,
+          input: plan.webSearch ?? {
+            query: makeBoundedSearchQuery(searchBase, 3000),
+            focus: "all" as const,
+          },
+        }
       : null,
   ].filter((candidate): candidate is ExternalSearchRequest => candidate !== null);
 
-  const selectedExternal = externalCandidates.slice(0, 2);
+  // Manteniamo il limite di due ricerche esterne, ma riserviamo uno slot alla
+  // Web quando è abilitata: con l'ordine precedente internal + doctrine
+  // occupavano entrambi gli slot e la ricerca web non partiva mai.
+  const selectedExternal = externalCandidates.length <= 2
+    ? [...externalCandidates]
+    : [
+        ...externalCandidates.filter(({ name }) => name === "webSearch"),
+        ...externalCandidates.filter(({ name }) => name !== "webSearch").slice(0, 1),
+      ];
   if (externalCandidates.length > 2) {
     console.warn("[DeepAnalysisResearch] Limitate a due le ricerche esterne pianificate.");
   }
@@ -231,19 +287,19 @@ async function collectResearchSources(params: {
         name: fallbackName,
         input: {
           searchType: "semantic",
-          query: makeBoundedSearchQuery(directive ?? prompt, 3000),
+          query: makeBoundedSearchQuery(searchBase, 3000),
         },
       });
     } else if (fallbackName === "doctrineSearch") {
       selectedExternal.push({
         name: fallbackName,
-        input: { query: makeBoundedSearchQuery(directive ?? prompt, 4000) },
+        input: { query: makeBoundedSearchQuery(searchBase, 4000) },
       });
     } else {
       selectedExternal.push({
         name: fallbackName,
         input: {
-          query: makeBoundedSearchQuery(directive ?? prompt, 3000),
+          query: makeBoundedSearchQuery(searchBase, 3000),
           focus: "all",
         },
       });
@@ -258,7 +314,7 @@ async function collectResearchSources(params: {
             name: "userFileSearch" as const,
             input: {
               query: makeBoundedSearchQuery(
-                directive ? `${prompt}\n${directive}` : prompt,
+                directive ? `${prompt}\n${directive}\n${attachedContext}` : `${prompt}\n${attachedContext}`,
                 4000
               ),
             },
@@ -349,9 +405,41 @@ async function collectResearchSources(params: {
 
   return extractResearchSources([
     {
-      content: results.map((result) => ({ toolResponse: result.toolResponse })),
+      content: [
+        ...results.map((result) => ({ toolResponse: result.toolResponse })),
+        ...(attachedSummaries.length
+          ? [{ toolResponse: { name: "attachedDocuments", output: attachedSummaries } }]
+          : []),
+      ],
     },
   ]);
+}
+
+// Riassunto e questioni giuridiche dell'allegato, sempre disponibili anche se la ricerca per paragrafi non trova nulla
+async function loadAttachedDocumentSummaries(docs: string[], userId: string) {
+  const ids = Array.from(new Set(docs.filter((id) => id && !id.includes("/")))).slice(0, 10);
+  if (ids.length === 0) return [];
+
+  try {
+    const db = getDb();
+    const snaps = await db.getAll(...ids.map((id) => db.collection("documents").doc(id)));
+    return snaps.flatMap((snap) => {
+      const data = snap.data();
+      if (!data) return [];
+      const visibleTo = Array.isArray(data.visibleTo) ? data.visibleTo : [];
+      if (data.user !== userId && !visibleTo.includes(userId)) return [];
+      return [{
+        _type: "document_summary",
+        documentId: snap.id,
+        fileName: data.nome_file ?? "",
+        summary: data.summary ?? "",
+        legalIssues: data.extract_legal_issues ?? "",
+      }];
+    });
+  } catch (error) {
+    logSafeError("DEEP_ANALYSIS_ATTACHED_SUMMARY_FAILED", error);
+    return [];
+  }
 }
 
 function executeResearchTool(
@@ -377,6 +465,50 @@ function executeResearchTool(
     case "userFileSearch":
       return userFileSearch(search.input, { context });
   }
+}
+
+type RawMapping = z.infer<typeof ResearchMappingSchema>;
+
+// Una tesi è accettata solo se collegata a fonti realmente reperite: gli id sconosciuti vengono scartati
+function groundMapping(rawMapping: RawMapping, allSources: ResearchSource[]) {
+  const ground = (
+    orientamento: RawMapping["mappaDialettica"]["orientamentoFavorevole"]
+  ) => {
+    if (!orientamento) return null;
+    const known = new Set(allSources.map((source) => source.sourceId));
+    const fonti = validaFonti(orientamento.fonti ?? [], allSources).filter(
+      (fonte: { id?: unknown }) => typeof fonte.id === "string" && known.has(fonte.id)
+    ) as NonNullable<typeof orientamento>["fonti"];
+    return fonti.length > 0
+      ? {
+          titoloTesi: orientamento.titoloTesi,
+          argomentazioneLogica: orientamento.argomentazioneLogica,
+          fonti,
+        }
+      : null;
+  };
+
+  const favorevole = ground(rawMapping.mappaDialettica.orientamentoFavorevole);
+  const contrario = ground(rawMapping.mappaDialettica.orientamentoContrario);
+  const puntiAperti = [...(rawMapping.mappaDialettica.puntiAperti ?? [])];
+  const scartato =
+    (rawMapping.mappaDialettica.orientamentoFavorevole && !favorevole) ||
+    (rawMapping.mappaDialettica.orientamentoContrario && !contrario);
+  if (scartato) {
+    puntiAperti.unshift(
+      "Alcune tesi non sono state riportate perché non supportate da fonti reperite: è consigliabile affinare la ricerca."
+    );
+  }
+
+  return {
+    mappaDialettica: {
+      orientamentoFavorevole: favorevole,
+      orientamentoContrario: contrario,
+      puntiAperti,
+    } as z.infer<typeof MappaDialetticaSchema>,
+    totaleFonti:
+      (favorevole?.fonti.length ?? 0) + (contrario?.fonti.length ?? 0),
+  };
 }
 
 function makeBoundedSearchQuery(value: string, maxLength: number): string {
@@ -416,9 +548,11 @@ export const researchAnalysisFlow = ai.defineFlow(
       allSources,
     });
 
-    const rawMapping = await generateResearchMapping(
+    const mappingUserPrompt =
+      "Genera l'inquadramento e la mappa dialettica in formato strutturato.";
+    let rawMapping = await generateResearchMapping(
       mappingSystemPrompt,
-      "Genera l'inquadramento e la mappa dialettica in formato strutturato.",
+      mappingUserPrompt,
       "research_mapping",
       "ResearchAnalysisFlow",
       "Errore durante la generazione della mappa dialettica"
@@ -428,30 +562,34 @@ export const researchAnalysisFlow = ai.defineFlow(
       throw new Error("Output della mappa dialettica vuoto.");
     }
 
-    const validFavSources = validaFonti(
-      rawMapping.mappaDialettica.orientamentoFavorevole?.fonti ?? []
-    );
-    const validContSources = validaFonti(
-      rawMapping.mappaDialettica.orientamentoContrario?.fonti ?? []
-    );
+    let grounded = groundMapping(rawMapping, allSources);
 
-    const mappedMappaDialettica: z.infer<typeof MappaDialetticaSchema> = {
-      orientamentoFavorevole: rawMapping.mappaDialettica.orientamentoFavorevole
-        ? {
-            titoloTesi: rawMapping.mappaDialettica.orientamentoFavorevole.titoloTesi,
-            argomentazioneLogica: rawMapping.mappaDialettica.orientamentoFavorevole.argomentazioneLogica,
-            fonti: validFavSources,
-          }
-        : null,
-      orientamentoContrario: rawMapping.mappaDialettica.orientamentoContrario
-        ? {
-            titoloTesi: rawMapping.mappaDialettica.orientamentoContrario.titoloTesi,
-            argomentazioneLogica: rawMapping.mappaDialettica.orientamentoContrario.argomentazioneLogica,
-            fonti: validContSources,
-          }
-        : null,
-      puntiAperti: rawMapping.mappaDialettica.puntiAperti ?? [],
-    };
+    // Fonti reperite ma nessuna collegata alle tesi: nuovo tentativo con il modello completo
+    if (grounded.totaleFonti === 0 && allSources.length > 0) {
+      console.warn("[DeepAnalysisResearch] Mappa senza fonti collegate: retry con modello completo.");
+      const retried = await generateResearchMapping(
+        mappingSystemPrompt,
+        `${mappingUserPrompt}\nATTENZIONE: il tentativo precedente non ha collegato alcuna fonte alle tesi. Valuta massima, contenuto ed estratti di ciascuna fonte dell'elenco e associa a ogni tesi gli ID pertinenti. Se nessuna fonte è pertinente per un orientamento, restituisci null per quell'orientamento.`,
+        "research_mapping_retry",
+        "ResearchAnalysisFlow",
+        "Errore durante la generazione della mappa dialettica",
+        true
+      );
+      if (retried) {
+        rawMapping = retried;
+        grounded = groundMapping(retried, allSources);
+      }
+    }
+
+    if (grounded.totaleFonti === 0) {
+      grounded.mappaDialettica.puntiAperti.unshift(
+        allSources.length > 0
+          ? "Le fonti reperite non risultano pertinenti al quesito: riformula la domanda o amplia le fonti."
+          : "Nessuna fonte pertinente è stata reperita con i parametri impostati."
+      );
+    }
+
+    const mappedMappaDialettica = grounded.mappaDialettica;
 
     const mappaConcettuale = buildConceptMap({
       prompt,
@@ -566,7 +704,7 @@ export const refineResearchFlow = ai.defineFlow(
         newSources.map((source: ResearchSource) => source.sourceId)
       );
 
-      const incoming = validaFonti(newFonts).filter(
+      const incoming = validaFonti(newFonts, allSources).filter(
         (source: { id?: unknown }) =>
           typeof source.id === "string" &&
           (knownSet.has(source.id) || allowedIds.has(source.id))

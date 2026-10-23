@@ -53,7 +53,7 @@ describe("FontiOrientamentoSwitch Component Suite", () => {
     expect(screen.getByText("Nessuna fonte favorevole disponibile o valida.")).toBeInTheDocument();
   });
 
-  test("filtra correttamente le fonti non valide e mostra i contatori delle fonti attive", () => {
+  test("filtra gli ID malformati ma mantiene visibili le fonti valide non recuperate", () => {
     const orientamentoFav: OrientamentoDialettico = {
       fonti: [...mockFavorevoliValide, ...mockFontiCorrotte],
     } as unknown as OrientamentoDialettico;
@@ -70,11 +70,12 @@ describe("FontiOrientamentoSwitch Component Suite", () => {
       />
     );
 
-    expect(screen.getByText("Favorevoli (1/2)")).toBeInTheDocument();
+    expect(screen.getByText("Favorevoli (2/3)")).toBeInTheDocument();
     expect(screen.getByText("Contrarie (1/1)")).toBeInTheDocument();
 
     expect(screen.getByTestId("precedente-card-cass-1111")).toBeInTheDocument();
     expect(screen.getByTestId("precedente-card-cass-2222")).toBeInTheDocument();
+    expect(screen.getByTestId("precedente-card-not-found-id")).toBeInTheDocument();
     expect(screen.queryByTestId("precedente-card-err/id")).not.toBeInTheDocument();
   });
 

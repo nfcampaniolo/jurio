@@ -53,7 +53,7 @@ function hasRetryableStatus(error: unknown): boolean {
   ]
     .filter((part): part is string => typeof part === "string")
     .join(" ");
-  return /\b(429|500|502|503|504)\b|RESOURCE_EXHAUSTED|UNAVAILABLE|DEADLINE_EXCEEDED/i.test(
+  return /\b(429|500|502|503|504)\b|RESOURCE_EXHAUSTED|UNAVAILABLE|DEADLINE_EXCEEDED|fetch failed|VERTEX_CALL_TIMEOUT/i.test(
     message
   );
 }
@@ -61,13 +61,27 @@ function hasRetryableStatus(error: unknown): boolean {
 const wait = (milliseconds: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
 
+const CALL_TIMEOUT_MS = 90_000;
+
+// Evita che una chiamata Vertex bloccata consumi l'intero timeout della funzione
+function withTimeout<T>(promise: Promise<T>): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(
+      () => reject(new Error("VERTEX_CALL_TIMEOUT")),
+      CALL_TIMEOUT_MS
+    );
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 export async function generateWithVertexRetry<T>(
   generate: () => Promise<T>,
   onRetry: (retryNumber: number, delayMs: number) => Promise<void>
 ): Promise<T> {
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
     try {
-      return await generate();
+      return await withTimeout(generate());
     } catch (error) {
       if (!hasRetryableStatus(error)) throw error;
       if (attempt === MAX_ATTEMPTS) {

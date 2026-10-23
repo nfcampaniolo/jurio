@@ -37,25 +37,25 @@ describe("Usage Utils Suite", () => {
       expect(calculateTimeSaved(zeroDoc)).toBe(0);
     });
 
-    test("calcola il moltiplicatore ricerca (10 min ciascuno per research_agent e research)", () => {
+    test("calcola il moltiplicatore ricerca (7 min ciascuno per research_agent e research)", () => {
       const doc: UsageDoc = {
         id: "2026_09",
         research_agent: 3,
         research: 2,
       };
-      // (3 + 2) * 10 = 50
-      expect(calculateTimeSaved(doc)).toBe(50);
+      // (3 + 2) * 7 = 35
+      expect(calculateTimeSaved(doc)).toBe(35);
     });
 
-    test("calcola il moltiplicatore analisi (30 min ciascuno per review_agent, reasoning, speech_to_text)", () => {
+    test("calcola il moltiplicatore analisi (10 min ciascuno per review_agent, reasoning, speech_to_text)", () => {
       const doc: UsageDoc = {
         id: "2026_09",
         review_agent: 2,
         reasoning: 1,
         speech_to_text: 3,
       };
-      // (2 + 1 + 3) * 30 = 180
-      expect(calculateTimeSaved(doc)).toBe(180);
+      // (2 + 1 + 3) * 10 = 60
+      expect(calculateTimeSaved(doc)).toBe(60);
     });
 
     test("calcola il moltiplicatore sintesi (15 min per drafting_agent)", () => {
@@ -70,16 +70,16 @@ describe("Usage Utils Suite", () => {
     test("somma correttamente tutte le metriche ponderate combinate", () => {
       const fullDoc: UsageDoc = {
         id: "2026_09",
-        research_agent: 2, // 20
-        research: 3,       // 30 -> tot ricerca = 50
-        review_agent: 1,   // 30
-        reasoning: 2,      // 60
-        speech_to_text: 1, // 30 -> tot analisi = 120
+        research_agent: 2, // 14
+        research: 3,       // 21 -> tot ricerca = 35
+        review_agent: 1,   // 10
+        reasoning: 2,      // 20
+        speech_to_text: 1, // 10 -> tot analisi = 40
         drafting_agent: 4, // 60 -> tot sintesi = 60
       };
 
-      // 50 + 120 + 60 = 230
-      expect(calculateTimeSaved(fullDoc)).toBe(230);
+      // 35 + 40 + 60 = 135
+      expect(calculateTimeSaved(fullDoc)).toBe(135);
     });
 
     test("ignora campi non inclusi nella formula di risparmio tempo (prompting, legal_agent)", () => {

@@ -205,9 +205,9 @@ export const AnalysisSettingsSection: React.FC<AnalysisSettingsSectionProps> = (
               <div className="mb-8">
                 <LabelWithInfo 
                   id="confidenza" 
-                  label="Livello di Confidenza" 
+                  label="Soglia di Pertinenza"
                   icon={<Target size={13} className="opacity-70" />}
-                  description="Rappresenta la soglia minima di similarità semantica. Valori alti (85-100%) garantiscono risultati estremamente mirati. Valori inferiori allargano la ricerca esplorando concetti trasversali. Il range ammesso è 50-100%."
+                  description="È la soglia minima di similarità semantica usata per selezionare i risultati, non una misura della probabilità che una conclusione sia corretta. Una soglia più alta restringe i risultati; una più bassa amplia la ricerca. Il range ammesso è 50-100%."
                   isActive={activeInfo === "confidenza"}
                   onToggle={toggleInfo}
                   rightElement={

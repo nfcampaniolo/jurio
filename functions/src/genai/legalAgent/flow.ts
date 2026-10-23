@@ -85,7 +85,11 @@ export const legalAgentFlow = ai.defineFlow(
     const stageTimes: Record<string, number> = {};
     const markStage = (name: string, since: number) => { stageTimes[name] = Date.now() - since; };
 
-    const profile = getExecutionProfile(promptLower);
+    const profile = getExecutionProfile(promptLower, {
+      hasDocs: Array.isArray(input.docs) && input.docs.length > 0,
+      hasFascicolo: Boolean(input.fascicoloId),
+      hasFilters: Array.isArray(input.filters) && input.filters.length > 0,
+    });
     const selectedModel = profile.model;
 
     const titlePromise = input.isFirstMessage
@@ -239,7 +243,7 @@ export const legalAgentFlow = ai.defineFlow(
         ];
 
         finalResponse = await generateWithQuotaRetry(() => ai.generate({
-          model: selectedModel,
+          model: profile.synthesisModel,
           messages: synthesisMessages,
           config: {
             maxOutputTokens: 3000,

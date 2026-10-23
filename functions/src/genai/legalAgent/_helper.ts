@@ -174,16 +174,40 @@ export function prepareContextAndMessages(input: {
   ];
 }
 
-export function getExecutionProfile(promptLower: string): ExecutionProfile {
+export function getExecutionProfile(
+  promptLower: string,
+  options: { hasDocs?: boolean; hasFascicolo?: boolean; hasFilters?: boolean } = {}
+): ExecutionProfile {
+  const flashModel = "vertexai/gemini-3.5-flash";
+  const liteModel = "vertexai/gemini-3.5-flash-lite";
   const needsDeepReasoning =
     promptLower.length >= 600 ||
     /\b(analizza|confronta|controvers|eccezion|responsabilit|risarciment|impugn|strategia|prescrizion|decadenza|concorso|bilanciamento|distinguish)\w*/i.test(promptLower);
 
-  if (promptLower.length < 150 && !needsDeepReasoning) {
-    return { model: "vertexai/gemini-3.5-flash", dbLimit: 5, webLimit: 2, thinkingLevel: "LOW" };
+  // Flash-Lite è adatto ai turni brevi e leggeri. Termini e intenzioni giuridiche
+  // esplicite restano su Flash, così la ricerca e il ragionamento non vengono
+  // instradati al modello più piccolo solo perché il prompt è corto.
+  const hasLegalIntent =
+    /\b(art(?:icolo)?|codice|legge|norma|normativa|sentenza|giurisprudenza|cassazione|tribunale|giudice|ricorso|causa|contratto|clausola|penale|reato|risarcimento|danno|responsabilit|prescrizion|decadenza|licenziamento|lavoro|locazione|sfratto|privacy|gdpr|diritto|obbligazion|parte|avvocato|processo|procedura|impugn|contestazion|diffida|parere|consulenza|posso|può|possono|devo|deve|devono|obbligo|diritti|valido|valida|nullo|nulla|vietato|consentito|termine|scadenza|sanzione|multa|è legittimo|come agire)\w*/i.test(promptLower);
+  const canUseLite = promptLower.length < 150 &&
+    !needsDeepReasoning &&
+    !hasLegalIntent &&
+    !options.hasDocs &&
+    !options.hasFascicolo &&
+    !options.hasFilters;
+
+  if (canUseLite) {
+    return {
+      model: liteModel,
+      synthesisModel: flashModel,
+      dbLimit: 5,
+      webLimit: 2,
+      thinkingLevel: "LOW",
+    };
   }
   return {
-    model: "vertexai/gemini-3.5-flash",
+    model: flashModel,
+    synthesisModel: flashModel,
     dbLimit: promptLower.length >= 600 ? 8 : 5,
     webLimit: promptLower.length >= 600 ? 3 : 2,
     thinkingLevel: needsDeepReasoning ? "HIGH" : "MEDIUM",
@@ -368,6 +392,7 @@ export function extractAndFormatSources(
         score: rawScore !== null ? rawScore : (isExactMatch ? 1 : null),
         match_percentage: matchPercentage,
         organo_giudicante: f.organo_giudicante ?? f.court ?? null,
+        sezione: f.sezione ?? null,
         data_pubblicazione: f.dataSentenza ?? f.data ?? f.date ?? null,
         fonte_web: f.fonte ?? f.source ?? null,
         url_riferimento: f.link ?? f.urn ?? f.url ?? f.sourceUrl ?? null,

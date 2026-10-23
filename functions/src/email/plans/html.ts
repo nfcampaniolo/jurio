@@ -157,8 +157,17 @@ export const generateMonthlyReportEmail = (data: MonthlyUsageReportData) => {
   if (data.analisi.count > 0) {
     dettagliOperazioni += `
       <div class="feature">
-        <h3>Analisi Documentale</h3>
-        <p>Hai analizzato <strong>${data.analisi.count}</strong> documenti, recuperando <strong>${data.analisi.timeSavedMinutes} minuti</strong> di tempo prezioso.</p>
+        <h3>Analisi, Reasoning e OCR</h3>
+        <p>Hai completato <strong>${data.analisi.count}</strong> elaborazioni, recuperando <strong>${data.analisi.timeSavedMinutes} minuti</strong> di tempo prezioso.</p>
+      </div>
+    `;
+  }
+
+  if (data.deepAnalysis.count > 0) {
+    dettagliOperazioni += `
+      <div class="feature">
+        <h3>Ricerca Giurisprudenziale Approfondita</h3>
+        <p>Hai completato <strong>${data.deepAnalysis.count}</strong> indagini approfondite, risparmiando circa <strong>${data.deepAnalysis.timeSavedMinutes} minuti</strong>.</p>
       </div>
     `;
   }

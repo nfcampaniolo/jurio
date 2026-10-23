@@ -19,6 +19,7 @@ import CitationTree from "@/features/document/components/CitationGraph";
 interface Props {
   precedente: PrecedenteReperito;
   onToggleEsclusione: (id: string, escluso: boolean) => void;
+  documentoId?: string;
 }
 
 function formatData(value?: string | null): string {
@@ -44,20 +45,21 @@ function text(value?: string | null): string {
 export const PrecedenteCard: React.FC<Props> = ({
   precedente,
   onToggleEsclusione,
+  documentoId,
 }) => {
   const isWeb = precedente.fonte === "web";
+  // Dottrina e allegati non sono in "sentences": non vanno cercati come provvedimenti
+  const isProvvedimento =
+    !isWeb && (!precedente.tipoFonte || precedente.tipoFonte === "provvedimento");
+  const tipoLabel =
+    precedente.tipoFonte === "dottrina" ? "Dottrina" : "Documento allegato";
   const escluso = Boolean(precedente.escluso);
 
   const {
     precedente: documento,
     loading,
     error,
-  } = usePrecedente(precedente.id, !isWeb);
-
-  // Se è una fonte interna non reperita o andata in errore, non renderizzare nulla
-  if (!isWeb && !loading && (!documento || error)) {
-    return null;
-  }
+  } = usePrecedente(documentoId ?? precedente.id, isProvvedimento);
 
   const organo =
     documento?.organo_giudicante || "Autorità giudiziaria";
@@ -75,7 +77,7 @@ export const PrecedenteCard: React.FC<Props> = ({
   const precedentiRichiamati = documento?.precedenti_richiamati || [];
 
   // URL della fonte interna basato sull'id del precedente
-  const internalSourceUrl = `https://jurio.it/giurisprudenza/${precedente.id}`;
+  const internalSourceUrl = `https://jurio.it/giurisprudenza/${documentoId ?? precedente.id}`;
 
   return (
     <article
@@ -102,7 +104,7 @@ export const PrecedenteCard: React.FC<Props> = ({
                 ].join(" ")}
                 style={{ fontFamily: "var(--font-serif)" }}
               >
-                {isWeb ? "Fonte web" : organo}
+                {isWeb ? "Fonte web" : isProvvedimento ? organo : precedente.titolo || tipoLabel}
               </h3>
 
               {precedente.nuova && (
@@ -112,7 +114,23 @@ export const PrecedenteCard: React.FC<Props> = ({
               )}
             </div>
 
-            {!isWeb && (numero || data) && (
+            {!isWeb && !isProvvedimento && (
+              <p className="mt-1 flex items-center gap-2 text-[11px] text-(--color-muted)">
+                <span>{tipoLabel}</span>
+                {precedente.url && (
+                  <a
+                    href={precedente.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
+                    Apri fonte
+                  </a>
+                )}
+              </p>
+            )}
+
+            {isProvvedimento && (numero || data) && (
               <div className="mt-1 flex items-center gap-2 text-[11px] text-(--color-muted)">
                 {numero && <span>N. {numero}</span>}
 
@@ -176,10 +194,24 @@ export const PrecedenteCard: React.FC<Props> = ({
       )}
 
       {/* LOADING */}
-      {!isWeb && loading && (
+      {isProvvedimento && loading && (
         <div className="flex items-center gap-2 border-t border-(--color-border) px-4 py-4 text-xs text-(--color-muted)">
           <Loader2 size={13} className="animate-spin" />
           Recupero del provvedimento...
+        </div>
+      )}
+
+      {isProvvedimento && !loading && (!documento || error) && (
+        <div className="border-t border-(--color-border) px-4 py-3 text-xs text-amber-700 dark:text-amber-300" role="status">
+          <p className="font-medium">Provvedimento {documentoId ?? precedente.id}</p>
+          <a
+            href={`https://jurio.it/giurisprudenza/${documentoId ?? precedente.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 inline-block text-[11px] underline"
+          >
+            Apri il provvedimento nella banca dati
+          </a>
         </div>
       )}
 

@@ -311,9 +311,11 @@
       ".jc-back:hover{text-decoration-color:var(--jc-text)}",
 
       /* --- Testi ----------------------------------------------- */
-      ".jc-title{margin:0 0 10px;font-family:var(--jc-serif);font-size:clamp(22px,2.8vw,27px);font-weight:600;line-height:1.2;letter-spacing:-.01em;color:var(--jc-text)}",
+      ".jc-title{margin:0 0 8px;font-family:var(--jc-serif);font-size:clamp(21px,2.4vw,25px);font-weight:600;line-height:1.2;letter-spacing:-.01em;color:var(--jc-text)}",
 
-      ".jc-copy{margin:0;max-width:66ch;color:var(--jc-muted);font-size:14px;line-height:1.7}",
+      ".jc-copy{margin:0;max-width:66ch;color:var(--jc-muted);font-size:13px;line-height:1.55}",
+
+      ".jc-note{display:flex;align-items:flex-start;gap:8px;margin-top:14px;padding:8px 10px;border:1px solid var(--jc-border);border-left:3px solid var(--jc-accent);border-radius:8px;background:var(--jc-bg-soft);color:var(--jc-muted);font-size:11.5px;line-height:1.45}",
 
       ".jc-legal-links{display:inline-flex;flex-wrap:wrap;align-items:center;gap:7px;margin-left:2px}",
 
@@ -321,23 +323,25 @@
 
       ".jc-legal-links a:hover{text-decoration-color:var(--jc-text)}",
 
-      ".jc-note{display:flex;align-items:flex-start;gap:10px;margin-top:18px;padding:10px 12px;border:1px solid var(--jc-border);border-left:3px solid var(--jc-accent);border-radius:8px;background:var(--jc-bg-soft);color:var(--jc-muted);font-size:12px;line-height:1.5}",
-
       /* --- Azioni ---------------------------------------------- */
-      ".jc-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}",
+      ".jc-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}",
 
-      ".jc-btn{display:inline-flex;align-items:center;justify-content:center;flex:1 1 150px;min-width:0;min-height:46px;padding:11px 16px;border:1px solid var(--jc-text);border-radius:12px;background:var(--jc-text);color:var(--jc-bg);font:inherit;font-size:14px;font-weight:600;line-height:1.3;text-align:center;cursor:pointer;transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease}",
+      ".jc-btn{display:inline-flex;align-items:center;justify-content:center;flex:1 1 150px;min-width:0;min-height:42px;padding:10px 14px;border:1px solid var(--jc-text);border-radius:10px;background:var(--jc-text);color:var(--jc-bg);font:inherit;font-size:13px;font-weight:600;line-height:1.3;text-align:center;cursor:pointer;transition:background .16s ease,border-color .16s ease,color .16s ease,transform .16s ease}",
 
       ".jc-btn:hover{background:var(--jc-accent);border-color:var(--jc-accent);color:var(--jc-on-accent)}",
 
       ".jc-btn:active{transform:translateY(1px)}",
 
-      ".jc-btn--ghost{background:transparent;border-color:var(--jc-border);color:var(--jc-text)}",
+      ".jc-btn--ghost{background:var(--jc-bg-soft);border-color:var(--jc-muted);color:var(--jc-text)}",
 
       ".jc-btn--ghost:hover{background:var(--jc-bg-soft);border-color:var(--jc-text);color:var(--jc-text)}",
 
       ".jc-btn:focus-visible,.jc-close:focus-visible,.jc-back:focus-visible,.jc-switch:focus-visible,.jc-legal-links a:focus-visible{outline:3px solid var(--jc-accent);outline-offset:3px}",
 
+      ".jc-btn--accept{background:var(--jc-accent);border-color:var(--jc-accent);color:var(--jc-on-accent);font-weight:700}",
+
+      ".jc-btn--accept:hover{background:var(--jc-accent-hover);border-color:var(--jc-accent-hover);color:var(--jc-on-accent)}",
+      
       /* --- Preferenze ------------------------------------------ */
       ".jc-settings-intro{margin-bottom:20px}",
 
@@ -368,12 +372,11 @@
       ".jc-settings-footer{margin-top:14px;color:var(--jc-muted);font-size:12px;line-height:1.5}",
 
       /* --- Responsive ------------------------------------------ */
-      "@media(max-width:560px){#jc-root{padding:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}.jc-card{max-height:calc(100vh - 20px);max-height:calc(100dvh - 20px);padding:22px 18px 18px}.jc-header{margin-bottom:18px;padding-bottom:14px}.jc-logo{height:24px}.jc-copy{font-size:13px}.jc-actions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:18px}.jc-btn{width:100%}.jc-row{gap:12px;padding:14px 0}.jc-row-description{font-size:12px}}",
+      "@media(max-width:560px){#jc-root{padding:10px;padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}.jc-card{width:100%;max-height:calc(100vh - 20px);max-height:calc(100dvh - 20px);padding:20px 16px 16px}.jc-header{margin-bottom:16px;padding-bottom:12px}.jc-logo{height:24px}.jc-copy{font-size:12.5px}.jc-actions{display:grid;grid-template-columns:1fr;gap:7px;margin-top:16px}.jc-btn{width:100%}.jc-row{gap:12px;padding:13px 0}.jc-row-description{font-size:12px}}",
 
       "@media(max-width:370px){.jc-card{padding-left:14px;padding-right:14px}.jc-row{align-items:flex-start}.jc-switch{margin-top:4px}}",
 
-      "@media(prefers-reduced-motion:reduce){.jc-btn,.jc-close,.jc-switch,.jc-switch:before{transition:none}}",
-
+      "@media(prefers-reduced-motion:reduce){.jc-card{animation:none}.jc-btn,.jc-close,.jc-switch,.jc-switch:before{transition:none}}",
       /* --- Tema scuro: segue la preferenza di sistema ---------- */
       "@media(prefers-color-scheme:dark){" +
         "#jc-root{" +
@@ -427,14 +430,18 @@
   }
 
   function button(label, onClick, variant) {
-    var node = el(
-      "button",
-      {
-        type: "button",
-        class: variant === "ghost" ? "jc-btn jc-btn--ghost" : "jc-btn"
-      },
-      label
-    );
+    var className = "jc-btn";
+
+    if (variant === "ghost") {
+      className += " jc-btn--ghost";
+    } else if (variant === "accept") {
+      className += " jc-btn--accept";
+    }
+
+    var node = el("button", {
+      type: "button",
+      class: className
+    }, label);
 
     node.addEventListener("click", onClick);
 
@@ -683,21 +690,21 @@
         )
       );
 
-      // "Rifiuta tutti" e "Accetta tutti" hanno lo stesso peso visivo.
+      // "Accetta solo essenziali" e "Accetta tutti" hanno lo stesso peso visivo.
       var actions = el("div", {
         class: "jc-actions"
       });
 
       actions.appendChild(
-        button("Rifiuta tutti", function () {
+        button("Accetta solo essenziali", function () {
           save(false, false);
-        })
+        }, "ghost")
       );
 
       actions.appendChild(
         button("Accetta tutti", function () {
           save(true, true);
-        })
+        }, "accept")
       );
 
       actions.appendChild(
@@ -705,7 +712,6 @@
           render(true);
         }, "ghost")
       );
-
       card.appendChild(actions);
     } else {
       card.appendChild(
@@ -778,7 +784,7 @@
       });
 
       settingsActions.appendChild(
-        button("Rifiuta tutti", function () {
+        button("Accetta solo essenziali", function () {
           save(false, false);
         }, "ghost")
       );
@@ -786,7 +792,7 @@
       settingsActions.appendChild(
         button("Accetta tutti", function () {
           save(true, true);
-        }, "ghost")
+        }, "accept")
       );
 
       settingsActions.appendChild(

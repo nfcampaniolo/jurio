@@ -71,7 +71,7 @@ describe("WorkspaceHeader Component Suite", () => {
   test("mostra lo stato di elaborazione (processing) quando isProcessing è true", () => {
     render(<WorkspaceHeader {...defaultProps} isProcessing={true} />);
 
-    expect(screen.getByText("Elaborazione Mappa...")).toBeInTheDocument();
+    expect(screen.getByText("Ricerca giurisprudenziale...")).toBeInTheDocument();
   });
 
   test("mostra correttamente i diversi stati della sessione (draft, completed, nuova)", () => {

@@ -19,7 +19,11 @@ describe("deep-analysis prompt builders", () => {
   });
 
   it("includes source evidence and refinement constraints in the follow-up prompts", () => {
-    expect(buildResearchMappingSystemPrompt({ prompt: "Q", allSources: [{ id: "s1" }] })).toContain('"id":"s1"');
+    const mappingPrompt = buildResearchMappingSystemPrompt({ prompt: "Q", allSources: [{ id: "s1" }] });
+    expect(mappingPrompt).toContain('"id":"s1"');
+    expect(mappingPrompt).toContain("almeno 4 frasi complete");
+    expect(mappingPrompt).toContain("prevalente");
+    expect(mappingPrompt).toContain("null per l'orientamento");
     expect(buildRefineResearchSystemPrompt({
       originalPrompt: "Q", direttivaHitl: "approfondisci", requiredTools: [], hasUserDocs: false,
       docsLength: 0, docs: [], knownIds: ["s1"],
@@ -28,7 +32,9 @@ describe("deep-analysis prompt builders", () => {
       originalPrompt: "Q", direttivaHitl: "approfondisci", requiredTools: [], hasUserDocs: false,
       docsLength: 0, docs: [], knownIds: ["precedente-1"],
     })).toContain("precedente-1");
-    expect(buildRefineMappingSystemPrompt({ originalPrompt: "Q", direttivaHitl: "nuovi dati" })).toContain("nuovi dati");
+    const refinePrompt = buildRefineMappingSystemPrompt({ originalPrompt: "Q", direttivaHitl: "nuovi dati" });
+    expect(refinePrompt).toContain("nuovi dati");
+    expect(refinePrompt).toContain("Riesamina criticamente");
     expect(buildSynthesisReportSystemPrompt("Q")).toContain("esclusivamente i dati JSON");
   });
 });
