@@ -6,6 +6,7 @@ import { getDb, getAdminAuth} from "./_deps";
 import { Request, Response } from "express";
 import { JurioFeatureType, ALLOWED_ORIGINS, ALLOWED_PLANS, JURIO_USAGE_LIMITS } from "./_constants";
 import { logSafeError } from "./_logging";
+import { withPseudonymization } from "./privacy/pseudonymization";
 
 const db = getDb();
 const auth = getAdminAuth();
@@ -151,7 +152,7 @@ export async function withSecureApiEndpoint(
     try {
       await requireAppCheck(req);
       const uid = await requireUidFromAuthHeader(req);
-      await handler(uid);
+      await withPseudonymization(req.body, () => handler(uid));
     } catch (err) {
       handleApiError(res, err);
     }

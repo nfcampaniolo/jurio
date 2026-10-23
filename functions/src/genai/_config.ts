@@ -1,11 +1,12 @@
 import { genkit } from "genkit";
 import { vertexAI } from "@genkit-ai/google-genai";
+import { pseudonymizeGenkit } from "../privacy/pseudonymization";
 
 // ─────────────────────────────────────────────
 // GENKIT INIT (Vertex AI Enterprise - Conforme UE)
 // ─────────────────────────────────────────────
 
-export const ai = genkit({
+const genkitInstance = genkit({
   plugins: [
     vertexAI({
       projectId: process.env.GCLOUD_PROJECT,
@@ -17,6 +18,8 @@ export const ai = genkit({
     thinkingConfig: { thinkingLevel: "LOW" },
   }),
 });
+
+export const ai = pseudonymizeGenkit(genkitInstance);
 
 // ─────────────────────────────────────────────
 // TYPES & INTERFACES

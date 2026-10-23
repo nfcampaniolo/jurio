@@ -10,6 +10,7 @@ import { FirestoreEvent, QueryDocumentSnapshot } from "firebase-functions/v2/fir
 import * as admin from "firebase-admin";
 import { getDb } from "../../_deps";
 import { logSafeError } from "../../_logging";
+import { withPseudonymization } from "../../privacy/pseudonymization";
 
 const db = getDb();
 // Il trigger parte dal messaggio utente ma l'estrazione analizza l'intero thread
@@ -110,25 +111,30 @@ export async function executeSupport(req: Request, res: Response): Promise<any> 
     });
 
     try {
-      // 6. Avvio del Flow GenAI in Streaming
-      const flowStream = legalAgentSupport.stream({ 
-        prompt: safePrompt, 
-        history: safeHistory 
-      });
+      await withPseudonymization(
+        { prompt: safePrompt, history: safeHistory },
+        async () => {
+          // 6. Avvio del Flow GenAI in Streaming
+          const flowStream = legalAgentSupport.stream({
+            prompt: safePrompt,
+            history: safeHistory,
+          });
 
-      // Iterazione in tempo reale sui chunk emessi dal flow (status e text)
-      for await (const chunk of flowStream.stream) {
-        if (clientDisconnected || res.writableEnded) break;
-        res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
-      }
+          // Iterazione in tempo reale sui chunk emessi dal flow (status e text)
+          for await (const chunk of flowStream.stream) {
+            if (clientDisconnected || res.writableEnded) break;
+            res.write(`data: ${JSON.stringify({ message: chunk })}\n\n`);
+          }
 
-      // 7. Attesa e invio dell'output finale (risposta + fonti strutturate)
-      if (!clientDisconnected && !res.writableEnded) {
-        const finalOutput = await flowStream.output; 
-        res.write(`data: ${JSON.stringify({ result: finalOutput })}\n\n`);
-        res.write(`data: [DONE]\n\n`);
-        res.end();
-      }
+          // 7. Attesa e invio dell'output finale (risposta + fonti strutturate)
+          if (!clientDisconnected && !res.writableEnded) {
+            const finalOutput = await flowStream.output;
+            res.write(`data: ${JSON.stringify({ result: finalOutput })}\n\n`);
+            res.write(`data: [DONE]\n\n`);
+            res.end();
+          }
+        }
+      );
 
     } catch (err: unknown) {
       if (clientDisconnected) return; // Ignora se il client ha chiuso volontariamente la connessione
