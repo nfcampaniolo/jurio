@@ -30,15 +30,15 @@
     window.JURIO_COOKIE = {
       document: {
         version: "1.0",
-        lastUpdated: "31/08/2026"
+        lastUpdated: "23/10/2026"
       },
       provider: {
         name: "Nicolò Flavio Campaniolo",
         email: "contatti@jurio.it"
       },
       services: {
-        analytics: "Google Analytics (soggetti a consenso)",
-        payment: "Stripe (cookie tecnici per la sicurezza delle transazioni e prevenzione frodi)"
+        analytics: "Google Tag Manager (GTM-5PR3B8LS); gli strumenti caricati dal container dipendono dalla sua configurazione e possono includere Google Analytics o tag pubblicitari",
+        payment: "Stripe Checkout, quando l'utente avvia un pagamento"
       }
     };
   </script>
@@ -77,27 +77,27 @@
           <section class="legal-section">
             <h2>2. Tipologie di Cookie utilizzati su Jurio</h2>
             <p>
-              La nostra piattaforma utilizza diverse tipologie di cookie, classificate in base alla loro finalità. L'erogazione del servizio SaaS richiede l'utilizzo imprescindibile di alcuni cookie tecnici.
+              Il sito usa strumenti tecnici necessari e, solo dopo una scelta positiva, può caricare Google Tag Manager e i tag configurati al suo interno. La classificazione e la durata dei cookie di terze parti dipendono dai tag effettivamente pubblicati nel container.
             </p>
 
             <div class="cookie-type-box">
               <h3>Cookie Tecnici (Strettamente necessari)</h3>
               <p style="margin-bottom: 0;">
-                Questi cookie sono essenziali per il corretto funzionamento di Jurio. Permettono all'utente di navigare, effettuare il login in sicurezza, mantenere la sessione attiva durante l'uso dell'applicativo e salvare le preferenze relative al consenso dei cookie stessi. <strong>Non richiedono il consenso dell'utente</strong> in quanto indispensabili per erogare il servizio richiesto.
+                Il gestore del consenso salva la scelta nelle memorie locali del browser (chiave <code>custom_consent_settings</code>, con scadenza applicativa di 180 giorni); questo dato non è un cookie. Le funzioni di accesso e sicurezza possono inoltre usare identificatori e archiviazione tecnica del browser forniti da Firebase. Questi strumenti sono usati per fornire il servizio richiesto e non per profilazione pubblicitaria.
               </p>
             </div>
 
             <div class="cookie-type-box">
               <h3>Cookie Analitici (Statistici)</h3>
               <p style="margin-bottom: 0;">
-                Utilizziamo <span data-config="services.analytics"></span> per capire come gli utenti interagiscono con la piattaforma, raccogliendo informazioni in forma aggregata sul numero di visitatori e sulle pagine visitate. Questi cookie vengono attivati <strong>solo previo consenso dell'utente</strong>.
+                Dopo il consenso alla categoria analitica, il gestore carica <span data-config="services.analytics"></span>. I tag del container possono impostare cookie o inviare identificatori e dati di utilizzo a Google o ad altri destinatari configurati. Il dettaglio di nomi, finalità e durata va letto insieme ai tag effettivamente attivi; l'attivazione è subordinata al consenso.
               </p>
             </div>
 
             <div class="cookie-type-box">
               <h3>Cookie di Terze Parti (Sicurezza e Pagamenti)</h3>
               <p style="margin-bottom: 0;">
-                Integrazioni essenziali, come il gateway di pagamento <span data-config="services.payment"></span>, possono installare cookie tecnici di terze parti direttamente sul dispositivo dell'utente. Tali cookie sono strettamente necessari per elaborare le transazioni in sicurezza e prevenire attività fraudolente.
+                Quando l'utente sceglie di pagare, viene aperta la pagina di pagamento ospitata da <span data-config="services.payment"></span>. Stripe può utilizzare cookie e tecnologie analoghe per erogare il checkout, prevenire frodi e proteggere la transazione, secondo la propria informativa. Le tecnologie attivate sulla pagina Stripe sono soggette alla gestione di Stripe.
               </p>
             </div>
           </section>
@@ -113,7 +113,7 @@
               <li>Personalizzare le tue scelte.</li>
             </ul>
             <p>
-              Il tuo consenso è registrato tramite un apposito cookie tecnico. Puoi modificare le tue preferenze in qualsiasi momento cliccando sull'icona o sul link "Gestione Cookie" presente nel footer del sito.
+              La scelta è conservata in <code>localStorage</code> per 180 giorni, non in un cookie, e può essere modificata in qualsiasi momento dal link "Gestisci cookie" nel footer. Il rifiuto mantiene disattivate le categorie analitiche e pubblicitarie. Quando revochi una scelta, il gestore tenta anche di rimuovere dal dominio i cookie di tracciamento accessibili; cookie di terze parti e identificatori non accessibili potrebbero richiedere la cancellazione dalle impostazioni del browser.
             </p>
           </section>
 
@@ -134,10 +134,10 @@
           <section class="legal-section">
             <h2>5. Titolare del Trattamento</h2>
             <p>
-              Il Titolare del trattamento dei dati è <span data-config="provider.name"></span>. Poiché l'installazione di cookie da parte di terze parti tramite i servizi utilizzati su Jurio non può essere tecnicamente controllata dal Titolare, ogni riferimento specifico a cookie e sistemi di tracciamento installati da terze parti è da considerarsi indicativo.
+              Il Titolare del trattamento dei dati è <span data-config="provider.name"></span>. I tag caricati tramite Google Tag Manager dipendono dalla configurazione del container e possono cambiare. Il Titolare deve mantenere questa informativa aggiornata rispetto ai tag effettivamente pubblicati; nomi e durata dei cookie di terze parti dipendono dai relativi servizi.
             </p>
             <p style="margin-top: 1rem;">
-              Per ottenere informazioni complete, l'utente è invitato a consultare la privacy policy degli eventuali servizi terzi elencati nel presente documento (es. Stripe).
+              Per informazioni sul trattamento di Stripe è possibile consultare la <a href="https://stripe.com/it/privacy" target="_blank" rel="noopener noreferrer">privacy policy di Stripe</a>. Per i tag caricati dal container si applicano anche le informative dei relativi fornitori.
               Per esercitare i tuoi diritti previsti dal GDPR o per qualsiasi domanda relativa a questa Cookie Policy, puoi contattare il Titolare all'indirizzo:
               <a class="legal-email" data-email="provider.email" href="#"></a>.
             </p>

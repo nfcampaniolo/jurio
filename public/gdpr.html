@@ -30,19 +30,15 @@
   <script>
     window.JURIO_GDPR = {
       document: {
-        lastUpdated: "31/08/2026"
+        lastUpdated: "23/10/2026"
       },
       provider: {
         name: "Nicolò Flavio Campaniolo",
         address: "Torino, Italia",
         email: "contatti@jurio.it"
       },
-      infrastructure: {
-        hosting: "Google Cloud / Firebase",
-        hostingLocation: "Il bucket Storage predefinito di produzione, jurio-it.firebasestorage.app, è in EUR4; il progetto di sviluppo include un bucket Storage in US-WEST1, la cui effettiva separazione dai dati di produzione è da verificare.",
-        aiProvider: "Google Vertex AI/Gemini, OpenAI API, DeepSeek API (flussi amministrativi) e Google Cloud Speech-to-Text",
-        paymentGateway: "Stripe"
-      },
+      privacyUrl: "/privacy",
+      cookieUrl: "/cookie",
     };
   </script>
 
@@ -62,105 +58,26 @@
           <span class="eyebrow">Jurio · Privacy e Sicurezza</span>
           <h1 class="legal-title">Conformità GDPR e Protezione Dati</h1>
           <p class="legal-intro">
-            Trasparenza su come Jurio raccoglie, protegge e tratta i dati personali degli utenti nel pieno rispetto del Regolamento (UE) 2016/679 (GDPR).
+            Una sintesi delle informazioni sul trattamento dei dati personali in Jurio. L'informativa completa, con finalità, basi giuridiche, fornitori, conservazione e diritti, è disponibile nella <a href="/privacy">Privacy Policy</a>.
             <br><br>
             <span style="font-size: 0.9rem;">Ultimo aggiornamento: <strong data-config="document.lastUpdated"></strong></span>
           </p>
         </header>
 
         <div class="legal-content">
-
           <section class="legal-section">
-            <h2>1. Identità e dati di contatto del Titolare</h2>
-            <p>
-              Le presenti informazioni riguardano il trattamento dei dati effettuato attraverso la piattaforma <strong>Jurio</strong>. Il Titolare del Trattamento (ai sensi dell'art. 4 GDPR) è il creatore e sviluppatore indipendente del progetto:
-            </p>
-            <ul class="legal-list">
-                <li><strong><span data-config="provider.name"></span></strong></li>
-                <li>Sede operativa: <span data-config="provider.address"></span></li>
-            </ul>
-            <p style="margin-top: 1rem;">
-              Per qualsiasi questione inerente alla privacy o per esercitare i propri diritti, gli utenti possono contattare direttamente il Titolare all'indirizzo dedicato:
-              <a class="legal-email" data-email="provider.email" href="#"></a>
-            </p>
+            <h2>Titolare e contatti</h2>
+            <p>Il titolare del trattamento è <strong><span data-config="provider.name"></span></strong>, con sede a <span data-config="provider.address"></span>. Per richieste sulla privacy: <a class="legal-email" data-email="provider.email" href="#"></a>.</p>
           </section>
-
           <section class="legal-section">
-            <h2>2. Finalità e Basi Giuridiche del Trattamento</h2>
-            <p>
-              Il trattamento dei dati all'interno di Jurio si basa rigorosamente sulle seguenti condizioni di liceità (Art. 6 GDPR):
-            </p>
-            <ul class="legal-list">
-              <li>
-                <strong>Esecuzione del Contratto:</strong> per consentire la registrazione dell'account, l'accesso all'applicativo, l'elaborazione dei pagamenti e la fornitura del servizio di ricerca giuridica.
-              </li>
-              <li>
-                <strong>Obbligo di Legge:</strong> per ottemperare agli obblighi civilistici e fiscali previsti dalla normativa applicabile per l'erogazione di servizi digitali.
-              </li>
-              <li>
-                <strong>Legittimo Interesse:</strong> per garantire la sicurezza informatica della piattaforma (log di accesso, prevenzione abusi) e per fornire assistenza tecnica all'utente.
-              </li>
-            </ul>
+            <h2>Dati e servizi</h2>
+            <p>Jurio tratta i dati dell'account, i dati tecnici e di sicurezza, le informazioni necessarie per pagamenti e assistenza, e i contenuti che l'utente inserisce o carica (ricerche, conversazioni, documenti e, se si usa la dettatura, audio e trascrizioni). A seconda della funzione, alcuni contenuti sono elaborati da fornitori cloud, AI o vocali. I dati inviati e le condizioni applicabili dipendono dalla funzione utilizzata; non si assume una garanzia generale di assenza di conservazione da parte di ogni fornitore.</p>
           </section>
-
           <section class="legal-section">
-            <h2>3. Tipologia dei dati trattati e Intelligenza Artificiale</h2>
-            <p>
-              Per l'erogazione del servizio, Jurio tratta esclusivamente i dati strettamente necessari:
-            </p>
-            <ul class="legal-list">
-              <li><strong>Dati di navigazione e tecnici:</strong> indirizzo IP, log di sistema.</li>
-              <li><strong>Dati di Account e Pagamento:</strong> nome, email, identificativi delle transazioni (gestiti in sicurezza dal provider di pagamento).</li>
-              <li><strong>Dati elaborati (Prompt):</strong> i testi, i quesiti legali e i documenti inviati dall'utente al sistema di Intelligenza Artificiale.</li>
-            </ul>
-            
-            <div class="ai-policy-box">
-              <strong style="display: block; margin-bottom: 0.5rem; color: var(--color-primary);">Servizi di Intelligenza Artificiale</strong>
-              In base alla funzionalità richiesta, i testi, i quesiti, i documenti, le query o l'audio necessari possono essere comunicati ai fornitori indicati nella sezione sui servizi tecnici (<span data-config="infrastructure.aiProvider"></span>). Il ruolo di ciascun fornitore e le condizioni di trattamento dipendono dal servizio, dall'account e dagli accordi applicabili. Non viene formulata una garanzia generale di zero retention o di esclusione dall'addestramento valida per tutti i fornitori.
-            </div>
+            <h2>Diritti e cancellazione</h2>
+            <p>Puoi chiedere accesso, rettifica, cancellazione, limitazione, portabilità nei casi previsti e opporti ai trattamenti basati sul legittimo interesse. Le richieste sono normalmente gestite entro un mese. Puoi anche presentare reclamo al Garante per la protezione dei dati personali. Il profilo offre funzioni per esportare i dati e chiedere la cancellazione; la cancellazione può richiedere di uscire prima dai team di cui fai parte e non elimina i dati che devono essere conservati per obblighi legali.</p>
+            <p>Consulta la <a href="/privacy">Privacy Policy completa</a> per basi giuridiche, fornitori e criteri di conservazione, e la <a href="/cookie">Cookie Policy</a> per preferenze e tecnologie del browser.</p>
           </section>
-
-          <section class="legal-section">
-            <h2>4. Sub-Responsabili e Trasferimento dei Dati</h2>
-            <p>
-              Jurio utilizza fornitori tecnici per hosting, pagamenti e funzionalità AI. Il ruolo e le condizioni applicabili a ciascun fornitore dipendono dal servizio e dagli accordi pertinenti:
-            </p>
-            <ul class="legal-list">
-              <li><strong>Hosting e Database:</strong> infrastruttura ospitata su <span data-config="infrastructure.hosting"></span>. Le regioni variano per servizio e ambiente: <span data-config="infrastructure.hostingLocation"></span></li>
-              <li><strong>Servizi AI e vocali:</strong> Google Vertex AI/Gemini per funzionalità generative, OpenAI API per embedding e fallback, DeepSeek API in specifici flussi amministrativi e Google Cloud Speech-to-Text per la trascrizione audio. I dati inviati dipendono dalla funzionalità utilizzata e dai relativi accordi applicabili.</li>
-              <li><strong>Gestione Pagamenti:</strong> transazioni elaborate interamente dal gateway sicuro <span data-config="infrastructure.paymentGateway"></span>. Nessun dato completo della carta di credito viene mai archiviato sui nostri server.</li>
-            </ul>
-          </section>
-
-          <section class="legal-section">
-            <h2>5. Periodo di conservazione (Data Retention)</h2>
-            <p>
-              I dati sono conservati per il tempo strettamente necessario a conseguire le finalità indicate:
-            </p>
-            <ul class="legal-list">
-              <li><strong>Dati dell'Account e dei Progetti:</strong> conservati fino alla cancellazione volontaria dell'account da parte dell'utente.</li>
-              <li><strong>Dati Amministrativi:</strong> conservati per 10 anni in conformità agli obblighi di legge italiani (art. 2220 c.c.).</li>
-              <li><strong>Log di sicurezza:</strong> conservati per il tempo necessario al monitoraggio delle anomalie, alla prevenzione degli abusi e alla gestione tecnica, secondo le configurazioni effettive dei servizi.</li>
-            </ul>
-          </section>
-
-          <section class="legal-section">
-            <h2>6. I Diritti dell’interessato (Artt. 15-22 GDPR)</h2>
-            <p>
-              In qualità di utente, mantieni il pieno controllo sui tuoi dati. Hai il diritto di:
-            </p>
-            <ul class="legal-list">
-              <li>Accedere ai tuoi dati personali e ottenerne copia (Art. 15);</li>
-              <li>Richiederne la rettifica in caso di inesattezza (Art. 16);</li>
-              <li>Richiederne la cancellazione definitiva (Diritto all'oblio, Art. 17);</li>
-              <li>Limitare o opporti al trattamento basato su legittimo interesse (Artt. 18 e 21);</li>
-              <li>Ricevere i dati in formato strutturato e leggibile da dispositivo automatico (Portabilità, Art. 20).</li>
-            </ul>
-            <p style="margin-top: 1rem;">
-              Per esercitare questi diritti, scrivi direttamente al Titolare all'indirizzo <a class="legal-email" data-email="provider.email" href="#"></a>. Qualora lo ritenessi necessario, hai inoltre il diritto di presentare un reclamo formale all'Autorità Garante per la Protezione dei Dati Personali.
-            </p>
-          </section>
-
         </div>
       </div>
     </section>

@@ -21,7 +21,7 @@
 
     document: {
       version: "1.0",
-      lastUpdated: "31/08/2026"
+      lastUpdated: "23/10/2026"
     },
 
     controller: {
@@ -37,24 +37,24 @@
     },
 
     service: {
-      hosting: "Google Cloud",
+      hosting: "Google Cloud / Firebase (autenticazione, database, archiviazione file e funzioni server)",
       payment: "Stripe",
-      ai: "Google Vertex AI/Gemini, OpenAI API, DeepSeek API (flussi amministrativi) e Google Cloud Speech-to-Text",
-      analytics: "Google Analytics (soggetto a consenso cookie)",
+      ai: "Google Vertex AI/Gemini, API OpenAI (ricerca, embedding e funzionalità di supporto), Google Cloud Speech-to-Text; DeepSeek API e Tavily possono essere usati in specifiche funzioni o flussi amministrativi",
+      analytics: "Google Tag Manager e gli strumenti di analisi o marketing eventualmente configurati nel container (solo dopo il consenso della relativa categoria)",
       aiTraining:
         "In base alla funzionalità richiesta, i testi, i documenti, le query o l'audio necessari possono essere trasmessi ai servizi AI indicati. Le condizioni di conservazione, uso dei dati e localizzazione dipendono dal servizio, dall'account e dai termini applicabili; non viene formulata una garanzia generale di zero retention o di esclusione dall'addestramento per tutti i fornitori.",
       internationalTransfers:
-        "Le regioni di trattamento dipendono dal servizio e dall'ambiente. Il bucket Storage predefinito di produzione, jurio-it.firebasestorage.app, è in EUR4; nel progetto di sviluppo è presente un bucket Storage in US-WEST1, la cui separazione effettiva dai dati di produzione deve essere verificata. Eventuali trasferimenti fuori dallo Spazio Economico Europeo e le relative garanzie dipendono dai fornitori, dalle configurazioni e dagli accordi applicabili."
+        "I dati possono essere trattati in Italia, nello Spazio Economico Europeo o in altri Paesi in funzione del fornitore, della funzione utilizzata e della configurazione applicabile. Quando ricorre un trasferimento verso un Paese terzo, il Titolare si avvale del meccanismo previsto dal GDPR per il caso concreto (ad esempio decisione di adeguatezza o garanzie appropriate). Per informazioni sulle garanzie applicabili alla specifica richiesta è possibile contattare il Titolare."
     },
 
     retention: {
-      account: "Per tutta la durata dell'account e, successivamente, per il tempo necessario alla gestione di eventuali obblighi o controversie.",
+      account: "Per la durata del rapporto; dopo la chiusura, i dati residui sono conservati solo per il tempo necessario agli obblighi di legge, alla gestione di contestazioni e alla tutela dei diritti.",
       userContent:
-        "Fino alla cancellazione da parte dell'utente o alla cessazione dell'account, salvo necessità di conservazione per obblighi di legge o tutela dei diritti.",
+        "Fino alla cancellazione da parte dell'utente o alla chiusura dell'account, secondo le funzioni di cancellazione disponibili; copie tecniche e backup possono permanere per i normali cicli di rotazione e sicurezza.",
       billing:
         "Per il periodo richiesto dagli obblighi civilistici, fiscali e contabili applicabili.",
       logs:
-        "Per il periodo strettamente necessario alla sicurezza, alla prevenzione degli abusi e alla gestione tecnica del servizio."
+        "Per il tempo necessario alla sicurezza, alla prevenzione degli abusi e alla gestione tecnica, secondo i cicli di conservazione dei sistemi utilizzati."
     },
 
     options: {
@@ -130,8 +130,7 @@
                 <li>documenti, testi, prompt e altri contenuti inseriti dall'utente nel servizio.</li>
               </ul>
               <p>
-                Jurio non richiede, per la normale erogazione del servizio, dati appartenenti a categorie particolari.
-                L'utente non deve inserire dati di terzi se non dispone di un'idonea base giuridica per farlo.
+                A seconda delle funzioni usate, i contenuti possono includere dati personali e, nei documenti o quesiti caricati dall'utente, anche categorie particolari o dati relativi a procedimenti giudiziari. Jurio non chiede di inserirli se non necessari. L'utente deve avere titolo per caricare i dati di terzi e deve limitarli a quanto necessario.
               </p>
             </section>
 
@@ -145,6 +144,10 @@
                 <li>
                   <strong>Fatturazione e adempimenti</strong>:
                   adempimento di obblighi legali, art. 6, par. 1, lett. c) GDPR.
+                </li>
+                <li>
+                  <strong>Elaborazione di ricerche, documenti e richieste dell'utente</strong>:
+                  erogazione delle funzioni richieste nell'ambito del contratto, art. 6, par. 1, lett. b) GDPR; l'utente resta responsabile della liceità dei dati di terzi che inserisce.
                 </li>
                 <li>
                   <strong>Sicurezza, prevenzione degli abusi e tutela dei sistemi</strong>:
@@ -161,16 +164,16 @@
             <section>
               <h2>Fornitori e destinatari</h2>
               <p>
-                Per erogare le funzionalità richieste, alcuni dati possono essere comunicati ai fornitori tecnici indicati.
-                Il ruolo di ciascun fornitore e le condizioni di trattamento dipendono dal servizio e dagli accordi applicabili.
+                I dati sono trattati da fornitori che supportano l'infrastruttura e le funzioni richieste. Il ruolo (responsabile o titolare autonomo), i dati coinvolti e le condizioni applicabili dipendono dal servizio concretamente utilizzato e dagli accordi con il fornitore.
               </p>
               <ul>
                 <li><strong>Hosting / infrastruttura:</strong> <span data-config="service.hosting"></span></li>
                 <li><strong>Pagamenti:</strong> <span data-config="service.payment"></span></li>
                 <li><strong>Servizi AI:</strong> <span data-config="service.ai"></span></li>
-                <li><strong>Analytics:</strong> <span data-config="service.analytics"></span></li>
+                <li><strong>Analisi e marketing online:</strong> <span data-config="service.analytics"></span></li>
+                <li><strong>Comunicazioni:</strong> servizi di posta elettronica e assistenza eventualmente coinvolti nella richiesta o nella gestione dell'account.</li>
               </ul>
-              <p style="margin-top: 1rem;"><strong style="color: var(--color-primary);">Policy AI:</strong> <span data-config="service.aiTraining"></span></p>
+              <p style="margin-top: 1rem;"><strong style="color: var(--color-primary);">Trattamenti AI:</strong> <span data-config="service.aiTraining"></span> Gli strumenti AI producono supporto informativo e non adottano per conto del Titolare decisioni con effetti giuridici sull'utente.</p>
             </section>
 
             <section data-section="thirdPartyData" hidden>
@@ -213,7 +216,7 @@
               <p>
                 Le richieste possono essere inviate a
                 <a data-email="controller.email" href="#"></a>.
-                L'interessato può inoltre proporre reclamo al Garante per la protezione dei dati personali
+                La richiesta viene normalmente riscontrata entro un mese; il termine può essere prorogato nei casi e con le modalità previste dall'art. 12 GDPR. Alcuni diritti si applicano solo quando ne ricorrono i presupposti di legge. L'interessato può inoltre proporre reclamo al <a href="https://www.garanteprivacy.it/">Garante per la protezione dei dati personali</a>
                 o all'autorità di controllo competente.
               </p>
             </section>
