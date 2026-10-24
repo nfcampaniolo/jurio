@@ -4,6 +4,7 @@ const ALLOWED_ORIGINS = [
   "https://jurio.it",
   "https://claude.ai",
   "https://chat.openai.com",
+  "https://chatgpt.com",
   "https://chat.mistral.ai",
 ];
 

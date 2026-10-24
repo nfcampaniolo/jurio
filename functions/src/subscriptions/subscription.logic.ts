@@ -20,7 +20,18 @@ export async function executeGetRegister(req: Request, res: Response): Promise<a
     const ref = db.collection("register").doc(uid);
     const existingSnap = await ref.get();
 
-    await validateUserPlanAndLimits(uid, "register", existingSnap);
+    if (existingSnap.exists) {
+      // Per una registrazione già completata, applica il normale controllo piano e quote.
+      await validateUserPlanAndLimits(uid, "register", existingSnap);
+    } else {
+      // Un nuovo utente non ha ancora un piano in register/{uid}; applica
+      // direttamente il limite globale previsto per la feature "register".
+      const limits = JURIO_USAGE_LIMITS.register?.global ?? { perMinute: 5, perDay: 20 };
+      await Promise.all([
+        consumePerMinuteFeature(uid, "register", limits.perMinute),
+        consumeDailyFeature(uid, "register", limits.perDay),
+      ]);
+    }
 
     // 2. Transazione Atomica su Firestore per la creazione del trial di 7 giorni
     const out = await db.runTransaction(async (tx) => {
