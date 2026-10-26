@@ -262,7 +262,7 @@ SCOMPOSIZIONE IN TEMATICHE
 4. Mantieni l'ordine di apparizione nel documento.
 
 DATI DEL DOCUMENTO (valgono per tutte le tematiche)
-Estrai dall'intestazione, dal frontespizio o dalle prime pagine: tipo_documento, origine (organo/ufficio che lo ha prodotto), numero_anno, data_documento. Se mancano, null. Non usare la data di oggi.
+Estrai dall'intestazione, dal frontespizio o dalle prime pagine: tipo_documento, origine (organo/ufficio che lo ha prodotto), numero_anno, data_documento. Se mancano, usa una stringa vuota. Non usare la data di oggi e non restituire null.
 
 CAMPI DI OGNI TEMATICA
 - tematica: titolo breve e normalizzato (max ~15 parole), senza numerazioni del documento.

@@ -93,7 +93,7 @@ export const doctrineFlow = ai.defineFlow(
               schema: DoctrineGenerationSchema,
             },
             config: {
-              thinkingConfig: { thinkingLevel: "LOW" },
+              thinkingConfig: { thinkingLevel: "HIGH" },
             },
           });
 
