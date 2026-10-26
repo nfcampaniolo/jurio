@@ -22,6 +22,7 @@ type OAuthParams = {
   state: string | null;
   codeChallenge: string | null;
   codeChallengeMethod: string | null;
+  resource: string | null;
   validatedRedirectUri: string | null;
   urlError: string | null;
 };
@@ -36,6 +37,7 @@ function parseOAuthParams(search: string): OAuthParams {
   const codeChallengeMethod = params.get(
     "code_challenge_method"
   );
+  const resource = params.get("resource");
 
   let validatedRedirectUri: string | null = null;
   let urlError: string | null = null;
@@ -88,6 +90,10 @@ function parseOAuthParams(search: string): OAuthParams {
     urlError = "client_id non valido.";
   }
 
+  if (resource && resource !== "https://jurio.it/mcp") {
+    urlError = "La risorsa richiesta non è supportata.";
+  }
+
   if (state && state.length > MAX_STATE_LENGTH) {
     urlError = "Parametro state non valido.";
   }
@@ -98,6 +104,7 @@ function parseOAuthParams(search: string): OAuthParams {
     state,
     codeChallenge,
     codeChallengeMethod,
+    resource,
     validatedRedirectUri,
     urlError,
   };
@@ -125,6 +132,7 @@ export function useOAuthLogic() {
     state,
     codeChallenge,
     codeChallengeMethod,
+    resource,
     validatedRedirectUri,
     urlError,
   } = oauth;
@@ -177,6 +185,7 @@ export function useOAuthLogic() {
           redirect_uri: redirectUri,
           code_challenge: codeChallenge,
           code_challenge_method: "S256",
+          resource: resource || "https://jurio.it/mcp",
           createdAt: serverTimestamp(),
           expiresAt,
         });
@@ -224,6 +233,7 @@ export function useOAuthLogic() {
     redirectUri,
     codeChallenge,
     codeChallengeMethod,
+    resource,
     state,
   ]);
 

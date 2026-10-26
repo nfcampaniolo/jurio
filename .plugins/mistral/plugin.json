@@ -1,0 +1,20 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "jurio-legal-research",
+  "version": "1.0.0",
+  "description": "Ricerca giurisprudenziale e normativa italiana tramite il server MCP di Jurio.",
+  "author": {
+    "name": "Jurio",
+    "email": "contatti@jurio.it",
+    "url": "https://jurio.it"
+  },
+  "homepage": "https://jurio.it",
+  "keywords": ["giurisprudenza", "diritto italiano", "ricerca legale", "MCP"],
+  "extensions": {
+    "ai.mistral.vibe": {
+      "schemaVersion": 1,
+      "displayName": "Jurio Legal Research",
+      "toolNamespace": "jurio"
+    }
+  }
+}

@@ -87,6 +87,7 @@ describe("Guide Navigation Config Suite", () => {
         "/guida/consiglio-di-stato",
         "/guida/corte-costituzionale",
         "/guida/mcp-vibe",
+        "/guida/mcp-chatgpt",
       ];
 
       expectedKeyRoutes.forEach((route) => {

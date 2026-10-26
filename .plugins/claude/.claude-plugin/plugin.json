@@ -1,0 +1,17 @@
+{
+  "name": "jurio-legal-research",
+  "displayName": "Jurio Legal Research",
+  "description": "Ricerca giurisprudenziale e normativa italiana tramite il server MCP di Jurio.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Jurio",
+    "email": "contatti@jurio.it",
+    "url": "https://jurio.it"
+  },
+  "homepage": "https://jurio.it",
+  "icon": "./assets/logo.png",
+  "documentationUrl": "https://jurio.it/caso-studio/configurazione-claude-mcp",
+  "supportUrl": "https://jurio.it/contatti",
+  "privacyPolicyUrl": "https://jurio.it/privacy",
+  "termsOfServiceUrl": "https://jurio.it/termini"
+}

@@ -44,4 +44,4 @@ firebase-export/
 word/
 compilance/
 posts/
-jurio-openai-plugin/
+!.plugins/

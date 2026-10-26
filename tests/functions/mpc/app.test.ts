@@ -32,7 +32,8 @@ describe("MPC Express app", () => {
   });
 
   it("normalizes the /mcp prefix and calls next for downstream route matching", () => {
-    const normalize = app.router.stack[3].handle;
+    // Helmet, JSON, URL-encoded parsing and CORS are registered before normalization.
+    const normalize = app.router.stack[4].handle;
     const next = vi.fn();
     const slashRoute = { url: "/mcp/tools?x=1" };
     const rootRoute = { url: "/mcp" };

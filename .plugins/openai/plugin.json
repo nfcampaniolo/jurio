@@ -1,0 +1,38 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "jurio-legal-research",
+  "version": "1.0.0",
+  "description": "Ricerca giurisprudenziale e normativa italiana tramite il server MCP di Jurio.",
+  "author": {
+    "name": "Jurio",
+    "email": "contatti@jurio.it",
+    "url": "https://jurio.it"
+  },
+  "homepage": "https://jurio.it",
+  "keywords": ["giurisprudenza", "diritto italiano", "ricerca legale", "MCP"],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Jurio",
+        "shortDescription": "Ricerca giuridica italiana",
+        "longDescription": "Consulta giurisprudenza e normativa italiane tramite gli strumenti MCP di Jurio. Le risposte devono distinguere i risultati delle fonti dalla sintesi generata e mantenere i riferimenti per la verifica professionale.",
+        "developerName": "Jurio",
+        "category": "Productivity",
+        "capabilities": ["Ricerca giurisprudenziale", "Ricerca normativa", "Estrazione di documenti"],
+        "websiteURL": "https://jurio.it",
+        "supportURL": "https://jurio.it/contatti",
+        "privacyPolicyURL": "https://jurio.it/privacy",
+        "termsOfServiceURL": "https://jurio.it/termini",
+        "defaultPrompt": [
+          "Cerca precedenti italiani su una questione giuridica e indica le fonti.",
+          "Trova la giurisprudenza relativa a questa norma e confronta gli orientamenti.",
+          "Cerca una sentenza per numero o ECLI e riassumine i punti rilevanti."
+        ],
+        "brandColor": "#8A5A00",
+        "brandColorDark": "#E0A32E",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/logo.png"
+      }
+    }
+  }
+}

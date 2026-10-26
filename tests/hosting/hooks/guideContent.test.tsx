@@ -66,6 +66,9 @@ vi.mock("@/features/guide/components/ConfigurazioneClaude", () => ({
 vi.mock("../components/ConfigurazioneClaude", () => ({
   default: () => <div data-testid="guida-mcp-claude">Configurazione Claude</div>,
 }));
+vi.mock("@/features/guide/components/ConfigurazioneOpenAI", () => ({
+  default: () => <div data-testid="guida-mcp-chatgpt">Configurazione ChatGPT</div>,
+}));
 
 /* ---------- subject under test ---------- */
 import { guideContent } from "@/features/guide/hooks/guideContent";
@@ -96,11 +99,12 @@ describe("Guide Content Registry Suite", () => {
     ["quote", "guida-quote"],
     ["mcp-vibe", "guida-mcp-vibe"],
     ["mcp-claude", "guida-mcp-claude"],
+    ["mcp-chatgpt", "guida-mcp-chatgpt"],
   ];
 
   describe("Integrità del Registro delle Rotte", () => {
     test("contiene esattamente le 20 sezioni censite", () => {
-      expect(Object.keys(guideContent)).toHaveLength(20);
+      expect(Object.keys(guideContent)).toHaveLength(21);
     });
 
     test("tutti gli slug rispettano il pattern kebab-case minuscolo", () => {

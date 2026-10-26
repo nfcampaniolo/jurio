@@ -42,6 +42,7 @@ export const guideNavigation = [
       { title: "Aggiornamento Forzato", href: "/guida/aggiornamento-forzato" },
       { title: "Configurazione MCP Vibe", href: "/guida/mcp-vibe" },
       { title: "Configurazione MCP Claude", href: "/guida/mcp-claude" },
+      { title: "Configurazione MCP ChatGPT", href: "/guida/mcp-chatgpt" },
     ]
   }
 ];

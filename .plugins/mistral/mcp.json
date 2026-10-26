@@ -1,0 +1,9 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "jurio": {
+      "type": "streamable-http",
+      "url": "https://jurio.it/mcp"
+    }
+  }
+}

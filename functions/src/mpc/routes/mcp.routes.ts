@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpServer } from "../server";
 import { getDb } from "../../_deps";
@@ -6,6 +6,15 @@ import { logSafeError } from "../../_logging";
 
 const db = getDb();
 export const mcpRouter = Router();
+const MCP_RESOURCE = "https://jurio.it/mcp";
+const RESOURCE_METADATA_URL = "https://jurio.it/.well-known/oauth-protected-resource/mcp";
+
+function setOAuthChallenge(res: Response, error: string): void {
+  res.set(
+    "WWW-Authenticate",
+    `Bearer realm="jurio", resource_metadata="${RESOURCE_METADATA_URL}", error="${error}"`
+  );
+}
 
 mcpRouter.use(async (req, res) => {
   if (req.method === "OPTIONS") {
@@ -16,7 +25,7 @@ mcpRouter.use(async (req, res) => {
   const authHeader = typeof req.headers?.authorization === "string" ? req.headers.authorization : "";
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.set("WWW-Authenticate", 'Bearer realm="jurio", error="unauthorized"');
+    setOAuthChallenge(res, "unauthorized");
     res.status(401).json({
       error: "unauthorized",
       message: "Autenticazione richiesta per utilizzare Jurio MCP.",
@@ -28,7 +37,7 @@ mcpRouter.use(async (req, res) => {
 
   try {
     if (!/^[a-f0-9]{64}$/.test(token)) {
-      res.set("WWW-Authenticate", 'Bearer realm="jurio", error="invalid_token"');
+      setOAuthChallenge(res, "invalid_token");
       res.status(401).json({ error: "unauthorized", message: "Token non valido." });
       return;
     }
@@ -36,7 +45,7 @@ mcpRouter.use(async (req, res) => {
     const tokenSnap = await db.collection("oauth_tokens").doc(token).get();
 
     if (!tokenSnap.exists) {
-      res.set("WWW-Authenticate", 'Bearer realm="jurio", error="invalid_token"');
+      setOAuthChallenge(res, "invalid_token");
       res.status(401).json({ error: "unauthorized", message: "Token non valido o revocato." });
       return;
     }
@@ -46,14 +55,21 @@ mcpRouter.use(async (req, res) => {
     const uid = tokenData?.user;
 
     if (typeof uid !== "string" || !uid || !expiresAt || typeof expiresAt.toDate !== "function") {
+      setOAuthChallenge(res, "invalid_token");
       res.status(401).json({ error: "unauthorized", message: "Dati del token non validi." });
       return;
     }
 
     if (expiresAt.toDate() <= new Date()) {
       await tokenSnap.ref.delete().catch(() => {});
-      res.set("WWW-Authenticate", 'Bearer realm="jurio", error="invalid_token"');
+      setOAuthChallenge(res, "invalid_token");
       res.status(401).json({ error: "unauthorized", message: "Token scaduto." });
+      return;
+    }
+
+    if (tokenData?.resource && tokenData.resource !== MCP_RESOURCE) {
+      setOAuthChallenge(res, "invalid_token");
+      res.status(401).json({ error: "unauthorized", message: "Token non valido per questa risorsa." });
       return;
     }
 

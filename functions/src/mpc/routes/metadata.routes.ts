@@ -37,6 +37,8 @@ metadataRouter.get([
     authorization_endpoint: "https://jurio.it/mcp/authorize",
     token_endpoint: "https://jurio.it/mcp/token",
     registration_endpoint: "https://jurio.it/mcp/register",
+    authorization_response_iss_parameter_supported: false,
+    token_endpoint_auth_methods_supported: ["client_secret_post"],
     response_types_supported: ["code"],
     grant_types_supported: ["authorization_code"],
     code_challenge_methods_supported: ["S256"]

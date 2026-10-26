@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "jurio": {
+      "type": "http",
+      "url": "https://jurio.it/mcp"
+    }
+  }
+}

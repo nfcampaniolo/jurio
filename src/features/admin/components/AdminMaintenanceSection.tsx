@@ -70,6 +70,7 @@ export const AdminMaintenanceSection: React.FC<AdminMaintenanceSectionProps> = (
             <option value="SESTA SEZIONE PENALE">SESTA SEZIONE PENALE</option>
             <option value="SETTIMA SEZIONE PENALE">SETTIMA SEZIONE PENALE</option>
             <option value="SEZIONI UNITE PENALI">SEZIONI UNITE PENALI</option>
+            <option value="SEZIONE FERIALE PENALE">SEZIONE FERIALE PENALE</option>
             <option value="SEZIONE II">SEZIONE II</option>
             <option value="SEZIONE III">SEZIONE III</option>
             <option value="SEZIONE IV">SEZIONE IV</option>

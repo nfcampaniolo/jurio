@@ -1,0 +1,8 @@
+[[mcp_servers]]
+name = "jurio"
+transport = "streamable-http"
+url = "https://jurio.it/mcp"
+
+[mcp_servers.auth]
+type = "oauth"
+scopes = []

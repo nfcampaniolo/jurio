@@ -11,6 +11,7 @@ export const app = express();
 // 1. Hardening Header e Limite Payload
 app.use(helmet());
 app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: false, limit: "10kb" }));
 
 // 2. CORS Restrittivo
 app.use(cors(corsOptions));

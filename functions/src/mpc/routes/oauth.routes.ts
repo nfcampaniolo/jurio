@@ -6,6 +6,7 @@ import { logSafeError } from "../../_logging";
 
 const db = getDb();
 export const oauthRouter = Router();
+const MCP_RESOURCE = "https://jurio.it/mcp";
 
 // Dynamic Client Registration (RFC 7591)
 oauthRouter.post("/register", async (req, res) => {
@@ -66,6 +67,7 @@ oauthRouter.get("/authorize", async (req, res) => {
     response_type,
     code_challenge,
     code_challenge_method,
+    resource,
   } = req.query;
 
   if (typeof response_type !== "string" || response_type !== "code") {
@@ -90,6 +92,14 @@ oauthRouter.get("/authorize", async (req, res) => {
 
   if (!/^[A-Za-z0-9_-]{43}$/.test(code_challenge)) {
     res.status(400).send("code_challenge non valido.");
+    return;
+  }
+
+  if (resource !== undefined && (typeof resource !== "string" || resource !== MCP_RESOURCE)) {
+    res.status(400).json({
+      error: "invalid_target",
+      error_description: "La risorsa richiesta non è supportata.",
+    });
     return;
   }
 
@@ -127,6 +137,7 @@ oauthRouter.get("/authorize", async (req, res) => {
     loginUrl.searchParams.set("redirect_uri", redirect_uri);
     loginUrl.searchParams.set("code_challenge", code_challenge);
     loginUrl.searchParams.set("code_challenge_method", "S256");
+    loginUrl.searchParams.set("resource", MCP_RESOURCE);
 
     if (typeof state === "string") {
       loginUrl.searchParams.set("state", state);
@@ -143,12 +154,20 @@ oauthRouter.get("/authorize", async (req, res) => {
 
 // OAuth Token Exchange
 oauthRouter.post("/token", async (req, res) => {
-  const { grant_type, code, client_id, code_verifier } = req.body || {};
+  const { grant_type, code, client_id, code_verifier, resource } = req.body || {};
 
   if (grant_type !== "authorization_code" || !code) {
     res.status(400).json({
       error: "unsupported_grant_type",
       error_description: "Richiesto grant_type=authorization_code e parametro code",
+    });
+    return;
+  }
+
+  if (resource !== undefined && (typeof resource !== "string" || resource !== MCP_RESOURCE)) {
+    res.status(400).json({
+      error: "invalid_target",
+      error_description: "La risorsa richiesta non è supportata.",
     });
     return;
   }
@@ -170,6 +189,14 @@ oauthRouter.post("/token", async (req, res) => {
       res.status(401).json({
         error: "invalid_grant",
         error_description: "Dati del codice non validi",
+      });
+      return;
+    }
+
+    if (codeData.resource && resource && String(codeData.resource) !== resource) {
+      res.status(401).json({
+        error: "invalid_grant",
+        error_description: "La risorsa non corrisponde al codice di autorizzazione.",
       });
       return;
     }
@@ -233,6 +260,7 @@ oauthRouter.post("/token", async (req, res) => {
       createdAt: FieldValue.serverTimestamp(),
       expiresAt: Timestamp.fromDate(expireDate),
       client_id: String(codeData.client_id),
+      resource: codeData.resource || resource || MCP_RESOURCE,
     });
 
     res.status(200).json({
