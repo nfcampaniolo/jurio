@@ -28,6 +28,15 @@ const PrecedenteSchema = z.object({
   anno: SafeNumber,
 });
 
+// Vertex AI validates structured output against the JSON schema before the
+// local Zod preprocessors run. Ask the model for the year as text, then coerce
+// it to a number with DoctrineOutputSchema before returning/saving the result.
+const PrecedenteGenerationSchema = z.object({
+  sezione: SafeString,
+  numero: SafeString,
+  anno: SafeString,
+});
+
 const SafePrecedentiArray = z.preprocess((val) => {
   if (!Array.isArray(val)) return [];
   return val.map(item => (typeof item === 'object' && item !== null) ? item : {});
@@ -50,6 +59,22 @@ const TemaDottrinaSchema = z.object({
   summary: SafeString,
   pagine: SafeString,
   testo: SafeString,
+});
+
+const SafePrecedentiGenerationArray = z.preprocess((val) => {
+  if (!Array.isArray(val)) return [];
+  return val.map(item => (typeof item === 'object' && item !== null) ? item : {});
+}, z.array(PrecedenteGenerationSchema));
+
+const TemaDottrinaGenerationSchema = TemaDottrinaSchema.extend({
+  precedenti_citati: SafePrecedentiGenerationArray,
+});
+
+export const DoctrineGenerationSchema = z.object({
+  tematiche: z.preprocess(
+    (val) => (Array.isArray(val) ? val : []),
+    z.array(TemaDottrinaGenerationSchema)
+  ),
 });
 
 export const DoctrineOutputSchema = z.object({

@@ -252,7 +252,7 @@ Ricevi il testo completo di un documento istituzionale (Relazione, Massimario, R
 
 PRINCIPI
 - Fedeltà assoluta al testo: usa solo ciò che è scritto nel documento. Non aggiungere norme, precedenti, orientamenti o commenti tuoi, nemmeno se li conosci.
-- Se un dato non è presente o non è desumibile con certezza dal testo, restituisci null (o array vuoto). Non indovinare e non inventare.
+- Se un dato non è presente o non è desumibile con certezza dal testo, non indovinare e non inventare: usa una stringa vuota per i campi testuali e un array vuoto per i campi array. Non restituire mai null.
 - Scrivi in italiano giuridico, in modo neutro e senza valutazioni personali.
 
 SCOMPOSIZIONE IN TEMATICHE
@@ -272,7 +272,7 @@ CAMPI DI OGNI TEMATICA
 - sezioni_coinvolte: sezioni o organi citati come autori delle pronunce, se presenti.
 - materia: ramo del diritto (penale, civile, lavoro, tributario, amministrativo, ecc.).
 - norme_citate: norme richiamate nella tematica, in forma normalizzata e sintetica (es. "cp art. 416-bis.1", "cpc art. 360"), senza duplicati.
-- precedenti_citati: pronunce richiamate con gli estremi disponibili (organo, sezione, numero, anno, data); ometti i campi non presenti.
+- precedenti_citati: pronunce richiamate con gli estremi disponibili (organo, sezione, numero, anno, data); ometti i campi non presenti. Restituisci l'anno come stringa di sole cifre (es. "2020").
 - tag: 3-8 parole chiave giuridiche specifiche, non generiche.
 - summary: 4-6 righe, autosufficienti (comprensibili senza il resto del documento, senza rinvii tipo "come sopra" o "in questa relazione"). Devono contenere la questione, la soluzione e le norme e i concetti chiave in frase compiuta. Niente elenchi di parole chiave. Sarà usata per la ricerca vettoriale.
 - pagine: pagina iniziale e finale della tematica nel documento, se i marcatori di pagina sono presenti.

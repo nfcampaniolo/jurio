@@ -1,9 +1,11 @@
 import { z } from 'genkit';
 import { ai } from "../_config";
 import { REASONING_SYSTEM_PROMPT, buildReasoningUserPrompt, PROMPT_MASSIMAZIONE, PROMPT_DOTTRINA, buildMultiDocumentPromptSuffix, buildDoctrineSystemPrompt, buildDoctrineUserPrompt } from "./_prompts";
-import { DoctrineOutputSchema } from "./_schema";
+import { DoctrineGenerationSchema, DoctrineOutputSchema } from "./_schema";
 import { chunkText, safeParseJson, generateWithRetry } from "./_helper";
 
+// Process two chunks together to reduce total upload latency while limiting
+// the request burst sent to Vertex AI.
 const DOCTRINE_CHUNK_CONCURRENCY = 2;
 const DOCTRINE_SYSTEM_PROMPT = buildDoctrineSystemPrompt(PROMPT_DOTTRINA);
 
@@ -78,7 +80,7 @@ export const doctrineFlow = ai.defineFlow(
           );
 
           const response = await generateWithRetry({
-            model: "vertexai/gemini-3.5-flash",
+            model: "vertexai/gemini-3.5-flash-lite",
             system: DOCTRINE_SYSTEM_PROMPT,
             prompt: buildDoctrineUserPrompt({
               sourceUrl: input.sourceUrl,
@@ -88,12 +90,22 @@ export const doctrineFlow = ai.defineFlow(
             }),
             output: {
               format: "json",
-              schema: DoctrineOutputSchema,
+              schema: DoctrineGenerationSchema,
+            },
+            config: {
+              thinkingConfig: { thinkingLevel: "LOW" },
             },
           });
 
           const parsed = response.output ?? safeParseJson(response.text ?? "");
-          const validated = DoctrineOutputSchema.safeParse(parsed);
+          const generated = DoctrineGenerationSchema.safeParse(parsed);
+          if (!generated.success) {
+            throw new Error(`Output strutturato non valido: ${generated.error.message}`);
+          }
+
+          // Convert model-facing string years to the numeric format used by
+          // the persisted doctrine records.
+          const validated = DoctrineOutputSchema.safeParse(generated.data);
           if (!validated.success) {
             throw new Error(`Output strutturato non valido: ${validated.error.message}`);
           }

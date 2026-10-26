@@ -204,6 +204,13 @@ export function pseudonymizeGenkit<T extends object>(instance: T): T {
           typeof safeRequest === "object" &&
           !Array.isArray(safeRequest)
         ) {
+          // The model identifier is configuration, not user content. Keep it
+          // unchanged so a PII value cannot corrupt a provider/model name.
+          if ("model" in request) {
+            (safeRequest as Record<string, unknown>).model =
+              (request as Record<string, unknown>).model;
+          }
+
           const onChunk = (request as { onChunk?: unknown }).onChunk;
           if (typeof onChunk === "function") {
             (safeRequest as Record<string, unknown>).onChunk = (...chunkArgs: unknown[]) =>

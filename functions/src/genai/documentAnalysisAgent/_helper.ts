@@ -38,23 +38,43 @@ export function safeParseJson(rawText: string): unknown | null {
   }
 }
 
-export function isResourceExhaustedError(error: unknown): boolean {
+function isTransientGenerationError(error: unknown): boolean {
   if (!error || typeof error !== "object") {
     return false;
   }
 
-  const e = error as any;
-  return (
-    e.code === 429 ||
-    e.status === "RESOURCE_EXHAUSTED" ||
-    e.status === 429 ||
-    e.detail?.error?.code === 429
-  );
+  const value = error as Record<string, unknown>;
+  const detail = value.detail && typeof value.detail === "object"
+    ? value.detail as Record<string, unknown>
+    : {};
+  const detailError = detail.error && typeof detail.error === "object"
+    ? detail.error as Record<string, unknown>
+    : {};
+  const message = [value.message, value.originalMessage, detailError.message]
+    .filter((part): part is string => typeof part === "string")
+    .join(" ");
+
+  // Genkit can wrap permanent upstream 400/403 responses as status 500.
+  // Inspect the original message first so these failures are not retried.
+  if (/\[400\b|\[403\b|INVALID_ARGUMENT|PERMISSION_DENIED|UNAUTHENTICATED|Spend cap breached|Schema validation failed/i.test(message)) {
+    return false;
+  }
+
+  const codes = [value.code, value.status, detailError.code, detailError.status];
+
+  if (codes.some((code) =>
+    code === 429 || code === 500 || code === 502 || code === 503 || code === 504 ||
+    code === "RESOURCE_EXHAUSTED" || code === "UNAVAILABLE" || code === "DEADLINE_EXCEEDED" || code === "INTERNAL"
+  )) {
+    return true;
+  }
+
+  return /\b(429|500|502|503|504)\b|RESOURCE_EXHAUSTED|UNAVAILABLE|DEADLINE_EXCEEDED|fetch failed|VERTEX_CALL_TIMEOUT/i.test(message);
 }
 
 export async function generateWithRetry(
   request: Parameters<typeof ai.generate>[0],
-  maxRetries = 3
+  maxRetries = 5
 ) {
   let lastError: unknown;
 
@@ -64,7 +84,7 @@ export async function generateWithRetry(
     } catch (error) {
       lastError = error;
 
-      if (!isResourceExhaustedError(error)) {
+      if (!isTransientGenerationError(error)) {
         throw error;
       }
 
@@ -72,12 +92,12 @@ export async function generateWithRetry(
         break;
       }
 
-      const baseDelay = 2000 * Math.pow(2, attempt);
+      const baseDelay = 3000 * Math.pow(2, attempt);
       const jitter = randomInt(1000);
       const delay = baseDelay + jitter;
 
       console.warn(
-        `[doctrineFlow] 429 RESOURCE_EXHAUSTED. Retry ${attempt + 1}/${maxRetries} tra ${delay}ms...`
+        `[doctrineFlow] Errore temporaneo Vertex AI. Retry ${attempt + 1}/${maxRetries} tra ${delay}ms...`
       );
 
       await new Promise((resolve) => setTimeout(resolve, delay));
