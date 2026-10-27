@@ -358,5 +358,15 @@ export const routes = [
       'Informativa sull’utilizzo dei cookie e degli strumenti di tracciamento sulla piattaforma Jurio.',
     changefreq: 'yearly',
     priority: '0.3'
+  },
+
+  {
+    path: '/commerciali/guida-completa',
+    title: 'Guida Ufficiale a Jurio | Ricerca Giuridica con Intelligenza Artificiale',
+    description:
+      'Guida completa a Jurio: banca dati giurisprudenziale, ricerca semantica con intelligenza artificiale, integrazioni MCP e piani di utilizzo.',
+    changefreq: 'monthly',
+    priority: '0.8'
   }
+
 ];

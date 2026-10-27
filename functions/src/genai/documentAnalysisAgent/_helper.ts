@@ -38,6 +38,21 @@ export function safeParseJson(rawText: string): unknown | null {
   }
 }
 
+export function isResourceExhaustedError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+
+  const value = error as Record<string, unknown>;
+
+  return (
+    value.code === 429 ||
+    value.code === "429" ||
+    value.code === "RESOURCE_EXHAUSTED" ||
+    value.status === 429 ||
+    value.status === "429" ||
+    value.status === "RESOURCE_EXHAUSTED"
+  );
+}
+
 function isTransientGenerationError(error: unknown): boolean {
   if (!error || typeof error !== "object") {
     return false;

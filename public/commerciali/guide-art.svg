@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#8a5c16" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 240 240">
+  <symbol id="cover" viewBox="0 0 240 240">
+    <circle cx="120" cy="120" r="86"/><circle cx="120" cy="120" r="60"/>
+    <path d="M36 120h34m100 0h34M120 36v34m0 100v34"/>
+    <circle cx="120" cy="120" r="12"/>
+  </symbol>
+  <symbol id="database" viewBox="0 0 240 240">
+    <path d="M42 62h156M52 62v118m45-118v118m46-118v118m45-118v118M38 180h164M30 198h180"/>
+    <path d="m42 62 78-35 78 35M61 91h118M61 124h118M61 157h118"/>
+  </symbol>
+  <symbol id="search" viewBox="0 0 240 240">
+    <path d="M54 42h94l38 38v104H54zM148 42v40h38M75 111h70M75 132h48"/>
+    <circle cx="152" cy="157" r="28"/><path d="m172 178 24 24"/>
+  </symbol>
+  <symbol id="mcp" viewBox="0 0 240 240">
+    <circle cx="120" cy="126" r="38"/><path d="M104 126h32m-16-16v32"/>
+    <circle cx="48" cy="48" r="22"/><circle cx="192" cy="48" r="22"/><circle cx="120" cy="210" r="18"/>
+    <path d="m64 63 30 35m82-35-30 35m-26 66v28"/>
+  </symbol>
+  <symbol id="plans" viewBox="0 0 240 240">
+    <rect x="35" y="54" width="75" height="132" rx="5"/><rect x="130" y="38" width="75" height="148" rx="5"/>
+    <path d="M52 83h41M52 103h41M52 123h30m65-57h41m-41 20h41m-41 20h41m-41 20h30"/>
+    <circle cx="72" cy="161" r="5"/><circle cx="167" cy="161" r="5"/>
+  </symbol>
+  <symbol id="consultant" viewBox="0 0 240 240">
+    <path d="M42 48h156v104h-93l-38 34v-34H42z"/><path d="M69 81h102M69 104h74M69 127h52"/>
+    <path d="M143 185h57v-44"/><circle cx="171" cy="185" r="18"/><path d="M171 174v12l8 5"/>
+  </symbol>
+  <symbol id="analysis" viewBox="0 0 240 240">
+    <path d="M120 36v160m-40 0h80M72 66h96M120 50l-48 16m48-16 48 16"/>
+    <path d="m72 66-34 66h68L72 66zm96 0-34 66h68l-34-66z"/>
+    <path d="M38 132c4 20 64 20 68 0m28 0c4 20 64 20 68 0"/>
+  </symbol>
+  <symbol id="prompt" viewBox="0 0 240 240">
+    <rect x="42" y="35" width="156" height="170" rx="5"/>
+    <path d="M67 76h72M67 101h107M67 126h88M67 151h56"/>
+    <path d="m149 160 14 14 27-31"/>
+  </symbol>
+  <symbol id="documents" viewBox="0 0 240 240">
+    <path d="M48 42h95l43 43v112H48zM143 42v45h43M70 113h92M70 136h82M70 159h55"/>
+    <circle cx="164" cy="168" r="25"/><path d="m182 186 22 22"/>
+  </symbol>
+  <symbol id="time" viewBox="0 0 240 240">
+    <circle cx="120" cy="120" r="82"/><path d="M120 69v53l37 24"/>
+    <path d="M63 48 48 63m129-15 15 15M120 28v15"/>
+  </symbol>
+  <symbol id="capacity" viewBox="0 0 240 240">
+    <path d="M42 194h164M57 194v-53h34v53m27 0V99h34v95m27 0V55h34v139"/>
+    <path d="m58 90 45-30 35 15 54-42"/><path d="M173 33h19v19"/>
+  </symbol>
+  <symbol id="cta" viewBox="0 0 240 240">
+    <circle cx="120" cy="120" r="80"/><circle cx="120" cy="120" r="52"/><circle cx="120" cy="120" r="23"/>
+    <path d="M120 120 196 44m-29 0h29v29"/>
+  </symbol>
+</svg>

@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6f7">
+
+  <!-- SEO di base -->
+  <title>Guida Ufficiale a Jurio | Ricerca Giuridica con Intelligenza Artificiale</title>
+  <meta name="description" content="Scopri come usare Jurio: banca dati giurisprudenziale delle Corti Supreme, ricerca semantica avanzata con IA, integrazioni MCP e piani di utilizzo.">
+  <meta name="author" content="Jurio">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="https://jurio.it/guida">
+
+  <!-- Open Graph / Facebook / LinkedIn / WhatsApp -->
+  <meta property="og:type" content="article">
+  <meta property="og:locale" content="it_IT">
+  <meta property="og:site_name" content="Jurio">
+  <meta property="og:title" content="Guida Ufficiale a Jurio | Ricerca Giuridica con IA">
+  <meta property="og:description" content="Guida completa alla banca dati giurisprudenziale di Jurio: ricerca semantica, integrazioni MCP e piani per professionisti del diritto.">
+  <meta property="og:url" content="https://jurio.it/guida">
+  <meta property="og:image" content="https://jurio.it/assets/og-image-guida.jpg">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Anteprima della Guida Ufficiale a Jurio">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Guida Ufficiale a Jurio | Ricerca Giuridica con IA">
+  <meta name="twitter:description" content="Impara a utilizzare la banca dati giurisprudenziale Jurio, la ricerca semantica con IA e le integrazioni MCP.">
+  <meta name="twitter:image" content="https://jurio.it/assets/og-image-guida.jpg">
+
+  <!-- Favicon e Asset per Dispositivi Mobile -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+
+  <!-- Preload e Fogli di Stile (Core Web Vitals) -->
+  <link rel="preload" href="guide.css" as="style">
+  <link rel="stylesheet" href="guide.css">
+  <link rel="stylesheet" href="https://jurio.it/styles.css">
+  <!-- Dati Strutturati JSON-LD per Motori di Ricerca ed AI -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "TechArticle",
+    "headline": "Guida Ufficiale a Jurio: Banca Dati e Ricerca Giuridica con IA",
+    "description": "La guida completa all'utilizzo di Jurio: consultazione delle Corti Supreme, algoritmi di ricerca semantica, integrazioni con Model Context Protocol (MCP) e panoramica dei piani d'uso.",
+    "url": "https://jurio.it/guida",
+    "inLanguage": "it-IT",
+    "author": {
+      "@type": "Organization",
+      "name": "Jurio",
+      "url": "https://jurio.it"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Jurio",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://jurio.it/assets/logo.png"
+      }
+    },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://jurio.it/guida"
+    }
+  }
+  </script>
+
+  <!-- Stili di pagina legati allo sfondo -->
+  <style>
+    .guide-pages {
+      position: relative;
+      background-color: #f8f9fa;
+      background-image: 
+        radial-gradient(circle at 10% 5%, rgba(138, 92, 22, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 45%, rgba(138, 92, 22, 0.04) 0%, transparent 45%),
+        radial-gradient(circle at 20% 85%, rgba(138, 92, 22, 0.05) 0%, transparent 50%);
+    }
+
+    .guide-background-art {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .guide-page {
+      position: relative;
+      z-index: 1;
+    }
+  </style>
+</head>
+<body class="guide-body">
+  <a class="skip-link" href="#contenuto">Vai al contenuto</a>
+  
+  <div id="header"></div>
+  <main id="contenuto" class="guide-main">
+    
+    <div class="guide-controls" aria-label="Azioni della guida">
+      <button class="guide-print" type="button" onclick="window.print()">Stampa / salva PDF <span aria-hidden="true">↗</span></button>
+    </div>
+    <div class="guide-pages">
+      <!-- Disegno vettoriale decorativo continuo per l'intero documento -->
+      <svg class="guide-background-art" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 800 5000" aria-hidden="true">
+        <defs>
+          <linearGradient id="bg-line-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#8a5c16" stop-opacity="0.12"/>
+            <stop offset="50%" stop-color="#c9cdd3" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#8a5c16" stop-opacity="0.1"/>
+          </linearGradient>
+          <linearGradient id="bg-glow" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#8a5c16" stop-opacity="0.08"/>
+            <stop offset="100%" stop-color="#8a5c16" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Linee fluide strutturali e connettive lungo le pagine -->
+        <path d="M 60,0 C 180,600 -40,1200 120,1800 C 280,2400 40,3000 150,3600 C 260,4200 70,4700 100,5000" 
+              fill="none" stroke="url(#bg-line-grad)" stroke-width="2.5" stroke-dasharray="8 6" />
+
+        <path d="M 740,0 C 620,800 820,1600 680,2400 C 540,3200 760,4000 660,5000" 
+              fill="none" stroke="url(#bg-line-grad)" stroke-width="2" />
+
+        <!-- Nodi decorativi disposti lungo lo scorrimento -->
+        <circle cx="120" cy="450" r="4" fill="#8a5c16" opacity="0.3" />
+        <circle cx="120" cy="450" r="16" fill="none" stroke="#8a5c16" stroke-width="1" opacity="0.2" />
+
+        <circle cx="700" cy="1150" r="5" fill="#8a5c16" opacity="0.25" />
+        <circle cx="700" cy="1150" r="24" fill="none" stroke="#8a5c16" stroke-width="1" stroke-dasharray="3 3" opacity="0.2" />
+
+        <circle cx="100" cy="2100" r="6" fill="#8a5c16" opacity="0.3" />
+        <path d="M 80,2100 L 120,2100 M 100,2080 L 100,2120" stroke="#8a5c16" stroke-width="1.5" opacity="0.25" />
+
+        <circle cx="680" cy="3100" r="5" fill="#8a5c16" opacity="0.2" />
+        <circle cx="680" cy="3100" r="30" fill="none" stroke="#8a5c16" stroke-width="1" opacity="0.15" />
+
+        <circle cx="140" cy="4100" r="4" fill="#8a5c16" opacity="0.3" />
+        <circle cx="140" cy="4100" r="18" fill="none" stroke="#8a5c16" stroke-width="1" opacity="0.2" />
+
+        <!-- Forme geometriche sottili di sfondo -->
+        <rect x="710" y="650" width="120" height="120" rx="20" fill="none" stroke="#8a5c16" stroke-width="1" opacity="0.08" transform="rotate(15 710 650)" />
+        <rect x="-30" y="2700" width="160" height="160" rx="30" fill="none" stroke="#8a5c16" stroke-width="1.5" opacity="0.07" transform="rotate(-20 -30 2700)" />
+        <rect x="690" y="4400" width="140" height="140" rx="24" fill="none" stroke="#8a5c16" stroke-width="1" opacity="0.08" transform="rotate(10 690 4400)" />
+      </svg>
+
+      <article class="guide-page guide-cover" aria-labelledby="titolo-guida">
+        <svg class="guide-page-art" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><use href="guida-art.svg#cover"></use></svg>
+        <div class="guide-page-content">
+          <div class="guide-cover-brand">
+            <img src="https://jurio.it/logo.webp" alt="Logo Jurio" fetchpriority="high">
+            <h1 id="titolo-guida">Jurio</h1>
+            <p>L’essenziale per la ricerca giuridica</p>
+            <h2 class="guide-cover-promise">Trova ciò che <em>conta.</em></h2>
+            <p class="guide-cover-description">Descrivi il caso. La ricerca semantica individua precedenti pertinenti e ti aiuta a risalire alle fonti, così puoi concentrarti su ciò che fa davvero la differenza nella tua strategia legale.</p>
+
+            <svg class="guide-cover-illustration" viewBox="0 0 760 230" role="img" aria-labelledby="illustrazione-titolo illustrazione-descrizione">
+              <title id="illustrazione-titolo">Dal quesito giuridico ai precedenti verificabili</title>
+              <desc id="illustrazione-descrizione">Un quesito entra nella ricerca semantica di Jurio e conduce a decisioni e fonti da verificare.</desc>
+              <path d="M194 112h127m118 0h127" fill="none" stroke="#c9cdd3" stroke-width="2" stroke-linecap="round" />
+              <path d="M300 112l12-7v14zM448 112l12-7v14z" fill="#8a5c16" />
+              <rect x="24" y="47" width="170" height="130" rx="4" fill="#fff" stroke="#d6d9de" stroke-width="2" />
+              <circle cx="52" cy="77" r="10" fill="none" stroke="#8a5c16" stroke-width="2" />
+              <path d="m59 84 8 8" stroke="#8a5c16" stroke-width="2" stroke-linecap="round" />
+              <path d="M84 73h76M45 111h126M45 128h105M45 145h69" stroke="#d6d9de" stroke-width="3" stroke-linecap="round" />
+              <text x="109" y="201" fill="#5f6672" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="1.3" text-anchor="middle">IL QUESITO</text>
+              <circle cx="380" cy="112" r="58" fill="#fff" stroke="#8a5c16" stroke-width="2" />
+              <circle cx="380" cy="112" r="44" fill="none" stroke="#d6d9de" stroke-width="1.5" />
+              <path d="M360 112h40M380 92v40" stroke="#8a5c16" stroke-width="2" stroke-linecap="round" />
+              <circle cx="380" cy="112" r="7" fill="#8a5c16" />
+              <text x="380" y="201" fill="#5f6672" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="1.3" text-anchor="middle">RICERCA SEMANTICA</text>
+              <rect x="566" y="47" width="170" height="130" rx="4" fill="#fff" stroke="#d6d9de" stroke-width="2" />
+              <path d="M588 75h48M588 91h39M588 108h48" stroke="#d6d9de" stroke-width="3" stroke-linecap="round" />
+              <path d="M588 139h125" stroke="#d6d9de" stroke-width="2" />
+              <circle cx="680" cy="82" r="15" fill="none" stroke="#8a5c16" stroke-width="2" />
+              <path d="m690 93 9 9" stroke="#8a5c16" stroke-width="2" stroke-linecap="round" />
+              <circle cx="600" cy="157" r="4" fill="#8a5c16" />
+              <circle cx="615" cy="157" r="4" fill="#d6d9de" />
+              <circle cx="630" cy="157" r="4" fill="#d6d9de" />
+              <text x="651" y="201" fill="#5f6672" font-family="Inter,Arial,sans-serif" font-size="12" font-weight="700" letter-spacing="1.3" text-anchor="middle">FONTI DA VERIFICARE</text>
+            </svg>
+
+            <div class="guide-cover-offer">
+              <span>Ricerca semantica + MCP</span>
+              <strong>Essential da 61 € / anno</strong>
+            </div>
+            <p class="guide-cover-footnote">Meno passaggi manuali, più tempo per valutare i risultati. L’efficienza dipende dal caso e dal modo d’uso.</p>
+          </div>
+        </div>
+      </article>
+
+      <article class="guide-page" aria-labelledby="titolo-banca-dati">
+        <svg class="guide-page-art" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><use href="guida-art.svg#database"></use></svg>
+        <div class="guide-page-content">
+          <p class="guide-kicker">01 <span>/</span> La banca dati</p>
+          <h2 class="guide-page-title" id="titolo-banca-dati">La giurisprudenza è il <em>punto di partenza.</em></h2>
+          <p class="guide-page-lead">Jurio raccoglie e organizza decisioni delle principali corti, per aiutarti a orientarti tra precedenti, principi e orientamenti collegati alla questione.</p>
+
+          <div class="guide-court-list">
+            <div><span class="guide-index">01</span><div><h3>Corte di cassazione</h3><p>Giurisprudenza civile e penale.</p></div></div>
+            <div><span class="guide-index">02</span><div><h3>Consiglio di Stato</h3><p>Decisioni della giustizia amministrativa.</p></div></div>
+            <div><span class="guide-index">03</span><div><h3>Corte costituzionale</h3><p>Pronunce e questioni di legittimità costituzionale.</p></div></div>
+          </div>
+
+          <figure class="guide-editorial-image">
+            <img src="https://jurio.it/guida-image/massima.webp" alt="Vista di un provvedimento e dei riferimenti giurisprudenziali in Jurio" loading="lazy">
+            <figcaption>Decisioni e riferimenti sono presentati per facilitare la consultazione della fonte.</figcaption>
+          </figure>
+
+          <div class="guide-process-line">
+            <span>Decisioni</span><i aria-hidden="true">→</i><span>Elaborazione con IA</span><i aria-hidden="true">→</i><span>Ricerca semantica</span>
+          </div>
+          <p class="guide-source-note"><strong>La fonte resta verificabile.</strong> Jurio supporta la ricerca; apri i provvedimenti citati e controlla direttamente il contenuto e la sua rilevanza.</p>
+        </div>
+        <footer class="guide-page-footer"><span>IL NUCLEO DEL PRODOTTO</span><span>02 / 12</span></footer>
+      </article>
+
+      <article class="guide-page" aria-labelledby="titolo-ricerca">
+        <svg class="guide-page-art" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><use href="guida-art.svg#search"></use></svg>
+        <div class="guide-page-content">
+          <p class="guide-kicker">02 <span>/</span> Ricerca semantica</p>
+          <h2 class="guide-page-title" id="titolo-ricerca">Cerca la questione, <em>non solo la citazione.</em></h2>
+          <p class="guide-page-lead">Formula una ricerca con i fatti e il problema giuridico. Il motore semantico confronta il significato della domanda con i contenuti della banca dati, anche quando le parole usate nelle decisioni sono diverse.</p>
+
+          <ol class="guide-steps">
+            <li><span>01</span><div><h3>Descrivi il caso</h3><p>Indica i fatti che contano e il dubbio da approfondire.</p></div></li>
+            <li><span>02</span><div><h3>Esplora i precedenti</h3><p>Individua decisioni e orientamenti collegati alla questione.</p></div></li>
+            <li><span>03</span><div><h3>Verifica le fonti</h3><p>Apri i provvedimenti, controlla i passaggi e valuta l’applicabilità.</p></div></li>
+          </ol>
+
+          <div class="guide-query-example">
+            <p class="guide-label">Esempio</p>
+            <blockquote>“Licenziamento disciplinare: proporzionalità della sanzione rispetto alla condotta contestata”</blockquote>
+          </div>
+
+          <figure class="guide-search-image">
+            <img src="https://jurio.it/guida-image/ricerca.webp" alt="Interfaccia di ricerca giurisprudenziale di Jurio" loading="lazy">
+            <figcaption>Inserisci la questione e affina i risultati nella piattaforma.</figcaption>
+          </figure>
+        </div>
+        <footer class="guide-page-footer"><span>DAL QUESITO ALLA FONTE</span><span>03 / 12</span></footer>
+      </article>
+
+    <article class="guide-page guide-page-mcp" aria-labelledby="titolo-integrazioni">
+        <svg class="guide-page-art" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><use href="/guide-art.svg#mcp"></use></svg>
+        <div class="guide-page-content">
+          <p class="guide-kicker">03 <span>/</span> Integrazioni MCP</p>
+          <h2 class="guide-page-title" id="titolo-integrazioni">Jurio, nel <em>client AI che usi già.</em></h2>
+          <p class="guide-page-lead">Il Model Context Protocol collega il client a Jurio: puoi interrogare la banca dati e recuperare il testo delle decisioni dal tuo flusso di lavoro.</p>
+
+          <div class="guide-mcp-diagram" aria-label="ChatGPT, Claude e Mistral Vibe si collegano alla banca dati Jurio attraverso MCP">
+            <div class="guide-mcp-clients">
+              <div class="guide-mcp-client"><img src="https://chatgpt.com/favicon.ico" alt=""><span>ChatGPT</span></div>
+              <div class="guide-mcp-client"><img src="https://static.vecteezy.com/system/resources/thumbnails/067/941/712/small_2x/claude-ai-logo-rounded-hd-free-png.png" alt=""><span>Claude</span></div>
+              <div class="guide-mcp-client"><img src="https://mistral.ai/favicon.ico" alt=""><span>Mistral Vibe</span></div>
+            </div>
+            <div class="guide-mcp-flow" aria-hidden="true"><span></span><span></span><span></span><b>MCP</b></div>
+            <div class="guide-mcp-destination"><img src="https://jurio.it/logo.webp" alt=""><div><strong>Jurio</strong><small>Banca dati giurisprudenziale</small></div></div>
+          </div>
+
+          <p class="guide-mcp-intro">Il client AI invia la richiesta a Jurio; Jurio cerca nella banca dati e restituisce risultati e riferimenti alle decisioni. La ricerca resta ancorata alle fonti giuridiche.</p>
+
+          <ol class="guide-mcp-steps">
+            <li><span>01</span><p>Aggiungi un server o connettore MCP remoto nelle impostazioni del client.</p></li>
+            <li><span>02</span><p>Inserisci l’URL del server Jurio riportato qui sotto.</p></li>
+            <li><span>03</span><p>Accedi e autorizza il collegamento in sicurezza con il tuo account Jurio.</p></li>
+          </ol>
+
+          <!-- Blocco URL Server MCP Riorganizzato -->
+          <div class="guide-endpoint" style="display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px 20px; background: rgba(255, 255, 255, 0.85); border: 1px solid #d6d9de; border-left: 4px solid #8a5c16; border-radius: 8px; backdrop-filter: blur(4px); box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);">
+            <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #5f6672;">
+              URL del server MCP
+            </span>
+            <code style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 15px; font-weight: 600; color: #8a5c16; background: #f4efea; padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(138, 92, 22, 0.15); word-break: break-all;">
+              https://jurio.it/mcp
+            </code>
+          </div>
+
+          <!-- Specifica Sicurezza OAuth 2.0 -->
+          <div style="margin-top: 14px; padding: 12px 16px; background-color: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 12.5px; line-height: 1.5; color: #4b5563;">
+            <strong style="color: #1f2937; font-weight: 600;">Autenticazione &amp; Sicurezza OAuth 2.0:</strong> 
+            La connessione è protetta dal protocollo standard OAuth 2.0 con PKCE (Proof Key for Code Exchange) su canale crittografato HTTPS/TLS. L'autenticazione tramite Brand Verification garantisce l'accesso diretto alla sola ricerca giurisprudenziale, mantenendo il controllo dei permessi revocabili in qualsiasi momento dal tuo account.
+          </div>
+
+          <p class="guide-source-note" style="margin-top: 12px;"><strong>Già dal piano Essential.</strong> La ricerca semantica e l’estrazione dei testi ufficiali sono disponibili tramite MCP; per la connessione servono un account Jurio e l’autorizzazione OAuth.</p>
+        </div>
+        <footer class="guide-page-footer"><span>JURIO NEL TUO FLUSSO DI LAVORO</span><span>04 / 12</span></footer>
+      </article>
+
+      <article class="guide-page" id="piani" aria-labelledby="titolo-piani">
+        <svg class="guide-page-art" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><use href="guida-art.svg#plans"></use></svg>
+        <div class="guide-page-content">
+          <p class="guide-kicker">04 <span>/</span> Piani</p>
+          <h2 class="guide-page-title" id="titolo-piani">Un piano per ogni <em>modo di lavorare.</em></h2>
+          <p class="guide-page-lead">Essential mette al centro ricerca semantica e MCP. Business aggiunge strumenti per lavorare su fascicoli, documenti e sintesi AI.</p>
+
+          <div class="guide-plans">
+            <section class="guide-plan">
+              <div class="guide-plan-top"><p class="guide-label">Ricerca e MCP · Piano base</p><h3>Essential</h3></div>
+              <div class="guide-plan-prices"><p><strong>6,10 €</strong><span>/ mese</span></p><p><strong>61 €</strong><span>/ anno</span></p></div>
+              <p class="guide-plan-equivalent">Annuale: equivalente a 5,08 € al mese · IVA inclusa</p>
+              <ul><li>100 ricerche giurisprudenziali al giorno</li><li>100 estrazioni di testi ufficiali al giorno</li><li>Integrazione MCP con ChatGPT, Claude, Mistral e client compatibili</li></ul>
+            </section>
+            <section class="guide-plan guide-plan-business">
+              <div class="guide-plan-top"><p class="guide-label">Suite completa</p><h3>Business</h3></div>
+              <div class="guide-plan-prices"><p><strong>24,40 €</strong><span>/ mese</span></p><p><strong>244 €</strong><span>/ anno</span></p></div>
+              <p class="guide-plan-equivalent">Annuale: equivalente a 20,33 € al mese · IVA inclusa</p>
+              <ul>
+                <li>Tutte le funzioni Essential, con il doppio delle ricerche e delle estrazioni</li>
+                <li><a href="#tool-consulente">Consulente Legale</a> e <a href="#tool-approfondimento">Approfondimento giurisprudenziale</a></li>
+                <li><a href="#tool-prompt">Prompt personalizzati</a> e <a href="#tool-documenti">analisi dei tuoi documenti in chat</a></li>
+                <li>Ricerca web certificata e trascrizione vocale</li>
+              </ul>
+            </section>
+          </div>
+
+          <div class="guide-workspace"><p class="guide-label">Workspace annuale</p><p><strong>3 licenze · 650 €</strong><span>5 licenze · 1.000 €</span><span>7 licenze · 1.300 €</span></p><small>Importi annuali, IVA inclusa. <a href="https://jurio.it/prezzi#teams">Dettagli Workspace ↗</a></small></div>
+          <div class="guide-trial"><strong>Prova gratuita di 7 giorni</strong><a href="https://jurio.it/login">Inizia su Jurio ↗</a></div>
+          <p class="guide-price-note">Prezzi consultati il 26 ottobre 2026. Le tariffe e le condizioni possono variare: <a href="https://jurio.it/prezzi">verifica il listino aggiornato</a>.</p>
+        </div>
+        <footer class="guide-page-footer"><span>ESSENTIAL · BUSINESS · WORKSPACE</span><span>05 / 12</span></footer>
+      </article>
+
+      <article class="guide-page guide-tool-page" id="tool-consulente" aria-labelledby="titolo-consulente">
+        <svg class="guide-page-art" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><use href="guida-art.svg#consultant"></use></svg>
+        <div class="guide-page-content">
+          <p class="guide-kicker">05 <span>/</span> Strumenti Business</p>
+          <p class="guide-tool-plan">INCLUSO NEL PIANO BUSINESS</p>
+          <h2 class="guide-page-title" id="titolo-consulente">Consulente Legale: <em>dalla domanda alla pratica.</em></h2>
+          <p class="guide-page-lead">Un ambiente di lavoro conversazionale per esaminare questioni giuridiche, interrogare le fonti e proseguire l’analisi mantenendo il contesto della pratica.</p>
+
+          <figure class="guide-tool-image">
+            <img src="https://jurio.it/guida-image/consulente.webp" alt="Interfaccia del Consulente Legale di Jurio" loading="lazy">
+            <figcaption>Un unico spazio per avviare una chat, aprire un fascicolo e riprendere le analisi.</figcaption>
+          </figure>
+
+          <div class="guide-tool-options">
+            <article><span>01</span><h3>Chat temporanea</h3><p>Affronta un quesito o un’analisi rapida in linguaggio naturale.</p></article>
+            <article><span>02</span><h3>Fascicolo</h3><p>Organizza una pratica continuativa e conserva il contesto tra le conversazioni.</p></article>
+            <article><span>03</span><h3>Archivio</h3><p>Riapri sessioni e fascicoli per riprendere il lavoro svolto.</p></article>
+          </div>
+          <p class="guide-tool-note"><strong>Nel piano Business:</strong> fino a 50 utilizzi al giorno. Le risposte riportano riferimenti da consultare e verificare direttamente nelle fonti.</p>
+        </div>
+        <footer class="guide-page-footer"><span>BUSINESS · CONSULENTE LEGALE</span><span>06 / 12</span></footer>
+      </article>
+
+      <article class="guide-page guide-tool-page" id="tool-approfondimento" aria-labelledby="titolo-approfondimento">
+        <svg class="guide-page-art" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><use href="guida-art.svg#analysis"></use></svg>
+        <div class="guide-page-content">
+          <p class="guide-kicker">06 <span>/</span> Strumenti Business</p>
+          <p class="guide-tool-plan">INCLUSO NEL PIANO BUSINESS</p>
+          <h2 class="guide-page-title" id="titolo-approfondimento">Approfondimento giurisprudenziale: <em>esamina le tesi in campo.</em></h2>
+          <p class="guide-page-lead">Per le questioni più articolate, Jurio organizza la ricerca in una mappa dialettica: orientamenti favorevoli e contrari, argomenti e fonti da valutare.</p>
+
+          <div class="guide-investigation">
+            <section class="guide-investigation-question">
+              <span class="guide-investigation-number">01 · IL QUESITO</span>
+              <h3>Descrivi il fatto controverso</h3>
+              <p>Formula la questione giuridica e aggiungi, se utile, i documenti della pratica da considerare nell’analisi.</p>
+            </section>
+
+            <div class="guide-investigation-sources" aria-label="Fonti considerate nella ricerca">
+              <span>Banca dati giurisprudenziale</span><span>Web giuridico istituzionale</span><span>Documenti del fascicolo</span>
+            </div>
+
+            <section class="guide-investigation-map">
+              <div class="guide-investigation-heading"><span class="guide-investigation-number">02 · LA MAPPA DIALETTICA</span><p>La ricerca organizza le ragioni e le fonti sui due lati della questione.</p></div>
+              <div class="guide-map-branches">
+                <article class="guide-map-side guide-map-favorable"><span>TESI FAVOREVOLE</span><h3>Argomenti a sostegno</h3><p>Orientamenti conformi, precedenti e riferimenti normativi pertinenti.</p></article>
+                <article class="guide-map-side guide-map-adverse"><span>TESI CONTRARIA</span><h3>Obiezioni e rischi</h3><p>Orientamenti difformi, eccezioni e possibili profili critici.</p></article>
+              </div>
+            </section>
+
+            <section class="guide-investigation-summary">
+              <span class="guide-investigation-number">03 · LA SINTESI</span>
+              <div><h3>Una lettura d’insieme, con le fonti in chiaro</h3><p>Inquadramento giuridico, argomenti principali, rischi e conclusioni operative da approfondire e verificare.</p></div>
+              <div class="guide-summary-actions"><span>Copia gli appunti</span><span>Esporta il report in PDF</span></div>
+            </section>
+          </div>
+          <p class="guide-tool-note"><strong>Nel piano Business:</strong> fino a 30 approfondimenti al giorno. Puoi configurare le fonti da includere e il livello di ampiezza della ricerca.</p>
+        </div>
+        <footer class="guide-page-footer"><span>BUSINESS · APPROFONDIMENTO GIURISPRUDENZIALE</span><span>07 / 12</span></footer>
+      </article>
+
+      <article class="guide-page guide-tool-page" id="tool-prompt" aria-labelledby="titolo-prompt">
+        <svg class="guide-page-art" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><use href="guida-art.svg#prompt"></use></svg>
+        <div class="guide-page-content">
+          <p class="guide-kicker">07 <span>/</span> Strumenti Business</p>
+          <p class="guide-tool-plan">INCLUSO NEL PIANO BUSINESS</p>
+          <h2 class="guide-page-title" id="titolo-prompt">I tuoi prompt, <em>il tuo metodo di lavoro.</em></h2>
+          <p class="guide-page-lead">Crea istruzioni su misura per le attività ricorrenti dello studio, salvale nella tua libreria e richiamale nelle chat quando ti servono.</p>
+
+          <figure class="guide-tool-image">
+            <img src="https://jurio.it/guida-image/prompting.webp" alt="Strumento Jurio per creare e organizzare prompt personalizzati" loading="lazy">
+            <figcaption>Trasforma il tuo metodo in istruzioni riutilizzabili.</figcaption>
+          </figure>
+
+          <div class="guide-tool-callout">
+            <p class="guide-label">Un esempio</p>
+            <blockquote>“Analizza il documento, individua le clausole che disciplinano il recesso e riassumi obblighi, termini e possibili criticità.”</blockquote>
+          </div>
+          <div class="guide-tool-benefits"><span>Scrivi</span><i aria-hidden="true">→</i><span>Salva</span><i aria-hidden="true">→</i><span>Riutilizza in chat</span></div>
+          <p class="guide-tool-note"><strong>Nel piano Business:</strong> fino a 100 utilizzi al giorno per la creazione e l’impiego dei prompt personalizzati.</p>
+        </div>
+        <footer class="guide-page-footer"><span>BUSINESS · PROMPT PERSONALIZZATI</span><span>08 / 12</span></footer>
+      </article>
+
+      <article class="guide-page guide-tool-page" id="tool-documenti" aria-labelledby="titolo-documenti">
+        <svg class="guide-page-art" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><use href="guida-art.svg#documents"></use></svg>
+        <div class="guide-page-content">
+          <p class="guide-kicker">08 <span>/</span> Strumenti Business</p>
+          <p class="guide-tool-plan">INCLUSO NEL PIANO BUSINESS</p>
+          <h2 class="guide-page-title" id="titolo-documenti">I tuoi documenti, <em>pronti per la chat.</em></h2>
+          <p class="guide-page-lead">Carica un documento, lascia che Jurio ne elabori il contenuto e richiamalo nella conversazione per porre domande, estrarre informazioni o confrontare passaggi.</p>
+
+          <figure class="guide-tool-image">
+            <img src="https://jurio.it/guida-image/allegati.webp" alt="Documenti allegati e disponibili per l'analisi in una chat Jurio" loading="lazy">
+            <figcaption>Gli allegati elaborati possono essere richiamati nelle chat e nei fascicoli.</figcaption>
+          </figure>
+
+          <div class="guide-tool-options guide-document-formats">
+            <article><span>01</span><h3>Carica</h3><p>Seleziona file dal dispositivo o dal tuo archivio Jurio.</p></article>
+            <article><span>02</span><h3>Elabora</h3><p>Estrai testo e informazioni utili anche da documenti scansionati.</p></article>
+            <article><span>03</span><h3>Interroga in chat</h3><p>Chiedi sintesi, confronti, clausole o dettagli specifici.</p></article>
+          </div>
+          <p class="guide-tool-note"><strong>Nel piano Business:</strong> fino a 50 elaborazioni al giorno. Nella sessione è possibile allegare fino a 10 documenti.</p>
+        </div>
+        <footer class="guide-page-footer"><span>BUSINESS · DOCUMENTI IN CHAT</span><span>09 / 12</span></footer>
+      </article>
+
+      <article class="guide-page guide-page-efficiency" aria-labelledby="titolo-efficienza">
+        <svg class="guide-page-art" viewBox="0 0 240 240" aria-hidden="true" focusable="false">
+          <use href="guida-art.svg#time"></use>
+        </svg>
+
+        <div class="guide-page-content">
+          <p class="guide-kicker">09 <span>/</span> Il valore del tuo tempo</p>
+
+          <h2 class="guide-page-title" id="titolo-efficienza">
+            Dedica meno tempo alla ricerca.
+            <em>Più tempo alla strategia.</em>
+          </h2>
+
+          <p class="guide-page-lead">
+            Jurio ti aiuta a trovare precedenti pertinenti e risalire alle fonti,
+            riducendo i passaggi manuali della ricerca. Così puoi dedicare più
+            tempo all’analisi dei casi, alla strategia e ai tuoi clienti.
+          </p>
+
+          <div class="guide-scenario-label">
+            <span>Quanto può valere il tempo recuperato?</span>
+            <span>Esempio illustrativo</span>
+          </div>
+
+          <div class="guide-scenario">
+            <div>
+              <strong>15 min</strong>
+              <span>recuperati al giorno, ipoteticamente</span>
+            </div>
+            <div>
+              <strong>220</strong>
+              <span>giornate lavorative all’anno</span>
+            </div>
+            <div>
+              <strong>55 ore</strong>
+              <span>recuperate in un anno</span>
+            </div>
+            <div>
+              <strong>3.300 €</strong>
+              <span>valore teorico a 60 €/ora</span>
+            </div>
+          </div>
+
+          <h3 class="guide-break-even-title">
+            Quanto tempo basta per compensare il costo di Jurio?
+          </h3>
+
+          <p>
+            Ipotizzando che un’ora del tuo tempo valga 60 €, ecco quanto
+            tempo recuperato equivale al canone annuale:
+          </p>
+
+          <div class="guide-break-even">
+            <div>
+              <span>Essential · 61 €/anno</span>
+              <strong>1 ora e 1 minuto</strong>
+              <small>Circa 17 secondi per giornata lavorativa</small>
+            </div>
+            <div>
+              <span>Business · 244 €/anno</span>
+              <strong>4 ore e 4 minuti</strong>
+              <small>Circa 1 minuto e 7 secondi al giorno</small>
+            </div>
+          </div>
+
+          <p class="guide-accessible">
+            <strong>Ricerca giuridica con IA da 5,08 € al mese.</strong>
+            Essential costa 61 € all’anno, include MCP e non prevede costi
+            a consumo.
+          </p>
+
+          <p class="guide-economics-note">
+            Esempio ipotetico basato su 220 giornate lavorative e un valore del
+            tempo di 60 €/ora. Il tempo effettivamente recuperato dipende
+            dall’utilizzo di Jurio; il suo valore teorico non garantisce
+            maggiori ricavi o utili. Prezzi annuali IVA inclusa.
+          </p>
+        </div>
+
+        <footer class="guide-page-footer">
+          <span>PIÙ TEMPO PER IL TUO LAVORO. UN CANONE ACCESSIBILE.</span>
+          <span>10 / 12</span>
+        </footer>
+      </article>
+
+      <article class="guide-page guide-page-usage" aria-labelledby="titolo-utilizzi">
+        <svg class="guide-page-art" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><use href="guida-art.svg#capacity"></use></svg>
+        <div class="guide-page-content">
+          <p class="guide-kicker">10 <span>/</span> Capacità operativa</p>
+          <h2 class="guide-page-title" id="titolo-utilizzi">Più utilizzi, <em>limiti chiari.</em></h2>
+          <p class="guide-page-lead">I contatori si azzerano ogni 24 ore. Le soglie si applicano separatamente a ciascuna funzione e non comportano costi a consumo.</p>
+
+          <table class="guide-usage-table">
+            <thead><tr><th scope="col">Funzione</th><th scope="col">Essential</th><th scope="col">Business</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Ricerca giurisprudenziale</th><td>100 / giorno</td><td><strong>200 / giorno · 2×</strong></td></tr>
+              <tr><th scope="row">Estrazione testo ufficiale</th><td>100 / giorno</td><td><strong>200 / giorno · 2×</strong></td></tr>
+              <tr><th scope="row">Consulente Legale AI</th><td>Non incluso</td><td>50 / giorno</td></tr>
+              <tr><th scope="row">Prompt personalizzati in chat</th><td>Non inclusi</td><td>100 / giorno</td></tr>
+              <tr><th scope="row">Ricerca web certificata</th><td>Non inclusa</td><td>20 / giorno</td></tr>
+              <tr><th scope="row">Approfondimento giurisprudenziale</th><td>Non incluso</td><td>30 / giorno</td></tr>
+              <tr><th scope="row">Elaborazione documenti in chat</th><td>Non inclusa</td><td>50 / giorno</td></tr>
+              <tr><th scope="row">Trascrizione vocale</th><td>Non inclusa</td><td>200 / giorno</td></tr>
+            </tbody>
+          </table>
+
+          <div class="guide-uplift"><span>+100</span><p><strong>Ricerche al giorno</strong><br>con Business rispetto a Essential</p><span>+100</span><p><strong>Estrazioni al giorno</strong><br>con Business rispetto a Essential</p></div>
+          <p class="guide-usage-note">Business raddoppia la capacità giornaliera di ricerca semantica e di estrazione dei testi ufficiali, e include gli strumenti di analisi e sintesi AI. Limiti e disponibilità possono variare: <a href="https://jurio.it/prezzi">consulta i valori aggiornati</a>.</p>
+        </div>
+        <footer class="guide-page-footer"><span>UTILIZZI GIORNALIERI PER PIANO</span><span>11 / 12</span></footer>
+      </article>
+
+      <article class="guide-page guide-page-cta" aria-labelledby="titolo-cta">
+        <svg class="guide-page-art" viewBox="0 0 240 240" aria-hidden="true" focusable="false"><use href="guida-art.svg#cta"></use></svg>
+        <div class="guide-page-content">
+          <p class="guide-kicker">Jurio <span>/</span> Il prossimo passo</p>
+          <div class="guide-cta-brand"><img src="https://jurio.it/logo.webp" alt=""><span>Jurio</span></div>
+          <h2 class="guide-cta-title" id="titolo-cta">La ricerca giuridica, <em>pronta a seguirti.</em></h2>
+          <p class="guide-cta-lead">Trova i precedenti per significato, verifica le fonti e porta la ricerca nel tuo client AI. Parti da Essential: ricerca semantica, MCP e fino a 100 ricerche al giorno.</p>
+          <div class="guide-cta-price"><strong>61 € / anno</strong><span>5,08 € al mese equivalenti · IVA inclusa</span></div>
+          <div class="guide-cta-actions"><a class="guide-cta-primary" href="https://jurio.it/login">Inizia la prova gratuita di 7 giorni <span aria-hidden="true">↗</span></a><a class="guide-cta-secondary" href="https://jurio.it/prezzi">Confronta tutti i piani</a></div>
+          <p class="guide-cta-footnote">La tecnologia giuridica può essere uno strumento quotidiano, accessibile e proporzionato al tuo lavoro.</p>
+        </div>
+        <footer class="guide-page-footer"><span>JURIO · RICERCA GIURIDICA CON IA</span><span>12 / 12</span></footer>
+      </article>
+    </div>
+  </main>
+  <div id="footer"></div>
+  <script>
+      document.addEventListener("DOMContentLoaded", async () => {
+          const components = [
+              {
+                  selector: "#header",
+                  file: "/header.html",
+              },
+              {
+                  selector: "#footer",
+                  file: "/footer.html",
+              },
+          ];
+
+          await Promise.all(
+              components.map(async ({ selector, file }) => {
+                  const element = document.querySelector(selector);
+
+                  if (!element) return;
+
+                  try {
+                      const response = await fetch(file);
+
+                      if (!response.ok) {
+                          throw new Error(`HTTP ${response.status}`);
+                      }
+
+                      element.innerHTML = await response.text();
+                  } catch (error) {
+                      console.error(`Errore nel caricamento di ${file}:`, error);
+                  }
+              })
+          );
+      });
+  </script>
+  <script>
+    (() => {
+      const sheets = document.querySelector('.guide-pages');
+      const fitA4Preview = () => {
+        const a4WidthInCssPixels = 210 * 96 / 25.4;
+        const scale = Math.min(1, Math.max(.25, (window.innerWidth - 32) / a4WidthInCssPixels));
+        sheets.style.setProperty('--guide-page-zoom', scale);
+      };
+      fitA4Preview();
+      window.addEventListener('resize', fitA4Preview, { passive: true });
+    })();
+  </script>
+</body>
+</html>
