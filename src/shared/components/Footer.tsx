@@ -131,7 +131,7 @@ export const Footer: React.FC = () => {
       {/* Disclaimer e Copyright */}
       <div className="mt-16 pt-8 border-t border-(--color-border) flex flex-col items-center gap-4">
         <p className="text-[11px] md:text-xs text-(--color-muted) text-center font-light max-w-4xl opacity-80 leading-relaxed">
-          Le fonti documentali indicizzate provengono esclusivamente da archivi istituzionali ufficiali (Corte Suprema di Cassazione, Corte Costituzionale, Giustizia Amministrativa). Ogni elaborazione, sintesi e statistica generata dalla piattaforma si fonda rigorosamente su tali dati.
+          Le fonti documentali, oggetto di sintesi e indicizzazione, provengono esclusivamente da archivi istituzionali ufficiali (Corte Suprema di Cassazione, Corte Costituzionale, Giustizia Amministrativa). Ogni elaborazione, sintesi e statistica generata dalla piattaforma si fonda rigorosamente su tali dati.
         </p>
         <div className="text-[10px] uppercase tracking-widest text-(--color-muted) text-center font-medium opacity-70">
           &copy; {currentYear} Jurio. Tutti i diritti riservati.

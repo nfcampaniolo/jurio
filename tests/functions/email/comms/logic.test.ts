@@ -117,7 +117,7 @@ describe("comms email logic", () => {
     expect(mocks.requestHtml).toHaveBeenCalledWith("Ada", "T-42", "Problema accesso", "Non riesco ad accedere");
     expect(mocks.dispatch).toHaveBeenCalledWith({
       to: "ada@example.com",
-      cc: "nicolo.flavio.campaniolo@gmail.com",
+      cc: "contatti@jurio.it",
       subject: "Richiesta Jurio: T-42",
       html: "<request>Ada|T-42|Problema accesso|Non riesco ad accedere</request>",
     });

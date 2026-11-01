@@ -26,7 +26,7 @@ const {
   mockGetGoogleConfig: vi.fn(() => ({
     clientId: "mock-client-id.apps.googleusercontent.com",
     apiKey: "mock-api-key",
-    appId: "mock-app-id",
+    projectNumber: "123456789",
   })),
   mockLoadScript: vi.fn().mockResolvedValue(undefined),
   mockLoadGoogleLibraries: vi.fn().mockResolvedValue(undefined),
@@ -96,6 +96,7 @@ describe("useGoogleDrive Hook Suite", () => {
     setOAuthToken: vi.fn().mockReturnThis(),
     setDeveloperKey: vi.fn().mockReturnThis(),
     setAppId: vi.fn().mockReturnThis(),
+    setOrigin: vi.fn().mockReturnThis(),
     setCallback: vi.fn((cb: (data: Record<string, unknown>) => void) => {
       pickerCallback = cb;
       return mockPickerBuilderInstance;
@@ -168,34 +169,37 @@ describe("useGoogleDrive Hook Suite", () => {
       mockAuthState.user = null;
       const { result } = renderHook(() => useGoogleDrive());
 
-      await act(async () => {
-        await result.current.openPicker(vi.fn());
+      act(() => {
+        result.current.openPicker(vi.fn());
       });
 
       expect(mockToast.error).toHaveBeenCalledWith("Devi essere autenticato nell'applicazione.");
       expect(mockLoadGoogleLibraries).not.toHaveBeenCalled();
     });
 
-    test("intercetta assenza di Google Identity Services gestendo l'eccezione con toast", async () => {
+    test("se le librerie non sono pronte blocca il picker con messaggio di inizializzazione", async () => {
       (window as unknown as { google: { accounts?: unknown } }).google.accounts = undefined;
 
       const { result } = renderHook(() => useGoogleDrive());
 
-      await act(async () => {
-        await result.current.openPicker(vi.fn());
+      act(() => {
+        result.current.openPicker(vi.fn());
       });
 
       expect(mockToast.error).toHaveBeenCalledWith(
-        "Google Drive: Google Identity Services non disponibile."
+        "Google Drive si sta inizializzando. Riprova tra qualche secondo."
       );
     });
 
-    test("richiede il token con prompt 'consent' al primo avvio e gestisce errore da Google", async () => {
+    test("richiede il token al primo avvio e gestisce errore da Google", async () => {
       const { result } = renderHook(() => useGoogleDrive());
 
-      let pickerPromise!: Promise<void>;
+      await vi.waitFor(() => {
+        expect(result.current.librariesReady).toBe(true);
+      });
+
       act(() => {
-        pickerPromise = result.current.openPicker(vi.fn());
+        result.current.openPicker(vi.fn());
       });
 
       await vi.waitFor(() => {
@@ -206,27 +210,26 @@ describe("useGoogleDrive Hook Suite", () => {
           })
         );
       });
-      expect(mockRequestAccessToken).toHaveBeenCalledWith({ prompt: "consent" });
+      expect(mockRequestAccessToken).toHaveBeenCalledWith();
 
       // Simula rifiuto consenso da Google
       act(() => {
         tokenCallback?.({ error: "access_denied", error_description: "Utente ha negato il consenso" });
       });
 
-      await act(async () => {
-        await pickerPromise;
-      });
-
-      expect(mockToast.error).toHaveBeenCalledWith("Google Drive: Utente ha negato il consenso");
+      expect(mockToast.error).toHaveBeenCalledWith("Utente ha negato il consenso");
     });
 
     test("apre Google Picker con filtri MIME corretti e invoca onSelectFile alla selezione", async () => {
       const onSelectFileSpy = vi.fn();
       const { result } = renderHook(() => useGoogleDrive());
 
-      let openPickerPromise!: Promise<void>;
+      await vi.waitFor(() => {
+        expect(result.current.librariesReady).toBe(true);
+      });
+
       act(() => {
-        openPickerPromise = result.current.openPicker(onSelectFileSpy);
+        result.current.openPicker(onSelectFileSpy);
       });
 
       await vi.waitFor(() => {
@@ -238,16 +241,12 @@ describe("useGoogleDrive Hook Suite", () => {
         tokenCallback?.({ access_token: "ya29.mock_token_drive" });
       });
 
-      await act(async () => {
-        await openPickerPromise;
-      });
-
       expect(mockDocsViewInstance.setMimeTypes).toHaveBeenCalledWith(
         "application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
       );
       expect(mockPickerBuilderInstance.setOAuthToken).toHaveBeenCalledWith("ya29.mock_token_drive");
       expect(mockPickerBuilderInstance.setDeveloperKey).toHaveBeenCalledWith("mock-api-key");
-      expect(mockPickerBuilderInstance.setAppId).toHaveBeenCalledWith("mock-app-id");
+      expect(mockPickerBuilderInstance.setAppId).toHaveBeenCalledWith("123456789");
       expect(mockPickerSetVisible).toHaveBeenCalledWith(true);
       expect(result.current.googleToken).toBe("ya29.mock_token_drive");
 
@@ -276,9 +275,12 @@ describe("useGoogleDrive Hook Suite", () => {
       const onSelectFileSpy = vi.fn();
       const { result } = renderHook(() => useGoogleDrive());
 
-      let openPickerPromise!: Promise<void>;
+      await vi.waitFor(() => {
+        expect(result.current.librariesReady).toBe(true);
+      });
+
       act(() => {
-        openPickerPromise = result.current.openPicker(onSelectFileSpy);
+        result.current.openPicker(onSelectFileSpy);
       });
 
       await vi.waitFor(() => {
@@ -287,10 +289,6 @@ describe("useGoogleDrive Hook Suite", () => {
 
       act(() => {
         tokenCallback?.({ access_token: "ya29.mock_token_drive" });
-      });
-
-      await act(async () => {
-        await openPickerPromise;
       });
 
       // Azione Annulla
@@ -325,25 +323,21 @@ describe("useGoogleDrive Hook Suite", () => {
 
       await expect(
         authResult.current.downloadFile("file-1", "atto.pdf", "application/pdf")
-      ).rejects.toThrow("Token Google Drive non disponibile.");
+      ).rejects.toThrow("Token Google scaduto. Riapri Google Drive e autorizza nuovamente l'accesso.");
     });
 
     test("scarica il file dal backend di download cloud e restituisce un'istanza File valida", async () => {
       const { result } = renderHook(() => useGoogleDrive());
 
       // 1. Popola il token tramite openPicker
-      let openPromise!: Promise<void>;
       act(() => {
-        openPromise = result.current.openPicker(vi.fn());
+        result.current.openPicker(vi.fn());
       });
       await vi.waitFor(() => {
         expect(mockInitTokenClient).toHaveBeenCalled();
       });
       act(() => {
         tokenCallback?.({ access_token: "token_autenticato_valido" });
-      });
-      await act(async () => {
-        await openPromise;
       });
 
       // 2. Simula download endpoint
@@ -381,18 +375,14 @@ describe("useGoogleDrive Hook Suite", () => {
     test("solleva eccezione e ripristina loading a false se il server risponde con errore HTTP", async () => {
       const { result } = renderHook(() => useGoogleDrive());
 
-      let openPromise!: Promise<void>;
       act(() => {
-        openPromise = result.current.openPicker(vi.fn());
+        result.current.openPicker(vi.fn());
       });
       await vi.waitFor(() => {
         expect(mockInitTokenClient).toHaveBeenCalled();
       });
       act(() => {
         tokenCallback?.({ access_token: "token_test" });
-      });
-      await act(async () => {
-        await openPromise;
       });
 
       mockFetchWithSecurity.mockResolvedValueOnce({

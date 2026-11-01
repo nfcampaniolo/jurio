@@ -46,3 +46,24 @@ word/
 compilance/
 posts/
 !.plugins/
+
+# --- Sensitive / internal-only areas (do not publish to GitHub) ---
+# Admin sections (frontend, backend, tests)
+src/features/admin/
+functions/src/admin/
+tests/**/admin/
+tests/**/Admin*/
+tests/**/Admin*.test.tsx
+
+# Sentences collection loading/details
+functions/src/research/sentences.logic.ts
+tests/functions/research/sentences.logic.test.ts
+tests/hosting/services/sentenceQueries.test.ts
+src/features/profile/components/UploadSentences.tsx
+src/features/document/hooks/saveSentences.ts
+src/features/document/components/LinkedSentences.tsx
+
+# Firebase database/storage rules and indexes
+firestore.indexes.json
+firestore.rules
+storage.rules

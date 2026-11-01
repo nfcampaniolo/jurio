@@ -92,7 +92,7 @@ describe("DeepAnalysisLanding Component Suite", () => {
     expect(workflowItems).toHaveLength(4);
 
     expect(screen.getByText("Inquadramento della Questione")).toBeInTheDocument();
-    expect(screen.getByText("Scrutinio delle Fonti Ufficiali")).toBeInTheDocument();
+    expect(screen.getByText("Scrutinio delle Fonti Autorevoli")).toBeInTheDocument();
     expect(screen.getByText("Approfondimento Dinamico")).toBeInTheDocument();
     expect(screen.getByText("Sintesi Strategica")).toBeInTheDocument();
   });

@@ -6,7 +6,7 @@ const steps = [
   {
     key: 'database',
     title: 'Tutta la giurisprudenza che conta',
-    desc: 'Ricerca nei provvedimenti di Cassazione Civile, Cassazione Penale, Consiglio di Stato e Corte Costituzionale, per trovare i precedenti più pertinenti rispetto alla questione giuridica analizzata.',
+    desc: 'Ricerca la sintesi dei provvedimenti di Cassazione Civile, Cassazione Penale, Consiglio di Stato e Corte Costituzionale, per trovare i precedenti più pertinenti rispetto alla questione giuridica analizzata.',
     Icon: Book,
   },
 

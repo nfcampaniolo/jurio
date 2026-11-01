@@ -27,7 +27,7 @@ La ricerca legale richiede tempo: individuare precedenti pertinenti, confrontare
 
 Jurio nasce per semplificare questo processo.
 
-Grazie alla ricerca semantica e all’intelligenza artificiale, puoi partire da una questione giuridica, individuare i contenuti rilevanti e approfondirli direttamente attraverso le fonti originali.
+Grazie alla ricerca semantica e all’intelligenza artificiale, puoi partire da una questione giuridica, individuare i contenuti rilevanti e lavorare su sintesi e metadati dei provvedimenti ufficiali.
 
 Non un altro chatbot generico. Uno strumento progettato intorno al lavoro giuridico.
 
@@ -39,7 +39,7 @@ Cerca per questione giuridica, fatti e significato. Individua precedenti e orien
 
 ### Giurisprudenza con le fonti in primo piano
 
-Accedi a un patrimonio di giurisprudenza delle Corti superiori italiane, elaborata e indicizzata per facilitare la ricerca. Approfondisci le decisioni e verifica direttamente i documenti di riferimento.
+Accedi a un patrimonio di giurisprudenza delle Corti superiori italiane, elaborata e indicizzata per facilitare la ricerca. Approfondisci le decisioni con sintesi strutturate e metadati verificabili.
 
 ### Analisi di documenti e fascicoli
 
@@ -65,7 +65,7 @@ Nel lavoro legale, una risposta plausibile non basta. Conta poter risalire alla 
 
 Per questo Jurio mette al centro:
 
-* **Fonti verificabili:** puoi approfondire i documenti alla base dei risultati.
+* **Fonti verificabili:** ogni risultato mantiene riferimenti verificabili tramite metadati e sintesi dei provvedimenti ufficiali.
 * **Contesto giuridico:** la ricerca combina il patrimonio giurisprudenziale con la documentazione selezionata.
 * **Controllo professionale:** l'AI supporta l'analisi, ma non sostituisce il giudizio dell'avvocato.
 

@@ -208,7 +208,7 @@ export const SearchBar = () => {
           transition={{ duration: 0.8 }}
           className="text-sm sm:text-base max-w-2xl text-(--color-muted) leading-relaxed font-light"
         >
-          Jurio assicura la disamina sistematica di sentenze e ordinanze integrali attinte dai repertori ufficiali, mantenute in costante coordinamento con il diritto positivo vigente. L’accreditamento alla piattaforma è a titolo gratuito e ricomprende una finestra di valutazione per saggiare l’intera capacità euristica e analitica del sistema.
+          Jurio fornisce la sintesi ed elaborazione di sentenze e ordinanze attinte dai repertori ufficiali, mantenute in costante coordinamento con il diritto positivo vigente. L’accreditamento alla piattaforma è a titolo gratuito e ricomprende una finestra di valutazione per saggiare l’intera capacità euristica e analitica del sistema.
         </motion.p>
       </div>
 

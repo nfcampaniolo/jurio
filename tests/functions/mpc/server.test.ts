@@ -6,7 +6,6 @@ const mocks = vi.hoisted(() => ({
   registerRicercaNormativa: vi.fn(),
   registerRicercaIdentificativo: vi.fn(),
   registerRicercaPerMateria: vi.fn(),
-  registerEstraiTestoDocumento: vi.fn(),
   registerGetPromptList: vi.fn(),
 }));
 
@@ -15,7 +14,6 @@ vi.mock("@functions/mpc/tools/ricercaDottrina", () => ({ registerdoctrineSearch:
 vi.mock("@functions/mpc/tools/ricercaNormativa", () => ({ registerRicercaNormativa: mocks.registerRicercaNormativa }));
 vi.mock("@functions/mpc/tools/ricercaIdentificativo", () => ({ registerRicercaIdentificativo: mocks.registerRicercaIdentificativo }));
 vi.mock("@functions/mpc/tools/ricercaPerMateria", () => ({ registerRicercaPerMateria: mocks.registerRicercaPerMateria }));
-vi.mock("@functions/mpc/tools/estraiTestoDocumento", () => ({ registerEstraiTestoDocumento: mocks.registerEstraiTestoDocumento }));
 vi.mock("@functions/mpc/tools/ricercaPrompt", () => ({ registerGetPromptList: mocks.registerGetPromptList }));
 
 describe("createMcpServer", () => {
@@ -36,7 +34,6 @@ describe("createMcpServer", () => {
     expect(mocks.registerRicercaNormativa).toHaveBeenCalledWith(expect.any(Object), authHeader);
     expect(mocks.registerRicercaIdentificativo).toHaveBeenCalledWith(expect.any(Object), authHeader);
     expect(mocks.registerRicercaPerMateria).toHaveBeenCalledWith(expect.any(Object), authHeader);
-    expect(mocks.registerEstraiTestoDocumento).toHaveBeenCalledWith(expect.any(Object), authHeader);
     expect(mocks.registerGetPromptList).toHaveBeenCalledWith(expect.any(Object), authHeader);
   });
 });

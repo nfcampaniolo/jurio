@@ -13,6 +13,7 @@ import type { AnalisiContrattualeData } from "./RenderContratto";
 import type { DueDiligenceData } from "./RenderDueDiligence";
 import type { PreparazioneCasoData } from "./RenderPreparazioneCaso";
 import type { Sentenza, Ordinanza, Decreto, DocumentoGiurisprudenzaGenerico } from "@/interfaces/interfaces";
+import { isFonteAmmessa } from "@/features/document/constants/fontiAmmesse";
 
 // L'unione dei tipi ora è sicura
 type JurioDocument = Sentenza | Ordinanza | Decreto | DocumentoGiurisprudenzaGenerico | Record<string, unknown>;
@@ -57,6 +58,12 @@ export const MassimaCard: React.FC<Props> = ({ result, file, share, uid = "", id
   const documentName = 'nome_file' in result ? (result.nome_file as string) : undefined;
   const isGenerico = result.tipo_documento === "documento_giurisprudenza_generico";
 
+  const fonte = 'fonte' in result ? (result.fonte as string | undefined) : undefined;
+  const hasFonteField = 'fonte' in result;
+  const canShowSidebarBySource = !hasFonteField || isFonteAmmessa(fonte);
+  const showFonteNonAmmessaMessage = Boolean(file) && hasFonteField && !canShowSidebarBySource;
+  const shouldShowSidebar = file && (documentName || 'organo_giudicante' in result) && canShowSidebarBySource;
+
   return (
     <div className="flex flex-col lg:flex-row items-start gap-8 m-3">
       <div className="relative flex-1 min-w-0 w-full space-y-6 text-left sm:text-justify border border-(--color-border) rounded-lg p-6 sm:p-8 bg-(--color-surface) shadow-(--shadow-soft) overflow-hidden">
@@ -71,9 +78,15 @@ export const MassimaCard: React.FC<Props> = ({ result, file, share, uid = "", id
         <div className="mt-6">
           {getRenderer()}
         </div>
+
+        {showFonteNonAmmessaMessage && (
+          <p className="mt-4 text-xs text-(--color-muted) font-light">
+            Anteprima PDF non disponibile: fonte non ammessa.
+          </p>
+        )}
       </div>
 
-      {file && (documentName || 'organo_giudicante' in result) && (
+      {shouldShowSidebar && (
         <PdfPreviewSidebar 
           file={file} 
           share={share} 

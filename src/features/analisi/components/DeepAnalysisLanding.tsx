@@ -16,8 +16,8 @@ const workflowSteps = [
   {
     key: "02",
     Icon: Landmark,
-    title: "Scrutinio delle Fonti Ufficiali",
-    desc: "Il sistema interroga le banche dati e gli archivi di merito e legittimità, isolando i precedenti puntuali e le massime rilevanti per la fattispecie."
+    title: "Scrutinio delle Fonti Autorevoli",
+    desc: "Il sistema interroga le banche dati isolando i precedenti puntuali e le massime rilevanti per la fattispecie. Integra con ricerche web da fonti autorevoli."
   },
   {
     key: "03",

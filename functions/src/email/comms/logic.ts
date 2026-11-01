@@ -50,7 +50,7 @@ export async function enqueueContactEmail({ nome, id, subject, message, email }:
   
   await dispatchMailAndNotification({
     to: email,
-    cc: "nicolo.flavio.campaniolo@gmail.com",
+    cc: "contatti@jurio.it",
     subject: oggetto,
     html
   });

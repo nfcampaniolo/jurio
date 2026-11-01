@@ -69,7 +69,7 @@ describe("ComeFunziona Component Suite", () => {
       {
         watermark: "01",
         title: "Tutta la giurisprudenza che conta",
-        descSnippet: /ricerca nei provvedimenti di cassazione civile/i,
+        descSnippet: /ricerca la sintesi dei provvedimenti di cassazione civile/i,
       },
       {
         watermark: "02",

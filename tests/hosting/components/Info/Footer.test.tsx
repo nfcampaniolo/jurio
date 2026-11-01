@@ -90,7 +90,7 @@ test("renderizza i canali social con link sicuri a schede esterne", () => {
 
     expect(
       screen.getByText(
-        /Le fonti documentali indicizzate provengono esclusivamente da archivi istituzionali ufficiali/i
+        /Le fonti documentali, oggetto di sintesi e indicizzazione, provengono esclusivamente da archivi istituzionali ufficiali/i
       )
     ).toBeInTheDocument();
 

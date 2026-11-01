@@ -177,13 +177,23 @@ export const RenderGiurisprudenza: React.FC<RenderGiurisprudenzaProps> = ({ data
       {/* Fonte Logo e Link Esterno */}
       {(data.fonte || data.logo_fonte) && (
         <div className="flex items-end gap-2 pt-4 border-t border-(--color-border)/50 mt-6">
-          {data.logo_fonte && (
-            data.logo_fonte.startsWith("http") ? (
-              <img src={data.logo_fonte} alt={data.fonte ?? "fonte"} className="h-4 w-auto grayscale opacity-70" />
-            ) : (
-              <span className="text-xs text-(--color-muted) font-light">{data.logo_fonte}</span>
-            )
-          )}
+            {(() => {
+            const isItalgiure = data.fonte && data.fonte.toLowerCase().includes("italgiure");
+            console.log("isItalgiure:", isItalgiure)
+            const resolvedLogo = isItalgiure ? "https://www.cortedicassazione.it/resources/static/img/portale/CDC-Logo.svg" : data.logo_fonte;
+            return (
+              <>
+                {resolvedLogo && (
+                  resolvedLogo.startsWith("http") || resolvedLogo.startsWith("/") ? (
+                    <img src={resolvedLogo} alt={data.fonte ?? "fonte"} className="h-4 w-auto grayscale opacity-70" />
+                  ) : (
+                    <span className="text-xs text-(--color-muted) font-light">{resolvedLogo}</span>
+                  )
+                )}
+              </>
+            );
+          })()}
+
           {data.fonte && (
             data.fonte.startsWith("http") ? (
               <a href={data.fonte} target="_blank" rel="noopener noreferrer" className="text-xs text-(--color-muted) underline hover:text-(--color-text) transition-colors">

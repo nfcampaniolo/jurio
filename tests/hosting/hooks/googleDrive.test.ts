@@ -3,7 +3,10 @@ import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
 declare global {
   interface Window {
     gapi?: {
-      load: (api: string, callback: () => void) => void;
+      load: (
+        api: string,
+        options: { callback: () => void; onerror?: () => void; ontimeout?: () => void; timeout?: number }
+      ) => void;
     };
   }
 }
@@ -49,21 +52,21 @@ describe("Google Drive Config & Loader Suite", () => {
     test("restituisce le configurazioni se tutte le variabili d'ambiente sono valorizzate", () => {
       vi.stubEnv("VITE_GOOGLE_CLIENT_ID", "mock-client-id.apps.googleusercontent.com");
       vi.stubEnv("VITE_FIREBASE_API_KEY", "mock-firebase-api-key-123");
-      vi.stubEnv("VITE_GOOGLE_APP_ID", "mock-app-id-789");
+      vi.stubEnv("VITE_GOOGLE_PROJECT_NUMBER", "123456789");
 
       const config = getGoogleConfig();
 
       expect(config).toEqual({
         clientId: "mock-client-id.apps.googleusercontent.com",
         apiKey: "mock-firebase-api-key-123",
-        appId: "mock-app-id-789",
+        projectNumber: "123456789",
       });
     });
 
     test("solleva errore se VITE_GOOGLE_CLIENT_ID non è configurato", () => {
       vi.stubEnv("VITE_GOOGLE_CLIENT_ID", "");
       vi.stubEnv("VITE_FIREBASE_API_KEY", "mock-api-key");
-      vi.stubEnv("VITE_GOOGLE_APP_ID", "mock-app-id");
+      vi.stubEnv("VITE_GOOGLE_PROJECT_NUMBER", "123456789");
 
       expect(() => getGoogleConfig()).toThrow("VITE_GOOGLE_CLIENT_ID non configurato.");
     });
@@ -71,17 +74,17 @@ describe("Google Drive Config & Loader Suite", () => {
     test("solleva errore se VITE_FIREBASE_API_KEY non è configurato", () => {
       vi.stubEnv("VITE_GOOGLE_CLIENT_ID", "mock-client-id");
       vi.stubEnv("VITE_FIREBASE_API_KEY", "");
-      vi.stubEnv("VITE_GOOGLE_APP_ID", "mock-app-id");
+      vi.stubEnv("VITE_GOOGLE_PROJECT_NUMBER", "123456789");
 
       expect(() => getGoogleConfig()).toThrow("VITE_GOOGLE_API_KEY non configurato.");
     });
 
-    test("solleva errore se VITE_GOOGLE_APP_ID non è configurato", () => {
+    test("solleva errore se VITE_GOOGLE_PROJECT_NUMBER non è configurato o non valido", () => {
       vi.stubEnv("VITE_GOOGLE_CLIENT_ID", "mock-client-id");
       vi.stubEnv("VITE_FIREBASE_API_KEY", "mock-api-key");
-      vi.stubEnv("VITE_GOOGLE_APP_ID", "");
+      vi.stubEnv("VITE_GOOGLE_PROJECT_NUMBER", "");
 
-      expect(() => getGoogleConfig()).toThrow("VITE_GOOGLE_APP_ID non configurato.");
+      expect(() => getGoogleConfig()).toThrow("VITE_GOOGLE_PROJECT_NUMBER non valido");
     });
   });
 
@@ -153,7 +156,7 @@ describe("Google Drive Config & Loader Suite", () => {
       setupPreloadedScripts();
 
       window.gapi = {
-        load: vi.fn((_api: string, callback: () => void) => callback()),
+        load: vi.fn((_api: string, options: { callback: () => void }) => options.callback()),
       };
       window.google = {} as typeof window.google;
 
@@ -166,7 +169,7 @@ describe("Google Drive Config & Loader Suite", () => {
       setupPreloadedScripts();
 
       window.gapi = {
-        load: vi.fn((_api: string, callback: () => void) => callback()),
+        load: vi.fn((_api: string, options: { callback: () => void }) => options.callback()),
       };
       window.google = {
         accounts: {
@@ -180,8 +183,8 @@ describe("Google Drive Config & Loader Suite", () => {
     test("completa con successo se gapi e i namespace google sono pronti", async () => {
       setupPreloadedScripts();
 
-      const mockGapiLoad = vi.fn((api: string, callback: () => void) => {
-        if (api === "picker") callback();
+      const mockGapiLoad = vi.fn((api: string, options: { callback: () => void }) => {
+        if (api === "picker") options.callback();
       });
 
       window.gapi = {
@@ -197,7 +200,10 @@ describe("Google Drive Config & Loader Suite", () => {
       } as typeof window.google;
 
       await expect(loadGoogleLibraries()).resolves.toBeUndefined();
-      expect(mockGapiLoad).toHaveBeenCalledWith("picker", expect.any(Function));
+      expect(mockGapiLoad).toHaveBeenCalledWith(
+        "picker",
+        expect.objectContaining({ callback: expect.any(Function) })
+      );
     });
   });
 });

@@ -3,6 +3,7 @@ import { getDocumentMassima } from "@/shared/services/document";
 import { getDocumentStorage } from "@/shared/services/storage";
 import type { Sentenza, Ordinanza, Decreto, DocumentoGiurisprudenzaGenerico } from "@/interfaces/interfaces";
 import { trackEvent } from "@/infrastructure/analytics";
+import { isFonteAmmessa } from "@/features/document/constants/fontiAmmesse";
 
 type DocumentoAny =
   | Sentenza
@@ -74,6 +75,16 @@ export const useDocumento = (id?: string | null) => {
         if (document && typeof document !== "string") {
           const docData = document as DocumentoAny;
           setSelectedDoc(docData);
+
+          // Per la giurisprudenza, lo Storage è consentito solo alle fonti ammesse.
+          const fonte = 'fonte' in docData ? (docData.fonte as string) : undefined;
+          const canAccessStorageSource = isFonteAmmessa(fonte);
+
+          if (isGiurisprudenza && !canAccessStorageSource) {
+            console.log("[useDocumento] Fonte non ammessa rilevata. Salto il recupero dello Storage PDF.");
+            setPdfUrl(null);
+            return;
+          }
 
           // 2. Leggiamo il campo 'user' e costruiamo lo storageName
           const documentUserId = (docData as DocumentoAny).user; 
