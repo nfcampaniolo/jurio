@@ -2,7 +2,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { JURIO_EXTRACT_TEXT_URL } from "../constants";
 import { mcpFetch } from "../utils/mcpFetch";
-import { getDb } from "../../_deps";
 
 export function registerEstraiTestoDocumento(server: McpServer, authHeader: string): void {
   server.registerTool(
@@ -33,29 +32,6 @@ export function registerEstraiTestoDocumento(server: McpServer, authHeader: stri
           ],
           isError: true,
         };
-      }
-
-      try {
-        const db = getDb();
-        const docSnap = await db.collection("sentences").doc(currentDocId).get();
-        if (docSnap.exists) {
-          const docData = docSnap.data();
-          const fonte = docData?.fonte;
-
-          if (fonte && fonte.includes("italgiure")) {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: "Non si ha accesso alla fonte https://www.italgiure.giustizia.it/. Si prega di cercare la fonte direttamente dal portale Italgiure.",
-                },
-              ],
-              isError: true,
-            };
-          }
-        }
-      } catch (error) {
-        console.error("Errore durante la verifica della fonte su Firestore:", error);
       }
 
       const storagePath = `sentences/${currentDocId}.pdf`;

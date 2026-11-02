@@ -2,12 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   mcpFetch: vi.fn(),
-  getDb: vi.fn(),
-  consoleError: vi.spyOn(console, "error").mockImplementation(() => {}),
 }));
 
 vi.mock("@functions/mpc/utils/mcpFetch", () => ({ mcpFetch: mocks.mcpFetch }));
-vi.mock("@functions/_deps", () => ({ getDb: mocks.getDb }));
 
 import { JURIO_EXTRACT_TEXT_URL } from "@functions/mpc/constants";
 import { registerEstraiTestoDocumento } from "@functions/mpc/tools/estraiTestoDocumento";
@@ -27,16 +24,6 @@ function setup() {
 describe("registerEstraiTestoDocumento", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    const get = vi.fn().mockResolvedValue({
-      exists: false,
-      data: () => null,
-    });
-
-    const doc = vi.fn(() => ({ get }));
-    const collection = vi.fn(() => ({ doc }));
-
-    mocks.getDb.mockReturnValue({ collection });
     mocks.mcpFetch.mockResolvedValue({ data: { pages: 12, text: "testo estratto" } });
   });
 
@@ -73,22 +60,17 @@ describe("registerEstraiTestoDocumento", () => {
     expect(mocks.mcpFetch).not.toHaveBeenCalled();
   });
 
-  it("blocks extraction for italgiure sources", async () => {
+  it("does not block extraction for italgiure sources", async () => {
     const { handler } = setup();
-
-    const get = vi.fn().mockResolvedValue({
-      exists: true,
-      data: () => ({ fonte: "https://www.italgiure.giustizia.it/qualcosa" }),
-    });
-    const doc = vi.fn(() => ({ get }));
-    const collection = vi.fn(() => ({ doc }));
-    mocks.getDb.mockReturnValue({ collection });
 
     const result = await handler({ url: "https://jurio.it/giurisprudenza/abc123" });
 
-    expect(result).toMatchObject({ isError: true });
-    expect(result.content[0].text).toContain("italgiure.giustizia.it");
-    expect(mocks.mcpFetch).not.toHaveBeenCalled();
+    expect(mocks.mcpFetch).toHaveBeenCalledWith(
+      JURIO_EXTRACT_TEXT_URL,
+      "Bearer extract-token",
+      { storagePath: "sentences/abc123.pdf" }
+    );
+    expect(result.content[0].text).toContain("ESTRAZIONE COMPLETATA");
   });
 
   it("returns backend error payload when extraction endpoint fails", async () => {
@@ -103,22 +85,4 @@ describe("registerEstraiTestoDocumento", () => {
     });
   });
 
-  it("continues extraction even if firestore source check throws", async () => {
-    const { handler } = setup();
-
-    const get = vi.fn().mockRejectedValue(new Error("firestore down"));
-    const doc = vi.fn(() => ({ get }));
-    const collection = vi.fn(() => ({ doc }));
-    mocks.getDb.mockReturnValue({ collection });
-
-    const result = await handler({ url: "https://jurio.it/giurisprudenza/abc123" });
-
-    expect(mocks.consoleError).toHaveBeenCalled();
-    expect(mocks.mcpFetch).toHaveBeenCalledWith(
-      JURIO_EXTRACT_TEXT_URL,
-      "Bearer extract-token",
-      { storagePath: "sentences/abc123.pdf" }
-    );
-    expect(result.content[0].text).toContain("ESTRAZIONE COMPLETATA");
-  });
 });
