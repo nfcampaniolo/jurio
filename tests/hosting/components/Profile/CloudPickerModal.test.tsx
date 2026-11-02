@@ -180,13 +180,13 @@ describe("CloudPickerModal Component Suite", () => {
     expect(screen.queryByRole("button", { name: "Sfoglia Google Drive" })).toBeNull();
   });
 
-  test("apre il picker di Google Drive e chiude il modale al click su 'Sfoglia Google Drive'", async () => {
+  test("apre il picker di Google Drive al click su 'Sfoglia Google Drive'", async () => {
     renderModal();
 
     const browseBtn = screen.getByRole("button", { name: "Sfoglia Google Drive" });
     fireEvent.click(browseBtn);
 
-    expect(mockOnClose).toHaveBeenCalledTimes(1);
+    expect(mockOnClose).not.toHaveBeenCalled();
 
     await act(async () => {
       vi.runAllTimers();
@@ -232,7 +232,7 @@ describe("CloudPickerModal Component Suite", () => {
       blob: dummyBlob,
     });
 
-    expect(mockOnClose).toHaveBeenCalledTimes(2);
+    expect(mockOnClose).toHaveBeenCalledTimes(1);
   });
 
   test("mostra notifica toast di errore se il download del file da Google Drive fallisce", async () => {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaGoogleDrive, FaTimes, FaMicrosoft, FaTools } from "react-icons/fa";
 import { Loader2 } from "lucide-react";
@@ -20,14 +20,29 @@ export const CloudPickerModal: React.FC<CloudPickerModalProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<CloudProviderType>("google");
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isOpeningPicker, setIsOpeningPicker] = useState(false);
+  const openingTimerRef = useRef<number | null>(null);
 
   const google = useGoogleDrive();
+
+  useEffect(() => {
+    return () => {
+      if (openingTimerRef.current) {
+        window.clearTimeout(openingTimerRef.current);
+      }
+    };
+  }, []);
 
   if (!isOpen) return null;
 
   // Questa funzione viene chiamata dal Picker di Google quando l'utente seleziona un file
   const handleGoogleFilePicked = async (fileId: string, fileName: string, mimeType: string) => {
     try {
+      if (openingTimerRef.current) {
+        window.clearTimeout(openingTimerRef.current);
+        openingTimerRef.current = null;
+      }
+      setIsOpeningPicker(false);
       setIsDownloading(true);
       
       // Chiamiamo il backend per scaricare fisicamente i byte del file
@@ -115,11 +130,11 @@ export const CloudPickerModal: React.FC<CloudPickerModalProps> = ({
             {activeTab === "google" && (
               <div className="flex flex-col items-center justify-center py-10 text-center gap-4 h-full">
                 
-                {isDownloading || google.loading ? (
+                {isDownloading || google.loading || isOpeningPicker ? (
                   <div className="flex flex-col items-center justify-center gap-3">
                     <Loader2 className="animate-spin text-blue-500" size={36} />
                     <span className="text-xs font-bold uppercase tracking-widest text-(--color-muted)">
-                      Scaricamento in corso...
+                      {isDownloading || google.loading ? "Scaricamento in corso..." : "Apertura Google Drive..."}
                     </span>
                   </div>
                 ) : (
@@ -128,21 +143,33 @@ export const CloudPickerModal: React.FC<CloudPickerModalProps> = ({
                     <p className="text-sm text-(--color-muted) font-light max-w-sm">
                       Sfoglia in modo sicuro i tuoi documenti su Google Drive e seleziona il file da analizzare.
                     </p>
-                      <button
-                        onClick={() => {
-                          onClose();
+                    <button
+                      type="button"
+                      className="px-4 py-2 rounded-md bg-(--color-text) text-(--color-surface) text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all outline-none"
+                      onClick={() => {
+                        if (openingTimerRef.current) {
+                          window.clearTimeout(openingTimerRef.current);
+                          openingTimerRef.current = null;
+                        }
 
-                          setTimeout(async () => {
-                            try {
-                              await google.openPicker(handleGoogleFilePicked);
-                            } catch (error) {
-                              console.error(error);
-                            }
-                          }, 0);
-                        }}
-                      >
-                        Sfoglia Google Drive
-                      </button>
+                        setIsOpeningPicker(true);
+
+                        try {
+                          google.openPicker(handleGoogleFilePicked);
+                        } catch (error) {
+                          console.error(error);
+                          setIsOpeningPicker(false);
+                          return;
+                        }
+
+                        openingTimerRef.current = window.setTimeout(() => {
+                          setIsOpeningPicker(false);
+                          openingTimerRef.current = null;
+                        }, 1200);
+                      }}
+                    >
+                      Sfoglia Google Drive
+                    </button>
                     <span className="text-[10px] text-(--color-muted) uppercase tracking-wider mt-4">
                       I tuoi file rimangono privati.
                     </span>

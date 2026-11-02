@@ -5,6 +5,7 @@ import { registerRicercaNormativa } from "./tools/ricercaNormativa";
 import { registerRicercaIdentificativo } from "./tools/ricercaIdentificativo";
 import { registerRicercaPerMateria } from "./tools/ricercaPerMateria";
 import { registerGetPromptList } from "./tools/ricercaPrompt";
+import { registerEstraiTestoDocumento } from "./tools/estraiTestoDocumento";
 
 export function createMcpServer(authHeader: string): McpServer {
   const server = new McpServer({
@@ -18,6 +19,7 @@ export function createMcpServer(authHeader: string): McpServer {
   registerRicercaIdentificativo(server, authHeader);
   registerRicercaPerMateria(server, authHeader);
   registerGetPromptList(server, authHeader);
+  registerEstraiTestoDocumento(server, authHeader);
   
   return server;
 }
