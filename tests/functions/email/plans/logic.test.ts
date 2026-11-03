@@ -298,6 +298,20 @@ describe("plans email logic", () => {
       expect(mocks.dispatch.mock.calls[0][0].notifications).toHaveLength(2);
     });
 
+    it("usa ore, giorni e settimane nel subject quando il tempo supera le soglie", async () => {
+      // Arrange
+      const extendedReport = { ...reportData, totalTimeSavedMinutes: 2880 };
+      mocks.getUserByEmail.mockResolvedValue({ uid: "uid-a" });
+
+      // Act
+      await logic.enqueueMonthlyUsageEmail({ email: "a@example.com", reportData: extendedReport });
+
+      // Assert
+      expect(mocks.dispatch).toHaveBeenCalledWith(expect.objectContaining({
+        subject: "Il tuo resoconto mensile su Jurio: hai risparmiato 2 giorni!",
+      }));
+    });
+
     it("usa l'oggetto senza risparmio quando il totale è zero e omette notifiche se non registrati", async () => {
       // Arrange
       const zeroReport = { ...reportData, totalTimeSavedMinutes: 0 };

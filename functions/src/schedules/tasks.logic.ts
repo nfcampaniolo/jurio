@@ -1,10 +1,9 @@
 import { Request, Response } from "express";
 import { FieldValue, Timestamp, getFirestore } from "firebase-admin/firestore";
-import { getDb, getAdmin, sanitize, getAdminAuth } from "../_deps";
+import { getDb, getAdmin, sanitize, getAdminAuth, getAdminStorage } from "../_deps";
 import { calculateReportData } from "../email/_helper";
-import { enqueueMonthlyUsageEmail } from "../email/plans/logic";
+import { enqueueMonthlyUsageEmail, enqueueDowngradeEmail } from "../email/plans/logic";
 import { SEZIONI_CASSAZIONE_CIVILE, SEZIONI_CASSAZIONE_PENALE } from "../_constants";
-import { enqueueDowngradeEmail } from "../email/plans/logic";
 import { logSafeError } from "../_logging";
 
 export type DowngradeTxResult = {
@@ -190,6 +189,7 @@ export async function computeAndSaveMonthlyUsage() {
 
   // Array per immagazzinare i report da spedire DOPO il commit al DB
   const emailTasks: Array<{ uid: string; reportData: any }> = [];
+  const globalUsageByService: Record<string, { utilizzi_totali: number; utenti_attivi: number }> = {};
 
   // 4. Salvataggio in batch in register/{uid}/usage/{YYYY_MM}
   const batches: Promise<any>[] = [];
@@ -204,7 +204,20 @@ export async function computeAndSaveMonthlyUsage() {
       continue; // Salta questo uid se non è un utente registrato
     }
 
-    // 4.2 Prepariamo i dati per il DB
+    // 4.2 Aggregazione globale per servizio (solo utenti registrati)
+    for (const [serviceName, serviceCountRaw] of Object.entries(servicesRecord)) {
+      const serviceCount = typeof serviceCountRaw === "number" ? serviceCountRaw : 0;
+      if (serviceCount <= 0) continue;
+
+      if (!globalUsageByService[serviceName]) {
+        globalUsageByService[serviceName] = { utilizzi_totali: 0, utenti_attivi: 0 };
+      }
+
+      globalUsageByService[serviceName].utilizzi_totali += serviceCount;
+      globalUsageByService[serviceName].utenti_attivi += 1;
+    }
+
+    // 4.3 Prepariamo i dati per il DB
     const usageDocRef = db.collection('register').doc(uid).collection('usage').doc(targetMonthStr);
     const payload = sanitize({
       ...servicesRecord,
@@ -213,7 +226,7 @@ export async function computeAndSaveMonthlyUsage() {
 
     currentBatch.set(usageDocRef, payload, { merge: true });
 
-    // 4.3 Prepariamo i dati per l'email sfruttando la funzione pura
+    // 4.4 Prepariamo i dati per l'email sfruttando la funzione pura
     const reportData = calculateReportData(servicesRecord, meseDescrittivo);
     
     // Accodiamo l'email solo se l'utente ha usato effettivamente qualcosa
@@ -238,9 +251,47 @@ export async function computeAndSaveMonthlyUsage() {
 
   // Aspettiamo che TUTTI i dati statistici siano scritti su Firestore
   await Promise.all(batches);
+
+  // 5. Salvataggio del report aggregato globale su Cloud Storage
+  const serviziOrdinatiPerUtilizzo = Object.entries(globalUsageByService)
+    .sort(([, left], [, right]) => right.utilizzi_totali - left.utilizzi_totali)
+    .map(([servizio, metriche]) => ({ servizio, ...metriche }));
+
+  const globalUsageReport = {
+    type: "monthly_global_usage_by_service",
+    mese_id: targetMonthStr,
+    mese_descrittivo: meseDescrittivo,
+    generato_il: new Date().toISOString(),
+    utenti_registrati_processati: utentiProcessati,
+    servizi: serviziOrdinatiPerUtilizzo,
+  };
+
+  try {
+    const storage = getAdminStorage();
+    const bucket = storage.bucket();
+    const reportPath = `reports/usage/monthly/${targetMonthStr}.json`;
+    const latestPath = "reports/usage/monthly/latest.json";
+
+    await Promise.all([
+      bucket.file(reportPath).save(JSON.stringify(globalUsageReport, null, 2), {
+        contentType: "application/json",
+        metadata: { cacheControl: "public, max-age=3600" },
+      }),
+      bucket.file(latestPath).save(JSON.stringify(globalUsageReport, null, 2), {
+        contentType: "application/json",
+        metadata: { cacheControl: "public, max-age=3600" },
+      }),
+    ]);
+
+    console.log(`📁 Report globale utilizzi salvato su Storage: ${reportPath}`);
+  } catch (error) {
+    logSafeError("MONTHLY_USAGE_GLOBAL_REPORT_UPLOAD_FAILED", error);
+    throw error;
+  }
+
   console.log(`✅ DB Aggiornato. Procedo all'invio di ${emailTasks.length} email.`);
 
-  // 5. Invio delle email (Fase 2)
+  // 6. Invio delle email (Fase 2)
   for (const task of emailTasks) {
     try {
       // Otteniamo l'email dell'utente da Firebase Auth
@@ -259,7 +310,8 @@ export async function computeAndSaveMonthlyUsage() {
 
   return { 
     utenti_processati: utentiProcessati, 
-    email_accodate: emailTasks.length 
+    email_accodate: emailTasks.length,
+    servizi_aggregati: serviziOrdinatiPerUtilizzo.length,
   };
 }
 

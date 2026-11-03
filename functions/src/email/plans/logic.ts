@@ -1,4 +1,5 @@
 import {  generatePurchaseEmail, generateDowngradeEmail, generateMonthlyReportEmail } from "./html"; 
+import { formatTimeSaved } from "./time";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { getDb, getAdminAuth } from "../../_deps";
 import { EnqueuePurchaseEmailArgs, NotificationPayload, QueuePurchaseStripeArgs, EnqueueEmailArgs, EnqueueMonthlyUsageEmailArgs } from "../_interfaces"
@@ -101,7 +102,7 @@ export async function enqueueMonthlyUsageEmail({
   const emailsArray = Array.isArray(email) ? email : [email];
 
   const subject = reportData.totalTimeSavedMinutes > 0
-    ? `Il tuo resoconto mensile su Jurio: hai risparmiato ${reportData.totalTimeSavedMinutes} minuti!`
+    ? `Il tuo resoconto mensile su Jurio: hai risparmiato ${formatTimeSaved(reportData.totalTimeSavedMinutes)}!`
     : `Il tuo resoconto mensile su Jurio`;
 
   const html = generateMonthlyReportEmail(reportData);

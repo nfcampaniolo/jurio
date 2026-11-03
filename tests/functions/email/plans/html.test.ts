@@ -5,6 +5,7 @@ import {
   generateMonthlyReportEmail,
   generatePurchaseEmail,
 } from "../../../../functions/src/email/plans/html";
+import { formatTimeSaved } from "../../../../functions/src/email/plans/time";
 
 describe("plans email HTML", () => {
   beforeEach(() => {
@@ -79,7 +80,7 @@ describe("plans email HTML", () => {
 
     // Assert
     expect(result).toContain("settembre 2026");
-    expect(result).toContain("81 minuti");
+    expect(result).toContain("1,4 ore");
     expect(result).toContain("Ricerca Giurisprudenziale");
     expect(result).toContain("Ricerca Giurisprudenziale Approfondita");
     expect(result).toContain("Sintesi e Drafting");
@@ -110,5 +111,12 @@ describe("plans email HTML", () => {
     expect(result).not.toContain("Analisi Documentale");
     expect(result).not.toContain("Sintesi e Drafting");
     expect(result).not.toContain("prompting libero");
+  });
+
+  it("formatta il tempo risparmiato in base alla soglia", () => {
+    expect(formatTimeSaved(45)).toBe("45 minuti");
+    expect(formatTimeSaved(120)).toBe("2 ore");
+    expect(formatTimeSaved(2880)).toBe("2 giorni");
+    expect(formatTimeSaved(20160)).toBe("2 settimane");
   });
 });

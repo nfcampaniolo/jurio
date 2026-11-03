@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   getDb: vi.fn(),
   getAdmin: vi.fn(),
   getAdminAuth: vi.fn(),
+  getAdminStorage: vi.fn(),
   sanitize: vi.fn((value: unknown) => value),
   calculateReportData: vi.fn(),
   enqueueMonthlyUsageEmail: vi.fn(),
@@ -36,6 +37,9 @@ const mocks = vi.hoisted(() => ({
   usageRef: { path: "register/user-1/usage/2026_09" },
   runTransaction: vi.fn(),
   authGetUser: vi.fn(),
+  storageBucket: vi.fn(),
+  storageFile: vi.fn(),
+  storageSave: vi.fn(),
 }));
 
 const sourceRequire = createRequire(resolve(process.cwd(), "functions/src/schedules/tasks.logic.ts"));
@@ -58,6 +62,7 @@ vi.mock("@functions/_deps", () => ({
   getDb: mocks.getDb,
   getAdmin: mocks.getAdmin,
   getAdminAuth: mocks.getAdminAuth,
+  getAdminStorage: mocks.getAdminStorage,
   sanitize: mocks.sanitize,
 }));
 vi.mock("@functions/email/_helper", () => ({ calculateReportData: mocks.calculateReportData }));
@@ -137,6 +142,10 @@ describe("scheduled aggregation and downgrade tasks", () => {
     });
     mocks.getAdminAuth.mockReturnValue({ getUser: mocks.authGetUser });
     mocks.authGetUser.mockResolvedValue({ email: "user@example.test" });
+    mocks.storageFile.mockReturnValue({ save: mocks.storageSave });
+    mocks.storageBucket.mockReturnValue({ file: mocks.storageFile });
+    mocks.getAdminStorage.mockReturnValue({ bucket: mocks.storageBucket });
+    mocks.storageSave.mockResolvedValue(undefined);
     mocks.calculateReportData.mockReturnValue({
       totalTimeSavedMinutes: 10, haFattoPrompting: false, interazioniCount: 2, title: "report",
     });
@@ -190,6 +199,16 @@ describe("scheduled aggregation and downgrade tasks", () => {
     expect(mocks.batchSet).toHaveBeenCalledWith(mocks.usageRef, {
       legal_agent: 5, unknown_service: 0, _updatedAt: "server-time",
     }, { merge: true });
+    expect(mocks.storageFile).toHaveBeenNthCalledWith(1, "reports/usage/monthly/2026_09.json");
+    expect(mocks.storageFile).toHaveBeenNthCalledWith(2, "reports/usage/monthly/latest.json");
+    expect(JSON.parse(mocks.storageSave.mock.calls[0][0])).toEqual({
+      type: "monthly_global_usage_by_service",
+      mese_id: "2026_09",
+      mese_descrittivo: expect.stringContaining("2026"),
+      generato_il: expect.any(String),
+      utenti_registrati_processati: 1,
+      servizi: [{ servizio: "legal_agent", utilizzi_totali: 5, utenti_attivi: 1 }],
+    });
     expect(mocks.calculateReportData).toHaveBeenCalledWith(
       { legal_agent: 5, unknown_service: 0 },
       expect.stringContaining("2026"),
@@ -200,7 +219,7 @@ describe("scheduled aggregation and downgrade tasks", () => {
       reportData: { totalTimeSavedMinutes: 10, haFattoPrompting: false, interazioniCount: 2, title: "report" },
     });
     expect(eventOrder).toEqual(["set", "commit", "email"]);
-    expect(result).toEqual({ utenti_processati: 1, email_accodate: 1 });
+    expect(result).toEqual({ utenti_processati: 1, email_accodate: 1, servizi_aggregati: 1 });
     expect(log).toHaveBeenCalled();
     log.mockRestore();
   });
@@ -226,10 +245,27 @@ describe("scheduled aggregation and downgrade tasks", () => {
     const result = await computeAndSaveMonthlyUsage();
 
     // Assert
-    expect(result).toEqual({ utenti_processati: 2, email_accodate: 0 });
+    expect(result).toEqual({ utenti_processati: 2, email_accodate: 0, servizi_aggregati: 1 });
     expect(mocks.enqueueMonthlyUsageEmail).not.toHaveBeenCalled();
     expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();
+  });
+
+  it("rethrows storage errors while saving the global monthly usage report", async () => {
+    // Arrange
+    const failure = new Error("storage failed");
+    mocks.registerGet.mockResolvedValue({ exists: true });
+    mocks.storageSave.mockRejectedValueOnce(failure);
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    // Act
+    const result = computeAndSaveMonthlyUsage();
+
+    // Assert
+    await expect(result).rejects.toBe(failure);
+    expect(error).toHaveBeenCalledWith("MONTHLY_USAGE_GLOBAL_REPORT_UPLOAD_FAILED", { errorType: "Error" });
+    expect(mocks.enqueueMonthlyUsageEmail).not.toHaveBeenCalled();
+    error.mockRestore();
   });
 
   it("validates downgrade method and required body values", async () => {

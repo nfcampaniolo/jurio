@@ -1,5 +1,6 @@
 import emailStyles from '../emailStyles';
 import type{ MonthlyUsageReportData } from "../_interfaces";
+import { formatTimeSaved } from "./time";
 
 export const generateDowngradeEmail = (nome: string) => {
   return `
@@ -142,6 +143,8 @@ return `
 };
 
 export const generateMonthlyReportEmail = (data: MonthlyUsageReportData) => {
+  const totalTimeSavedLabel = formatTimeSaved(data.totalTimeSavedMinutes);
+
   // Costruiamo i blocchi dinamici per le feature usate
   let dettagliOperazioni = "";
 
@@ -222,7 +225,7 @@ export const generateMonthlyReportEmail = (data: MonthlyUsageReportData) => {
       <div class="subheader" style="text-align: center;">
         <p>Ecco il tuo resoconto di <strong>${data.mese}</strong>.</p>
         <p>Questo mese hai delegato a Jurio il lavoro ripetitivo, recuperando tempo prezioso per le attività ad alto valore aggiunto:</p>
-        <div class="highlight-time">${data.totalTimeSavedMinutes} minuti</div>
+        <div class="highlight-time">${totalTimeSavedLabel}</div>
         <p>risparmiati complessivamente.</p>
       </div>
 
