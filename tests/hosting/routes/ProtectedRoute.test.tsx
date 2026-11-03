@@ -17,7 +17,7 @@ const { mockNavigateComponent, mockUseLocation } = vi.hoisted(() => ({
 }));
 
 const { mockUseSmoothLoading } = vi.hoisted(() => ({
-  mockUseSmoothLoading: vi.fn(() => true),
+  mockUseSmoothLoading: vi.fn((_isLoading: boolean) => true),
 }));
 
 /* ---------- mock react-router-dom ---------- */
