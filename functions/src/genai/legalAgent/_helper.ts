@@ -180,34 +180,37 @@ export function getExecutionProfile(
 ): ExecutionProfile {
   const flashModel = "vertexai/gemini-3.5-flash";
   const liteModel = "vertexai/gemini-3.5-flash-lite";
+  const reasoningSignals = /\b(analizza|confronta|controvers|eccezion|responsabilit|risarciment|impugn|strategia|prescrizion|decadenza|concorso|bilanciamento|distinguish|valuta|argomenta|eccepisc|confuta|giurisprudenza\s+contrast|orientament\w*\s+prevalent)\w*/i;
   const needsDeepReasoning =
     promptLower.length >= 600 ||
-    /\b(analizza|confronta|controvers|eccezion|responsabilit|risarciment|impugn|strategia|prescrizion|decadenza|concorso|bilanciamento|distinguish)\w*/i.test(promptLower);
+    reasoningSignals.test(promptLower);
 
-  // Flash-Lite è adatto ai turni brevi e leggeri. Termini e intenzioni giuridiche
-  // esplicite restano su Flash, così la ricerca e il ragionamento non vengono
-  // instradati al modello più piccolo solo perché il prompt è corto.
-  const hasLegalIntent =
-    /\b(art(?:icolo)?|codice|legge|norma|normativa|sentenza|giurisprudenza|cassazione|tribunale|giudice|ricorso|causa|contratto|clausola|penale|reato|risarcimento|danno|responsabilit|prescrizion|decadenza|licenziamento|lavoro|locazione|sfratto|privacy|gdpr|diritto|obbligazion|parte|avvocato|processo|procedura|impugn|contestazion|diffida|parere|consulenza|posso|può|possono|devo|deve|devono|obbligo|diritti|valido|valida|nullo|nulla|vietato|consentito|termine|scadenza|sanzione|multa|è legittimo|come agire)\w*/i.test(promptLower);
-  const canUseLite = promptLower.length < 150 &&
-    !needsDeepReasoning &&
-    !hasLegalIntent &&
-    !options.hasDocs &&
-    !options.hasFascicolo &&
-    !options.hasFilters;
+  const hasStructuredContext = Boolean(options.hasDocs || options.hasFascicolo || options.hasFilters);
+  // Usiamo il modello pieno solo quando c'è reale necessità di ragionamento
+  // o contesto lungo/strutturato da orchestrare.
+  const shouldUseFullModel =
+    needsDeepReasoning ||
+    promptLower.length >= 1000 ||
+    (hasStructuredContext && promptLower.length >= 350);
 
-  if (canUseLite) {
+  if (!shouldUseFullModel) {
+    const liteThinkingLevel: ExecutionProfile["thinkingLevel"] =
+      promptLower.length >= 250 || hasStructuredContext ? "MEDIUM" : "LOW";
     return {
       model: liteModel,
-      synthesisModel: flashModel,
+      synthesisModel: liteModel,
+      maxOutputTokens: 2800,
+      synthesisMaxOutputTokens: 2800,
       dbLimit: 5,
       webLimit: 2,
-      thinkingLevel: "LOW",
+      thinkingLevel: liteThinkingLevel,
     };
   }
   return {
     model: flashModel,
     synthesisModel: flashModel,
+    maxOutputTokens: 5200,
+    synthesisMaxOutputTokens: 5200,
     dbLimit: promptLower.length >= 600 ? 8 : 5,
     webLimit: promptLower.length >= 600 ? 3 : 2,
     thinkingLevel: needsDeepReasoning ? "HIGH" : "MEDIUM",

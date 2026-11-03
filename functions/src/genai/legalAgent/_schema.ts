@@ -15,6 +15,8 @@ export interface ToolContext {
 export interface ExecutionProfile {
   model: string;
   synthesisModel: string;
+  maxOutputTokens: number;
+  synthesisMaxOutputTokens: number;
   dbLimit: number;
   webLimit: number;
   thinkingLevel: "LOW" | "MEDIUM" | "HIGH";

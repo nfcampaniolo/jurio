@@ -171,7 +171,7 @@ export const legalAgentFlow = ai.defineFlow(
         returnToolRequests: true,
         context: toolContext,
         config: {
-          maxOutputTokens: 3000,
+          maxOutputTokens: profile.maxOutputTokens,
           thinkingConfig: { thinkingLevel: profile.thinkingLevel },
         },
         onChunk: (chunk: any) => {
@@ -246,7 +246,7 @@ export const legalAgentFlow = ai.defineFlow(
           model: profile.synthesisModel,
           messages: synthesisMessages,
           config: {
-            maxOutputTokens: 3000,
+            maxOutputTokens: profile.synthesisMaxOutputTokens,
             thinkingConfig: { thinkingLevel: profile.thinkingLevel },
           },
           onChunk: (chunk: any) => {

@@ -31,15 +31,28 @@ describe("legal-agent orchestration helpers", () => {
   });
 
   it("selects retrieval limits and maps history into model/user messages", () => {
-    expect(getExecutionProfile("short")).toMatchObject({ dbLimit: 5, webLimit: 2 });
-    expect(getExecutionProfile("short").thinkingLevel).toBe("LOW");
+    expect(getExecutionProfile("short")).toMatchObject({
+      model: "vertexai/gemini-3.5-flash-lite",
+      synthesisModel: "vertexai/gemini-3.5-flash-lite",
+      maxOutputTokens: 2800,
+      synthesisMaxOutputTokens: 2800,
+      dbLimit: 5,
+      webLimit: 2,
+      thinkingLevel: "LOW",
+    });
+    expect(getExecutionProfile("qual è il termine per opposizione a decreto ingiuntivo?")).toMatchObject({
+      model: "vertexai/gemini-3.5-flash-lite",
+      synthesisModel: "vertexai/gemini-3.5-flash-lite",
+    });
     expect(getExecutionProfile("analizza la responsabilità contrattuale")).toMatchObject({
+      model: "vertexai/gemini-3.5-flash",
+      synthesisModel: "vertexai/gemini-3.5-flash",
       thinkingLevel: "HIGH",
     });
     expect(getExecutionProfile("x".repeat(150))).toMatchObject({
       dbLimit: 5,
       webLimit: 2,
-      thinkingLevel: "MEDIUM",
+      thinkingLevel: "LOW",
     });
     expect(getExecutionProfile("x".repeat(600))).toMatchObject({
       dbLimit: 8,

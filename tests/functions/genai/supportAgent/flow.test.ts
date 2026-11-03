@@ -24,12 +24,12 @@ describe("support-agent flows", () => {
     expect(mocks.manualSearch).toHaveBeenCalledWith("How?");
     expect(mocks.generate).toHaveBeenCalledOnce();
     expect(mocks.generate.mock.calls[0][0]).toMatchObject({
+      model: "vertexai/gemini-3.5-flash-lite",
       config: {
-        maxOutputTokens: 1200,
+        maxOutputTokens: 2200,
         thinkingConfig: { thinkingLevel: "LOW" },
       },
     });
-    expect(mocks.generate.mock.calls[0][0]).not.toHaveProperty("model");
     const systemPrompt = mocks.generate.mock.calls[0][0].messages[0].content[0].text;
     expect(systemPrompt).toContain("Manual excerpt");
     expect(systemPrompt.split(SYSTEM_PROMPT_JURIO_SUPPORT).length - 1).toBe(1);

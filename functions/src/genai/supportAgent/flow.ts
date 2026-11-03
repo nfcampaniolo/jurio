@@ -86,10 +86,12 @@ export const legalAgentSupport = ai.defineFlow(
     const generationStartedAt = Date.now();
     let firstTokenLogged = false;
     let streamedText = "";
+    const supportModel = "vertexai/gemini-3.5-flash-lite";
     const response = await ai.generate({
+      model: supportModel,
       messages,
       config: {
-        maxOutputTokens: 1200,
+        maxOutputTokens: 2200,
         thinkingConfig: { thinkingLevel: "LOW" },
       },
       onChunk: (chunk) => {
