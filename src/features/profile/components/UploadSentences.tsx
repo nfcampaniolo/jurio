@@ -53,6 +53,14 @@ export const Upload: React.FC = () => {
   const [isSearchingVector, setIsSearchingVector] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const searchCache = useRef<DocumentoGiurisprudenziale[] | null>(null);
+  const lockSnapshotRef = useRef<{
+    scrollY: number;
+    bodyOverflow: string;
+    bodyPosition: string;
+    bodyTop: string;
+    bodyWidth: string;
+    htmlScrollBehavior: string;
+  } | null>(null);
   const [selectedDocumentIndex, setSelectedDocumentIndex] = useState<number | null>(null);
 
   // --- STATO SINGOLO PER IL PROMPT (Tutto il resto lo fa PromptSelector) ---
@@ -122,13 +130,48 @@ export const Upload: React.FC = () => {
   }, [loading]);
 
   useEffect(() => {
-      if (showText || denyOpen || isCloudModalOpen || selectedDocumentIndex !== null) {
-        document.body.style.overflow = "hidden";
-      } else {
-        document.body.style.overflow = "unset";
+      const shouldLockScroll = showText || denyOpen || isCloudModalOpen || selectedDocumentIndex !== null;
+
+      if (shouldLockScroll) {
+        if (!lockSnapshotRef.current) {
+          const scrollY = window.scrollY;
+          lockSnapshotRef.current = {
+            scrollY,
+            bodyOverflow: document.body.style.overflow,
+            bodyPosition: document.body.style.position,
+            bodyTop: document.body.style.top,
+            bodyWidth: document.body.style.width,
+            htmlScrollBehavior: document.documentElement.style.scrollBehavior,
+          };
+
+          document.documentElement.style.scrollBehavior = "auto";
+          document.body.style.overflow = "hidden";
+          document.body.style.position = "fixed";
+          document.body.style.top = `-${scrollY}px`;
+          document.body.style.width = "100%";
+        }
+      } else if (lockSnapshotRef.current) {
+        const snapshot = lockSnapshotRef.current;
+        document.body.style.overflow = snapshot.bodyOverflow;
+        document.body.style.position = snapshot.bodyPosition;
+        document.body.style.top = snapshot.bodyTop;
+        document.body.style.width = snapshot.bodyWidth;
+        document.documentElement.style.scrollBehavior = snapshot.htmlScrollBehavior;
+        window.scrollTo(0, snapshot.scrollY);
+        lockSnapshotRef.current = null;
       }
+
       return () => {
-        document.body.style.overflow = "unset";
+        if (!lockSnapshotRef.current) return;
+
+        const snapshot = lockSnapshotRef.current;
+        document.body.style.overflow = snapshot.bodyOverflow;
+        document.body.style.position = snapshot.bodyPosition;
+        document.body.style.top = snapshot.bodyTop;
+        document.body.style.width = snapshot.bodyWidth;
+        document.documentElement.style.scrollBehavior = snapshot.htmlScrollBehavior;
+        window.scrollTo(0, snapshot.scrollY);
+        lockSnapshotRef.current = null;
       };
   }, [showText, denyOpen, isCloudModalOpen, selectedDocumentIndex]);
 
