@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, FileText, Loader2, Info, Play } from "lucide-react";
@@ -80,19 +80,19 @@ export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({
     else if (e.type === "dragleave" || e.type === "drop") setDragActive(false);
   };
 
-  const addPendingFiles = (files: File[]) => {
+  const addPendingFiles = useCallback((files: File[]) => {
     if (totalCount + files.length > maxAllowed) {
       toast.error(`Puoi allegare al massimo ${maxAllowed} documenti in totale.`);
       return;
     }
     setPendingFiles(prev => [...prev, ...files]);
-  };
+  }, [maxAllowed, totalCount]);
 
   useEffect(() => {
     if (!isOpen || externalPendingFiles.length === 0) return;
     addPendingFiles(externalPendingFiles);
     onExternalPendingFilesConsumed?.();
-  }, [isOpen, externalPendingFiles, onExternalPendingFilesConsumed]);
+  }, [addPendingFiles, isOpen, externalPendingFiles, onExternalPendingFilesConsumed]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();

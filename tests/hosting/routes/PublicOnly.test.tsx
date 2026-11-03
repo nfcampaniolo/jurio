@@ -17,7 +17,7 @@ const { mockAuthState, mockNavigateComponent } = vi.hoisted(() => ({
 }));
 
 const { mockUseSmoothLoading } = vi.hoisted(() => ({
-  mockUseSmoothLoading: vi.fn((_isLoading: boolean) => true),
+  mockUseSmoothLoading: vi.fn<(isLoading: boolean) => boolean>(() => true),
 }));
 
 /* ---------- mock react-router-dom ---------- */

@@ -42,10 +42,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
     } catch (err) {
       // Cattura eventuali errori di inizializzazione
-      if (!cancelled) {
-        setStatus('error');
-        setErrorMessage(err instanceof Error ? err.message : "Errore sconosciuto");
-      }
+      const nextErrorMessage = err instanceof Error ? err.message : "Errore sconosciuto";
+      queueMicrotask(() => {
+        if (!cancelled) {
+          setStatus('error');
+          setErrorMessage(nextErrorMessage);
+        }
+      });
     }
 
     return () => {
