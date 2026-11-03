@@ -56,15 +56,7 @@ describe("AuthProvider Suite", () => {
   });
 
   test("salta la sottoscrizione e imposta status su 'unauthenticated' se la rotta è statica (/privacy, /termini, /gdpr)", async () => {
-    // Override temporaneo di pathname per rispecchiare l'URL assoluto / pathname matchato
-    const originalPathname = window.location.pathname;
-    Object.defineProperty(window, "location", {
-      value: {
-        ...window.location,
-        pathname: "https://jurio.it/privacy",
-      },
-      writable: true,
-    });
+    setLocationPath("/privacy");
 
     render(
       <AuthProvider>
@@ -80,14 +72,7 @@ describe("AuthProvider Suite", () => {
 
     expect(mockOnUserStateChange).not.toHaveBeenCalled();
 
-    // Restore
-    Object.defineProperty(window, "location", {
-      value: {
-        ...window.location,
-        pathname: originalPathname,
-      },
-      writable: true,
-    });
+    setLocationPath("/");
   });
 
   test("sottoscrive il listener e aggiorna il contesto quando l'utente è autenticato", async () => {

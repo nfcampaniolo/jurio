@@ -27,6 +27,7 @@ vi.mock("react-router-dom", () => ({
 vi.mock("framer-motion", () => ({
   __esModule: true,
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useReducedMotion: () => false,
   motion: {
     div: React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
       ({ children, ...props }, ref) => (
@@ -36,6 +37,11 @@ vi.mock("framer-motion", () => ({
       )
     ),
   },
+}));
+
+vi.mock("@/shared/hooks/useSmoothLoading", () => ({
+  __esModule: true,
+  useSmoothLoading: (isLoading: boolean) => isLoading,
 }));
 
 /* ---------- mock lucide-react ---------- */
@@ -331,7 +337,7 @@ let mockLegalChatState = {
   threadTitle: "Thread Principale",
   archiveDocs: [],
   isLoadingData: false,
-  isLoadingSession: false,
+  isSessionReady: true,
   processFilesParallel: mockProcessFilesParallel,
   isProcessingFiles: false,
   handleSourceClick: mockHandleSourceClick,
@@ -404,7 +410,7 @@ describe("LegalChatPage Suite", () => {
       threadTitle: "Thread Principale",
       archiveDocs: [],
       isLoadingData: false,
-      isLoadingSession: false,
+      isSessionReady: true,
       processFilesParallel: mockProcessFilesParallel,
       isProcessingFiles: false,
       handleSourceClick: mockHandleSourceClick,
@@ -482,11 +488,11 @@ describe("LegalChatPage Suite", () => {
 
   test("mostra l'overlay durante il caricamento della sessione", () => {
     mockLegalChatState.sessionType = "fascicolo";
-    mockLegalChatState.isLoadingSession = true;
+    mockLegalChatState.isSessionReady = false;
 
     render(<LegalChatPage />);
 
-    expect(screen.getByTestId("session-loading-overlay")).toBeInTheDocument();
+    expect(screen.getByTestId("session-loading-screen")).toBeInTheDocument();
   });
 
   test("gestisce le azioni del workspace documentale (quote, semaforo, distinguish)", () => {

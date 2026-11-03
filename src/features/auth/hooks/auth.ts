@@ -2,12 +2,21 @@ import type { User } from "firebase/auth";
 import { firebaseApp } from "@/infrastructure/firebase";
 import { trackEvent } from "@/infrastructure/analytics";
 
+type FirebaseAuthModule = typeof import("firebase/auth");
+let authModulePromise: Promise<FirebaseAuthModule> | null = null;
+
+async function getFirebaseAuthModule(): Promise<FirebaseAuthModule> {
+  if (!authModulePromise) {
+    authModulePromise = import("firebase/auth");
+  }
+  return authModulePromise;
+}
 
 export async function getAuthClient() {
   console.log("[getAuthClient] Inizializzazione AuthClient...");
   const { initializeFirebaseAppCheck } = await import("@/infrastructure/appCheck");
   initializeFirebaseAppCheck();
-  const { getAuth } = await import("firebase/auth");
+  const { getAuth } = await getFirebaseAuthModule();
   return getAuth(firebaseApp);
 }
 
@@ -108,7 +117,7 @@ export function onUserStateChange(callback: (user: User | null, hasConflict: boo
 
   void (async () => {
     const auth = await getAuthClient();
-    const { onAuthStateChanged } = await import("firebase/auth");
+    const { onAuthStateChanged } = await getFirebaseAuthModule();
 
     if (cancelled) {
       console.log("[onUserStateChange] Setup annullato prima del completamento.");

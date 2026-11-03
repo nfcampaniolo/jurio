@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { PanelRight, X, FolderPlus } from "lucide-react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { PanelRight, X, FolderPlus, Loader2 } from "lucide-react";
 import { Helmet } from "@dr.pogodin/react-helmet";
 
 // --- Componenti Esistenti ---
@@ -28,123 +28,198 @@ interface LocationState {
   inizializzaDocumenti?: AttachedDocument[];
 }
 
+// ============================================================
+// SCHERMATA DI CARICAMENTO
+// ============================================================
+
+const SessionLoadingScreen = () => (
+  <div
+    data-testid="session-loading-screen"
+    role="status"
+    aria-live="polite"
+    aria-label="Caricamento sessione"
+    className="absolute inset-0 z-30 flex items-center justify-center bg-white dark:bg-neutral-950"
+  >
+    <div className="w-full max-w-3xl px-6">
+      <div className="mb-5 flex items-center justify-center gap-3 text-neutral-700 dark:text-neutral-200">
+        <Loader2 size={19} className="animate-spin" />
+        <span className="text-xs font-semibold uppercase tracking-[0.16em]">
+          Caricamento sessione
+        </span>
+      </div>
+
+      <div className="space-y-3" aria-hidden="true">
+        <div className="ml-auto h-16 w-[72%] rounded-2xl rounded-br-xs bg-neutral-100 dark:bg-neutral-900" />
+        <div className="h-20 w-[88%] rounded-2xl rounded-bl-xs bg-neutral-100 dark:bg-neutral-900" />
+        <div className="ml-auto h-14 w-[62%] rounded-2xl rounded-br-xs bg-neutral-100 dark:bg-neutral-900" />
+      </div>
+    </div>
+  </div>
+);
+
+// ============================================================
+// PAGINA PRINCIPALE
+// ============================================================
+
 export const LegalChatPage = () => {
   const location = useLocation();
+  const reduceMotion = useReducedMotion();
+
   const state = location.state as LocationState | null;
   const titoloRicevuto = state?.inizializzaTitolo;
   const documentiRicevuti = state?.inizializzaDocumenti;
-  
+
   const chatLogic = useLegalChat({
     docs: documentiRicevuti,
     title: titoloRicevuto,
     isNewFascicolo: Boolean(titoloRicevuto),
   });
+
   const {
     sessionType,
     isConverting,
     messages,
-    inputValue, setInputValue,
-    activeSourceId, setActiveSourceId,
-    showFilters, setShowFilters,
-    showDocsModal, setShowDocsModal,
+    inputValue,
+    setInputValue,
+    activeSourceId,
+    setActiveSourceId,
+    showFilters,
+    setShowFilters,
+    showDocsModal,
+    setShowDocsModal,
     attachedDocs,
-    filterState, setFilterState, activeFiltersCount, clearFilters,
-    messagesEndRef, handleSendMessage, toggleDocSelection, removeAttachment, seo,
-    isStreaming, agentStatusText,
+    filterState,
+    setFilterState,
+    activeFiltersCount,
+    clearFilters,
+    messagesEndRef,
+    handleSendMessage,
+    toggleDocSelection,
+    removeAttachment,
+    seo,
+    isStreaming,
+    agentStatusText,
     startTempChat,
     startFascicoloSetup,
-    closeSession, 
-    sessionTitle, 
-    threadTitle, 
+    closeSession,
+    sessionTitle,
+    threadTitle,
     archiveDocs,
     isLoadingData,
-    isLoadingSession,
+    isSessionReady,
     processFilesParallel,
     isProcessingFiles,
     handleSourceClick,
     threads,
     activeThreadId,
     convertChatToFascicolo,
-    showTitleModal, setShowTitleModal,
+    showTitleModal,
+    setShowTitleModal,
     setSessionTitle,
     denyOpen,
     handleToggleFascicoloLink,
-    handleDeleteDocumento, handleRenameDocumento,
+    handleDeleteDocumento,
+    handleRenameDocumento,
     setActiveQuote,
     activeQuote,
-    isReadOnly
+    isReadOnly,
   } = chatLogic;
 
-  // Stati Locali della UI
+  // ============================================================
+  // STATI LOCALI
+  // ============================================================
+
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
-  const [viewMode, setViewMode] = useState<'chat' | 'workspace'>('chat');
+  const [viewMode, setViewMode] = useState<"chat" | "workspace">("chat");
+  const [externalDroppedFiles, setExternalDroppedFiles] = useState<File[]>([]);
+
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Gestione Overflow Body in base all'accesso negato
+  // ============================================================
+  // GESTIONE OVERFLOW BODY
+  // ============================================================
+
   useEffect(() => {
     document.body.style.overflow = denyOpen ? "hidden" : "unset";
-    return () => { document.body.style.overflow = "unset"; };
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
   }, [denyOpen]);
-  
-  // Auto-resize della Textarea
+
+  // ============================================================
+  // AUTO-RESIZE TEXTAREA
+  // ============================================================
+
   useEffect(() => {
-    const t = textAreaRef.current;
-    if (t) {
-      t.style.height = "auto";
-      const newHeight = Math.min(t.scrollHeight, window.innerWidth < 768 ? 96 : 128);
-      t.style.height = `${newHeight}px`;
+    const textarea = textAreaRef.current;
+
+    if (textarea) {
+      textarea.style.height = "auto";
+
+      const newHeight = Math.min(
+        textarea.scrollHeight,
+        window.innerWidth < 768 ? 96 : 128
+      );
+
+      textarea.style.height = `${newHeight}px`;
     }
   }, [inputValue]);
 
-  // Isteresi: il loader sparisce solo dopo 250ms di stabilità, così i rimbalzi true/false/true dello stato di caricamento non producono flash
-  const isSessionBusy = isLoadingSession && (sessionType === 'fascicolo' || sessionType === 'temporanea');
-  const [holdLoader, setHoldLoader] = useState(false);
-  const [prevBusy, setPrevBusy] = useState(isSessionBusy);
-  if (prevBusy !== isSessionBusy) {
-    setPrevBusy(isSessionBusy);
-    if (!isSessionBusy) setHoldLoader(true);
-  }
-  useEffect(() => {
-    if (!holdLoader || isSessionBusy) return;
-    const t = setTimeout(() => setHoldLoader(false), 250);
-    return () => clearTimeout(t);
-  }, [holdLoader, isSessionBusy]);
-  const showSessionLoader = isSessionBusy || holdLoader;
+  // ============================================================
+  // GESTIONE ALLEGATI
+  // ============================================================
 
   const clearAllAttachments = () => {
-    attachedDocs.forEach(doc => removeAttachment(doc.id));
+    attachedDocs.forEach((doc) => removeAttachment(doc.id));
   };
-  
-  const handleDocumentAction = (actionType: 'quote' | 'semaforo' | 'distinguish', selectedText: string) => {
-    if (window.innerWidth < 768 && actionType !== 'quote') {
-      setViewMode('chat');
+
+  // ============================================================
+  // AZIONI DOCUMENTI
+  // ============================================================
+
+  const handleDocumentAction = (
+    actionType: "quote" | "semaforo" | "distinguish",
+    selectedText: string
+  ) => {
+    if (window.innerWidth < 768 && actionType !== "quote") {
+      setViewMode("chat");
     }
 
-    if (actionType === 'quote') {
-      setActiveQuote(prev => prev.includes(selectedText) ? prev : [...prev, selectedText]);
+    if (actionType === "quote") {
+      setActiveQuote((prev) =>
+        prev.includes(selectedText) ? prev : [...prev, selectedText]
+      );
+
       if (window.innerWidth >= 768) {
         setTimeout(() => textAreaRef.current?.focus(), 50);
       }
-      return; 
+
+      return;
     }
 
-    const promptText = actionType === 'semaforo' 
-      ? `Verifica legittimità del seguente principio estratto dal documento: "${selectedText}"`
-      : `Trova un distinguish per i seguenti fatti estratti dal documento: "${selectedText}"`;
-    
+    const promptText =
+      actionType === "semaforo"
+        ? `Verifica legittimità del seguente principio estratto dal documento: "${selectedText}"`
+        : `Trova un distinguish per i seguenti fatti estratti dal documento: "${selectedText}"`;
+
     setInputValue(promptText);
   };
 
   const removeQuote = (index: number) => {
-    setActiveQuote(prev => prev.filter((_, i) => i !== index));
+    setActiveQuote((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // --- RENDER INTERFACCIA PRINCIPALE ---
+  // ============================================================
+  // INTERFACCIA CHAT
+  // ============================================================
+
   const renderChatInterface = () => (
     <div className="flex w-full h-full relative overflow-hidden bg-neutral-50 dark:bg-neutral-950">
-      
-      {/* 1. PANNELLO SINISTRO: WORKSPACE DOCUMENTO */}
-      <ChatWorkspace 
+
+      {/* 1. WORKSPACE DOCUMENTO */}
+
+      <ChatWorkspace
         viewMode={viewMode}
         setViewMode={setViewMode}
         attachedDocs={attachedDocs}
@@ -153,8 +228,10 @@ export const LegalChatPage = () => {
         removeQuote={removeQuote}
       />
 
-      {/* 2. AREA CENTRALE DELLA CHAT */}
+      {/* 2. AREA CENTRALE CHAT */}
+
       <div className="flex-1 min-w-0 flex flex-col h-full bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 relative z-10">
+
         <ChatHeader
           sessionType={sessionType}
           sessionTitle={sessionTitle}
@@ -170,6 +247,7 @@ export const LegalChatPage = () => {
         />
 
         <div className="relative flex-1 flex overflow-hidden min-h-0 w-full">
+
           <MessageList
             messages={messages}
             isStreaming={isStreaming}
@@ -179,10 +257,13 @@ export const LegalChatPage = () => {
             setActiveSourceId={setActiveSourceId}
             handleSourceClick={handleSourceClick}
           />
+
           <MessageTimeline messages={messages} />
+
         </div>
 
-        {/* Input bloccato se isReadOnly è true */}
+        {/* INPUT CHAT */}
+
         <ChatInput
           inputValue={inputValue}
           setInputValue={setInputValue}
@@ -197,18 +278,24 @@ export const LegalChatPage = () => {
           setShowFilters={setShowFilters}
           activeFiltersCount={activeFiltersCount}
           setShowDocsModal={setShowDocsModal}
+          onDropFiles={setExternalDroppedFiles}
           isProcessingFiles={isProcessingFiles}
           isStreaming={isStreaming}
           textAreaRef={textAreaRef}
           isReadOnly={isReadOnly}
         />
+
       </div>
 
-      <DocumentSelectorPanel 
-        isOpen={showDocsModal} 
+      {/* 3. DOCUMENT SELECTOR */}
+
+      <DocumentSelectorPanel
+        isOpen={showDocsModal}
         onClose={() => setShowDocsModal(false)}
         archiveDocs={archiveDocs}
         attachedDocs={attachedDocs}
+        externalPendingFiles={externalDroppedFiles}
+        onExternalPendingFilesConsumed={() => setExternalDroppedFiles([])}
         onToggleDoc={toggleDocSelection}
         onProcessFiles={processFilesParallel}
         onToggleFascicoloLink={handleToggleFascicoloLink}
@@ -218,52 +305,84 @@ export const LegalChatPage = () => {
         onDeleteDocumento={handleDeleteDocumento}
       />
 
-      {/* 3. RIGHT SIDEBAR (FONTI & THREAD FASCICOLO) */}
-      <aside className={`
-        absolute inset-0 z-20 flex lg:relative lg:inset-auto lg:w-80 xl:w-96 lg:shrink-0
-        ${showMobileSidebar ? 'pointer-events-auto' : 'pointer-events-none lg:pointer-events-auto'}
-        ${viewMode === 'workspace' ? 'lg:hidden' : 'lg:flex'} 
-      `}>
-        {/* Overlay Mobile */}
-        <div 
+      {/* 4. SIDEBAR DESTRA */}
+
+      <aside
+        className={`
+          absolute inset-0 z-20 flex lg:relative lg:inset-auto lg:w-80 xl:w-96 lg:shrink-0
+          ${showMobileSidebar
+            ? "pointer-events-auto"
+            : "pointer-events-none lg:pointer-events-auto"}
+          ${viewMode === "workspace" ? "lg:hidden" : "lg:flex"}
+        `}
+      >
+
+        {/* OVERLAY MOBILE */}
+
+        <div
           role="button"
           tabIndex={0}
           aria-label="Chiudi barra laterale"
-          className={`absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm lg:hidden transition-opacity outline-none focus-visible:ring-1 focus-visible:ring-neutral-400 ${showMobileSidebar ? 'opacity-100' : 'opacity-0'}`} 
-          onClick={() => setShowMobileSidebar(false)} 
+          className={`
+            absolute inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm
+            lg:hidden transition-opacity outline-none
+            focus-visible:ring-1 focus-visible:ring-neutral-400
+            ${showMobileSidebar ? "opacity-100" : "opacity-0"}
+          `}
+          onClick={() => setShowMobileSidebar(false)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
+            if (e.key === "Enter" || e.key === " ") {
               e.preventDefault();
               setShowMobileSidebar(false);
             }
           }}
         />
-        
-        <div className={`
-          relative w-[85%] sm:w-90 h-full bg-white dark:bg-neutral-900 ml-auto shadow-2xl flex flex-col
-          lg:w-full lg:shadow-none lg:ml-0 transition-transform duration-300
-          ${showMobileSidebar ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
-        `}>
-          
-          {/* Header Mobile Sidebar */}
+
+        <div
+          className={`
+            relative w-[85%] sm:w-90 h-full bg-white dark:bg-neutral-900
+            ml-auto shadow-2xl flex flex-col
+            lg:w-full lg:shadow-none lg:ml-0 transition-transform duration-300
+            ${showMobileSidebar
+              ? "translate-x-0"
+              : "translate-x-full lg:translate-x-0"}
+          `}
+        >
+
+          {/* HEADER SIDEBAR MOBILE */}
+
           <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-neutral-200 dark:border-neutral-800 bg-white/90 dark:bg-neutral-900/90 backdrop-blur-sm">
+
             <div className="flex items-center gap-2 text-neutral-900 dark:text-white font-bold text-sm">
-              {sessionType === 'fascicolo' ? (
-                <><FolderPlus size={18} className="text-yellow-600" /> Gestione Fascicolo</>
+
+              {sessionType === "fascicolo" ? (
+                <>
+                  <FolderPlus size={18} className="text-yellow-600" />
+                  Gestione Fascicolo
+                </>
               ) : (
-                <><PanelRight size={18} className="text-blue-600" /> Dettagli Sessione</>
+                <>
+                  <PanelRight size={18} className="text-blue-600" />
+                  Dettagli Sessione
+                </>
               )}
+
             </div>
-            <button 
+
+            <button
               onClick={() => setShowMobileSidebar(false)}
               className="p-1.5 rounded-lg text-neutral-500 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 transition-colors"
             >
               <X size={20} />
             </button>
+
           </div>
 
+          {/* CONTENUTO SIDEBAR */}
+
           <div className="flex-1 overflow-y-auto lg:border-l border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 pb-[env(safe-area-inset-bottom)]">
-            <RightSidebar 
+
+            <RightSidebar
               sessionType={sessionType}
               attachedDocs={attachedDocs}
               removeAttachment={removeAttachment}
@@ -275,22 +394,34 @@ export const LegalChatPage = () => {
               activeThreadId={activeThreadId ?? undefined}
               onThreadSelect={(id) => {
                 chatLogic.startThread(id);
-                if (window.innerWidth < 1024) setShowMobileSidebar(false); 
+
+                if (window.innerWidth < 1024) {
+                  setShowMobileSidebar(false);
+                }
               }}
               onNewThread={() => {
                 chatLogic.createNewThread();
-                if (window.innerWidth < 1024) setShowMobileSidebar(false);
+
+                if (window.innerWidth < 1024) {
+                  setShowMobileSidebar(false);
+                }
               }}
               onSourceClick={handleSourceClick}
               onDeleteThread={chatLogic.deleteThread}
               onRenameThread={chatLogic.renameThread}
               isReadOnly={isReadOnly}
             />
+
           </div>
         </div>
       </aside>
+
     </div>
   );
+
+  // ============================================================
+  // RENDER PAGINA
+  // ============================================================
 
   return (
     <>
@@ -298,68 +429,71 @@ export const LegalChatPage = () => {
         <title>{seo.title}</title>
         <meta name="description" content={seo.desc} />
       </Helmet>
-      
-      <FilterModal 
-        isOpen={showFilters} 
-        onClose={() => setShowFilters(false)} 
+
+      <FilterModal
+        isOpen={showFilters}
+        onClose={() => setShowFilters(false)}
         loading={false}
-        filterState={filterState} 
+        filterState={filterState}
         setFilterState={setFilterState}
         clearFilters={clearFilters}
       />
 
       <div className="flex flex-col h-dvh w-full bg-white dark:bg-neutral-950 font-sans overflow-hidden">
+
         <Header />
-        
-        <main id="main-content" tabIndex={-1} className="flex-1 relative flex overflow-hidden w-full">
-          <AnimatePresence initial={false}>
-            {sessionType === 'seleziona' && (
-              <motion.div 
-                key="seleziona" 
-                className="w-full h-full" 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, position: "absolute", inset: 0, pointerEvents: "none" }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-              >
-                <SelectionScreen 
-                  startTempChat={startTempChat}
-                  startFascicoloSetup={startFascicoloSetup}
-                  isLoadingData={isLoadingData}
-                />
-              </motion.div>
-            )}
-            {(sessionType === 'temporanea' || sessionType === 'fascicolo') && (
-              <motion.div 
-                key="chat" 
-                className="w-full h-full" 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0, position: "absolute", inset: 0, pointerEvents: "none" }}
-                transition={{ duration: 0.15, ease: "easeOut" }}
-              >
-                {renderChatInterface()}
-              </motion.div>
-            )}
-          </AnimatePresence>
-          <AnimatePresence>
-            {showSessionLoader && (
-              <motion.div
-                key="session-loading"
-                data-testid="session-loading-overlay"
-                className="absolute inset-0 z-30 flex"
-                initial={false}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
-              >
-              </motion.div>
-            )}
-          </AnimatePresence>
+
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 relative flex overflow-hidden w-full"
+        >
+
+          {/* SCHERMATA INIZIALE */}
+
+          {sessionType === "seleziona" ? (
+            <motion.div
+              key="seleziona"
+              className="w-full h-full"
+              initial={reduceMotion ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: reduceMotion ? 0 : 0.2 }}
+            >
+              <SelectionScreen
+                startTempChat={startTempChat}
+                startFascicoloSetup={startFascicoloSetup}
+                isLoadingData={isLoadingData}
+              />
+            </motion.div>
+
+          ) : isSessionReady ? (
+
+            /* SESSIONE COMPLETAMENTE PRONTA */
+
+            <motion.div
+              key="chat"
+              className="w-full h-full"
+              initial={reduceMotion ? false : { opacity: 0, scale: 0.995 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: reduceMotion ? 0 : 0.2 }}
+            >
+              {renderChatInterface()}
+            </motion.div>
+
+          ) : (
+
+            /* CARICAMENTO: NESSUNA CHAT PARZIALE VISIBILE */
+
+            <SessionLoadingScreen />
+
+          )}
+
         </main>
       </div>
-      
-      <TitlePromptModal 
+
+      {/* MODALE TITOLO */}
+
+      <TitlePromptModal
         isOpen={showTitleModal}
         onClose={() => setShowTitleModal(false)}
         onConfirm={(title: string) => {
@@ -369,10 +503,13 @@ export const LegalChatPage = () => {
         }}
         initialTitle={sessionTitle}
       />
-      
+
+      {/* ACCESSO NEGATO */}
+
       <AnimatePresence>
         {denyOpen && <AccessDenied />}
       </AnimatePresence>
+
     </>
   );
 };

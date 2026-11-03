@@ -4,12 +4,15 @@ import { useAuth } from "@/context/useAuth";
 import { userExists } from "@/shared/services/user";
 import { AuthLoader } from "./AuthLoader";
 import { ErrorScreen } from "../shared/components/ErrorScreen";
+import { useSmoothLoading } from "@/shared/hooks/useSmoothLoading";
 
 export const RegistrationRoute = ({ children }: { children: ReactNode }) => {
   const { user, status, errorMessage } = useAuth();
   
   // Tracciamo lo stato del profilo in modo esplicito per gestire gli errori della Promise
   const [profileState, setProfileState] = useState<'loading' | 'exists' | 'missing' | 'error'>('loading');
+  const isBusy = status === 'loading' || (status === 'authenticated' && profileState === 'loading');
+  const showLoader = useSmoothLoading(isBusy);
 
   useEffect(() => {
     // Se non siamo autenticati o siamo in errore globale, non fare nulla
@@ -38,7 +41,7 @@ export const RegistrationRoute = ({ children }: { children: ReactNode }) => {
   }
 
   // 2. Auth sta ancora caricando
-  if (status === 'loading') return <AuthLoader />;
+  if (status === 'loading') return showLoader ? <AuthLoader /> : null;
 
   // 3. Utente ospite puro (Guest): Via libera al form
   if (status === 'unauthenticated') return <>{children}</>;
@@ -51,7 +54,7 @@ export const RegistrationRoute = ({ children }: { children: ReactNode }) => {
   }
 
   // 5. Verifica in corso su Firestore
-  if (profileState === 'loading') return <AuthLoader />;
+  if (profileState === 'loading') return showLoader ? <AuthLoader /> : null;
 
   // 6. Registrazione su Firestore completata in precedenza
   if (profileState === 'exists') return <Navigate to="/profilo" replace />;

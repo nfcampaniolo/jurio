@@ -31,6 +31,7 @@ export const ApprofondimentoGiurisprudenziale: React.FC = () => {
   const [sidebarAperta, setSidebarAperta] = useState(false);
   const [mostraImpostazioni, setMostraImpostazioni] = useState<boolean>(false);
   const [mostraGuida, setMostraGuida] = useState<boolean>(false);
+  const [externalDroppedFiles, setExternalDroppedFiles] = useState<File[]>([]);
 
   const [eliminandoId, setEliminandoId] = useState<string | null>(null);
   const [sessioneDaEliminare, setSessioneDaEliminare] = useState<{ id: string; titolo: string } | null>(null);
@@ -256,6 +257,7 @@ export const ApprofondimentoGiurisprudenziale: React.FC = () => {
                   onSessionCreated={handleCambioSessione}
                   configurazione={configurazione}
                   attachedDocs={attachedDocs}
+                  onDropFiles={setExternalDroppedFiles}
                   onOpenDocsModal={() => setShowDocsModal(true)}
                   onRemoveAttachment={removeAttachment}
                   onSyncDocs={handleSyncDocs}
@@ -271,6 +273,8 @@ export const ApprofondimentoGiurisprudenziale: React.FC = () => {
         onClose={() => setShowDocsModal(false)}
         archiveDocs={archiveDocs}
         attachedDocs={attachedDocs}
+        externalPendingFiles={externalDroppedFiles}
+        onExternalPendingFilesConsumed={() => setExternalDroppedFiles([])}
         onToggleDoc={toggleDocSelection}
         onProcessFiles={processFilesParallel}
         onToggleFascicoloLink={handleToggleFascicoloLink}

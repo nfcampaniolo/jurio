@@ -16,6 +16,10 @@ const { mockAuthState, mockNavigateComponent } = vi.hoisted(() => ({
   mockNavigateComponent: vi.fn(),
 }));
 
+const { mockUseSmoothLoading } = vi.hoisted(() => ({
+  mockUseSmoothLoading: vi.fn(() => true),
+}));
+
 /* ---------- mock react-router-dom ---------- */
 vi.mock("react-router-dom", () => ({
   __esModule: true,
@@ -48,12 +52,18 @@ vi.mock("@/shared/components/ErrorScreen", () => ({
   ),
 }));
 
+vi.mock("@/shared/hooks/useSmoothLoading", () => ({
+  __esModule: true,
+  useSmoothLoading: (isLoading: boolean) => mockUseSmoothLoading(isLoading),
+}));
+
 /* ---------- component under test ---------- */
 import { PublicOnly } from "@/routes/PublicOnly";
 
 describe("PublicOnly Route Guard Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseSmoothLoading.mockReturnValue(true);
     mockAuthState.user = null;
     mockAuthState.status = "unauthenticated";
     mockAuthState.hasConflict = false;

@@ -78,7 +78,7 @@ export const useLegalChat = (initialData?: {
   // Parte da true se c'è un utente: evita il flash lista vuota -> spinner -> lista
   const [isLoadingData, setIsLoadingData] = useState(Boolean(user?.uid));
   const [isLoadingSession, setIsLoadingSession] = useState(Boolean(routeEntityKey && !isNewFascicolo));
-  const [hasLoadedUserData, setHasLoadedUserData] = useState(false);
+  const [hasLoadedFascicoli, setHasLoadedFascicoli] = useState(false);
   const [isProcessingFiles, setIsProcessingFiles] = useState(false);
   const [showTitleModal, setShowTitleModal] = useState(false);
   const [denyOpen, setDenyOpen] = useState(false);
@@ -118,63 +118,108 @@ export const useLegalChat = (initialData?: {
   }, [user?.uid, fascicoloId, isNewFascicolo]);
 
   // --- Inizializzazione Dati Base ---
+  // Le tre liste sono indipendenti: non facciamo aspettare il caricamento
+  // della chat/fascicolo al completamento della lista documenti o delle altre liste.
   useEffect(() => {
-    const fetchUserData = async () => {
-      if (!user?.uid) return;
-      setIsLoadingData(true);
-      setHasLoadedUserData(false);
-      try {
-        const [docsRes, fascicoliRes, chatsRes] = await Promise.all([ listDocumentsByUser(user.uid), listFascicoliByUser(user.uid), listChatsByUser(user.uid) ]);
+    if (!user?.uid) return;
+
+    let cancelled = false;
+    setIsLoadingData(true);
+    setHasLoadedFascicoli(false);
+
+    const docsTask = listDocumentsByUser(user.uid)
+      .then((docsRes) => {
+        if (cancelled) return;
         setArchiveDocs(docsRes.map(doc => ({
-          id: String(doc.id), name: doc.nome_file || "Documento senza nome",
+          id: String(doc.id),
+          name: doc.nome_file || "Documento senza nome",
           metadata: doc.tipo_documento === "documento_giurisprudenza_generico" ? doc.sottotipo_documento : doc.massima,
-          type: "pdf", dataSentenza: doc.dataSentenza || undefined, fascicoloIds: doc.fascicoloIds || undefined, user: doc.user
+          type: "pdf",
+          dataSentenza: doc.dataSentenza || undefined,
+          fascicoloIds: doc.fascicoloIds || undefined,
+          user: doc.user
         })));
-        setPastFascicoli(fascicoliRes); setPastChats(chatsRes);           
-      } catch (error) { console.error(error); } finally {
-        setIsLoadingData(false);
-        setHasLoadedUserData(true);
-      }
+      })
+      .catch((error) => console.error("[Archive] Errore caricamento documenti:", error));
+
+    const fascicoliTask = listFascicoliByUser(user.uid)
+      .then((fascicoliRes) => {
+        if (!cancelled) setPastFascicoli(fascicoliRes);
+      })
+      .catch((error) => console.error("[Archive] Errore caricamento fascicoli:", error))
+      .finally(() => {
+        if (!cancelled) setHasLoadedFascicoli(true);
+      });
+
+    const chatsTask = listChatsByUser(user.uid)
+      .then((chatsRes) => {
+        if (!cancelled) setPastChats(chatsRes);
+      })
+      .catch((error) => console.error("[Archive] Errore caricamento chat:", error));
+
+    void Promise.allSettled([docsTask, fascicoliTask, chatsTask]).then(() => {
+      if (!cancelled) setIsLoadingData(false);
+    });
+
+    return () => {
+      cancelled = true;
     };
-    void fetchUserData();
   }, [user?.uid]);
   
   // --- Sincronizzazione Rotte / Dati ---
   const loadedEntityRef = useRef<string | null>(null);
   const loadedThreadRef = useRef<string | null>(null);
   const threadMessagesCacheRef = useRef<Map<string, Message[]>>(new Map());
+  const locallyCreatedChatIdsRef = useRef<Set<string>>(new Set());
 
-  const loadPastChat = useCallback(async (chat: PastChat) => {
-    setIsLoadingData(true);
+  const loadChatById = useCallback(async (targetChatId: string, title = "") => {
+    const entityKey = `chat:${targetChatId}`;
     setIsLoadingSession(true);
-    setMessages([]);
+    setSessionTitle(title);
+    setAttachedDocs([]);
+
     const getTime = (ts: unknown): number => {
       if (!ts) return 0;
-      if (typeof ts === 'object' && ts !== null && 'seconds' in ts) return (ts as { seconds: number }).seconds * 1000;
-      const d = new Date(ts as string | number | Date); return isNaN(d.getTime()) ? 0 : d.getTime();
+      if (typeof ts === 'object' && ts !== null && 'seconds' in ts) {
+        return (ts as { seconds: number }).seconds * 1000;
+      }
+      const date = new Date(ts as string | number | Date);
+      return Number.isNaN(date.getTime()) ? 0 : date.getTime();
     };
+
     try {
-      const dbMessages = await fetchChatMessages(chat.id);
-      if (loadedEntityRef.current !== `chat:${chat.id}`) return;
+      const dbMessages = await fetchChatMessages(targetChatId);
+      if (loadedEntityRef.current !== entityKey) return;
+
       const sortedMessages = [...dbMessages].sort((a, b) => {
         const diff = getTime(a.timestamp) - getTime(b.timestamp);
-        if (diff !== 0) return diff; if (a.role === 'user' && b.role === 'model') return -1; if (a.role === 'model' && b.role === 'user') return 1; return 0;
+        if (diff !== 0) return diff;
+        if (a.role === 'user' && b.role === 'model') return -1;
+        if (a.role === 'model' && b.role === 'user') return 1;
+        return 0;
       });
-      setSessionTitle(chat.title); setMessages(sortedMessages.map((m: Message) => ({ ...m, isHistorical: true })));
-      setAttachedDocs([]); void navigate(`/chat/${chat.id}`);
+
+      setSessionTitle(title);
+      setMessages(sortedMessages.map((message: Message) => ({ ...message, isHistorical: true })));
+      setAttachedDocs([]);
     } catch (error) {
-      console.error(`[❌ ChatLoad] Errore`);
-      console.error(error);
+      console.error(`[ChatLoad] Errore caricamento chat ${targetChatId}:`, error);
+      if (loadedEntityRef.current === entityKey) setMessages([]);
     } finally {
-      setIsLoadingData(false);
-      if (loadedEntityRef.current === `chat:${chat.id}`) setIsLoadingSession(false);
+      if (loadedEntityRef.current === entityKey) setIsLoadingSession(false);
     }
-  }, [navigate]);
+  }, []);
+
+  const loadPastChat = useCallback(async (chat: PastChat) => {
+    const entityKey = `chat:${chat.id}`;
+    loadedEntityRef.current = entityKey;
+    loadedThreadRef.current = null;
+    await loadChatById(chat.id, chat.title);
+    if (loadedEntityRef.current === entityKey) void navigate(`/chat/${chat.id}`);
+  }, [loadChatById, navigate]);
 
   const loadPastFascicolo = useCallback(async (fascicolo: PastFascicolo) => {
-    setIsLoadingData(true);
     setIsLoadingSession(true);
-    setMessages([]);
     try {
       const prefetched = fascicoloPrefetchRef.current.get(fascicolo.id);
       fascicoloPrefetchRef.current.delete(fascicolo.id);
@@ -219,15 +264,22 @@ export const useLegalChat = (initialData?: {
     } catch (error) {
       toast.error("Errore nel caricamento.");
       console.error(error);
+      if (loadedEntityRef.current === `fascicolo:${fascicolo.id}`) {
+        setMessages([]);
+        setThreads([]);
+      }
     } finally {
-      setIsLoadingData(false);
       if (loadedEntityRef.current === `fascicolo:${fascicolo.id}`) setIsLoadingSession(false);
     }
   }, [threadId, navigate]);
 
   useEffect(() => {
     const currentThreadKey = loadedThreadRef.current;
-    if (fascicoloId && currentThreadKey?.startsWith(`${fascicoloId}:`)) {
+    if (
+      fascicoloId &&
+      activeThreadId &&
+      currentThreadKey === `${fascicoloId}:${activeThreadId}`
+    ) {
       threadMessagesCacheRef.current.set(currentThreadKey, messages);
     }
 
@@ -269,44 +321,70 @@ export const useLegalChat = (initialData?: {
       setIsLoadingSession(true);
       loadedEntityRef.current = null;
       loadedThreadRef.current = null;
-      setMessages([]);
+      // Non svuotiamo messages durante il cambio rotta: il loader copre la UI
+      // e i nuovi messaggi sostituiscono quelli vecchi tutti insieme.
     }
-    if (isLoadingData || !hasLoadedUserData) return;
+
+    if (!user?.uid) return;
 
     if (chatId) {
-      setSessionType('temporanea'); setIsSetupComplete(true); setIsReadOnly(false);
+      setSessionType('temporanea');
+      setIsSetupComplete(true);
+      setIsReadOnly(false);
       const entityKey = `chat:${chatId}`;
+      const chatToLoad = pastChats.find((chat) => chat.id === chatId);
+
       if (loadedEntityRef.current !== entityKey) {
-        const chatToLoad = pastChats.find(c => c.id === chatId);
-        if (chatToLoad) {
-          setIsLoadingSession(true);
-          loadedEntityRef.current = entityKey;
-          loadedThreadRef.current = null;
-          void loadPastChat(chatToLoad);
-        } else {
+        loadedEntityRef.current = entityKey;
+        loadedThreadRef.current = null;
+
+        // Una chat appena creata non esiste ancora nel DB: non facciamo una
+        // lettura inutile e mostriamo subito la conversazione vuota.
+        if (locallyCreatedChatIdsRef.current.delete(chatId)) {
+          setSessionTitle("");
+          setThreadTitle("");
+          setThreads([]);
+          setActiveThreadId(null);
+          setMessages([]);
+          setAttachedDocs([]);
           setIsLoadingSession(false);
+        } else {
+          void loadChatById(chatId, chatToLoad?.title ?? "");
         }
+      } else if (chatToLoad) {
+        // Il titolo può arrivare dopo i messaggi: aggiorniamolo senza ricaricare la chat.
+        setSessionTitle((currentTitle) => currentTitle === chatToLoad.title ? currentTitle : chatToLoad.title);
       }
     } else if (fascicoloId) {
-      setSessionType('fascicolo'); setIsSetupComplete(true);
+      setSessionType('fascicolo');
+      setIsSetupComplete(true);
       if (threadId) setActiveThreadId(threadId);
       const entityKey = `fascicolo:${fascicoloId}`;
+
+      // Per il fascicolo serve la metadata list (titolo e permessi), ma non
+      // aspettiamo anche documenti e chat: il prefetch dei thread è già partito.
+      if (!hasLoadedFascicoli) return;
+
       if (loadedEntityRef.current !== entityKey) {
-        const fascicoloToLoad = pastFascicoli.find(f => f.id === fascicoloId);
+        const fascicoloToLoad = pastFascicoli.find((fascicolo) => fascicolo.id === fascicoloId);
         if (fascicoloToLoad) {
-          setIsLoadingSession(true);
           loadedEntityRef.current = entityKey;
           loadedThreadRef.current = null;
-          setIsReadOnly(fascicoloToLoad.user !== user?.uid);
+          setIsReadOnly(fascicoloToLoad.user !== user.uid);
           void loadPastFascicolo(fascicoloToLoad);
-        }
-        else {
+        } else {
+          loadedEntityRef.current = entityKey;
           setMessages([]);
           setThreadTitle("");
           setIsReadOnly(false);
           setIsLoadingSession(false);
         }
       } else if (loadedEntityRef.current === entityKey && threadId) {
+        const fascicoloMeta = pastFascicoli.find((fascicolo) => fascicolo.id === fascicoloId);
+        if (fascicoloMeta) {
+          setSessionTitle((currentTitle) => currentTitle === fascicoloMeta.title ? currentTitle : fascicoloMeta.title);
+          setIsReadOnly(fascicoloMeta.user !== user.uid);
+        }
         const threadKey = `${fascicoloId}:${threadId}`;
         if (loadedThreadRef.current !== threadKey) {
           loadedThreadRef.current = threadKey;
@@ -316,8 +394,6 @@ export const useLegalChat = (initialData?: {
             setThreadTitle(threads.find((thread) => thread.id === threadId)?.title || "Conversazione");
             setMessages(cachedMessages);
           } else {
-            setMessages([]);
-            setThreadTitle("");
             setIsLoadingSession(true);
             void fetchSingleThreadMessages(fascicoloId, threadId).then((loaded: Message[]) => {
               if (loadedEntityRef.current !== entityKey || loadedThreadRef.current !== threadKey) return;
@@ -328,6 +404,9 @@ export const useLegalChat = (initialData?: {
               setMessages(historical);
             }).catch((error: unknown) => {
               console.error("[ChatLoad] Errore caricamento thread:", error);
+              if (loadedEntityRef.current === entityKey && loadedThreadRef.current === threadKey) {
+                setMessages([]);
+              }
               toast.error("Errore nel caricamento della conversazione.");
             }).finally(() => {
               if (loadedEntityRef.current === entityKey && loadedThreadRef.current === threadKey) {
@@ -343,12 +422,11 @@ export const useLegalChat = (initialData?: {
     fascicoloId, 
     routeEntityKey,
     threadId, 
-    isLoadingData, 
-    pastChats, 
-    pastFascicoli, 
-    user?.uid, 
-    hasLoadedUserData,
-    loadPastChat, 
+    pastChats,
+    pastFascicoli,
+    hasLoadedFascicoli,
+    user?.uid,
+    loadChatById,
     loadPastFascicolo,
     activeThreadId,
     messages,
@@ -357,7 +435,18 @@ export const useLegalChat = (initialData?: {
   ]);
   
   // Navigazione & Helpers
-  const startTempChat = () => void navigate(`/chat/${uuidv4()}`);
+  const startTempChat = () => {
+    const newChatId = uuidv4();
+    locallyCreatedChatIdsRef.current.add(newChatId);
+    // La chat nuova è vuota per definizione: la sua entità è pronta già prima
+    // del cambio URL, evitando un frame con la sessione precedente.
+    loadedEntityRef.current = `chat:${newChatId}`;
+    loadedThreadRef.current = null;
+    setSessionType('temporanea');
+    setIsSetupComplete(true);
+    setIsLoadingSession(false);
+    void navigate(`/chat/${newChatId}`);
+  };
   const startFascicoloSetup = (): void => { setSessionTitle(""); setThreadTitle(""); setSessionType('fascicolo'); setIsSetupComplete(false); void navigate('/crea-nuovo-fascicolo'); };
   const finalizeFascicoloCreation = () => { setIsSetupComplete(true); void navigate(`/fascicolo/${uuidv4()}/${uuidv4()}`); };
   const closeSession = () => void navigate(-1);
@@ -403,6 +492,20 @@ export const useLegalChat = (initialData?: {
       } catch (error) { console.error(error); } 
   };
 
+  // La readiness è calcolata anche dagli ID della rotta, non soltanto dagli
+  // state aggiornati negli effect. In questo modo un cambio chat/thread blocca
+  // il rendering già al primo render della nuova URL.
+  const expectedThreadKey = fascicoloId && threadId
+    ? `${fascicoloId}:${threadId}`
+    : null;
+
+  const isSessionReady = !routeEntityKey || (
+    loadedEntityRef.current === routeEntityKey &&
+    (!expectedThreadKey || loadedThreadRef.current === expectedThreadKey) &&
+    !isLoadingSession &&
+    !isLoadingData
+  );
+
   const getSeoData = () => {
     switch(sessionType) {
       case 'storico': return { title: "Archivio | Jurio", desc: "Consultazioni passate." };
@@ -421,7 +524,7 @@ export const useLegalChat = (initialData?: {
     messagesEndRef, handleSendMessage, toggleDocSelection, removeAttachment, loadPastFascicolo, loadPastChat,
     seo: getSeoData(), startTempChat, startFascicoloSetup, finalizeFascicoloCreation, convertChatToFascicolo, closeSession,
     createNewThread, sessionTitle, setSessionTitle, threadTitle, setThreadTitle, 
-    threads, activeThreadId, archiveDocs, pastFascicoli, pastChats, isLoadingData, isLoadingSession, processFilesParallel, isProcessingFiles,
+    threads, activeThreadId, archiveDocs, pastFascicoli, pastChats, isLoadingData, isLoadingSession, isSessionReady, processFilesParallel, isProcessingFiles,
     handleSourceClick, showTitleModal, setShowTitleModal, startThread, denyOpen,
     renameFascicolo, renameChat, deleteChat, deleteFascicolo, deleteThread, renameThread,
     handleToggleFascicoloLink, handleDeleteDocumento, handleRenameDocumento,

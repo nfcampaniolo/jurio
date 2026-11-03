@@ -28,6 +28,8 @@ interface AnalysisPromptSectionProps {
   prompt: string;
   setPrompt: (value: string) => void;
   isProcessing: boolean;
+  onDropFiles?: (files: File[]) => void;
+  onOpenDocsModal?: () => void;
 }
 
 const promptExamples = [
@@ -48,11 +50,14 @@ const promptExamples = [
 export const AnalysisPromptSection: React.FC<AnalysisPromptSectionProps> = ({
   prompt,
   setPrompt,
-  isProcessing
+  isProcessing,
+  onDropFiles,
+  onOpenDocsModal
 }) => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const promptRef = useRef(prompt);
   const [isListening, setIsListening] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
 
   // Mantieni aggiornato il ref del prompt per evitare closure obsolete
@@ -116,8 +121,49 @@ export const AnalysisPromptSection: React.FC<AnalysisPromptSectionProps> = ({
     setIsListening(true);
   };
 
+  const handleDragOver = (e: React.DragEvent<HTMLElement>) => {
+    if (isProcessing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLElement>) => {
+    if (isProcessing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+
+    const files = Array.from(e.dataTransfer.files ?? []);
+    if (files.length === 0) return;
+
+    onDropFiles?.(files);
+    onOpenDocsModal?.();
+  };
+
   return (
-    <section className="group relative bg-(--color-surface) border border-(--color-border) rounded-lg p-5 sm:p-6 shadow-(--shadow-soft) overflow-hidden">
+    <section
+      onDragEnter={handleDragOver}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`group relative bg-(--color-surface) border border-(--color-border) rounded-lg p-5 sm:p-6 shadow-(--shadow-soft) overflow-hidden ${
+        isDragActive ? "border-(--color-text) bg-(--color-bg)" : ""
+      }`}
+    >
+      {isDragActive && (
+        <div className="absolute inset-0 z-30 pointer-events-none flex items-center justify-center bg-(--color-bg)/85 backdrop-blur-[1px]">
+          <span className="px-3 py-1.5 rounded-md border border-(--color-border) bg-(--color-surface) text-[11px] font-bold uppercase tracking-wider text-(--color-text)">
+            Rilascia per allegare documenti
+          </span>
+        </div>
+      )}
       <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-0 group-hover:opacity-90 group-focus-within:opacity-90 transition-opacity duration-200 z-20 pointer-events-none" />
       
       <div className="flex items-center justify-between gap-3 pb-4">

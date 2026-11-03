@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { PastFascicoli } from "./PastFascicoli";
 import { Header } from "@/shared/components/Header";
 import { Helmet } from "@dr.pogodin/react-helmet";
@@ -10,6 +11,34 @@ import type { PastChat, PastFascicolo } from "@/interfaces/interfaces";
 import { getAuth } from "firebase/auth";
 import { ConfirmModal } from "@/shared/components/ConfirmModal"; 
 import { toast } from "react-hot-toast";
+
+const ArchiveLoadingSkeleton = () => (
+  <motion.div
+    key="archive-loading"
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -8 }}
+    transition={{ duration: 0.28, ease: "easeOut" }}
+    className="w-full max-w-5xl mx-auto px-6 py-10"
+  >
+    <div className="flex items-center gap-3 mb-7">
+      <Loader2 size={24} className="animate-spin text-(--color-text)" />
+      <span className="text-xs font-bold uppercase tracking-widest text-(--color-muted)">Caricamento archivio in corso...</span>
+    </div>
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 animate-pulse" aria-hidden="true">
+      {Array.from({ length: 6 }, (_, index) => (
+        <div key={`archive-skeleton-${index}`} className="rounded-lg border border-(--color-border) bg-(--color-surface) p-6 shadow-(--shadow-soft)">
+          <div className="flex items-center justify-between mb-5">
+            <div className="h-10 w-10 rounded-md bg-(--color-border) opacity-60" />
+            <div className="h-4 w-4 rounded bg-(--color-border) opacity-50" />
+          </div>
+          <div className="h-4 w-3/4 rounded bg-(--color-border) opacity-60 mb-3" />
+          <div className="h-3 w-1/2 rounded bg-(--color-border) opacity-45" />
+        </div>
+      ))}
+    </div>
+  </motion.div>
+);
 
 type RenameTarget = {
   id: string;
@@ -123,26 +152,32 @@ export const HistoryPage = () => {
         <Header />
         
         <main id="main-content" tabIndex={-1} className="flex-1 relative flex flex-col">
-          {isLoadingData ? (
-             <div className="flex flex-col items-center justify-center w-full h-[50vh] text-(--color-muted) gap-3">
-               <Loader2 size={32} className="animate-spin text-(--color-text)" />
-               <span className="text-xs font-bold uppercase tracking-widest">Caricamento archivio in corso...</span>
-             </div>
-          ) : (
-            <div className="w-full h-full animate-in fade-in duration-300">
-              <PastFascicoli 
-                fascicoli={pastFascicoli} 
-                chats={pastChats}
-                onSelectFascicolo={handleSelectFascicolo} 
-                onSelectChat={handleSelectChat} 
-                onDeleteFascicolo={(id) => openDeleteModal(id, "fascicolo")}
-                onDeleteChat={(id) => openDeleteModal(id, "chat")}
-                onRenameFascicolo={(id, currentName) => openRenameModal(id, currentName, "fascicolo")}
-                onRenameChat={(id, currentName) => openRenameModal(id, currentName, "chat")}
-                onBack={handleBack} 
-              />
-            </div>
-          )}
+          <AnimatePresence mode="wait" initial={false}>
+            {isLoadingData ? (
+              <ArchiveLoadingSkeleton />
+            ) : (
+              <motion.div
+                key="archive-content"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.24, ease: "easeOut" }}
+                className="w-full h-full"
+              >
+                <PastFascicoli 
+                  fascicoli={pastFascicoli} 
+                  chats={pastChats}
+                  onSelectFascicolo={handleSelectFascicolo} 
+                  onSelectChat={handleSelectChat} 
+                  onDeleteFascicolo={(id) => openDeleteModal(id, "fascicolo")}
+                  onDeleteChat={(id) => openDeleteModal(id, "chat")}
+                  onRenameFascicolo={(id, currentName) => openRenameModal(id, currentName, "fascicolo")}
+                  onRenameChat={(id, currentName) => openRenameModal(id, currentName, "chat")}
+                  onBack={handleBack} 
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </main>
       </div>
 

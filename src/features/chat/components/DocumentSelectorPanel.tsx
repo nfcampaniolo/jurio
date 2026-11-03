@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, FileText, Loader2, Info, Play } from "lucide-react";
@@ -18,6 +18,8 @@ export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({
   onClose, 
   archiveDocs,
   attachedDocs,
+  externalPendingFiles = [],
+  onExternalPendingFilesConsumed,
   onToggleDoc,
   onProcessFiles,
   onToggleFascicoloLink,
@@ -85,6 +87,12 @@ export const DocumentSelectorPanel: React.FC<DocumentSelectorPanelProps> = ({
     }
     setPendingFiles(prev => [...prev, ...files]);
   };
+
+  useEffect(() => {
+    if (!isOpen || externalPendingFiles.length === 0) return;
+    addPendingFiles(externalPendingFiles);
+    onExternalPendingFilesConsumed?.();
+  }, [isOpen, externalPendingFiles, onExternalPendingFilesConsumed]);
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();

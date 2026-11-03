@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useTransition } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { Clock, Folder, ChevronRight, MessageSquare, Files, Loader2, Trash2, Pencil } from "lucide-react";
 import type { PastFascicolo, PastChat } from "@/interfaces/interfaces";
 import { Timestamp } from "firebase/firestore";
@@ -34,6 +34,20 @@ const formatDate = (v: unknown): string => {
   }
   if (v instanceof Date) return v.toLocaleDateString();
   return "";
+};
+
+const cardVariants: Variants = {
+  hidden: { opacity: 0, y: 12, scale: 0.99 },
+  visible: (index: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      delay: Math.min(index * 0.03, 0.24),
+      duration: 0.28,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  }),
 };
 
 export const PastFascicoli: React.FC<PastFascicoliProps> = ({ 
@@ -159,15 +173,19 @@ export const PastFascicoli: React.FC<PastFascicoliProps> = ({
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.15 }}
+            transition={{ duration: 0.24, ease: "easeOut" }}
             className="grid md:grid-cols-2 lg:grid-cols-3 gap-5"
           >
-            {activeTab === 'fascicoli' && fascicoli.map((f) => (
-              <div 
+            {activeTab === 'fascicoli' && fascicoli.map((f, index) => (
+              <motion.div 
                 key={`fascicolo-${f.id}`}
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
+                custom={index}
                 onClick={() => void handleSelectFascicolo(f)}
                 onKeyDown={(e) => handleFascicoloKeyDown(e, f)}
                 role="button"
@@ -224,12 +242,16 @@ export const PastFascicoli: React.FC<PastFascicoliProps> = ({
                   <Clock size={13} className="opacity-70" /> 
                   {formatDate(f.updatedAt)} 
                 </span>
-              </div>
+              </motion.div>
             ))}
 
-            {activeTab === 'chats' && chats.map((c) => (
-              <div 
+            {activeTab === 'chats' && chats.map((c, index) => (
+              <motion.div 
                 key={`chat-${c.id}`}
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
+                custom={index}
                 onClick={() => void handleSelectChat(c)}
                 onKeyDown={(e) => handleChatKeyDown(e, c)}
                 role="button"
@@ -285,7 +307,7 @@ export const PastFascicoli: React.FC<PastFascicoliProps> = ({
                 <div className="flex items-center gap-3 text-xs text-(--color-muted) font-light border-t border-(--color-border) pt-3 mt-2">
                   <span className="flex items-center gap-1.5"><Clock size={13} className="opacity-70" /> {formatDate(c.updatedAt)}</span>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </motion.div>
         </AnimatePresence>

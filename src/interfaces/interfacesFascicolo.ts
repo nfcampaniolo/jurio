@@ -13,6 +13,8 @@ export interface DocumentSelectorPanelProps {
   onClose: () => void;
   archiveDocs: AttachedDocument[];
   attachedDocs: AttachedDocument[];
+  externalPendingFiles?: File[];
+  onExternalPendingFilesConsumed?: () => void;
   onToggleDoc: (doc: AttachedDocument) => void;
   onProcessFiles: (files: File[], selectedPromptId: string, targetFascicoloId?: string) => Promise<void>;
   onToggleFascicoloLink?: (doc: AttachedDocument, fascicoloId: string, isLinking: boolean) => void; 

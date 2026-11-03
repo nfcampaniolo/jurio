@@ -16,6 +16,10 @@ const { mockNavigateComponent, mockUseLocation } = vi.hoisted(() => ({
   })),
 }));
 
+const { mockUseSmoothLoading } = vi.hoisted(() => ({
+  mockUseSmoothLoading: vi.fn(() => true),
+}));
+
 /* ---------- mock react-router-dom ---------- */
 vi.mock("react-router-dom", () => ({
   __esModule: true,
@@ -51,12 +55,18 @@ vi.mock("@/shared/components/ErrorScreen", () => ({
   ),
 }));
 
+vi.mock("@/shared/hooks/useSmoothLoading", () => ({
+  __esModule: true,
+  useSmoothLoading: (isLoading: boolean) => mockUseSmoothLoading(isLoading),
+}));
+
 /* ---------- component under test ---------- */
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 
 describe("ProtectedRoute Route Guard Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseSmoothLoading.mockReturnValue(true);
     mockUseLocation.mockReturnValue({
       pathname: "/profilo",
       search: "",

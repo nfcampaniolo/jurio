@@ -17,6 +17,10 @@ const { mockAuthState, mockNavigateComponent, mockUserExists } = vi.hoisted(() =
   mockUserExists: vi.fn(),
 }));
 
+const { mockUseSmoothLoading } = vi.hoisted(() => ({
+  mockUseSmoothLoading: vi.fn(() => true),
+}));
+
 /* ---------- mock react-router-dom ---------- */
 vi.mock("react-router-dom", () => ({
   __esModule: true,
@@ -55,12 +59,18 @@ vi.mock("@/shared/components/ErrorScreen", () => ({
   ),
 }));
 
+vi.mock("@/shared/hooks/useSmoothLoading", () => ({
+  __esModule: true,
+  useSmoothLoading: (isLoading: boolean) => mockUseSmoothLoading(isLoading),
+}));
+
 /* ---------- component under test ---------- */
 import { RegistrationRoute } from "@/routes/RegistrationRoute";
 
 describe("RegistrationRoute Route Guard Suite", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseSmoothLoading.mockReturnValue(true);
     mockAuthState.user = null;
     mockAuthState.status = 'loading';
     mockAuthState.hasConflict = false;

@@ -241,7 +241,7 @@ describe("useLegalChat Orchestrator Suite", () => {
         { id: "m1", role: "user", content: "Quali sono i termini?", timestamp: 1000, isHistorical: true },
         { id: "m2", role: "model", content: "I termini ordinari sono...", timestamp: 2000, isHistorical: true },
       ]);
-      expect(mockNavigate).toHaveBeenCalledWith("/chat/chat-100");
+      expect(mockNavigate).not.toHaveBeenCalledWith("/chat/chat-100");
     });
 
     test("configura sessionType 'fascicolo', imposta isReadOnly in base al proprietario e carica i thread", async () => {

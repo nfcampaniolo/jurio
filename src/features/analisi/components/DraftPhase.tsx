@@ -8,6 +8,8 @@ interface Props {
   setQuesito: (val: string) => void;
   isProcessing: boolean;
   onEseguiRicerca: () => void;
+  onDropFiles?: (files: File[]) => void;
+  onOpenDocsModal?: () => void;
   configurazione?: DeepAnalysisConfig;
   documentiAllegatiCount?: number;
 }
@@ -17,6 +19,8 @@ export const DraftPhase: React.FC<Props> = ({
   setQuesito,
   isProcessing,
   onEseguiRicerca,
+  onDropFiles,
+  onOpenDocsModal,
   configurazione,
   documentiAllegatiCount,
 }) => {
@@ -44,6 +48,8 @@ export const DraftPhase: React.FC<Props> = ({
         prompt={quesito}
         setPrompt={setQuesito}
         isProcessing={isProcessing}
+        onDropFiles={onDropFiles}
+        onOpenDocsModal={onOpenDocsModal}
       />
       <div className="flex flex-col-reverse gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-(--color-muted)" aria-label="Riepilogo parametri dell'indagine">

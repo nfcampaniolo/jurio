@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { AuthContext } from "./AuthContext";
+import { onUserStateChange } from "@/features/auth/hooks/auth";
 
 type FirebaseUser = import("firebase/auth").User;
-const STATIC_ROUTES = new Set(["https://jurio.it/privacy", "https://jurio.it/termini", "https://jurio.it/gdpr"]);
+const STATIC_ROUTES = new Set(["/privacy", "/termini", "/gdpr"]);
 
 const isInitialStaticRoute = () => {
   if (typeof window === "undefined") return false;
@@ -27,27 +28,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (isInitialStaticRoute()) return;
 
-    let unsubscribe: undefined | (() => void);
     let cancelled = false;
 
-    (async () => {
-      const mod = await import("@/features/auth/hooks/auth");
-    
+    let unsubscribe: undefined | (() => void);
+    try {
       // Allineato alla nuova firma: accetta solo 'u' e 'conflict'
-      unsubscribe = mod.onUserStateChange((u: FirebaseUser | null, conflict: boolean) => {
+      unsubscribe = onUserStateChange((u: FirebaseUser | null, conflict: boolean) => {
         if (cancelled) return;
 
         setUser(u);
         setHasConflict(conflict);
         setStatus(u ? 'authenticated' : 'unauthenticated');
       });
-    })().catch((err) => {
-      // Cattura eventuali errori di inizializzazione o import dinamico
+    } catch (err) {
+      // Cattura eventuali errori di inizializzazione
       if (!cancelled) {
         setStatus('error');
         setErrorMessage(err instanceof Error ? err.message : "Errore sconosciuto");
       }
-    });
+    }
 
     return () => {
       cancelled = true;

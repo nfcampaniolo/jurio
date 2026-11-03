@@ -13,6 +13,7 @@ interface Props {
   onSessionCreated: (id: string) => void;
   configurazione: DeepAnalysisConfig;
   attachedDocs: AttachedDocument[];
+  onDropFiles?: (files: File[]) => void;
   onOpenDocsModal: () => void;
   onRemoveAttachment: (id: string) => void;
   onSyncDocs: (docs: AttachedDocument[]) => void;
@@ -23,6 +24,8 @@ export const WorkspaceIndagine: React.FC<Props> = ({
   onSessionCreated,
   configurazione,
   attachedDocs,
+  onDropFiles,
+  onOpenDocsModal,
   onSyncDocs,
 }) => {
   const {
@@ -160,6 +163,8 @@ export const WorkspaceIndagine: React.FC<Props> = ({
               setQuesito={setQuesitoLocale}
               isProcessing={isProcessing}
               onEseguiRicerca={handleEseguiRicercaConLog}
+              onDropFiles={onDropFiles}
+              onOpenDocsModal={onOpenDocsModal}
               configurazione={configurazione}
               documentiAllegatiCount={attachedDocs.length}
             />
