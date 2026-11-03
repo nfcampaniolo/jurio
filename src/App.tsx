@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { appRoutes } from "@/routes/routes";
 import ScrollToTop from "@/shared/components/ScrollToTop";
 import { AuthLoader } from "@/routes/AuthLoader";
+import { OnboardingPopups } from "@/features/onboarding/OnboardingPopups";
 
 function AppRouter() {
   return useRoutes(appRoutes);
@@ -15,6 +16,7 @@ export default function App() {
       <Suspense fallback={<AuthLoader />}>
         <ScrollToTop />
         <AppRouter />
+        <OnboardingPopups />
       </Suspense>
     </Router>
   );
