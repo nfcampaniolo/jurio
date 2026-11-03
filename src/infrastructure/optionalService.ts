@@ -2,6 +2,17 @@ import type { Analytics } from "firebase/analytics";
 import type { FirebasePerformance } from "firebase/performance";
 import { firebaseApp } from "@/infrastructure/firebase";
 
+interface CookieConsentState {
+  analytics?: boolean;
+}
+
+interface JurioCookieConsentApi {
+  get: () => CookieConsentState | null;
+  onChange: (
+    callback: (state: CookieConsentState) => void
+  ) => () => void;
+}
+
 interface IubendaPreferences {
   purposes?: Record<number, boolean>;
 }
@@ -29,6 +40,7 @@ interface IubendaObject {
 
 declare global {
   interface Window {
+    JurioCookieConsent?: JurioCookieConsentApi;
     _iub?: IubendaObject;
   }
 }
@@ -45,6 +57,8 @@ let analyticsCollectionSetter:
   | typeof import("firebase/analytics").setAnalyticsCollectionEnabled
   | null = null;
 let registeredCallback: IubendaCallbacks | null = null;
+let registeredJurioConsentApi: JurioCookieConsentApi | null = null;
+let jurioConsentUnsubscribe: (() => void) | null = null;
 
 async function initAnalytics(): Promise<void> {
   if (!measurementConsent || analyticsInstance) return;
@@ -174,10 +188,9 @@ async function initPerformance(): Promise<void> {
   }
 }
 
-async function applyMeasurementPreferences(
-  preferences?: IubendaPreferences
+async function applyMeasurementConsent(
+  hasMeasurementConsent: boolean
 ): Promise<void> {
-  const hasMeasurementConsent = preferences?.purposes?.[4] === true;
 
   if (measurementConsent !== hasMeasurementConsent) {
     measurementConsent = hasMeasurementConsent;
@@ -200,6 +213,13 @@ async function applyMeasurementPreferences(
   await Promise.all([initAnalytics(), initPerformance()]);
 }
 
+async function applyIubendaMeasurementPreferences(
+  preferences?: IubendaPreferences
+): Promise<void> {
+  const hasMeasurementConsent = preferences?.purposes?.[4] === true;
+  await applyMeasurementConsent(hasMeasurementConsent);
+}
+
 function registerConsentCallback(callbacks: IubendaCallbacks): void {
   if (registeredCallback === callbacks) return;
 
@@ -209,15 +229,40 @@ function registerConsentCallback(callbacks: IubendaCallbacks): void {
   callbacks.onPreferenceExpressedOrNotNeeded = (preferences) => {
     const currentPreferences =
       preferences ?? window._iub?.cs?.api?.getPreferences();
-    void applyMeasurementPreferences(currentPreferences);
+    void applyIubendaMeasurementPreferences(currentPreferences);
     originalCallback?.(preferences);
   };
 
   registeredCallback = callbacks;
 }
 
+function registerJurioConsent(
+  consentApi: JurioCookieConsentApi
+): void {
+  if (registeredJurioConsentApi === consentApi) return;
+
+  jurioConsentUnsubscribe?.();
+
+  jurioConsentUnsubscribe = consentApi.onChange((state) => {
+    void applyMeasurementConsent(state.analytics === true);
+  });
+
+  registeredJurioConsentApi = consentApi;
+}
+
 export async function initializeOptionalServices(): Promise<void> {
   if (typeof window === "undefined") return;
+
+  const consentApi = window.JurioCookieConsent;
+
+  if (consentApi) {
+    registerJurioConsent(consentApi);
+    const consentState = consentApi.get();
+    await applyMeasurementConsent(
+      consentState?.analytics === true
+    );
+    return;
+  }
 
   window._iub = window._iub ?? {};
   window._iub.csConfiguration =
@@ -230,7 +275,7 @@ export async function initializeOptionalServices(): Promise<void> {
   );
 
   const preferences = window._iub.cs?.api?.getPreferences();
-  await applyMeasurementPreferences(preferences);
+  await applyIubendaMeasurementPreferences(preferences);
 }
 
 export function getAnalyticsInstance(): Analytics | null {

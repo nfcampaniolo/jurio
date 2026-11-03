@@ -3,6 +3,19 @@ import type { RecaptchaVerifier } from "firebase/auth";
 
 declare global {
   interface Window {
+    JurioCookieConsent?: {
+      get: () => {
+        analytics?: boolean;
+        marketing?: boolean;
+      } | null;
+      onChange: (
+        callback: (state: {
+          analytics?: boolean;
+          marketing?: boolean;
+        }) => void
+      ) => () => void;
+    };
+
     dataLayer: Array<IArguments | Record<string, unknown>>;
     gtag: (
       command: 'consent' | 'config' | 'event' | 'js' | 'set',
