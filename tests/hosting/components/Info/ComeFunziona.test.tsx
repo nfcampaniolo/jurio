@@ -21,6 +21,12 @@ vi.mock("framer-motion", async (importOriginal) => {
       li: ({ children, className }: React.LiHTMLAttributes<HTMLLIElement>) => (
         <li className={className}>{children}</li>
       ),
+      div: ({ children, className, id }: React.HTMLAttributes<HTMLDivElement>) => (
+        <div id={id} className={className}>{children}</div>
+      ),
+      ol: ({ children, className }: React.OlHTMLAttributes<HTMLOListElement>) => (
+        <ol className={className}>{children}</ol>
+      ),
     },
   };
 });

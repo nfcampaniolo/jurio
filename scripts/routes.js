@@ -27,6 +27,15 @@ export const routes = [
   },
 
   {
+    path: '/mcp-ai',
+    title: 'MCP | Jurio',
+    description:
+      'Scopri l’integrazione MCP su Jurio: come utilizzare la piattaforma per la ricerca giurisprudenziale con intelligenza artificiale.',
+    changefreq: 'monthly',
+    priority: '0.9'
+  },
+
+  {
     path: '/casi-studio',
     title: 'Casi di Studio e Automazioni Legali AI | Jurio',
     description:
@@ -365,6 +374,15 @@ export const routes = [
     title: 'Guida Ufficiale a Jurio | Ricerca Giuridica con Intelligenza Artificiale',
     description:
       'Guida completa a Jurio: banca dati giurisprudenziale, ricerca semantica con intelligenza artificiale, integrazioni MCP e piani di utilizzo.',
+    changefreq: 'monthly',
+    priority: '0.8'
+  },
+
+  {
+    path: '/commerciali/guida-mcp',
+    title: 'Guida MCP | Jurio',
+    description:
+      'Guida completa all\'integrazione MCP su Jurio: come utilizzare la piattaforma per la ricerca giurisprudenziale con intelligenza artificiale.',
     changefreq: 'monthly',
     priority: '0.8'
   }

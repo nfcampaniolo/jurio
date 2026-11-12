@@ -12,11 +12,9 @@ export const Header: React.FC = () => {
 
   const [isOpen, setIsOpen] = useState(false);
   
-  // Dividiamo lo stato in due per capire da dove arriva la notifica non letta
   const [hasUnreadPersonal, setHasUnreadPersonal] = useState(false);
   const [hasUnreadBroadcast, setHasUnreadBroadcast] = useState(false);
   
-  // Il pallino si accende se c'è ALMENO una notifica o un broadcast non letto
   const hasUnread = hasUnreadPersonal || hasUnreadBroadcast;
 
   const shouldReduceMotion = useReducedMotion();
@@ -29,12 +27,12 @@ export const Header: React.FC = () => {
     { label: "Ricerca Giurisprudenza", type: "route", target: "/ricerca" },
     { label: "Consulente Legale", type: "route", target: "/chat" },
     { label: "Approfondimento Giuriprudenziale", type: "route", target: "/analisi" },
+    { label: "MCP", type: "route", target: "https://jurio.it/mcp-ai" },
   ];
 
   const closeMenu = () => setIsOpen(false);
   const toggleMenu = () => setIsOpen((v) => !v);
 
-  // Ottimizzazione: Controllo dinamico sia di 'notification' che di 'broadcast'
   useEffect(() => {
     if (!user) {
       setHasUnreadPersonal(false);
@@ -55,7 +53,6 @@ export const Header: React.FC = () => {
 
         if (isCancelled) return;
 
-        // 1. Ascoltatore Notifiche Personali
         const qPersonal = query(
           collection(db, "notification"),
           where("user", "==", user.uid),
@@ -67,27 +64,22 @@ export const Header: React.FC = () => {
           setHasUnreadPersonal(!snapshot.empty);
         });
 
-        // Variabili d'appoggio per incrociare i broadcast e le letture dell'utente
         let currentReadIds: string[] = [];
         let currentBroadcastIds: string[] = [];
 
-        // Funzione per valutare se ci sono broadcast non letti
         const evaluateBroadcasts = () => {
           const unreadB = currentBroadcastIds.some(id => !currentReadIds.includes(id));
           setHasUnreadBroadcast(unreadB);
         };
 
-        // 2. Ascoltatore Profilo Utente (per leggere l'array `readBroadcasts`)
         unsubUser = onSnapshot(doc(db, "users", user.uid), (snapshot) => {
           if (snapshot.exists()) {
             const data = snapshot.data();
-            // Assicuriamoci che l'array esista, altrimenti vuoto
             currentReadIds = data.readBroadcasts || []; 
             evaluateBroadcasts();
           }
         });
 
-        // 3. Ascoltatore Broadcast (Prendiamo solo gli ultimi 5 per non sovraccaricare)
         const qBroadcast = query(
           collection(db, "broadcast"),
           orderBy("createdAt", "desc"),
@@ -133,7 +125,7 @@ export const Header: React.FC = () => {
     <>
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-(--color-text) focus:px-4 focus:py-3 focus:text-(--color-bg) focus:outline-2 focus:outline-offset-2 focus:outline-(--color-primary)"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-100 focus:rounded-md focus:bg-(--color-text) focus:px-4 focus:py-3 focus:text-(--color-bg) focus:outline-2 focus:outline-offset-2 focus:outline-(--color-primary)"
       >
         Salta al contenuto principale
       </a>
@@ -154,16 +146,31 @@ export const Header: React.FC = () => {
         </Link>
         {/* Desktop nav */}
         <nav className="hidden xl:flex items-center gap-8" aria-label="Navigazione principale">
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              to={item.target}
-              style={{ textDecoration: 'none', color: 'inherit' }}
-              className="text-xs font-bold uppercase tracking-widest text-(--color-muted) hover:text-(--color-text) transition-colors outline-none pb-0.5"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {navItems.map((item) => {
+            const isExternal = item.target.startsWith("http");
+            
+            return isExternal ? (
+              <a
+                key={item.label}
+                href={item.target}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none', color: 'inherit' }}
+                className="text-xs font-bold uppercase tracking-widest text-(--color-muted) hover:text-(--color-text) transition-colors outline-none pb-0.5"
+              >
+                {item.label}
+              </a>
+            ) : (
+              <Link
+                key={item.label}
+                to={item.target}
+                style={{ textDecoration: 'none', color: 'inherit' }}
+                className="text-xs font-bold uppercase tracking-widest text-(--color-muted) hover:text-(--color-text) transition-colors outline-none pb-0.5"
+              >
+                {item.label}
+              </Link>
+            );
+          })}
 
           {/* Icone Extra se l'utente è loggato */}
           {user && (
@@ -233,17 +240,33 @@ export const Header: React.FC = () => {
             transition={shouldReduceMotion ? {} : { duration: 0.25, ease: "easeInOut" }}
             className="xl:hidden absolute top-full left-0 right-0 flex flex-col items-end gap-5 py-6 px-8 border-b border-(--color-border) bg-(--color-surface) shadow-2xl z-50 overflow-hidden"
           >
-            {navItems.map((item) => (
-              <Link
-                key={item.label}
-                to={item.target}
-                onClick={closeMenu}
-                style={{ textDecoration: 'none', color: 'inherit' }}
-                className="text-xs font-bold uppercase tracking-widest text-(--color-muted) hover:text-(--color-text) transition-colors outline-none py-1 text-right"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isExternal = item.target.startsWith("http");
+
+              return isExternal ? (
+                <a
+                  key={item.label}
+                  href={item.target}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={closeMenu}
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                  className="text-xs font-bold uppercase tracking-widest text-(--color-muted) hover:text-(--color-text) transition-colors outline-none py-1 text-right"
+                >
+                  {item.label}
+                </a>
+              ) : (
+                <Link
+                  key={item.label}
+                  to={item.target}
+                  onClick={closeMenu}
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                  className="text-xs font-bold uppercase tracking-widest text-(--color-muted) hover:text-(--color-text) transition-colors outline-none py-1 text-right"
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
 
             {/* Voci Extra Menu Mobile per Utenti Loggati */}
             {user && (

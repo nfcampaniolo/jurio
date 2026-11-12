@@ -185,6 +185,7 @@ vi.mock("lucide-react", () => {
 
 /* ---------- mock framer-motion ---------- */
 vi.mock("framer-motion", () => ({
+  useReducedMotion: () => false,
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   motion: {
     h1: ({ children, className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
@@ -268,7 +269,7 @@ describe("SearchBar Component Suite", () => {
     render(<SearchBar />);
 
     expect(screen.getByRole("heading", { name: "Consulta la giurisprudenza online", level: 1 })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Cerca")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Cerca...")).toBeInTheDocument();
 
     expect(screen.getByRole("button", { name: "Apri pannello termini" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Mostra filtri" })).toBeInTheDocument();
@@ -284,13 +285,13 @@ describe("SearchBar Component Suite", () => {
     render(<SearchBar />);
 
     expect(screen.getByTestId("mock-access-denied")).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText("Cerca")).toBeNull();
+    expect(screen.queryByPlaceholderText("Cerca...")).toBeNull();
   });
 
   test("gestisce l'input di ricerca e aggiorna l'indice dei suggerimenti", () => {
     render(<SearchBar />);
 
-    const input = screen.getByPlaceholderText("Cerca");
+    const input = screen.getByPlaceholderText("Cerca...");
     fireEvent.change(input, { target: { value: "responsabilità medica" } });
 
     expect(mockSearchBarState.setSearchInput).toHaveBeenCalledWith("responsabilità medica");
@@ -365,7 +366,7 @@ describe("SearchBar Component Suite", () => {
     expect(screen.getByPlaceholderText("In ascolto...")).toBeInTheDocument();
 
     fireEvent.click(micBtn);
-    expect(screen.getByPlaceholderText("Cerca")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Cerca...")).toBeInTheDocument();
   });
 
   test("mostra il banner del match dettagliato (detailedMatch) per tipologie diverse", () => {

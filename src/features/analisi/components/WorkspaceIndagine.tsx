@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
+import { motion, type Variants, useReducedMotion } from "framer-motion";
 import { useDeepAnalysisSession } from "../hooks/useDeepAnalysis";
 import { ReportSintesi } from "./ReportSintesi";
 import { WorkspaceHeader } from "./WorkspaceHeader";
@@ -8,6 +9,7 @@ import { ReviewPhase } from "./ReviewPhase";
 import { AccessDenied } from "@/shared/components/AccessDenied";
 import type { AttachedDocument } from "@/interfaces/interfaces";
 import type { DeepAnalysisConfig, PrecedenteReperito } from "../hooks/types";
+
 interface Props {
   sessioneId: string | null;
   onSessionCreated: (id: string) => void;
@@ -18,6 +20,29 @@ interface Props {
   onRemoveAttachment: (id: string) => void;
   onSyncDocs: (docs: AttachedDocument[]) => void;
 }
+
+const containerVariants: Variants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.12,
+      delayChildren: 0.08,
+    },
+  },
+};
+
+const blockVariants: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.45,
+      ease: [0.22, 1, 0.36, 1],
+    },
+  },
+};
 
 export const WorkspaceIndagine: React.FC<Props> = ({
   sessioneId,
@@ -40,6 +65,7 @@ export const WorkspaceIndagine: React.FC<Props> = ({
     isAccessDenied
   } = useDeepAnalysisSession(sessioneId);
 
+  const reduceMotion = useReducedMotion();
   const [titoloLocale, setTitoloLocale] = useState<string | null>(null);
   const [quesitoLocale, setQuesitoLocale] = useState<string | null>(null);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -139,11 +165,22 @@ export const WorkspaceIndagine: React.FC<Props> = ({
   const fontiApprovateCount = tutteLeFonti.filter((p: PrecedenteReperito) => !p.escluso).length;
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden relative print:h-auto print:overflow-visible print:block">
+    <section className="relative flex-1 flex flex-col h-full overflow-hidden bg-(--color-bg) print:h-auto print:overflow-visible print:block">
+      {/* Sfondo sfocato circolare al centro */}
+      <motion.div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 overflow-hidden"
+        initial={reduceMotion ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: reduceMotion ? 0 : 0.6, ease: "easeOut" }}
+      >
+        <div className="absolute -top-20 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-(--color-primary)/10 blur-3xl" />
+      </motion.div>
+
       {/* 🛡️ Access Gate attivabile in caso di 401/403 o permessi negati */}
       {isAccessDenied && <AccessDenied />}
 
-      <div className="print:hidden">
+      <div className="relative z-10 print:hidden">
         <WorkspaceHeader
           activeSession={activeSession}
           titoloEditabile={titoloEditabile}
@@ -155,9 +192,17 @@ export const WorkspaceIndagine: React.FC<Props> = ({
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-thin print:overflow-visible print:h-auto print:block">
-        <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 pb-32 space-y-8 print:py-0 print:pb-0">
-          {(!activeSession || activeSession.status === "draft")  && !isCompleted && (
+      <motion.div
+        variants={containerVariants}
+        initial={reduceMotion ? "visible" : "hidden"}
+        animate="visible"
+        className="relative z-10 flex-1 overflow-y-auto scrollbar-thin print:overflow-visible print:h-auto print:block"
+      >
+        <motion.div
+          variants={blockVariants}
+          className="max-w-6xl mx-auto py-8 px-4 sm:px-6 pb-32 space-y-8 print:py-0 print:pb-0"
+        >
+          {(!activeSession || activeSession.status === "draft") && !isCompleted && (
             <DraftPhase
               quesito={quesito}
               setQuesito={setQuesitoLocale}
@@ -169,29 +214,32 @@ export const WorkspaceIndagine: React.FC<Props> = ({
               documentiAllegatiCount={attachedDocs.length}
             />
           )}
+
           {(activeSession?.job?.status === "queued" || activeSession?.job?.status === "processing") && (
-            <section className="flex items-start gap-3 rounded-xl border border-blue-500/30 bg-blue-500/5 p-4" role="status" aria-live="polite">
+            <section className="flex items-start gap-3 rounded-lg border border-blue-500/30 bg-blue-500/5 p-4 shadow-sm" role="status" aria-live="polite">
               <div className="mt-0.5 h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-blue-500" />
               <div>
                 <p className="text-sm font-medium text-(--color-text)">
                   {activeSession.job.status === "queued" ? "Analisi in coda" : "Analisi in corso"}
                 </p>
-                <p className="mt-1 text-xs leading-relaxed text-(--color-muted)">
+                <p className="mt-1 text-xs leading-relaxed text-(--color-muted) font-light">
                   {activeSession.progress?.message || "Stiamo elaborando la tua indagine."}
                   {" "}Puoi chiudere questa pagina: il lavoro prosegue sui nostri server.
                 </p>
               </div>
             </section>
           )}
+
           {activeSession?.job?.status === "failed" && (
-            <section className="rounded-xl border border-red-500/30 bg-red-500/5 p-4" role="alert">
+            <section className="rounded-lg border border-red-500/30 bg-red-500/5 p-4 shadow-sm" role="alert">
               <p className="text-sm font-medium text-(--color-text)">Elaborazione non completata</p>
-              <p className="mt-1 text-xs text-(--color-muted)">
+              <p className="mt-1 text-xs text-(--color-muted) font-light">
                 {activeSession.progress?.message || "Puoi riprovare l'analisi o la sintesi."}
               </p>
             </section>
           )}
-          {activeSession?.status === "review" && activeSession?.mappaDialettica && !isCompleted &&(
+
+          {activeSession?.status === "review" && activeSession?.mappaDialettica && !isCompleted && (
             <ReviewPhase
               activeSession={activeSession}
               messaggioEsito={messaggioEsito}
@@ -212,9 +260,8 @@ export const WorkspaceIndagine: React.FC<Props> = ({
           {((activeSession?.status === "completed" || isCompleted) && activeSession?.sintesiStrategica) && (
             <ReportSintesi session={activeSession} />
           )}
-         
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      </motion.div>
+    </section>
   );
 };

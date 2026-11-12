@@ -110,7 +110,7 @@ export const Tool = () => {
         {authLoading ? (
           <LoadingSpinner />
         ) : (
-          <div className="max-w-5xl mx-auto w-full mt-10 mb-20">
+          <div className="max-w-5xl mx-auto w-full mb-20">
             <Suspense fallback={user ? <SearchSkeleton /> : <InfoSkeleton />}>
               <AnimatePresence mode="wait">
                 {!user ? (

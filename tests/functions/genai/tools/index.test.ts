@@ -9,7 +9,7 @@ const mocks = vi.hoisted(() => ({
   web: { name: "web" },
   doctrine: { name: "doctrine" },
 }));
-vi.mock("@genkit-ai/firebase", () => ({ enableFirebaseTelemetry: mocks.telemetry }));
+vi.mock("../../../../functions/node_modules/@genkit-ai/firebase/lib/index.mjs", () => ({ enableFirebaseTelemetry: mocks.telemetry }));
 vi.mock("@functions/genai/tools/internalDatabaseSearch", () => ({
   internalDatabaseSearch: mocks.internal, analyzeDistinguishingFacts: mocks.distinguish,
 }));

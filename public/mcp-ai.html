@@ -1,0 +1,1027 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6f7">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Collega Jurio a ChatGPT, Claude e Mistral Vibe tramite MCP. Cerca giurisprudenza, individua sentenze per numero o ECLI e consulta i documenti dalla tua AI.">
+  <meta name="author" content="Jurio">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="it_IT">
+  <meta property="og:site_name" content="Jurio">
+  <meta property="og:title" content="Jurio MCP: la ricerca giuridica nella tua AI">
+  <meta property="og:description" content="Integra la banca dati giuridica di Jurio in ChatGPT, Claude e Mistral Vibe con una connessione MCP e autenticazione OAuth.">
+  <meta property="og:image" content="https://jurio.ithttps://jurio.it/guida-image/vibe.webp">
+  <meta property="og:image:alt" content="Jurio MCP: connettore per ChatGPT, Claude e Mistral Vibe">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Jurio MCP: la ricerca giuridica nella tua AI">
+  <meta name="twitter:description" content="Collega Jurio a ChatGPT, Claude e Mistral Vibe tramite MCP.">
+  <meta name="twitter:image" content="https://jurio.ithttps://jurio.it/guida-image/vibe.webp">
+  <title>Jurio MCP: collega la ricerca giuridica alla tua AI</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+  <link rel="stylesheet" href="/styles.css">
+
+  <style>
+  /* =========================================================
+     JURIO MCP — VISUAL SYSTEM
+     Allineato al design system del sito: Inter / Lora, stone / ocra
+     ========================================================= */
+  :root {
+    --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+    --font-serif: "Lora", "Merriweather", Georgia, "Times New Roman", serif;
+    --color-bg: #f5f6f7;
+    --color-surface: #ffffff;
+    --color-text: #1a1d21;
+    --color-primary: #8a5c16;
+    --color-primary-hover: #70470f;
+    --color-border: #d6d9de;
+    --color-muted: #5f6672;
+    --shadow-soft: 0 14px 45px rgba(42, 34, 24, .07);
+    --shadow-hover: 0 22px 60px rgba(42, 34, 24, .11);
+    --container: 1180px;
+    --radius: 18px;
+    --button-bg: var(--color-text);
+    --button-text: var(--color-bg);
+    --button-bg-hover: var(--color-primary);
+    --text-base-size: 16px;
+    --mcp-ease: cubic-bezier(.22, 1, .36, 1);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 90px; }
+  body.mcp-body {
+    margin: 0;
+    min-width: 320px;
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: var(--text-base-size);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+  .mcp-body h1, .mcp-body h2, .mcp-body h3, .mcp-body h4,
+  .mcp-body summary { font-family: var(--font-serif); }
+  .mcp-body main { overflow: clip; }
+  .mcp-body main a:not(.mcp-btn) { color: var(--color-primary); text-underline-offset: 3px; }
+  .mcp-body main a:not(.mcp-btn):hover { color: var(--color-primary-hover); }
+  .mcp-body img { display: block; max-width: 100%; }
+  .mcp-body button, .mcp-body a { -webkit-tap-highlight-color: transparent; }
+  .mcp-body :focus-visible { outline: 3px solid var(--color-primary); outline-offset: 4px; }
+  .mcp-container { width: min(var(--container), calc(100% - 40px)); margin-inline: auto; }
+  .mcp-section { padding: clamp(4.5rem, 8vw, 7rem) 0; }
+
+  /* Hero editoriale */
+  .mcp-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding: clamp(3.2rem, 6vw, 5.5rem) 0 4rem;
+    background:
+      radial-gradient(circle at 90% 13%, rgba(138, 92, 22, .09), transparent 29%),
+      radial-gradient(circle at 8% 92%, rgba(138, 92, 22, .045), transparent 34%),
+      var(--color-bg);
+  }
+  .mcp-hero::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    width: min(52vw, 720px);
+    aspect-ratio: 1;
+    right: -18vw;
+    top: -16vw;
+    border: 1px solid rgba(138, 92, 22, .13);
+    border-radius: 50%;
+    box-shadow: 0 0 0 70px rgba(138, 92, 22, .035), 0 0 0 140px rgba(138, 92, 22, .018);
+    pointer-events: none;
+  }
+  .mcp-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, .92fr) minmax(0, 1.08fr);
+    align-items: center;
+    gap: clamp(2.5rem, 6vw, 5.5rem);
+  }
+  .mcp-hero-grid > div:first-child { position: relative; min-width: 0; }
+  .mcp-hero-grid > div:first-child::before {
+    content: "";
+    position: absolute;
+    top: .5rem;
+    bottom: .5rem;
+    left: -22px;
+    width: 2px;
+    background: var(--color-primary);
+    opacity: .8;
+  }
+  .mcp-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    margin: 0 0 1.2rem;
+    color: var(--color-primary);
+    font-size: .7rem;
+    font-weight: 800;
+    line-height: 1.4;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+  }
+  .mcp-eyebrow::before { content: ""; width: 22px; height: 1px; background: currentColor; opacity: .8; }
+  .mcp-hero h1 {
+    max-width: 760px;
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: clamp(3rem, 6vw, 5.4rem);
+    font-weight: 500;
+    line-height: .98;
+    letter-spacing: -.05em;
+    text-wrap: balance;
+  }
+  .mcp-hero h1 em, .mcp-heading h2 em { color: var(--color-primary); font-style: italic; }
+  .mcp-lead {
+    max-width: 660px;
+    margin: 1.5rem 0 0;
+    color: var(--color-text);
+    font-size: clamp(1.02rem, 1.5vw, 1.2rem);
+    line-height: 1.75;
+  }
+  .mcp-hero-proof {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .55rem 1.1rem;
+    margin: 1.35rem 0 0;
+    padding: 0;
+    list-style: none;
+    color: var(--color-muted);
+    font-size: .86rem;
+  }
+  .mcp-hero-proof li::before { content: "✓"; margin-right: .45rem; color: var(--color-primary); font-weight: 850; }
+  .mcp-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin-top: 1.8rem; }
+  .mcp-btn {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .6rem;
+    min-height: 48px;
+    padding: .72rem 1.15rem;
+    overflow: hidden;
+    border: 1px solid var(--button-bg);
+    border-radius: 10px;
+    background: var(--button-bg);
+    color: var(--button-text) !important;
+    font-family: var(--font-sans);
+    font-size: .88rem;
+    font-weight: 750;
+    line-height: 1.2;
+    text-decoration: none;
+    box-shadow: 0 10px 24px rgba(36, 33, 29, .08);
+    transition: transform .25s var(--mcp-ease), box-shadow .25s ease, background .2s ease, border-color .2s ease;
+  }
+  .mcp-btn::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0 auto 0 -120%;
+    width: 90%;
+    background: rgba(255,255,255,.13);
+    transform: skewX(-18deg);
+    transition: transform .55s var(--mcp-ease);
+  }
+  .mcp-btn:hover { transform: translateY(-2px); background: var(--button-bg-hover); border-color: var(--button-bg-hover); color: #fff !important; box-shadow: 0 16px 34px rgba(36,33,29,.12); }
+  .mcp-btn:hover::before { transform: translateX(240%) skewX(-18deg); }
+  .mcp-btn-secondary { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text) !important; box-shadow: none; }
+  .mcp-btn-secondary:hover { background: var(--color-surface); border-color: var(--color-primary); color: var(--color-primary) !important; }
+
+  /* Endpoint */
+  .mcp-endpoint-box {
+    margin-top: 2rem;
+    padding: 1.25rem;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+    border-radius: 14px;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-soft);
+  }
+  .mcp-endpoint-label {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: .4rem;
+    margin-bottom: .65rem;
+    color: var(--color-muted);
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .mcp-endpoint-label span:last-child { color: var(--color-primary); }
+  .mcp-endpoint-row {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .4rem .4rem .4rem .9rem;
+    border: 1px solid var(--color-border);
+    border-radius: 9px;
+    background: var(--color-bg);
+  }
+  .mcp-endpoint-url {
+    flex: 1;
+    min-width: 0;
+    color: var(--color-primary);
+    font: 750 .96rem/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow-wrap: anywhere;
+  }
+  .mcp-copy-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .4rem;
+    min-height: 38px;
+    padding: .55rem .8rem;
+    border: 0;
+    border-radius: 7px;
+    background: var(--color-text);
+    color: var(--color-bg);
+    font: 750 .75rem/1.2 var(--font-sans);
+    cursor: pointer;
+    transition: background .2s ease, transform .2s ease;
+  }
+  .mcp-copy-btn:hover { background: var(--color-primary); transform: translateY(-1px); }
+  .mcp-endpoint-note { margin: .65rem 0 0; color: var(--color-muted); font-size: .76rem; line-height: 1.55; }
+
+  /* Schema visivo dell'integrazione */
+  .mcp-diagram {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 380px;
+    padding: clamp(1.5rem, 4vw, 3rem);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background:
+      radial-gradient(circle at 50% 52%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 48%),
+      var(--color-surface);
+    box-shadow: var(--shadow-soft);
+  }
+  .mcp-diagram::before, .mcp-diagram::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 50%; top: 52%;
+    width: min(72%, 390px);
+    aspect-ratio: 1;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .mcp-diagram::after { width: min(92%, 500px); opacity: .5; }
+  .mcp-diagram-label { margin: 0 0 1.5rem; color: var(--color-muted); font-size: .68rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+  .mcp-flow { display: grid; grid-template-columns: minmax(0,1fr) 46px minmax(0,1fr); align-items: center; gap: .35rem; }
+  .mcp-node {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 126px;
+    padding: 1.1rem;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--color-surface) 94%, var(--color-bg));
+    box-shadow: 0 12px 30px rgba(42,34,24,.06);
+  }
+  .mcp-node:last-child { border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border)); }
+  .mcp-node strong { font-family: var(--font-serif); font-size: 1.35rem; font-weight: 600; line-height: 1.2; }
+  .mcp-node small { margin-top: .45rem; color: var(--color-muted); font-size: .76rem; line-height: 1.5; }
+  .mcp-bridge { color: var(--color-primary); text-align: center; font-size: .68rem; font-weight: 850; letter-spacing: .08em; }
+  .mcp-bridge::before, .mcp-bridge::after { content: ""; display: block; height: 1px; background: color-mix(in srgb, var(--color-primary) 55%, transparent); }
+  .mcp-bridge span { display: block; padding: .45rem 0; }
+  .mcp-diagram-caption { margin: 1.4rem 0 0; color: var(--color-muted); font-size: .8rem; line-height: 1.65; text-align: center; }
+
+  /* Sezioni, titoli e card */
+  .mcp-heading { max-width: 800px; margin: 0 auto 3rem; text-align: center; }
+  .mcp-heading h2 { margin: 0; font-family: var(--font-serif); font-size: clamp(2.25rem, 4vw, 3.6rem); font-weight: 500; line-height: 1.05; letter-spacing: -.04em; text-wrap: balance; }
+  .mcp-heading p:not(.mcp-eyebrow) { max-width: 720px; margin: 1rem auto 0; color: var(--color-muted); font-size: 1rem; line-height: 1.75; }
+  .mcp-card-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; }
+  .mcp-card {
+    position: relative;
+    min-width: 0;
+    padding: 1.8rem;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-soft);
+    transition: transform .4s var(--mcp-ease), box-shadow .4s ease, border-color .3s ease;
+  }
+  .mcp-card::after { content: ""; position: absolute; right: -15%; bottom: -70%; width: 65%; height: 180px; border: 1px solid color-mix(in srgb, var(--color-primary) 17%, transparent); border-radius: 50%; pointer-events: none; transition: transform .5s var(--mcp-ease); }
+  .mcp-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); border-color: color-mix(in srgb, var(--color-border) 65%, var(--color-primary)); }
+  .mcp-card:hover::after { transform: translate(-12px,-10px); }
+  .mcp-card-index { color: var(--color-primary); font-size: .67rem; font-weight: 850; letter-spacing: .13em; }
+  .mcp-card h3 { margin: .8rem 0 .7rem; font-family: var(--font-serif); font-size: 1.5rem; font-weight: 600; line-height: 1.15; letter-spacing: -.025em; }
+  .mcp-card p { position: relative; z-index: 1; margin: 0; color: var(--color-muted); font-size: .92rem; line-height: 1.72; }
+  .mcp-tinted { background: color-mix(in srgb, var(--color-bg) 78%, var(--color-primary) 4%); }
+
+  /* Passaggi */
+  .mcp-workflow { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1rem; counter-reset: item; }
+  .mcp-workflow article { position: relative; min-width: 0; padding: 1.6rem 1.3rem 1.8rem; border-top: 1px solid var(--color-border); counter-increment: item; }
+  .mcp-workflow article::before { content: "0" counter(item); display: inline-flex; margin-bottom: .9rem; color: var(--color-primary); font-size: .72rem; font-weight: 850; letter-spacing: .15em; }
+  .mcp-workflow article::after { content: ""; position: absolute; bottom: 0; left: 1.3rem; width: 36px; height: 1px; background: var(--color-primary); transform: scaleX(.4); transform-origin: left; transition: transform .35s var(--mcp-ease); }
+  .mcp-workflow article:hover::after { transform: scaleX(1); }
+  .mcp-workflow h3 { margin: 0 0 .6rem; font-family: var(--font-serif); font-size: 1.45rem; line-height: 1.15; }
+  .mcp-workflow p { margin: 0; color: var(--color-muted); font-size: .9rem; line-height: 1.7; }
+
+  /* Guide specifiche per piattaforma */
+  .mcp-platforms { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
+  .mcp-platform { overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-soft); }
+  .mcp-platform-header { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 1rem; padding: 1.5rem 1.7rem; border-bottom: 1px solid var(--color-border); background: color-mix(in srgb, var(--color-bg) 70%, var(--color-primary) 5%); }
+  .mcp-platform-header h3 { margin: 0; font-family: var(--font-serif); font-size: 1.8rem; font-weight: 600; line-height: 1.15; }
+  .mcp-platform-header p { margin: .35rem 0 0; color: var(--color-muted); font-size: .88rem; line-height: 1.6; }
+  .mcp-platform-tag { padding: .35rem .7rem; border: 1px solid color-mix(in srgb, var(--color-primary) 35%, var(--color-border)); border-radius: 999px; color: var(--color-primary); font-size: .68rem; font-weight: 800; white-space: nowrap; }
+  .mcp-platform-content { display: grid; grid-template-columns: minmax(0,1.05fr) minmax(280px,.95fr); gap: 1.8rem; padding: 1.7rem; }
+  .mcp-platform-content h4 { margin: 0 0 .6rem; font-family: var(--font-sans); font-size: .88rem; font-weight: 800; letter-spacing: .025em; }
+  .mcp-steps { margin: 0 0 1.35rem; padding-left: 1.25rem; }
+  .mcp-steps li { margin: .55rem 0; padding-left: .25rem; color: var(--color-text); font-size: .9rem; line-height: 1.7; }
+  .mcp-steps li::marker { color: var(--color-primary); font-weight: 850; }
+  .mcp-steps code { padding: .12rem .28rem; border-radius: 4px; background: color-mix(in srgb, var(--color-bg) 70%, var(--color-primary) 5%); color: var(--color-primary); font-size: .85em; overflow-wrap: anywhere; }
+  .mcp-note { margin: 1rem 0 0; padding: .95rem 1.05rem; border: 1px solid var(--color-border); border-left: 4px solid var(--color-primary); border-radius: 10px; background: color-mix(in srgb, var(--color-bg) 75%, var(--color-primary) 4%); color: var(--color-muted); font-size: .83rem; line-height: 1.65; }
+  .mcp-note strong { color: var(--color-text); }
+  .mcp-figure { min-width: 0; margin: 0; }
+  .mcp-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-bg); box-shadow: 0 8px 22px rgba(42,34,24,.05); }
+  .mcp-figure figcaption { margin-top: .5rem; color: var(--color-muted); font-size: .74rem; line-height: 1.5; }
+  .mcp-figure-stack { display: grid; align-content: start; gap: 1.1rem; }
+  .mcp-screenshot-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: .8rem; }
+  .mcp-screenshot-grid .mcp-figure:last-child:nth-child(odd) { grid-column: 1 / -1; max-width: 560px; }
+
+  /* Esempi d'uso e CTA */
+  .mcp-cta {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: minmax(0,1.15fr) minmax(220px,.85fr);
+    align-items: center;
+    gap: 2rem;
+    padding: clamp(2rem, 5vw, 4rem);
+    overflow: hidden;
+    border-radius: 22px;
+    background: #27231f;
+    color: #f9f6ef;
+    box-shadow: 0 20px 60px rgba(36,33,29,.16);
+  }
+  .mcp-cta::after { content: ""; position: absolute; z-index: -1; top: -170px; right: -150px; width: 420px; aspect-ratio: 1; border: 1px solid rgba(255,255,255,.12); border-radius: 50%; box-shadow: 0 0 0 60px rgba(255,255,255,.025), 0 0 0 120px rgba(255,255,255,.018); }
+  .mcp-cta .mcp-eyebrow { color: #d8b56a; }
+  .mcp-cta h2 { max-width: 760px; margin: 0; font-family: var(--font-serif); font-size: clamp(2.4rem, 5vw, 4.4rem); font-weight: 500; line-height: .98; letter-spacing: -.045em; }
+  .mcp-cta p:not(.mcp-eyebrow) { max-width: 700px; margin: 1rem 0 0; color: #d1c8bc; font-size: .98rem; line-height: 1.75; }
+  .mcp-cta .mcp-btn { justify-self: start; background: #f7f1e8; border-color: #f7f1e8; color: #27231f !important; }
+  .mcp-cta .mcp-btn:hover { background: #e2b96f; border-color: #e2b96f; color: #27231f !important; }
+
+  /* FAQ */
+  .mcp-faq { max-width: 900px; margin: 0 auto; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius); background: var(--color-surface); box-shadow: var(--shadow-soft); }
+  .mcp-faq details { padding: 0 1.5rem; transition: background .25s ease; }
+  .mcp-faq details + details { border-top: 1px solid var(--color-border); }
+  .mcp-faq details:hover { background: color-mix(in srgb, var(--color-surface) 94%, var(--color-bg)); }
+  .mcp-faq summary { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.25rem 2rem 1.25rem 0; color: var(--color-text); font-family: var(--font-serif); font-size: 1.08rem; font-weight: 600; line-height: 1.4; cursor: pointer; list-style: none; }
+  .mcp-faq summary::-webkit-details-marker { display: none; }
+  .mcp-faq summary::after { content: ""; flex: 0 0 auto; width: 9px; height: 9px; border-right: 2px solid var(--color-muted); border-bottom: 2px solid var(--color-muted); transform: translateY(-25%) rotate(45deg); transition: transform .3s var(--mcp-ease), border-color .3s ease; }
+  .mcp-faq details[open] summary::after { transform: translateY(25%) rotate(225deg); border-color: var(--color-primary); }
+  .mcp-faq details p { max-width: 800px; margin: 0; padding: 0 2rem 1.3rem 0; color: var(--color-muted); font-size: .9rem; line-height: 1.72; }
+  .mcp-resources { display: flex; flex-wrap: wrap; justify-content: center; gap: .7rem 1.5rem; margin-top: 2rem; font-size: .84rem; }
+  .mcp-footer-note { max-width: 850px; margin: 1.5rem auto 0; color: var(--color-muted); font-size: .76rem; line-height: 1.65; text-align: center; }
+
+  /* Adattamento automatico al tema scuro del sistema */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-bg: #111111;
+      --color-surface: #1a1a1a;
+      --color-text: #e6e7ea;
+      --color-primary: #e0a32e;
+      --color-primary-hover: #f0b541;
+      --color-border: #2e2e2e;
+      --color-muted: #a1a7b0;
+      --shadow-soft: 0 8px 18px rgba(0,0,0,.45);
+      --shadow-hover: 0 22px 60px rgba(0,0,0,.5);
+      --button-bg: var(--color-text);
+      --button-text: var(--color-bg);
+      --button-bg-hover: var(--color-primary);
+    }
+    .mcp-diagram { background: radial-gradient(circle at 50% 52%, rgba(224,163,46,.11), transparent 48%), var(--color-surface); }
+    .mcp-node { background: color-mix(in srgb, var(--color-surface) 90%, var(--color-bg)); box-shadow: 0 12px 30px rgba(0,0,0,.22); }
+    .mcp-cta { background: #0f0e0d; box-shadow: 0 20px 60px rgba(0,0,0,.32); }
+    .mcp-cta p:not(.mcp-eyebrow) { color: #d1c8bc; }
+    .mcp-cta .mcp-btn { background: #f7f1e8; border-color: #f7f1e8; color: #181613 !important; }
+  }
+
+  /* Tablet */
+  @media (max-width: 950px) {
+    .mcp-hero-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+    .mcp-hero-grid > div:first-child { max-width: 820px; }
+    .mcp-hero-grid > div:first-child::before { display: none; }
+    .mcp-diagram { min-height: 300px; }
+    .mcp-platform-content { grid-template-columns: 1fr; gap: 1.35rem; }
+    .mcp-card-grid, .mcp-workflow { grid-template-columns: repeat(2,minmax(0,1fr)); }
+    .mcp-cta { grid-template-columns: 1fr; }
+  }
+
+  /* Mobile */
+  @media (max-width: 720px) {
+    .mcp-container { width: min(var(--container), calc(100% - 28px)); }
+    .mcp-section { padding: 3.5rem 0; }
+    .mcp-hero { padding: 2.5rem 0 3rem; }
+    .mcp-hero::before { width: 320px; right: -190px; top: -85px; }
+    .mcp-hero h1 { font-size: clamp(2.65rem, 13vw, 3.8rem); line-height: .99; }
+    .mcp-lead { margin-top: 1.15rem; font-size: 1rem; line-height: 1.65; }
+    .mcp-hero-proof { display: grid; gap: .45rem; font-size: .83rem; }
+    .mcp-actions { display: grid; grid-template-columns: 1fr; gap: .65rem; margin-top: 1.5rem; }
+    .mcp-actions .mcp-btn { width: 100%; }
+    .mcp-endpoint-box { margin-top: 1.5rem; padding: 1rem; }
+    .mcp-endpoint-row { align-items: stretch; flex-direction: column; padding: .75rem; }
+    .mcp-endpoint-url { font-size: .88rem; }
+    .mcp-copy-btn { width: 100%; min-height: 42px; }
+    .mcp-diagram { min-height: 0; padding: 1.4rem; border-radius: 15px; }
+    .mcp-flow { grid-template-columns: 1fr; gap: .5rem; }
+    .mcp-node { min-height: 88px; padding: .9rem 1rem; }
+    .mcp-bridge { display: flex; align-items: center; justify-content: center; gap: .6rem; }
+    .mcp-bridge::before, .mcp-bridge::after { width: 35%; }
+    .mcp-bridge span { padding: 0; }
+    .mcp-heading { margin-bottom: 2rem; text-align: left; }
+    .mcp-heading h2 { font-size: clamp(2rem, 9vw, 2.8rem); line-height: 1.05; }
+    .mcp-heading p:not(.mcp-eyebrow) { margin-left: 0; font-size: .94rem; line-height: 1.65; }
+    .mcp-card-grid, .mcp-workflow { grid-template-columns: 1fr; gap: .75rem; }
+    .mcp-card { padding: 1.35rem; border-radius: 14px; }
+    .mcp-card::after { display: none; }
+    .mcp-card h3 { font-size: 1.35rem; }
+    .mcp-card p, .mcp-workflow p { font-size: .9rem; }
+    .mcp-workflow article { padding: 1.35rem 0 1.5rem; }
+    .mcp-workflow article::after { left: 0; }
+    .mcp-platform { border-radius: 14px; }
+    .mcp-platform-header { grid-template-columns: 1fr; align-items: start; padding: 1.2rem; }
+    .mcp-platform-header h3 { font-size: 1.55rem; }
+    .mcp-platform-tag { justify-self: start; }
+    .mcp-platform-content { padding: 1.2rem; }
+    .mcp-steps li { font-size: .88rem; }
+    .mcp-figure-stack { gap: .9rem; }
+    .mcp-screenshot-grid { grid-template-columns: 1fr; }
+    .mcp-screenshot-grid .mcp-figure:last-child:nth-child(odd) { grid-column: auto; max-width: none; }
+    .mcp-cta { gap: 1.3rem; padding: 1.7rem 1.35rem; border-radius: 17px; }
+    .mcp-cta h2 { font-size: clamp(2.2rem, 10vw, 3.2rem); }
+    .mcp-cta p:not(.mcp-eyebrow) { font-size: .92rem; }
+    .mcp-cta .mcp-btn { width: 100%; }
+    .mcp-faq { border-radius: 14px; }
+    .mcp-faq details { padding-inline: 1rem; }
+    .mcp-faq summary { padding: 1.1rem 1.5rem 1.1rem 0; font-size: 1rem; }
+    .mcp-faq details p { padding-right: 0; font-size: .88rem; }
+    .mcp-resources { justify-content: flex-start; flex-direction: column; gap: .6rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    .mcp-card:hover, .mcp-btn:hover { transform: none; }
+  }
+
+
+  /* =========================================================
+     DIAGRAMMA INTEGRAZIONE — layout isolato e stabile
+     Evita interferenze con gli stili globali del sito.
+     ========================================================= */
+  .mcp-body .mcp-integration-diagram {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+  }
+
+  .mcp-body .mcp-integration-diagram .mcp-diagram-label {
+    display: block;
+    width: 100%;
+    margin: 0 0 1.65rem;
+    color: var(--color-muted);
+    font-family: var(--font-sans);
+    font-size: .68rem;
+    font-weight: 800;
+    line-height: 1.5;
+    letter-spacing: .13em;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .mcp-body .mcp-integration-flow {
+    position: relative;
+    z-index: 1;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 86px minmax(0, 1fr);
+    align-items: stretch;
+    gap: .75rem;
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  .mcp-body .mcp-integration-node {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start;
+    justify-content: center;
+    gap: .55rem;
+    min-width: 0;
+    min-height: 164px;
+    padding: clamp(1rem, 2vw, 1.45rem);
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: var(--color-surface);
+    box-shadow: 0 12px 30px rgba(42, 34, 24, .06);
+    text-align: left;
+  }
+
+  .mcp-body .mcp-integration-node-jurio {
+    border-color: color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
+    background: color-mix(in srgb, var(--color-surface) 94%, var(--color-primary) 6%);
+  }
+
+  .mcp-body .mcp-integration-node .mcp-integration-kicker {
+    display: block;
+    max-width: 100%;
+    color: var(--color-primary);
+    font-family: var(--font-sans);
+    font-size: .61rem;
+    font-weight: 850;
+    line-height: 1.4;
+    letter-spacing: .12em;
+    overflow-wrap: anywhere;
+  }
+
+  .mcp-body .mcp-integration-node strong {
+    display: block;
+    max-width: 100%;
+    margin: 0;
+    color: var(--color-text);
+    font-family: var(--font-serif);
+    font-size: clamp(1.25rem, 1.8vw, 1.65rem);
+    font-weight: 600;
+    line-height: 1.15;
+    overflow-wrap: anywhere;
+  }
+
+  .mcp-body .mcp-integration-node p {
+    display: block;
+    max-width: 100%;
+    margin: 0;
+    color: var(--color-muted);
+    font-family: var(--font-sans);
+    font-size: .76rem;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+
+  .mcp-body .mcp-integration-bridge {
+    position: relative;
+    display: flex !important;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .45rem;
+    min-width: 0;
+    color: var(--color-primary);
+    text-align: center;
+  }
+
+  .mcp-body .mcp-integration-bridge::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 50%;
+    left: -.45rem;
+    width: calc(100% + .9rem);
+    height: 1px;
+    background: color-mix(in srgb, var(--color-primary) 52%, transparent);
+  }
+
+  .mcp-body .mcp-integration-bridge-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    min-height: 38px;
+    padding: .4rem .55rem;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 42%, var(--color-border));
+    border-radius: 999px;
+    background: var(--color-surface);
+    color: var(--color-primary);
+    font-family: var(--font-sans);
+    font-size: .72rem;
+    font-weight: 850;
+    letter-spacing: .08em;
+    box-shadow: 0 5px 18px rgba(42, 34, 24, .06);
+  }
+
+  .mcp-body .mcp-integration-bridge-hint {
+    display: block;
+    padding: .1rem .25rem;
+    background: var(--color-surface);
+    color: var(--color-muted);
+    font-family: var(--font-sans);
+    font-size: .57rem;
+    font-weight: 750;
+    line-height: 1.3;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+
+  .mcp-body .mcp-integration-diagram .mcp-diagram-caption {
+    display: block;
+    max-width: 620px;
+    margin: 1.5rem auto 0;
+    color: var(--color-muted);
+    font-family: var(--font-sans);
+    font-size: .8rem;
+    line-height: 1.65;
+    text-align: center;
+  }
+
+  @media (max-width: 720px) {
+    .mcp-body .mcp-integration-diagram { padding: 1.25rem; }
+    .mcp-body .mcp-integration-diagram .mcp-diagram-label { margin-bottom: 1.15rem; }
+    .mcp-body .mcp-integration-flow {
+      grid-template-columns: minmax(0, 1fr) !important;
+      gap: .55rem;
+      max-width: 420px;
+    }
+    .mcp-body .mcp-integration-node {
+      align-items: center;
+      min-height: 112px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .mcp-body .mcp-integration-node p { max-width: 280px; }
+    .mcp-body .mcp-integration-bridge {
+      min-height: 54px;
+      gap: .12rem;
+    }
+    .mcp-body .mcp-integration-bridge::before {
+      top: 0;
+      left: 50%;
+      width: 1px;
+      height: 100%;
+      background: color-mix(in srgb, var(--color-primary) 52%, transparent);
+    }
+    .mcp-body .mcp-integration-bridge-label {
+      min-height: 30px;
+      min-width: 52px;
+      font-size: .67rem;
+    }
+    .mcp-body .mcp-integration-bridge-hint {
+      padding: 0 .35rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mcp-body .mcp-integration-node,
+    .mcp-body .mcp-integration-bridge-label { transition: none !important; }
+  }
+
+  </style>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Che cos'è Jurio MCP?",
+        "acceptedAnswer": {"@type": "Answer", "text": "Jurio MCP è il connettore che permette a un client AI compatibile con il Model Context Protocol di usare gli strumenti di ricerca e consultazione della banca dati giuridica Jurio direttamente nella conversazione."}
+      },
+      {
+        "@type": "Question",
+        "name": "Qual è l'URL del server MCP di Jurio?",
+        "acceptedAnswer": {"@type": "Answer", "text": "L'endpoint MCP da inserire nella configurazione del client è https://jurio.it/mcp."}
+      },
+      {
+        "@type": "Question",
+        "name": "Come avviene l'autenticazione a Jurio?",
+        "acceptedAnswer": {"@type": "Answer", "text": "Quando richiesta dal client, l'autenticazione avviene tramite il flusso OAuth: l'utente viene reindirizzato alla pagina di accesso di Jurio e autorizza il collegamento. Non è necessario copiare manualmente un token, salvo diverse indicazioni mostrate dal client."}
+      },
+      {
+        "@type": "Question",
+        "name": "Quali piattaforme AI posso collegare a Jurio?",
+        "acceptedAnswer": {"@type": "Answer", "text": "Puoi configurare Jurio con client compatibili MCP, tra cui Mistral Vibe, Claude e ChatGPT. La creazione di connettori personalizzati può dipendere dal piano e dalle autorizzazioni del singolo account o workspace."}
+      },
+      {
+        "@type": "Question",
+        "name": "Che cosa posso fare con Jurio collegato alla mia AI?",
+        "acceptedAnswer": {"@type": "Answer", "text": "Puoi interrogare la banca dati per argomento o principio di diritto, cercare provvedimenti tramite numero o identificativo ECLI e consultare i contenuti dei documenti disponibili, inclusi testo, motivi e massime."}
+      }
+    ]
+  }
+  </script>
+</head>
+<body class="mcp-body">
+  <div id="header"></div>
+
+  <main id="contenuto">
+    <section class="mcp-hero" aria-labelledby="mcp-title">
+      <div class="mcp-container mcp-hero-grid">
+        <div>
+          <p class="mcp-eyebrow">Jurio · Model Context Protocol</p>
+          <h1 id="mcp-title">La ricerca giuridica, <em>direttamente nella tua AI.</em></h1>
+          <p class="mcp-lead">Collega la banca dati giuridica di Jurio a ChatGPT, Claude o Mistral Vibe. Cerca decisioni per argomento, individua sentenze precise e consulta i documenti senza interrompere il tuo flusso di lavoro.</p>
+          <ul class="mcp-hero-proof" aria-label="Vantaggi dell'integrazione">
+            <li>Un solo endpoint MCP</li>
+            <li>Accesso tramite OAuth</li>
+            <li>Ricerca e consultazione in chat</li>
+          </ul>
+          <div class="mcp-actions">
+            <a class="mcp-btn" href="#configurazione">Configura Jurio <span aria-hidden="true">→</span></a>
+            <a class="mcp-btn mcp-btn-secondary" href="/contatti">Richiedi informazioni</a>
+          </div>
+          <div class="mcp-endpoint-box" aria-label="Endpoint del server MCP Jurio">
+            <div class="mcp-endpoint-label"><span>Endpoint Server MCP</span><span>Connessione OAuth</span></div>
+            <div class="mcp-endpoint-row">
+              <code class="mcp-endpoint-url" id="mcp-url">https://jurio.it/mcp</code>
+              <button class="mcp-copy-btn" id="copy-btn" type="button" aria-label="Copia l'endpoint MCP di Jurio">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                <span id="copy-text">Copia endpoint</span>
+              </button>
+            </div>
+            <p class="mcp-endpoint-note">Usa questo URL come indirizzo del server remoto MCP in tutte e tre le piattaforme.</p>
+          </div>
+        </div>
+
+        <section class="mcp-diagram mcp-integration-diagram" aria-labelledby="mcp-integration-title">
+          <h2 class="mcp-diagram-label" id="mcp-integration-title">Come funziona l'integrazione</h2>
+          <div class="mcp-integration-flow">
+            <article class="mcp-integration-node mcp-integration-node-ai">
+              <span class="mcp-integration-kicker">CLIENT AI</span>
+              <strong>La tua AI</strong>
+              <p>ChatGPT <span aria-hidden="true">·</span> Claude <span aria-hidden="true">·</span> Mistral Vibe</p>
+            </article>
+
+            <div class="mcp-integration-bridge" aria-label="Connessione tramite protocollo MCP">
+              <span class="mcp-integration-bridge-label">MCP</span>
+              <span class="mcp-integration-bridge-hint">protocollo</span>
+            </div>
+
+            <article class="mcp-integration-node mcp-integration-node-jurio">
+              <span class="mcp-integration-kicker">BANCA DATI GIURIDICA</span>
+              <strong>Jurio</strong>
+              <p>Ricerca giuridica <span aria-hidden="true">·</span> Provvedimenti <span aria-hidden="true">·</span> Fonti</p>
+            </article>
+          </div>
+          <p class="mcp-diagram-caption">La tua AI invia richieste agli strumenti di Jurio e integra i risultati nella conversazione.</p>
+        </section>
+      </div>
+    </section>
+
+    <section class="mcp-section" aria-labelledby="benefici-title">
+      <div class="mcp-container">
+        <div class="mcp-heading">
+          <p class="mcp-eyebrow">Il valore per il tuo lavoro</p>
+          <h2 id="benefici-title">Meno passaggi tra strumenti. <em>Più continuità nella ricerca.</em></h2>
+          <p>Porta le fonti giuridiche di Jurio nel contesto in cui stai già ragionando, scrivendo o approfondendo una questione.</p>
+        </div>
+        <div class="mcp-card-grid">
+          <article class="mcp-card"><span class="mcp-card-index">01 / RICERCA PER ARGOMENTO</span><h3>Parti dalla questione giuridica</h3><p>Descrivi il caso o il principio di diritto da approfondire e avvia una ricerca semantica di decisioni e precedenti pertinenti.</p></article>
+          <article class="mcp-card"><span class="mcp-card-index">02 / RICERCA PUNTUALE</span><h3>Raggiungi il provvedimento</h3><p>Recupera una pronuncia specifica utilizzando il numero della sentenza o il relativo identificativo ECLI, quando disponibile.</p></article>
+          <article class="mcp-card"><span class="mcp-card-index">03 / CONSULTAZIONE</span><h3>Approfondisci il contenuto</h3><p>Consulta i contenuti dei documenti disponibili, inclusi testo, motivi e massime, per proseguire l'analisi nella conversazione.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="mcp-section mcp-tinted" aria-labelledby="flusso-title">
+      <div class="mcp-container">
+        <div class="mcp-heading">
+          <p class="mcp-eyebrow">Attivazione semplice</p>
+          <h2 id="flusso-title">Tre passaggi per collegare <em>Jurio alla tua AI.</em></h2>
+        </div>
+        <div class="mcp-workflow">
+          <article><h3>Copia l'endpoint</h3><p>Usa <strong>https://jurio.it/mcp</strong> come URL del server MCP remoto.</p></article>
+          <article><h3>Aggiungi il connettore</h3><p>Apri la sezione Connettori o Plugin del tuo client AI e crea un connettore MCP personalizzato chiamato Jurio.</p></article>
+          <article><h3>Autorizza e verifica</h3><p>Completa il login OAuth, abilita gli strumenti di Jurio e prova una ricerca direttamente in chat.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="mcp-section" id="configurazione" aria-labelledby="configurazione-title">
+      <div class="mcp-container">
+        <div class="mcp-heading">
+          <p class="mcp-eyebrow">Guide di configurazione</p>
+          <h2 id="configurazione-title">Scegli la tua piattaforma <em>e segui la procedura.</em></h2>
+          <p>Il nome delle voci di menu può cambiare con gli aggiornamenti delle piattaforme. L'indirizzo del server Jurio resta lo stesso.</p>
+        </div>
+
+        <div class="mcp-platforms">
+          <article class="mcp-platform" id="mistral-vibe">
+            <header class="mcp-platform-header">
+              <div><h3>Mistral Vibe</h3><p>Configura Jurio tra i connettori MCP personalizzati di Vibe/Work.</p></div>
+              <span class="mcp-platform-tag">Mistral</span>
+            </header>
+            <div class="mcp-platform-content">
+              <div>
+                <h4>1. Crea il connettore</h4>
+                <ol class="mcp-steps">
+                  <li>Accedi alla <a href="https://console.mistral.ai/" target="_blank" rel="noopener noreferrer">console Mistral</a> con il tuo account.</li>
+                  <li>Apri Vibe/Work e raggiungi la sezione <strong>Connettori</strong> (in alcune interfacce indicata come <strong>Contesto</strong>).</li>
+                  <li>Seleziona <strong>+ Aggiungi connettore</strong> e apri la scheda <strong>Connettore MCP personalizzato</strong>.</li>
+                  <li>Inserisci <strong>Jurio</strong> come nome e <code>https://jurio.it/mcp</code> come URL Server.</li>
+                  <li>Seleziona <strong>Connetti</strong> o <strong>Crea</strong>, in base alla versione dell'interfaccia.</li>
+                </ol>
+                <h4>2. Autorizza l'accesso</h4>
+                <ol class="mcp-steps" start="6">
+                  <li>Quando compare la richiesta di autenticazione, completa il flusso OAuth e accedi al tuo account Jurio.</li>
+                  <li>Conferma l'autorizzazione e torna in Vibe per verificare che il connettore risulti attivo.</li>
+                  <li>Alla prima invocazione, approva l'esecuzione degli strumenti. Puoi gestire le autorizzazioni per singola funzione nelle impostazioni del connettore.</li>
+                </ol>
+                <p class="mcp-note"><strong>Nota per gli amministratori:</strong> in Mistral Work la gestione dei connettori MCP personalizzati richiede i relativi permessi amministrativi. Per prudenza, mantieni la conferma manuale degli strumenti finché non hai verificato il comportamento di ciascuna funzione.</p>
+              </div>
+              <div class="mcp-figure-stack">
+                <figure class="mcp-figure"><img src="https://jurio.it/guida-image/mcp_vibe_1.webp" alt="Interfaccia Mistral Vibe per aggiungere un connettore MCP personalizzato" loading="lazy" decoding="async"><figcaption>Creazione di un connettore MCP personalizzato in Vibe.</figcaption></figure>
+                <figure class="mcp-figure"><img src="https://jurio.it/guida-image/mcp_vibe_2.webp" alt="Schermata di autorizzazione OAuth per il connettore Jurio in Mistral Vibe" loading="lazy" decoding="async"><figcaption>Autenticazione e autorizzazione dell'account Jurio.</figcaption></figure>
+                <figure class="mcp-figure"><img src="https://jurio.it/guida-image/vibe.webp" alt="Mistral Vibe con il connettore Jurio configurato" loading="lazy" decoding="async"><figcaption>Connettore Jurio disponibile in Vibe.</figcaption></figure>
+              </div>
+            </div>
+          </article>
+
+          <article class="mcp-platform" id="claude">
+            <header class="mcp-platform-header">
+              <div><h3>Claude</h3><p>Aggiungi Jurio come connettore personalizzato tramite remote MCP.</p></div>
+              <span class="mcp-platform-tag">Anthropic</span>
+            </header>
+            <div class="mcp-platform-content">
+              <div>
+                <h4>1. Aggiungi il connettore</h4>
+                <ol class="mcp-steps">
+                  <li>Accedi a <a href="https://claude.ai/" target="_blank" rel="noopener noreferrer">Claude</a> e apri <strong>Personalizza → Connettori</strong> (Customize → Connectors).</li>
+                  <li>Seleziona <strong>+ Aggiungi</strong> e poi <strong>Aggiungi connettore personalizzato</strong>. Negli account gestiti da un'organizzazione, l'aggiunta può essere riservata al proprietario o all'amministratore.</li>
+                  <li>Inserisci <strong>Jurio</strong> come nome e <code>https://jurio.it/mcp</code> come URL del server MCP. Seleziona <strong>Continua</strong>.</li>
+                  <li>Controlla le impostazioni di autenticazione rilevate da Claude e prosegui.</li>
+                </ol>
+                <h4>2. Completa OAuth</h4>
+                <ol class="mcp-steps" start="5">
+                  <li>Alla voce <strong>Autenticazione</strong>, scegli <strong>Accedi quando necessario</strong> oppure <strong>Accedi ora</strong>, secondo il flusso che preferisci.</li>
+                  <li>Alla voce <strong>Client OAuth</strong>, seleziona <strong>Registra automaticamente</strong> quando disponibile e compatibile, oppure l'identità Claude pubblicata se proposta come opzione consigliata.</li>
+                  <li>Salva con <strong>Aggiungi</strong>, quindi torna alla scheda del connettore e premi <strong>Collega</strong> per effettuare l'accesso a Jurio.</li>
+                  <li>In una conversazione, apri il menu degli strumenti/connettori e abilita Jurio per la chat.</li>
+                </ol>
+                <p class="mcp-note">Le opzioni OAuth mostrate dipendono dal tipo di account e dalle impostazioni del server. Se Claude propone una schermata diversa, segui le opzioni di autenticazione rilevate automaticamente e completa il collegamento dal pulsante <strong>Collega</strong>.</p>
+              </div>
+              <div class="mcp-figure-stack">
+                <figure class="mcp-figure"><img src="https://jurio.it/guida-image/claude_1.webp" alt="Directory dei connettori nelle impostazioni di Claude" loading="lazy" decoding="async"><figcaption>Accesso alla sezione Connettori di Claude.</figcaption></figure>
+                <figure class="mcp-figure"><img src="https://jurio.it/guida-image/mcp_claude_1.webp" alt="Inserimento del nome Jurio e dell'endpoint MCP nelle impostazioni Claude" loading="lazy" decoding="async"><figcaption>Nome del connettore e URL del server MCP.</figcaption></figure>
+                <figure class="mcp-figure"><img src="https://jurio.it/guida-image/mcp_claude_2.webp" alt="Impostazioni di autenticazione e client OAuth in Claude" loading="lazy" decoding="async"><figcaption>Scelta delle opzioni di autenticazione OAuth.</figcaption></figure>
+                <figure class="mcp-figure"><img src="https://jurio.it/guida-image/mcp_claude_3.webp" alt="Pulsante Collega per attivare il connettore Jurio in Claude" loading="lazy" decoding="async"><figcaption>Collegamento dell'account Jurio.</figcaption></figure>
+              </div>
+            </div>
+          </article>
+
+          <article class="mcp-platform" id="chatgpt">
+            <header class="mcp-platform-header">
+              <div><h3>ChatGPT</h3><p>Collega il server remoto di Jurio tramite la gestione dei server MCP personalizzati.</p></div>
+              <span class="mcp-platform-tag">OpenAI</span>
+            </header>
+            <div class="mcp-platform-content">
+              <div>
+                <h4>1. Verifica i permessi e crea il server</h4>
+                <ol class="mcp-steps">
+                  <li>Accedi a <a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer">ChatGPT</a> con l'account o workspace da collegare.</li>
+                  <li>Apri <strong>Plugin</strong>, premi il pulsante <strong>+</strong> e seleziona <strong>Aggiungi server MCP personalizzato</strong> (la denominazione può variare).</li>
+                  <li>Inserisci <strong>Jurio</strong> come nome e <code>https://jurio.it/mcp</code> come URL HTTPS dell'endpoint.</li>
+                  <li>Configura l'autenticazione richiesta dal server, leggi l'avviso di sicurezza e conferma di voler continuare.</li>
+                  <li>Seleziona <strong>Crea</strong> e attendi che ChatGPT rilevi gli strumenti disponibili.</li>
+                </ol>
+                <h4>2. Autorizza e prova una ricerca</h4>
+                <ol class="mcp-steps" start="6">
+                  <li>Se viene avviato il flusso OAuth, accedi a Jurio e autorizza il collegamento.</li>
+                  <li>Avvia una nuova chat, seleziona Jurio tra gli strumenti disponibili e prova, ad esempio: <em>«Cerca su Jurio sentenze della Cassazione sul licenziamento disciplinare»</em>.</li>
+                  <li>Esamina i risultati e conferma le richieste di utilizzo degli strumenti quando compaiono.</li>
+                </ol>
+                <p class="mcp-note"><strong>Disponibilità:</strong> la creazione di server MCP personalizzati dipende dal piano ChatGPT e dalle policy del workspace. Nella documentazione OpenAI, il supporto completo per i server MCP personalizzati su ChatGPT web è indicato per i piani Business ed Enterprise/Edu; in un workspace gestito può essere necessario l'intervento di un amministratore o proprietario.</p>
+              </div>
+              <div class="mcp-figure-stack">
+                <figure class="mcp-figure"><img src="https://jurio.it/guida-image/open_ai_add.webp" alt="Schermata di ChatGPT per aggiungere un server MCP personalizzato" loading="lazy" decoding="async"><figcaption>Aggiunta di un server MCP personalizzato.</figcaption></figure>
+                <figure class="mcp-figure"><img src="https://jurio.it/guida-image/open_ai_config_1.webp" alt="Configurazione del nome Jurio e dell'endpoint MCP in ChatGPT" loading="lazy" decoding="async"><figcaption>Inserimento del nome e dell'endpoint Jurio.</figcaption></figure>
+                <figure class="mcp-figure"><img src="https://jurio.it/guida-image/open_ai_config_2.webp" alt="Autorizzazione OAuth e rilevamento degli strumenti MCP in ChatGPT" loading="lazy" decoding="async"><figcaption>Autorizzazione e rilevamento degli strumenti.</figcaption></figure>
+                <figure class="mcp-figure"><img src="https://jurio.it/guida-image/open_ai_config_3.webp" alt="ChatGPT con Jurio selezionato tra gli strumenti di conversazione" loading="lazy" decoding="async"><figcaption>Jurio selezionato nella conversazione.</figcaption></figure>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="mcp-section mcp-tinted" aria-labelledby="esempio-title">
+      <div class="mcp-container">
+        <div class="mcp-heading">
+          <p class="mcp-eyebrow">Dopo il collegamento</p>
+          <h2 id="esempio-title">Interroga Jurio <em>con il linguaggio del tuo lavoro.</em></h2>
+          <p>Una volta abilitato il connettore, puoi formulare le richieste direttamente nella chat del tuo assistente AI.</p>
+        </div>
+        <div class="mcp-card-grid">
+          <article class="mcp-card"><span class="mcp-card-index">ESEMPIO 01</span><h3>Ricerca giurisprudenziale</h3><p>«Cerca decisioni sul risarcimento del danno da perdita di chance e individua i principi di diritto rilevanti».</p></article>
+          <article class="mcp-card"><span class="mcp-card-index">ESEMPIO 02</span><h3>Ricerca di una sentenza</h3><p>«Recupera la sentenza con questo numero o identificativo ECLI e mostrami i passaggi rilevanti».</p></article>
+          <article class="mcp-card"><span class="mcp-card-index">ESEMPIO 03</span><h3>Approfondimento di un documento</h3><p>«Consulta il provvedimento e riassumi motivi, massime e argomentazioni centrali».</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="mcp-section" aria-labelledby="faq-title">
+      <div class="mcp-container">
+        <div class="mcp-heading">
+          <p class="mcp-eyebrow">Domande frequenti</p>
+          <h2 id="faq-title">Tutto quello che serve sapere su <em>Jurio MCP.</em></h2>
+        </div>
+        <div class="mcp-faq">
+          <details><summary>Che cos'è Jurio MCP?</summary><p>È il connettore che permette a un assistente AI compatibile con il Model Context Protocol di utilizzare gli strumenti di ricerca e consultazione della banca dati giuridica Jurio direttamente nella conversazione.</p></details>
+          <details><summary>Qual è l'indirizzo corretto del server MCP?</summary><p>L'endpoint da inserire nella configurazione del client è <strong>https://jurio.it/mcp</strong>. Utilizza questo indirizzo per Mistral Vibe, Claude e ChatGPT.</p></details>
+          <details><summary>Devo creare o copiare un token API?</summary><p>La connessione descritta in questa guida utilizza il flusso OAuth quando richiesto dal client. Non è necessario copiare manualmente un token: segui la finestra di autorizzazione e accedi al tuo account Jurio. Le impostazioni esatte dipendono dal client e dal server.</p></details>
+          <details><summary>Quali funzionalità di Jurio posso usare dalla chat?</summary><p>Puoi avviare ricerche semantiche per argomento o principio di diritto, cercare provvedimenti tramite numero o identificativo ECLI e consultare i contenuti disponibili dei documenti, inclusi testo, motivi e massime.</p></details>
+          <details><summary>Perché non vedo l'opzione per aggiungere un server MCP?</summary><p>La disponibilità dipende dal piano, dal tipo di account e dalle autorizzazioni del workspace. Negli account aziendali potrebbe essere necessario chiedere all'amministratore o al proprietario di abilitare la creazione e l'utilizzo dei connettori personalizzati.</p></details>
+          <details><summary>Posso usare Jurio con più piattaforme AI?</summary><p>Sì. Puoi configurare Jurio nei diversi client compatibili MCP utilizzando lo stesso endpoint. Ogni piattaforma richiede una propria procedura di collegamento e autorizzazione.</p></details>
+          <details><summary>Come posso ricevere assistenza per la configurazione?</summary><p>Per problemi durante la connessione o l'autenticazione, visita la pagina <a href="/contatti">Contatti</a> e invia una richiesta di supporto indicando la piattaforma utilizzata e il passaggio in cui si verifica il problema.</p></details>
+        </div>
+        <div class="mcp-resources" aria-label="Documentazione ufficiale delle piattaforme">
+          <a href="https://jurio.it/guida/mcp-vibe" target="_blank" rel="noopener noreferrer">Documentazione MCP Mistral</a>
+          <a href="https://jurio.it/guida/mcp-claude" target="_blank" rel="noopener noreferrer">Guida connettori Claude</a>
+          <a href="https://jurio.it/guida/mcp-chatgpt" target="_blank" rel="noopener noreferrer">Guida server MCP ChatGPT</a>
+        </div>
+        <p class="mcp-footer-note">Le interfacce, i nomi delle opzioni e i requisiti dei piani possono cambiare. Le istruzioni sono aggiornate sulla base della documentazione delle piattaforme consultata al momento della revisione; in caso di differenze, fanno fede le schermate mostrate dal tuo account.</p>
+      </div>
+    </section>
+
+    <section class="mcp-section" aria-label="Contatta Jurio">
+      <div class="mcp-container">
+        <div class="mcp-cta">
+          <p class="mcp-eyebrow">Porta Jurio nel tuo flusso di lavoro</p>
+          <h2>La tua AI. Le fonti giuridiche di Jurio. Un'unica conversazione.</h2>
+          <p>Configura il connettore MCP e rendi la ricerca giurisprudenziale parte del tuo modo di lavorare. Per informazioni o supporto, contatta il team Jurio.</p>
+          <a class="mcp-btn" href="/contatti">Contatta Jurio <span aria-hidden="true">→</span></a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="footer"></div>
+
+  <script>
+    (function () {
+      const endpoint = "https://jurio.it/mcp";
+      const copyButton = document.getElementById("copy-btn");
+      const copyText = document.getElementById("copy-text");
+
+      async function copyEndpoint() {
+        try {
+          if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(endpoint);
+          } else {
+            const temporaryInput = document.createElement("textarea");
+            temporaryInput.value = endpoint;
+            temporaryInput.setAttribute("readonly", "");
+            temporaryInput.style.position = "absolute";
+            temporaryInput.style.left = "-9999px";
+            document.body.appendChild(temporaryInput);
+            temporaryInput.select();
+            const copied = document.execCommand("copy");
+            temporaryInput.remove();
+            if (!copied) throw new Error("Copia non riuscita");
+          }
+          copyText.textContent = "Copiato";
+          copyButton.setAttribute("aria-label", "Endpoint MCP copiato negli appunti");
+        } catch (error) {
+          copyText.textContent = "Seleziona l'URL";
+          copyButton.setAttribute("aria-label", "Seleziona manualmente l'endpoint MCP");
+        }
+        window.setTimeout(() => {
+          copyText.textContent = "Copia endpoint";
+          copyButton.setAttribute("aria-label", "Copia l'endpoint MCP di Jurio");
+        }, 2200);
+      }
+
+      if (copyButton) copyButton.addEventListener("click", copyEndpoint);
+
+      document.addEventListener("DOMContentLoaded", async () => {
+        const components = [
+          { selector: "#header", file: "/header.html" },
+          { selector: "#footer", file: "/footer.html" }
+        ];
+        await Promise.all(components.map(async ({ selector, file }) => {
+          const element = document.querySelector(selector);
+          if (!element) return;
+          try {
+            const response = await fetch(file, { credentials: "same-origin" });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            element.innerHTML = await response.text();
+          } catch (error) {
+            console.error(`Errore nel caricamento di ${file}:`, error);
+          }
+        }));
+      });
+    })();
+  </script>
+</body>
+</html>
