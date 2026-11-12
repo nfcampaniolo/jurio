@@ -22,7 +22,7 @@ const sensitiveFieldCategories: Array<[RegExp, PiiCategory]> = [
 ];
 
 const labelledNamePattern =
-  /\b(?:mi chiamo|(?:nome|cognome)(?:\s+(?:del|della|cliente|assistito|controparte))?|cliente|assistito|controparte|mittente|destinatario|sig(?:nore|nora)?|signor[ae]|avv(?:ocato)?|dott(?:\.?(?:ore|ssa))?|ing(?:egnere)?)\.?\s*[:=]?\s+([\p{Lu}][\p{L}'’.-]*(?:\s+[\p{Lu}][\p{L}'’.-]*){0,2})/giu;
+  /\b(?:mi chiamo|(?:nome|cognome)(?:\s+(?:del|della|cliente|assistito|controparte))?|cliente|assistito|controparte|mittente|destinatario|sig(?:nore|nora)?|signor[ae]|avv(?:ocato)?|dott(?:\.?(?:ore|ssa))?|ing(?:egnere)?)\.?(?:\s*[:=])?\s+([\p{Lu}][\p{L}'’.-]*(?:\s+[\p{Lu}][\p{L}'’.-]*){0,2})/giu;
 const addressPattern =
   /\b(?:via|viale|piazza|corso|largo|vicolo|strada|piazzale|lungomare)\s+[\p{Lu}][\p{L}'’-]*(?:\s+[\p{Lu}][\p{L}'’-]*){0,4}\s+\d+[A-Za-z]?\b/giu;
 

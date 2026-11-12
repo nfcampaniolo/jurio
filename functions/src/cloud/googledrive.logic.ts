@@ -132,7 +132,9 @@ export async function executeDownloadCloudFile(req: Request, res: Response): Pro
     }
 
     const fileId = fileIdRaw.replace(/[^a-zA-Z0-9_.-]/g, "").substring(0, 250);
-    if (!fileId) {
+    // Un ID composto solo da punti/trattini (es. "..") verrebbe interpretato come
+    // segmento di path relativo e permetterebbe di uscire da /me/drive/items/.
+    if (!/^[a-zA-Z0-9_.-]+$/.test(fileId) || !/[a-zA-Z0-9]/.test(fileId) || fileId.includes("..")) {
       res.status(400).json({ error: "Bad Request: Formato fileId non valido." });
       return;
     }
@@ -159,7 +161,16 @@ export async function executeDownloadCloudFile(req: Request, res: Response): Pro
 
     // D. Download da Microsoft OneDrive
     if (providerRaw === "microsoft") {
-      const msRes = await fetch(`https://graph.microsoft.com/v1.0/me/drive/items/${fileId}/content`, {
+      const graphUrl = new URL(
+        `/v1.0/me/drive/items/${encodeURIComponent(fileId)}/content`,
+        "https://graph.microsoft.com"
+      );
+      if (graphUrl.origin !== "https://graph.microsoft.com" || !graphUrl.pathname.startsWith("/v1.0/me/drive/items/")) {
+        res.status(400).json({ error: "Bad Request: Formato fileId non valido." });
+        return;
+      }
+
+      const msRes = await fetch(graphUrl.toString(), {
         headers: { Authorization: `Bearer ${providerTokenRaw}` }
       });
 

@@ -360,6 +360,24 @@ async function extractTextFromPptx(f: File): Promise<string> {
   }
 }
 
+/**
+ * Converte HTML in testo semplice usando il parser del browser (documento inerte:
+ * nessuno script viene eseguito, nessuna risorsa caricata). Evita i limiti delle
+ * regex su tag annidati/multilinea e decodifica correttamente le entità HTML.
+ */
+export function htmlToPlainText(html: string): string {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  doc.querySelectorAll("script, style, noscript, template, head").forEach((el) => el.remove());
+
+  const parts: string[] = [];
+  const walker = doc.createTreeWalker(doc.body ?? doc.documentElement, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (node.nodeValue) parts.push(node.nodeValue);
+  }
+
+  return parts.join(" ").replace(/\s+/g, " ").trim();
+}
+
 async function extractTextFromEml(f: File): Promise<string> {
   try {
     const arrayBuffer = await f.arrayBuffer();
@@ -377,12 +395,7 @@ async function extractTextFromEml(f: File): Promise<string> {
     if (email.text) {
       text += email.text;
     } else if (email.html) {
-      text += email.html
-        .replace(/<style[^>]*>.*<\/style>/gi, '')
-        .replace(/<script[^>]*>.*<\/script>/gi, '')
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
+      text += htmlToPlainText(email.html);
     }
 
     return text;

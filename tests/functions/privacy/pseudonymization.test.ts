@@ -57,6 +57,24 @@ describe("PseudonymizationVault", () => {
     expect(vault.restore(pseudonymized)).toBe(input);
   });
 
+  it("detects labelled names with optional separators", () => {
+    const vault = new PseudonymizationVault();
+    const input = "Cliente: Mario Rossi; avv.  =  Luca Bianchi; sig. Paolo Verdi";
+    const pseudonymized = vault.pseudonymize(input);
+
+    expect(pseudonymized).not.toMatch(/Mario Rossi|Luca Bianchi|Paolo Verdi/);
+    expect(vault.restore(pseudonymized)).toBe(input);
+  });
+
+  it("handles long whitespace runs after a name label in linear time (ReDoS guard)", () => {
+    const vault = new PseudonymizationVault();
+    const input = `cliente.${" \t".repeat(50_000)}1`;
+
+    const start = performance.now();
+    expect(vault.pseudonymize(input)).toBe(input);
+    expect(performance.now() - start).toBeLessThan(1_000);
+  });
+
   it("does not classify protocol numbers or currency amounts as phone numbers", () => {
     const vault = new PseudonymizationVault();
     const input = "Protocollo LEG-2026-123456, valore della causa € 1.500.000,00.";

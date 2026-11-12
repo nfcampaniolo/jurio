@@ -144,6 +144,7 @@ import {
   extractTextFromFile,
   extractTextFromMedia,
   ocrFileWithTesseract,
+  htmlToPlainText,
 } from "@/shared/services/extractors";
 
 describe("File Processing Service Suite", () => {
@@ -298,6 +299,28 @@ describe("File Processing Service Suite", () => {
       expect(text).toContain("Da: tribunale@giustiziacert.it");
       expect(text).toContain("A: avvocato@studiolegale.it");
       expect(text).toContain("Si notifica il deposito telematico dell'atto indicato.");
+    });
+
+    test("estrae il corpo HTML di un EML scartando style/script multilinea e decodificando le entità", async () => {
+      mockPostalMimeParse.mockResolvedValueOnce({
+        subject: "PEC",
+        from: { address: "a@b.it" },
+        html: `<html><head><style>
+          .x { color: red; }
+        </style></head><body><p>Gentile&nbsp;Avvocato,</p><script type="text/javascript">
+          alert("x");
+        </script><div>importo &euro; 100 &lt;netto&gt;</div></body></html>`,
+      });
+
+      const text = await extractTextFromFile(new File(["mock-eml"], "pec.eml"));
+
+      expect(text).toContain("Gentile Avvocato, importo € 100 <netto>");
+      expect(text).not.toMatch(/color|alert|<script/i);
+    });
+
+    test("htmlToPlainText separa i blocchi con spazi e normalizza gli spazi bianchi", () => {
+      expect(htmlToPlainText("<p>Primo</p><p>Secondo</p>\n\n<br>Terzo")).toBe("Primo Secondo Terzo");
+      expect(htmlToPlainText("")).toBe("");
     });
 
     test("estrae testo da file Apple Pages/Numbers/Keynote tramite preview PDF QuickLook", async () => {

@@ -76,7 +76,7 @@ export function extractFirstArticle(text: string): string | undefined {
   );
   if (!m) return undefined;
 
-  return normalize(m[1]).replace(/\s*/g, "").replace(/\./g, ".");
+  return normalize(m[1]).replace(/\s+/g, "");
 }
 
 export function extractComma(text: string): string | undefined {

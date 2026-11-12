@@ -47,7 +47,7 @@ export function extractFirstArticle(text: string): string | undefined {
   const t = lower(text).slice(0, MAX_REF_INPUT);
   const m = t.match(/\b(?:art\.?|artt\.?|articolo|articoli)\s*([0-9]+(?:\s*-\s*[0-9]+)?(?:\s*(?:bis|ter|quater|quinquies|sexies|septies|octies|novies|decies|undecies|duodecies))?(?:\s*-\s*(?:bis|ter|quater|quinquies|sexies|septies|octies|novies|decies|undecies|duodecies))?(?:\s*-\s*[0-9]+)?(?:\s*-\s*[a-z]+)?(?:\s*\.\s*\d+)?)\b/);
   if (!m) return undefined;
-  return normalizeRef(m[1]).replace(/\s*/g, "").replace(/\./g, ".");
+  return normalizeRef(m[1]).replace(/\s+/g, "");
 }
 
 export function extractComma(text: string): string | undefined {

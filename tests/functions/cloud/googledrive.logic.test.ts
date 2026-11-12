@@ -227,4 +227,21 @@ describe("cloud file endpoints", () => {
     expect(warning).toHaveBeenCalledOnce();
     warning.mockRestore();
   });
+
+  it.each(["..", "../..", "a/../../me", ".", "-.-", "item..id"])(
+    "rejects path-traversal fileId %s without calling Microsoft Graph",
+    async (fileId) => {
+      // Arrange
+      const fetch = vi.fn();
+      vi.stubGlobal("fetch", fetch);
+      const res = response();
+
+      // Act
+      await executeDownloadCloudFile({ body: { provider: "microsoft", providerToken: "token", fileId } } as never, res as never);
+
+      // Assert
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(fetch).not.toHaveBeenCalled();
+    },
+  );
 });
