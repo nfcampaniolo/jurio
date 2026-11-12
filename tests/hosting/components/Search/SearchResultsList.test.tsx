@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import React from "react";
 import type { Sentenza, Ordinanza } from "@/interfaces/interfaces";
 
@@ -11,6 +11,8 @@ vi.mock("lucide-react", () => {
   return {
     Info: Icon("info"),
     Loader2: Icon("loader-2"),
+    ChevronDown: Icon("chevron-down"),
+    Scale: Icon("scale"),
   };
 });
 
@@ -23,32 +25,23 @@ vi.mock("@/features/document/components/Document", () => ({
   ),
 }));
 
-vi.mock("@/features/document/components/Document", () => ({
-  Document: ({ documento }: { documento: { id: string; numero_documento?: string } }) => (
-    <div data-testid={`mock-document-${documento.id}`}>
-      {documento.numero_documento || documento.id}
-    </div>
-  ),
-}));
-
 /* ---------- mock framer-motion ---------- */
-vi.mock("framer-motion", () => ({
-  motion: {
-    div: ({
-      children,
-      className,
-      onClick,
-      ...props
-    }: React.HTMLAttributes<HTMLDivElement> & { [key: string]: unknown }) => (
-      <div className={className} onClick={onClick} {...props}>
-        {children}
-      </div>
-    ),
-  },
-}));
+vi.mock("framer-motion", () => {
+  const MOTION_PROPS = ["initial", "animate", "exit", "transition", "whileHover", "whileTap"];
+  const div = ({ children, ...props }: React.HTMLAttributes<HTMLDivElement> & { [key: string]: unknown }) => {
+    const domProps = Object.fromEntries(
+      Object.entries(props).filter(([k]) => !MOTION_PROPS.includes(k))
+    ) as React.HTMLAttributes<HTMLDivElement>;
+    return <div {...domProps}>{children}</div>;
+  };
+  return {
+    motion: { div },
+    AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  };
+});
 
 /* ---------- component ---------- */
-import { SearchResultsList } from "@/features/search/components/SearchResultsList"; // <-- adegua il path se necessario
+import { SearchResultsList } from "@/features/search/components/SearchResultsList";
 
 describe("SearchResultsList Component Suite", () => {
   const mockHandleClick = vi.fn();
@@ -64,6 +57,9 @@ describe("SearchResultsList Component Suite", () => {
     { id: "sem-2", numero_documento: "Ord. 201/2026" } as unknown as Ordinanza,
   ];
 
+  const makeDocs = (prefix: string, n: number): Ordinanza[] =>
+    Array.from({ length: n }, (_, i) => ({ id: `${prefix}-${i}` }) as unknown as Ordinanza);
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -78,12 +74,10 @@ describe("SearchResultsList Component Suite", () => {
     const defaultProps: React.ComponentProps<typeof SearchResultsList> = {
       totalResultsCount: 4,
       isSearching: true,
-      hasSearched: false,
+      hasSearched: true,
       effectiveTopMatches: dummyTopMatches,
       effectiveAllMatches: dummyAllMatches,
-      visibleTopMatches: dummyTopMatches,
-      visibleAllMatches: dummyAllMatches,
-      visibleCount: 4,
+      visibleCount: 10,
       loading: false,
       isDbPaginatedMode: false,
       hasMoreDbResults: false,
@@ -95,27 +89,29 @@ describe("SearchResultsList Component Suite", () => {
     return render(<SearchResultsList {...defaultProps} />);
   };
 
-  test("non renderizza nulla se totalResultsCount è 0 e loading è false", () => {
-    const { container } = renderComponent({ totalResultsCount: 0, loading: false });
+  const othersToggle = () =>
+    within(screen.getByRole("heading", { name: /Altri risultati/i, level: 2 })).getByRole("button");
+
+  /* ---------------- stati vuoti ---------------- */
+
+  test("non renderizza nulla se non ci sono risultati e non è stata ancora fatta una ricerca", () => {
+    const { container } = renderComponent({ totalResultsCount: 0, hasSearched: false });
     expect(container).toBeEmptyDOMElement();
   });
 
   test("mostra un messaggio quando una ricerca completata non restituisce risultati", () => {
-    renderComponent({ totalResultsCount: 0, hasSearched: true });
+    renderComponent({ totalResultsCount: 0, effectiveTopMatches: [], effectiveAllMatches: [] });
     expect(screen.getByRole("status")).toHaveTextContent("Nessun elemento trovato");
   });
 
-  test("renderizza il conteggio dei documenti trovati se totalResultsCount > 0", () => {
-    renderComponent({ totalResultsCount: 4 });
-    expect(screen.getByText("4 documenti trovati")).toBeInTheDocument();
-  });
+  /* ---------------- risultati pertinenti ---------------- */
 
-  test("renderizza le corrispondenze testuali esatte e gestisce il click sul documento", () => {
-    renderComponent({ isSearching: true });
+  test("mostra in primo piano i risultati pertinenti con il relativo conteggio e gestisce il click", () => {
+    renderComponent();
 
-    expect(
-      screen.getByRole("heading", { name: "Corrispondenze testuali esatte", level: 2 })
-    ).toBeInTheDocument();
+    const heading = screen.getByRole("heading", { name: "Risultati pertinenti", level: 2 });
+    expect(heading).toBeInTheDocument();
+    expect(within(heading.closest("section")!).getByText("2 documenti")).toBeInTheDocument();
     expect(screen.getByTestId("mock-document-top-1")).toBeInTheDocument();
     expect(screen.getByTestId("mock-document-top-2")).toBeInTheDocument();
 
@@ -124,28 +120,48 @@ describe("SearchResultsList Component Suite", () => {
     expect(mockHandleClick).toHaveBeenCalledWith(dummyTopMatches[0]);
   });
 
-  test("mostra il box di avviso quando isSearching è true ma non ci sono corrispondenze esatte", () => {
-    renderComponent({
-      isSearching: true,
-      effectiveTopMatches: [],
-      visibleTopMatches: [],
-    });
+  test("specifica quando non ci sono risultati pertinenti", () => {
+    renderComponent({ effectiveTopMatches: [], totalResultsCount: 2 });
 
-    expect(
-      screen.getByText(/Nessun risultato esatto o categoria specifica trovata per questa ricerca/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Verifica le corrispondenze semantiche nella sezione qui sotto/i)
-    ).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /Nessun risultato pertinente trovato per questa ricerca/i
+    );
+    expect(screen.getByText(/corrispondenza più debole/i)).toBeInTheDocument();
     expect(screen.getByTestId("icon-info")).toBeInTheDocument();
   });
 
-  test("renderizza la sezione 'Correlazione Semantica' quando isSearching è true e ci sono match semantici", () => {
-    renderComponent({ isSearching: true });
+  test("non rimanda agli altri risultati se non ce ne sono", () => {
+    renderComponent({ effectiveTopMatches: [], effectiveAllMatches: [], totalResultsCount: 0, loading: true });
+    expect(screen.queryByText(/corrispondenza più debole/i)).toBeNull();
+  });
 
-    expect(
-      screen.getByRole("heading", { name: "Correlazione Semantica", level: 2 })
-    ).toBeInTheDocument();
+  test("pagina i risultati pertinenti tramite handleLoadMore", () => {
+    renderComponent({
+      effectiveTopMatches: makeDocs("top", 12),
+      effectiveAllMatches: [],
+      totalResultsCount: 12,
+      visibleCount: 10,
+    });
+
+    expect(screen.getByTestId("mock-document-top-9")).toBeInTheDocument();
+    expect(screen.queryByTestId("mock-document-top-10")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Mostra altri risultati pertinenti" }));
+    expect(mockHandleLoadMore).toHaveBeenCalledTimes(1);
+  });
+
+  /* ---------------- altri risultati ---------------- */
+
+  test("la sezione 'Altri risultati' è chiusa di default quando ci sono risultati pertinenti", () => {
+    renderComponent();
+
+    const toggle = othersToggle();
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByTestId("mock-document-sem-1")).toBeNull();
+
+    fireEvent.click(toggle);
+
+    expect(othersToggle()).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByTestId("mock-document-sem-1")).toBeInTheDocument();
     expect(screen.getByTestId("mock-document-sem-2")).toBeInTheDocument();
 
@@ -153,48 +169,145 @@ describe("SearchResultsList Component Suite", () => {
     expect(mockHandleClick).toHaveBeenCalledWith(dummyAllMatches[0]);
   });
 
-  test("non mostra le intestazioni di ricerca quando isSearching è false ma mostra comunque i documenti", () => {
-    renderComponent({
-      isSearching: false,
-      effectiveTopMatches: [],
-      visibleTopMatches: [],
-      effectiveAllMatches: dummyAllMatches,
-      visibleAllMatches: dummyAllMatches,
-    });
+  test("la sezione 'Altri risultati' è aperta di default quando non ci sono risultati pertinenti", () => {
+    renderComponent({ effectiveTopMatches: [], totalResultsCount: 2 });
 
-    expect(screen.queryByRole("heading", { name: "Corrispondenze testuali esatte" })).toBeNull();
-    expect(screen.queryByRole("heading", { name: "Correlazione Semantica" })).toBeNull();
+    expect(othersToggle()).toHaveAttribute("aria-expanded", "true");
     expect(screen.getByTestId("mock-document-sem-1")).toBeInTheDocument();
   });
 
-  test("mostra il pulsante 'Mostra altri risultati' quando visibleCount < totalResultsCount e gestisce il click", () => {
-    renderComponent({
-      totalResultsCount: 10,
-      visibleCount: 4,
-    });
-
-    const loadMoreBtn = screen.getByRole("button", { name: "Mostra altri risultati" });
-    expect(loadMoreBtn).toBeInTheDocument();
-
-    fireEvent.click(loadMoreBtn);
-    expect(mockHandleLoadMore).toHaveBeenCalledTimes(1);
+  test("non mostra la sezione 'Altri risultati' se è vuota", () => {
+    renderComponent({ effectiveAllMatches: [], totalResultsCount: 2 });
+    expect(screen.queryByRole("heading", { name: /Altri risultati/i })).toBeNull();
   });
 
-  test("mostra il pulsante di caricamento quando isDbPaginatedMode e hasMoreDbResults sono true", () => {
+  test("pagina gli altri risultati localmente, senza chiamare handleLoadMore", () => {
     renderComponent({
-      totalResultsCount: 4,
-      visibleCount: 4,
+      effectiveTopMatches: [],
+      effectiveAllMatches: makeDocs("sem", 15),
+      totalResultsCount: 15,
+    });
+
+    expect(screen.getByTestId("mock-document-sem-9")).toBeInTheDocument();
+    expect(screen.queryByTestId("mock-document-sem-10")).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Mostra altri risultati" }));
+
+    expect(screen.getByTestId("mock-document-sem-14")).toBeInTheDocument();
+    expect(mockHandleLoadMore).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Mostra altri risultati" })).toBeNull();
+  });
+
+  /* ---------------- riferimento normativo ---------------- */
+
+  const normaHeading = () =>
+    screen.queryByRole("heading", { name: /Per riferimento normativo/i, level: 2 });
+
+  test("non mostra la sezione normativa se il filtro non è attivo", () => {
+    renderComponent();
+    expect(normaHeading()).toBeNull();
+  });
+
+  test("mostra i risultati normativi in una sezione dedicata, tra pertinenti e altri risultati", () => {
+    const normaDocs = [{ id: "norma-1" }, { id: "norma-2" }] as unknown as Ordinanza[];
+    renderComponent({
+      normativaMatch: { query: "art. 2051 c.c.", keys: ["cc|art:2051"], docs: normaDocs },
+      totalResultsCount: 6,
+    });
+
+    const heading = normaHeading()!;
+    const section = heading.closest("section")!;
+    expect(within(section).getByText("2 documenti")).toBeInTheDocument();
+    expect(within(section).getByTestId("mock-document-norma-1")).toBeInTheDocument();
+
+    const headings = screen.getAllByRole("heading", { level: 2 }).map((h) => h.textContent);
+    expect(headings[0]).toMatch(/Risultati pertinenti/);
+    expect(headings[1]).toMatch(/Per riferimento normativo/);
+    expect(headings[2]).toMatch(/Altri risultati/);
+
+    fireEvent.click(screen.getByTestId("mock-document-norma-2"));
+    expect(mockHandleClick).toHaveBeenCalledWith(normaDocs[1]);
+  });
+
+  test("segnala quando nella ricerca non è riconosciuto alcun riferimento normativo", () => {
+    renderComponent({ normativaMatch: { query: "danno da cose in custodia", keys: [], docs: [] } });
+
+    const section = normaHeading()!.closest("section")!;
+    expect(within(section).getByRole("note")).toHaveTextContent(
+      /Nessun riferimento normativo riconosciuto in "danno da cose in custodia"/
+    );
+  });
+
+  test("segnala quando nessuna pronuncia cita la norma indicata", () => {
+    renderComponent({ normativaMatch: { query: "art. 9999 c.c.", keys: ["cc|art:9999"], docs: [] } });
+
+    const section = normaHeading()!.closest("section")!;
+    expect(within(section).getByRole("note")).toHaveTextContent(/Nessuna pronuncia trovata/);
+  });
+
+  test("mostra la sezione normativa anche quando non ci sono altri risultati", () => {
+    renderComponent({
+      totalResultsCount: 0,
+      effectiveTopMatches: [],
+      effectiveAllMatches: [],
+      normativaMatch: { query: "art. 9999 c.c.", keys: ["cc|art:9999"], docs: [] },
+    });
+
+    expect(screen.getByRole("status")).toHaveTextContent("Nessun elemento trovato");
+    expect(normaHeading()).toBeInTheDocument();
+  });
+
+  test("pagina localmente i risultati normativi", () => {
+    renderComponent({
+      effectiveAllMatches: [],
+      normativaMatch: { query: "art. 2051 c.c.", keys: ["cc|art:2051"], docs: makeDocs("norma", 13) },
+      totalResultsCount: 15,
+    });
+
+    expect(screen.queryByTestId("mock-document-norma-10")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Mostra altre pronunce per norma" }));
+    expect(screen.getByTestId("mock-document-norma-12")).toBeInTheDocument();
+    expect(mockHandleLoadMore).not.toHaveBeenCalled();
+  });
+
+  /* ---------------- navigazione per filtri (senza testo) ---------------- */
+
+  test("senza testo di ricerca mostra una lista unica senza intestazioni di sezione", () => {
+    renderComponent({
+      isSearching: false,
+      effectiveTopMatches: [],
+      effectiveAllMatches: dummyAllMatches,
+      totalResultsCount: 2,
+    });
+
+    expect(screen.getByText("2 documenti trovati")).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Risultati pertinenti" })).toBeNull();
+    expect(screen.queryByRole("heading", { name: /Altri risultati/i })).toBeNull();
+    expect(screen.getByTestId("mock-document-sem-1")).toBeInTheDocument();
+  });
+
+  test("senza testo di ricerca mostra il pulsante di caricamento quando il DB ha altri risultati", () => {
+    renderComponent({
+      isSearching: false,
+      effectiveTopMatches: [],
+      effectiveAllMatches: dummyAllMatches,
+      totalResultsCount: 2,
       isDbPaginatedMode: true,
       hasMoreDbResults: true,
     });
 
-    expect(screen.getByRole("button", { name: "Mostra altri risultati" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Mostra altri risultati" }));
+    expect(mockHandleLoadMore).toHaveBeenCalledTimes(1);
   });
 
-  test("disabilita il pulsante e mostra lo spinner quando loading è true", () => {
+  test("senza testo di ricerca disabilita il pulsante e mostra lo spinner durante il caricamento", () => {
     renderComponent({
-      totalResultsCount: 10,
-      visibleCount: 4,
+      isSearching: false,
+      effectiveTopMatches: [],
+      effectiveAllMatches: dummyAllMatches,
+      totalResultsCount: 2,
+      isDbPaginatedMode: true,
+      hasMoreDbResults: true,
       loading: true,
     });
 
@@ -203,12 +316,12 @@ describe("SearchResultsList Component Suite", () => {
     expect(screen.getByTestId("icon-loader-2")).toBeInTheDocument();
   });
 
-  test("nasconde il pulsante di paginazione se tutti i risultati sono visibili e non ci sono altri dati dal DB", () => {
+  test("senza testo di ricerca nasconde il pulsante se tutto è visibile e il DB non ha altri dati", () => {
     renderComponent({
-      totalResultsCount: 4,
-      visibleCount: 4,
-      isDbPaginatedMode: false,
-      hasMoreDbResults: false,
+      isSearching: false,
+      effectiveTopMatches: [],
+      effectiveAllMatches: dummyAllMatches,
+      totalResultsCount: 2,
     });
 
     expect(screen.queryByRole("button", { name: /Mostra altri risultati/i })).toBeNull();

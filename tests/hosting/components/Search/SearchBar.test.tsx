@@ -32,7 +32,7 @@ interface MockSearchBarHook {
   filterTipo: string;
   setFilterTipo: Mock<(v: string) => void>;
   handleSearch: Mock<(term: string) => void>;
-  handleKeyDown: Mock<(e: React.KeyboardEvent<HTMLInputElement>) => void>;
+  handleKeyDown: Mock<(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void>;
   handleClick: Mock<(doc: DocumentoGiurisprudenziale) => void>;
   startDate: string;
   setStartDate: Mock<(v: string) => void>;
@@ -78,7 +78,7 @@ const { mockSearchBarState } = vi.hoisted(() => ({
     filterTipo: "",
     setFilterTipo: vi.fn<(v: string) => void>(),
     handleSearch: vi.fn<(term: string) => void>(),
-    handleKeyDown: vi.fn<(e: React.KeyboardEvent<HTMLInputElement>) => void>(),
+    handleKeyDown: vi.fn<(e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => void>(),
     handleClick: vi.fn<(doc: DocumentoGiurisprudenziale) => void>(),
     startDate: "",
     setStartDate: vi.fn<(v: string) => void>(),
@@ -269,7 +269,7 @@ describe("SearchBar Component Suite", () => {
     render(<SearchBar />);
 
     expect(screen.getByRole("heading", { name: "Consulta la giurisprudenza online", level: 1 })).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Cerca...")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Cerca nella giurisprudenza" })).toBeInTheDocument();
 
     expect(screen.getByRole("button", { name: "Apri pannello termini" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Mostra filtri" })).toBeInTheDocument();
@@ -285,18 +285,59 @@ describe("SearchBar Component Suite", () => {
     render(<SearchBar />);
 
     expect(screen.getByTestId("mock-access-denied")).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText("Cerca...")).toBeNull();
+    expect(screen.queryByRole("textbox", { name: "Cerca nella giurisprudenza" })).toBeNull();
   });
 
   test("gestisce l'input di ricerca e aggiorna l'indice dei suggerimenti", () => {
     render(<SearchBar />);
 
-    const input = screen.getByPlaceholderText("Cerca...");
+    const input = screen.getByRole("textbox", { name: "Cerca nella giurisprudenza" });
     fireEvent.change(input, { target: { value: "responsabilità medica" } });
 
     expect(mockSearchBarState.setSearchInput).toHaveBeenCalledWith("responsabilità medica");
     expect(mockSearchBarState.setShowSuggestions).toHaveBeenCalledWith(true);
     expect(mockSearchBarState.setActiveIndex).toHaveBeenCalledWith(-1);
+  });
+
+  test("il campo di ricerca è multilinea: Invio avvia la ricerca, Maiusc+Invio va a capo", () => {
+    mockSearchBarState.searchInput = "caduta su marciapiede dissestato";
+    render(<SearchBar />);
+
+    const input = screen.getByRole("textbox", { name: "Cerca nella giurisprudenza" });
+    expect(input.tagName).toBe("TEXTAREA");
+
+    fireEvent.keyDown(input, { key: "Enter", shiftKey: true });
+    expect(mockSearchBarState.handleSearch).not.toHaveBeenCalled();
+
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(mockSearchBarState.handleSearch).toHaveBeenCalledWith("caduta su marciapiede dissestato");
+  });
+
+  test("con i suggerimenti aperti Invio è delegato alla gestione dei suggerimenti", () => {
+    mockSearchBarState.searchInput = "usura";
+    mockSearchBarState.showSuggestions = true;
+    render(<SearchBar />);
+
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "Cerca nella giurisprudenza" }), { key: "Enter" });
+    expect(mockSearchBarState.handleKeyDown).toHaveBeenCalledTimes(1);
+    expect(mockSearchBarState.handleSearch).not.toHaveBeenCalled();
+  });
+
+  test("Invio con campo vuoto e senza filtri non avvia la ricerca", () => {
+    render(<SearchBar />);
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "Cerca nella giurisprudenza" }), { key: "Enter" });
+    expect(mockSearchBarState.handleSearch).not.toHaveBeenCalled();
+  });
+
+  test("il pulsante di cancellazione compare solo con del testo e svuota il campo", () => {
+    const { unmount } = render(<SearchBar />);
+    expect(screen.queryByRole("button", { name: "Cancella testo di ricerca" })).toBeNull();
+    unmount();
+
+    mockSearchBarState.searchInput = "fideiussione";
+    render(<SearchBar />);
+    fireEvent.click(screen.getByRole("button", { name: "Cancella testo di ricerca" }));
+    expect(mockSearchBarState.setSearchInput).toHaveBeenCalledWith("");
   });
 
   test("mostra la lista di suggerimenti e invoca handleSearch alla selezione di un termine", () => {
@@ -363,10 +404,10 @@ describe("SearchBar Component Suite", () => {
     const micBtn = screen.getByRole("button", { name: "Dettatura vocale" });
     fireEvent.click(micBtn);
 
-    expect(screen.getByPlaceholderText("In ascolto...")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("In ascolto…")).toBeInTheDocument();
 
     fireEvent.click(micBtn);
-    expect(screen.getByPlaceholderText("Cerca...")).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Cerca nella giurisprudenza" })).toBeInTheDocument();
   });
 
   test("mostra il banner del match dettagliato (detailedMatch) per tipologie diverse", () => {

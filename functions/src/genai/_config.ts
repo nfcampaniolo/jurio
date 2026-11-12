@@ -62,6 +62,7 @@ export const CFG = {
     field: 3000,
     chunk: 3000,
     web: 1200,
+    fullText: 60000,
   },
 
   // 4. Scoring e Modello Embedding

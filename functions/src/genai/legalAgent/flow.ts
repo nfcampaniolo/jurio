@@ -133,11 +133,19 @@ export const legalAgentFlow = ai.defineFlow(
                      : [po];
         }
 
-        const isErr = rawOutputs.length > 0 && typeof rawOutputs[0]?.messaggio === "string" && rawOutputs[0].messaggio.includes("Nessun paragrafo");
+        const noticeText = (item: any): string =>
+          typeof item?.message === "string" ? item.message : typeof item?.messaggio === "string" ? item.messaggio : "";
+        const isErr = rawOutputs.length > 0 && rawOutputs.every((item) => noticeText(item).includes("Nessun paragrafo") || typeof item?.error === "string");
         
         if (!isErr && rawOutputs.length > 0) {
           const retrievalText = JSON.stringify(preRetrievalOutput);
           appendRetrievalContext(messages, retrievalText, "Documentazione Allegata");
+        } else if (isErr) {
+          appendRetrievalContext(
+            messages,
+            "Non è stato possibile recuperare contenuti dai documenti allegati (documenti non accessibili o non ancora elaborati). Informa l'utente e invitalo a verificare il caricamento del file.",
+            "Documentazione Allegata"
+          );
         }
       } catch (e) {
         logSafeError("LEGAL_AGENT_INITIAL_DOCUMENT_READ_FAILED", e);
@@ -260,6 +268,13 @@ export const legalAgentFlow = ai.defineFlow(
 
     } catch (error: unknown) {
       logSafeError("LEGAL_AGENT_GENERATION_FAILED", error);
+      // Solo metadati del provider (nessun contenuto utente): servono a diagnosticare errori Vertex/Genkit.
+      const providerError = error as { status?: unknown; code?: unknown; name?: unknown } | null;
+      console.error("[legalAgentFlow] Generation failure detail", JSON.stringify({
+        status: typeof providerError?.status === "string" ? providerError.status : undefined,
+        code: typeof providerError?.code === "number" || typeof providerError?.code === "string" ? providerError.code : undefined,
+        name: typeof providerError?.name === "string" ? providerError.name.slice(0, 60) : undefined,
+      }));
       const msg = isQuotaError(error)
         ? "Il servizio AI è temporaneamente sovraccarico. Riprova tra qualche istante."
         : "Il motore neurale ha incontrato un errore imprevisto durante l'elaborazione.";

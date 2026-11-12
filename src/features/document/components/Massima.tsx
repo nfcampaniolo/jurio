@@ -1,4 +1,5 @@
 import React from "react";
+import { useLocation } from "react-router-dom";
 import { MassimaHeader } from "./MassimaHeader";
 import { PdfPreviewSidebar } from "./PdfPreviewSidebar";
 import { RenderGiurisprudenza } from "./RenderGiurisprudenza";
@@ -27,7 +28,9 @@ interface Props {
 }
 
 export const MassimaCard: React.FC<Props> = ({ result, file, share, uid = "", id = "" }) => {
-  
+  const { pathname } = useLocation();
+  const isGiurisprudenzaRoute = pathname.includes("/giurisprudenza");
+
   const getRenderer = () => {
     // 1. Render Contratto
     if ('obbligazioni' in result && 'corrispettivi' in result) {
@@ -60,8 +63,9 @@ export const MassimaCard: React.FC<Props> = ({ result, file, share, uid = "", id
 
   const fonte = 'fonte' in result ? (result.fonte as string | undefined) : undefined;
   const hasFonteField = 'fonte' in result;
-  const canShowSidebarBySource = !hasFonteField || isFonteAmmessa(fonte);
-  const showFonteNonAmmessaMessage = Boolean(file) && hasFonteField && !canShowSidebarBySource;
+  // Il filtro sulle fonti ammesse vale solo per le pagine /giurisprudenza
+  const canShowSidebarBySource = !isGiurisprudenzaRoute || !hasFonteField || isFonteAmmessa(fonte);
+  const showFonteNonAmmessaMessage = Boolean(file) && !canShowSidebarBySource;
   const shouldShowSidebar = file && (documentName || 'organo_giudicante' in result) && canShowSidebarBySource;
 
   return (

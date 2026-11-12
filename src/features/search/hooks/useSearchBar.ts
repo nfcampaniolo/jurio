@@ -20,7 +20,7 @@ export function useSearchBar() {
   const history = useSearchHistory(uid, searchInput);
   const engine = useSearchEngine(filters, history);
 
-  const handleKeyDown = async (e: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = async (e: KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (!showSuggestions) return;
     if (e.key === "ArrowDown") { 
       e.preventDefault(); 

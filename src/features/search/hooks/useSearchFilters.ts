@@ -15,6 +15,7 @@ export const DEFAULT_FILTERS = {
   sortBy: "relevance" as const,
   filterSezione: "",
   numberPages: 15,
+  searchNormativa: false,
 };
 
 export type SortBy = "relevance" | "date_desc" | "date_asc";
@@ -100,6 +101,7 @@ export function useSearchFilters() {
   const [sortBy, setSortBy] = useState<SortBy>(initialFilters.sortBy);
   const [filterSezione, setFilterSezione] = useState<string>(initialFilters.filterSezione);
   const [numberPages, setnumberPages] = useState<number>(initialFilters.numberPages);
+  const [searchNormativa, setSearchNormativa] = useState<boolean>(initialFilters.searchNormativa === true);
 
   // FIX 1: Intercettiamo il cambio di Grado per resettare la Sezione nello stesso ciclo di render.
   // Invece di usare un useEffect che scatta "dopo" e causa un render a cascata, facciamo tutto qui.
@@ -116,9 +118,9 @@ export function useSearchFilters() {
   // Questo useEffect rimane perché è l'unico modo corretto per 
   // SINCRONIZZARE React con un sistema esterno (il LocalStorage) quando lo stato cambia.
   useEffect(() => {
-    const filtersToSave = { filterGrado, filterTipo, filterTipologia, startDate, endDate, sortBy, filterSezione, numberPages };
+    const filtersToSave = { filterGrado, filterTipo, filterTipologia, startDate, endDate, sortBy, filterSezione, numberPages, searchNormativa };
     localStorage.setItem(SEARCH_FILTERS_CACHE_KEY, JSON.stringify(filtersToSave));
-  }, [filterGrado, filterTipo, filterTipologia, startDate, endDate, sortBy, filterSezione, numberPages]);
+  }, [filterGrado, filterTipo, filterTipologia, startDate, endDate, sortBy, filterSezione, numberPages, searchNormativa]);
 
   const clearFilters = useCallback(() => {
     _setFilterGrado(DEFAULT_FILTERS.filterGrado);
@@ -129,6 +131,7 @@ export function useSearchFilters() {
     setSortBy(DEFAULT_FILTERS.sortBy);
     setFilterSezione(DEFAULT_FILTERS.filterSezione);
     setnumberPages(DEFAULT_FILTERS.numberPages);
+    setSearchNormativa(DEFAULT_FILTERS.searchNormativa);
     
     localStorage.removeItem(SEARCH_FILTERS_CACHE_KEY);
     toast.success("Filtri resettati");
@@ -204,6 +207,6 @@ export function useSearchFilters() {
     filterGrado, setFilterGrado, filterTipo, setFilterTipo,
     filterTipologia, setFilterTipologia, startDate, setStartDate,
     endDate, setEndDate, sortBy, setSortBy, filterSezione, setFilterSezione,
-    numberPages, setnumberPages, clearFilters, buildVectorFilters, applyUiFiltersAndSort
+    numberPages, setnumberPages, searchNormativa, setSearchNormativa, clearFilters, buildVectorFilters, applyUiFiltersAndSort
   };
 }

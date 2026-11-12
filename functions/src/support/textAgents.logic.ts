@@ -2,10 +2,9 @@ import { Request, Response } from "express";
 import Busboy from "busboy";
 import { SpeechClient } from "@google-cloud/speech";
 import { corsHandlerDomain, withSecureApiEndpoint, validateUserPlanAndLimits, requireAppCheck, requireUidFromAuthHeader } from "../_utils";
-import { getDb, getAdminStorage } from "../_deps";
+import { getDb } from "../_deps";
 import { logSafeError } from "../_logging";
-// @ts-ignore
-import pdfExtract from "pdf-extraction";
+import { extractPdfTextFromStorage } from "./pdfText";
 
 const db = getDb();
 let speechClientInstance: SpeechClient | null = null;
@@ -231,10 +230,7 @@ async function extractDocumentTextHandler(req: Request, res: Response): Promise<
       return;
     }
 
-    // 4. Path Traversal Protection
-    const safeStoragePath = storagePathRaw.replace(/\.\./g, "");
-
-    // 5. Controllo utente e validazione unificata piano/limiti (feature "extract_document")
+    // 4. Controllo utente e validazione unificata piano/limiti (feature "extract_document")
     const userSnap = await db.collection("register").doc(uid).get();
     if (!userSnap.exists) {
       res.status(404).json({ error: "Not Found" });
@@ -243,48 +239,48 @@ async function extractDocumentTextHandler(req: Request, res: Response): Promise<
 
     await validateUserPlanAndLimits(uid, "extract_document", userSnap);
 
-    // 6. Estrazione Documento da Storage
-    const storage = getAdminStorage();
-    const bucket = storage.bucket();
-    const file = bucket.file(safeStoragePath);
-
-    const [exists] = await file.exists();
-    if (!exists) {
-      res.status(404).json({ error: "Not Found: Il file non esiste nello storage." });
-      return;
+    // 5. Estrazione Documento da Storage (path traversal protection inclusa)
+    let extracted;
+    try {
+      extracted = await extractPdfTextFromStorage(storagePathRaw);
+    } catch (err: unknown) {
+      const code = err instanceof Error ? err.message : "";
+      if (code === "FILE_NOT_FOUND") {
+        res.status(404).json({ error: "Not Found: Il file non esiste nello storage." });
+        return;
+      }
+      if (code === "FILE_TOO_LARGE") {
+        res.status(413).json({ error: "Payload Too Large: Il file supera la dimensione massima consentita di 30MB." });
+        return;
+      }
+      throw err;
     }
 
-    const [metadata] = await file.getMetadata();
-    const fileSize = Number(metadata.size || 0);
-    
-    if (fileSize > 30 * 1024 * 1024) {
-      res.status(413).json({ error: "Payload Too Large: Il file supera la dimensione massima consentita di 30MB." });
-      return;
-    }
-
-    const [buffer] = await file.download();
-    
-    // Estrazione testo tramite pdf-extraction
-    const pdfData = await pdfExtract(buffer);
-    let cleanedText = typeof pdfData?.text === "string" ? pdfData.text : "";
-
-    // Pulizia testuale standardizzata
-    cleanedText = cleanedText
-      .replace(/([^\n])\n(?=[^\n])/g, "\$1 ")
-      .replace(/[ \t]+/g, " ")
-      .replace(/\n\s*\n\s*\n/g, "\n\n")
-      .trim();
-
-    // 7. Risposta al Client
+    // 6. Risposta al Client
     res.status(200).json({ 
       success: true,
-      text: cleanedText,
-      pages: typeof pdfData?.numpages === "number" ? pdfData.numpages : 1
+      text: extracted.text,
+      pages: extracted.pages
     });
 
   } catch (err: unknown) {
     logSafeError("DOCUMENT_TEXT_EXTRACTION_FAILED", err);
-    
+
+    // Errori di piano/limiti: status coerenti, così client web e MCP mostrano il messaggio corretto
+    const msg = err instanceof Error ? err.message : "";
+    if (msg === "TOO_MANY_REQUESTS") {
+      res.status(429).json({ error: "Too Many Requests", details: "Limite di utilizzo superato." });
+      return;
+    }
+    if (msg === "FORBIDDEN") {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
+    if (msg === "NOT_FOUND") {
+      res.status(404).json({ error: "Not Found" });
+      return;
+    }
+
     res.status(500).json({ 
       error: "Internal Server Error"
     });

@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom';
+
 export default function ConsulenteLegale() {
   return (
     <div className="space-y-8">
@@ -118,6 +120,13 @@ export default function ConsulenteLegale() {
           <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
           <span className="font-bold uppercase tracking-widest text-(--color-text) block mb-1 text-[10px]">Pannello delle Fonti Citate e Zero Allucinazioni:</span>
           A destra della conversazione compare il pannello delle Fonti Citate: cliccando su ciascun riferimento citato nella risposta, si apre la scheda di dettaglio del provvedimento o dell'atto di provenienza. Questo ancoraggio continuo alle fonti garantisce la totale verificabilità di ogni affermazione e azzera il rischio di allucinazioni del modello.
+        </div>
+
+        {/* Box Limiti sui file e integrazioni */}
+        <div className="relative p-4 rounded-lg border border-(--color-border) bg-(--color-surface) text-md text-(--color-muted) font-light leading-relaxed shadow-xs overflow-hidden">
+          <div className="absolute top-0 left-0 right-0 h-0.75 bg-(--color-primary) opacity-90 z-20" />
+          <span className="font-bold uppercase tracking-widest text-(--color-text) block mb-1 text-[10px]">Creazione di file Word e PDF:</span>
+          Il Consulente Legale non è in grado di creare file Word o PDF: i contenuti redatti (pareri, bozze, schemi) vengono restituiti come testo nella conversazione, pronti per essere copiati. Per lavorare direttamente sui documenti è possibile collegare Jurio al proprio ambiente Word tramite l'<Link to="/guida/add-in-word" className="font-bold underline underline-offset-2 text-(--color-text)">Add-in Word</Link>, oppure a client di intelligenza artificiale come <Link to="/guida/mcp-claude" className="font-bold underline underline-offset-2 text-(--color-text)">Claude</Link>, <Link to="/guida/mcp-chatgpt" className="font-bold underline underline-offset-2 text-(--color-text)">ChatGPT</Link> e <Link to="/guida/mcp-vibe" className="font-bold underline underline-offset-2 text-(--color-text)">Vibe</Link> mediante il protocollo MCP.
         </div>
 
         {/* --- PLACEHOLDER IMMAGINE 2 (Interfaccia Chat e Pannello Fonti) --- */}

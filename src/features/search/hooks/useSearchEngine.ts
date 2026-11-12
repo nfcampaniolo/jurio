@@ -31,9 +31,19 @@ export interface VectorSearchResult {
 
 export type DetailedMatch =
   | { type: "numero_sentenza"; query: string; docs: DocumentoGiurisprudenziale[] }
-  | { type: "normativa"; query: string; key: string; docs: DocumentoGiurisprudenziale[] }
   | { type: "sottocategoria"; query: string; value: string; docs: DocumentoGiurisprudenziale[] }
   | null;
+
+/**
+ * Risultati della ricerca per riferimento normativo.
+ * Eseguita solo se l'utente attiva il filtro `searchNormativa`; mostrata in una sezione dedicata.
+ * `keys` vuoto = nessun articolo riconosciuto nella query.
+ */
+export interface NormativaMatch {
+  query: string;
+  keys: string[];
+  docs: DocumentoGiurisprudenziale[];
+}
 
 const isIdentifierQuery = (query: string): boolean => {
   const q = query.trim().toLowerCase();
@@ -111,6 +121,7 @@ export function useSearchEngine(
   const [visibleCount, setVisibleCount] = useState(10);
   
   const [detailedMatch, setDetailedMatch] = useState<DetailedMatch>(null);
+  const [normativaMatch, setNormativaMatch] = useState<NormativaMatch | null>(null);
   const [isDeepSearchAvailable, setIsDeepSearchAvailable] = useState(false);
   
   const [lastDbDoc, setLastDbDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -200,6 +211,7 @@ export function useSearchEngine(
     setLoading(true);
     setHasSearched(false);
     setDetailedMatch(null);
+    setNormativaMatch(null);
     setIsDeepSearchAvailable(false);
     setLastDbDoc(null);
     setHasMoreDbResults(false);
@@ -208,7 +220,7 @@ export function useSearchEngine(
     setSearchStatus("SUCCESS");
 
     const hasAnyFilters = Boolean(
-      filters.filterGrado || filters.filterTipo || filters.filterTipologia || filters.startDate || filters.endDate || filters.filterSezione || filters.sortBy !== "relevance"
+      filters.filterGrado || filters.filterTipo || filters.filterTipologia || filters.startDate || filters.endDate || filters.filterSezione || filters.sortBy !== "relevance" || filters.searchNormativa
     );
 
     void trackEvent("sentence_searched", { query_length: trimmedInput.length, filters_used: hasAnyFilters });
@@ -242,7 +254,9 @@ export function useSearchEngine(
 
           const subcatQuery = getSubcategoryQuery(trimmedInput);
           const numeroPromise = withTrace("search_exact_numero", { qlen: trimmedInput.length }, () => findByNumeroSentenza(trimmedInput));
-          const normativaPromise = withTrace("search_normativa", { qlen: trimmedInput.length }, () => findNormativaFromUserQuery(trimmedInput));
+          const normativaPromise = filters.searchNormativa
+            ? withTrace("search_normativa", { qlen: trimmedInput.length }, () => findNormativaFromUserQuery(trimmedInput))
+            : Promise.resolve<{ keys: string[]; docs: DocumentoGiurisprudenziale[] }>({ keys: [], docs: [] });
           const subcatPromise = subcatQuery ? withTrace("search_subcat", { subcat: subcatQuery }, () => findBySottocategoria(subcatQuery)) : Promise.resolve<DocumentoGiurisprudenziale[]>([]);
 
           const isIdQuery = isIdentifierQuery(trimmedInput);
@@ -252,7 +266,12 @@ export function useSearchEngine(
           const filteredNormativa = filters.applyUiFiltersAndSort(normativaOut.docs);
           const filteredSubcat = filters.applyUiFiltersAndSort(subcatResults);
 
-          const hasSpecificMatch = filteredNumero.length > 0 || filteredSubcat.length > 0 || filteredNormativa.length > 0;
+          // La normativa non è più un "match specifico": ha una sezione propria e non blocca la ricerca semantica
+          if (filters.searchNormativa) {
+            setNormativaMatch({ query: trimmedInput, keys: normativaOut.keys, docs: filteredNormativa });
+          }
+
+          const hasSpecificMatch = filteredNumero.length > 0 || filteredSubcat.length > 0;
 
           let vectorTopDocs: DocumentoGiurisprudenziale[] = [];
           let vectorAllDocs: DocumentoGiurisprudenziale[] = [];
@@ -263,8 +282,6 @@ export function useSearchEngine(
               currentDetailedMatch = { type: "numero_sentenza", query: trimmedInput, docs: filteredNumero };
             } else if (subcatQuery && filteredSubcat.length > 0) {
               currentDetailedMatch = { type: "sottocategoria", query: trimmedInput, value: subcatQuery, docs: filteredSubcat };
-            } else if (filteredNormativa.length > 0) {
-              currentDetailedMatch = { type: "normativa", query: trimmedInput, key: normativaOut.keys[0] ?? "normativa", docs: filteredNormativa };
             }
             
             setDetailedMatch(currentDetailedMatch);
@@ -295,8 +312,6 @@ export function useSearchEngine(
 
           filteredNumero.forEach((d: DocumentoGiurisprudenziale) => combinedMap.set(d.id, d));
           filteredSubcat.forEach((d: DocumentoGiurisprudenziale) => { if (!combinedMap.has(d.id)) combinedMap.set(d.id, d); });
-          filteredNormativa.forEach((d: DocumentoGiurisprudenziale) => { if (!combinedMap.has(d.id)) combinedMap.set(d.id, d); });
-          
           const filteredGenericAll = filters.applyUiFiltersAndSort(vectorAllDocs); 
           filteredGenericAll.forEach((d: DocumentoGiurisprudenziale) => { 
             if (!combinedMap.has(d.id) && !topIds.has(d.id)) combinedMap.set(d.id, d); 
@@ -309,7 +324,7 @@ export function useSearchEngine(
           void trackEvent("sentence_searched", {
             query_length: trimmedInput.length,
             filters_used: hasAnyFilters,
-            results_count: finalResults.length + filteredGenericTop.length,
+            results_count: finalResults.length + filteredGenericTop.length + filteredNormativa.length,
           });
 
           setHasSearched(true);
@@ -416,7 +431,7 @@ export function useSearchEngine(
   return {
     loading, hasSearched,
     topResults, results, visibleCount, setVisibleCount,
-    detailedMatch, setDetailedMatch, isDeepSearchAvailable,
+    detailedMatch, setDetailedMatch, normativaMatch, isDeepSearchAvailable,
     isDbPaginatedMode, hasMoreDbResults, webFallback, searchStatus, deny,
     handleSearch, handleDeepSearch, handleLoadMore
   };

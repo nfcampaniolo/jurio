@@ -1,4 +1,5 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect, useLayoutEffect, useCallback } from "react";
+import type { KeyboardEvent } from "react";
 import { motion, AnimatePresence, type Variants, useReducedMotion } from "framer-motion";
 import { Typewriter } from "@/shared/components/Typewriter";
 import { useSearchBar } from "@/features/search/hooks/useSearchBar";
@@ -41,6 +42,9 @@ const blockVariants: Variants = {
   },
 };
 
+// Altezza massima del campo di ricerca prima di attivare lo scroll interno (~6 righe)
+const SEARCH_INPUT_MAX_HEIGHT = 168;
+
 export const SearchBar = () => {
   const {
       searchInput, setSearchInput,
@@ -58,6 +62,8 @@ export const SearchBar = () => {
       filterSezione, setFilterSezione,
       numberPages, setnumberPages,
       detailedMatch,
+      normativaMatch,
+      searchNormativa, setSearchNormativa,
       isDeepSearchAvailable, 
       handleDeepSearch,  
       loadDistinctSottocategorie,
@@ -168,6 +174,39 @@ export const SearchBar = () => {
     }
   };
 
+  // --- CAMPO DI RICERCA AUTO-ESPANDIBILE ---
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  useLayoutEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, SEARCH_INPUT_MAX_HEIGHT)}px`;
+    el.style.overflowY = el.scrollHeight > SEARCH_INPUT_MAX_HEIGHT ? "auto" : "hidden";
+  }, [searchInput]);
+
+  const canSubmit = !loading && Boolean(searchInput.trim() || filterGrado || filterTipo || startDate || endDate);
+
+  const handleInputKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Invio = cerca, Maiusc+Invio = a capo (ignora l'Invio durante la composizione IME)
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      if (showSuggestions) {
+        void handleKeyDown(e);
+        return;
+      }
+      if (canSubmit) void handleSearch(searchInput);
+      return;
+    }
+    if (showSuggestions) void handleKeyDown(e);
+  };
+
+  const clearInput = () => {
+    setSearchInput("");
+    setActiveIndex(-1);
+    textareaRef.current?.focus();
+  };
+
   const isSearching = searchInput.trim().length > 0;
 
   const effectiveTopMatches = detailedMatch ? detailedMatch.docs : topResults;
@@ -175,11 +214,8 @@ export const SearchBar = () => {
     ? results.filter(doc => !detailedMatch.docs.some(d => d.id === doc.id)) 
     : results;
 
-  const visibleTopMatches = effectiveTopMatches.slice(0, visibleCount);
-  const remainingCount = Math.max(0, visibleCount - visibleTopMatches.length);
-  const visibleAllMatches = effectiveAllMatches.slice(0, remainingCount);
-
-  const totalResultsCount = effectiveTopMatches.length + effectiveAllMatches.length;
+  const normativaDocs = normativaMatch?.docs ?? [];
+  const totalResultsCount = effectiveTopMatches.length + effectiveAllMatches.length + normativaDocs.length;
 
   if (deny) {
     return (
@@ -207,6 +243,8 @@ export const SearchBar = () => {
     setStartDate,
     endDate,
     setEndDate,
+    searchNormativa,
+    setSearchNormativa,
     clearFilters,
   };
 
@@ -311,14 +349,14 @@ export const SearchBar = () => {
           variants={blockVariants}
           className="max-w-5xl mx-auto px-4 md:px-0 relative z-20 mb-6 sm:mb-10"
         >
-          <div className="flex items-center gap-2">
-            
+          <div className="flex items-start gap-2">
+
             <div className="hidden sm:flex gap-2">
               <button
                 type="button"
                 onClick={() => void openPicker()}
                 disabled={loading}
-                className="p-3 rounded-md hover:bg-(--color-bg) transition-colors flex items-center justify-center disabled:opacity-60 bg-(--color-surface) border border-(--color-border) text-(--color-text) outline-none shadow-xs cursor-pointer"
+                className="h-[50px] w-[50px] rounded-lg hover:bg-(--color-bg) transition-colors flex items-center justify-center disabled:opacity-60 bg-(--color-surface) border border-(--color-border) text-(--color-text) outline-none shadow-xs cursor-pointer"
                 title="Apri pannello termini"
                 aria-label="Apri pannello termini"
               >
@@ -328,7 +366,7 @@ export const SearchBar = () => {
               <button
                 onClick={() => setShowFilters(prev => !prev)}
                 disabled={loading}
-                className={`p-3 rounded-md transition-colors flex items-center justify-center disabled:opacity-60 outline-none border shadow-xs cursor-pointer ${showFilters ? 'bg-(--color-primary) text-white border-(--color-primary)' : 'bg-(--color-surface) border-(--color-border) text-(--color-text) hover:bg-(--color-bg)'}`}
+                className={`h-[50px] w-[50px] rounded-lg transition-colors flex items-center justify-center disabled:opacity-60 outline-none border shadow-xs cursor-pointer ${showFilters ? 'bg-(--color-primary) text-white border-(--color-primary)' : 'bg-(--color-surface) border-(--color-border) text-(--color-text) hover:bg-(--color-bg)'}`}
                 title={showFilters ? "Nascondi filtri" : "Mostra filtri"}
                 aria-label={showFilters ? "Nascondi filtri" : "Mostra filtri"}
               >
@@ -341,7 +379,7 @@ export const SearchBar = () => {
                 type="button"
                 onClick={() => setShowMobileMenu(!showMobileMenu)}
                 disabled={loading}
-                className={`p-2.5 rounded-md transition-colors flex items-center justify-center disabled:opacity-60 outline-none border shadow-xs cursor-pointer ${showMobileMenu || showFilters ? 'bg-(--color-primary) text-white border-(--color-primary)' : 'bg-(--color-surface) border-(--color-border) text-(--color-text)'}`}
+                className={`h-[50px] w-10 rounded-lg transition-colors flex items-center justify-center disabled:opacity-60 outline-none border shadow-xs cursor-pointer ${showMobileMenu || showFilters ? 'bg-(--color-primary) text-white border-(--color-primary)' : 'bg-(--color-surface) border-(--color-border) text-(--color-text)'}`}
                 aria-label="Menu opzioni"
               >
                 {showMobileMenu ? <X size={18} /> : <MoreVertical size={18} className="opacity-80" />}
@@ -384,26 +422,81 @@ export const SearchBar = () => {
               </AnimatePresence>
             </div>
 
-            <div className="relative flex-1">
-              <input
-                type="text"
-                placeholder={
-                  loading ? "Ricerca in corso…" : 
-                  isRecording ? "In ascolto..." : "Cerca..."
-                }
-                className={`w-full rounded-md border px-4 py-3 text-sm sm:text-base disabled:opacity-60 shadow-xs focus:border-(--color-primary) outline-none bg-(--color-surface) font-light transition-colors
-                  ${isRecording ? 'border-(--color-primary) text-(--color-text) placeholder:text-(--color-text)' : 'border-(--color-border) text-(--color-text) placeholder:text-(--color-muted)/60'}`}
-                value={searchInput}
-                disabled={loading || isRecording}
-                onChange={e => {
-                  setSearchInput(e.target.value);
-                  if (window.innerWidth >= 640) setShowSuggestions(true);
-                  setActiveIndex(-1);
-                }}
-                onKeyDown={handleKeyDown}
-                onFocus={() => { if (!loading && window.innerWidth >= 640) setShowSuggestions(true); }}
-                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              />
+            <div className="relative flex-1 min-w-0">
+              <div
+                className={`flex items-end gap-1 rounded-lg border bg-(--color-surface) shadow-xs transition-[border-color,box-shadow] duration-200
+                  focus-within:border-(--color-primary) focus-within:ring-4 focus-within:ring-(--color-primary)/10
+                  ${isRecording ? 'border-(--color-primary) ring-4 ring-(--color-primary)/10' : 'border-(--color-border) hover:border-(--color-muted)/60'}
+                  ${loading ? 'opacity-70' : ''}`}
+              >
+                <Search
+                  size={18}
+                  aria-hidden="true"
+                  className="hidden sm:block shrink-0 self-start mt-[15px] ml-4 text-(--color-muted) opacity-70"
+                />
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
+                  aria-label="Cerca nella giurisprudenza"
+                  placeholder={
+                    loading ? "Ricerca in corso…" :
+                    isRecording ? "In ascolto…" :
+                    "Descrivi il caso o il principio che cerchi…"
+                  }
+                  className={`flex-1 min-w-0 resize-none bg-transparent px-3 sm:pl-2.5 py-3 text-sm sm:text-base leading-6 outline-none font-light text-(--color-text) disabled:cursor-not-allowed
+                    ${isRecording ? 'placeholder:text-(--color-text)' : 'placeholder:text-(--color-muted)/60'}`}
+                  value={searchInput}
+                  disabled={loading || isRecording}
+                  onChange={e => {
+                    setSearchInput(e.target.value);
+                    if (window.innerWidth >= 640) setShowSuggestions(true);
+                    setActiveIndex(-1);
+                  }}
+                  onKeyDown={handleInputKeyDown}
+                  onFocus={() => { if (!loading && window.innerWidth >= 640) setShowSuggestions(true); }}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                />
+
+                <div className="flex items-center gap-1 shrink-0 p-1.5">
+                  {searchInput && !loading && !isRecording && (
+                    <button
+                      type="button"
+                      onClick={clearInput}
+                      className="p-2 rounded-md text-(--color-muted) hover:text-(--color-text) hover:bg-(--color-bg) transition-colors outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-(--color-primary)/40"
+                      title="Cancella"
+                      aria-label="Cancella testo di ricerca"
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={toggleRecording}
+                    disabled={loading}
+                    className={`p-2 rounded-md transition-colors flex items-center justify-center outline-none disabled:opacity-30 cursor-pointer focus-visible:ring-2 focus-visible:ring-(--color-primary)/40
+                      ${isRecording
+                        ? 'bg-(--color-primary) text-white animate-pulse'
+                        : 'text-(--color-muted) hover:text-(--color-text) hover:bg-(--color-bg)'}`}
+                    title="Dettatura vocale"
+                    aria-label="Dettatura vocale"
+                    aria-pressed={isRecording}
+                  >
+                    <Mic size={18} />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => void handleSearch(searchInput)}
+                    disabled={!canSubmit}
+                    className="p-2 rounded-md bg-(--color-primary) text-white hover:opacity-90 transition-opacity flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed outline-none cursor-pointer focus-visible:ring-2 focus-visible:ring-(--color-primary)/40 focus-visible:ring-offset-2"
+                    title="Cerca (Invio)"
+                    aria-label="Avvia ricerca"
+                  >
+                    {loading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
+                  </button>
+                </div>
+              </div>
 
               <AnimatePresence onExitComplete={() => { document.body.style.overflow = 'unset'; }}>
                 {showSuggestions && !loading && !isRecording && (
@@ -470,28 +563,6 @@ export const SearchBar = () => {
               </AnimatePresence>
             </div>
 
-            <button
-              type="button"
-              onClick={toggleRecording}
-              disabled={loading}
-              className={`p-3 rounded-md transition-all duration-300 flex items-center justify-center shrink-0 outline-none shadow-xs disabled:opacity-30 cursor-pointer
-                ${isRecording 
-                  ? 'bg-(--color-primary) text-white animate-pulse' 
-                  : 'bg-(--color-surface) border border-(--color-border) text-(--color-text) hover:bg-(--color-bg)'}`}
-              title="Dettatura vocale"
-              aria-label="Dettatura vocale"
-            >
-              <Mic size={18} className={isRecording ? "scale-110 transition-transform" : ""} />
-            </button>
-
-            <button
-              onClick={() => void handleSearch(searchInput)}
-              disabled={loading || (!searchInput.trim() && !(filterGrado || filterTipo || startDate || endDate))}
-              className="p-3 rounded-md bg-(--color-primary) text-white hover:opacity-90 transition-opacity flex items-center justify-center disabled:opacity-30 shadow-xs shrink-0 outline-none cursor-pointer"
-              aria-label="Avvia ricerca"
-            >
-              {loading ? <Loader2 size={18} className="animate-spin" /> : <Search size={18} />}
-            </button>
           </div>
 
           {!showSuggestions && !loading && !isRecording && (
@@ -521,7 +592,6 @@ export const SearchBar = () => {
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-(--color-muted) mb-0.5">
                     {detailedMatch.type === 'numero_sentenza' && 'Pronuncia Specifica'}
-                    {detailedMatch.type === 'normativa' && 'Riferimento Normativo'}
                     {detailedMatch.type === 'sottocategoria' && 'Categoria'}
                   </p>
                   <p className="text-base font-medium text-(--color-text) tracking-tight">
@@ -610,8 +680,7 @@ export const SearchBar = () => {
             hasSearched={hasSearched}
             effectiveTopMatches={effectiveTopMatches}
             effectiveAllMatches={effectiveAllMatches}
-            visibleTopMatches={visibleTopMatches}
-            visibleAllMatches={visibleAllMatches}
+            normativaMatch={normativaMatch}
             visibleCount={visibleCount}
             loading={loading}
             isDbPaginatedMode={isDbPaginatedMode}

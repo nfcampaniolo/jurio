@@ -139,6 +139,19 @@ describe("useSearchFilters & Search Utilities Suite", () => {
       const { result } = renderHook(() => useSearchFilters());
       expect(result.current.filterGrado).toBe(DEFAULT_FILTERS.filterGrado);
       expect(result.current.numberPages).toBe(DEFAULT_FILTERS.numberPages);
+      expect(result.current.searchNormativa).toBe(false);
+    });
+
+    test("salva e ripristina il filtro di ricerca per riferimento normativo", () => {
+      const { result, unmount } = renderHook(() => useSearchFilters());
+      act(() => {
+        result.current.setSearchNormativa(true);
+      });
+      expect(JSON.parse(localStorageStore[SEARCH_FILTERS_CACHE_KEY]).searchNormativa).toBe(true);
+      unmount();
+
+      const { result: restored } = renderHook(() => useSearchFilters());
+      expect(restored.current.searchNormativa).toBe(true);
     });
 
     test("ripristina lo stato salvato nella cache di localStorage", () => {

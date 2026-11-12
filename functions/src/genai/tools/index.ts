@@ -2,6 +2,7 @@ import { internalDatabaseSearch, analyzeDistinguishingFacts } from "./internalDa
 import { userManualSearch } from "./support";
 import { userFileSearch } from "./userFileSearch";
 import { webSearch, doctrineSearch } from "./webSearch";
+import { readFullText } from "./readFullText";
 import { enableFirebaseTelemetry } from "@genkit-ai/firebase";
 
 void enableFirebaseTelemetry();
@@ -13,6 +14,7 @@ export const dynamicTools = [
   doctrineSearch,
   analyzeDistinguishingFacts,
   userManualSearch,
+  readFullText,
 ];
 
 export { userFileSearch };
@@ -21,3 +23,4 @@ export { webSearch };
 export { doctrineSearch };
 export { analyzeDistinguishingFacts };
 export { userManualSearch };
+export { readFullText };

@@ -1,5 +1,9 @@
 import { describe, test, expect, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render as rtlRender, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import type { ReactElement } from "react";
+
+const render = (ui: ReactElement) => rtlRender(<MemoryRouter>{ui}</MemoryRouter>);
 
 /* ---------- component ---------- */
 import ConsulenteLegale from "@/features/guide/components/ConsulenteLegale"; // <-- adegua il path se necessario
@@ -141,5 +145,15 @@ describe("Guida - ConsulenteLegale Component Suite", () => {
     expect(
       screen.getByText(/Figura 2: Sessione conversazionale con ancoraggio puntuale alle fonti e agli allegati/i)
     ).toBeInTheDocument();
+  });
+
+  test("indica che non crea file Word/PDF e rimanda ad Add-in Word e MCP", () => {
+    render(<ConsulenteLegale />);
+
+    expect(screen.getByText(/non è in grado di creare file Word o PDF/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Add-in Word" })).toHaveAttribute("href", "/guida/add-in-word");
+    expect(screen.getByRole("link", { name: "Claude" })).toHaveAttribute("href", "/guida/mcp-claude");
+    expect(screen.getByRole("link", { name: "ChatGPT" })).toHaveAttribute("href", "/guida/mcp-chatgpt");
+    expect(screen.getByRole("link", { name: "Vibe" })).toHaveAttribute("href", "/guida/mcp-vibe");
   });
 });

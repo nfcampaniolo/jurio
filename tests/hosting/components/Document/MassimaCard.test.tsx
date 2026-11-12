@@ -1,5 +1,11 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render as rtlRender, screen, within } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
+import type { ReactElement } from "react";
+
+// MassimaCard usa useLocation(): serve un Router (rotta di default non /giurisprudenza)
+const render = (ui: ReactElement, route = "/") =>
+  rtlRender(<MemoryRouter initialEntries={[route]}>{ui}</MemoryRouter>);
 
 /* ---------- mock child components ---------- */
 vi.mock("./MassimaHeader", () => ({
@@ -320,6 +326,23 @@ describe("MassimaCard Component Suite", () => {
 
     render(<MassimaCard result={doc} file={null} />);
 
+    expect(screen.queryByTestId("mock-pdf-preview-sidebar")).toBeNull();
+  });
+
+  test("applica il filtro sulle fonti ammesse solo nelle rotte /giurisprudenza", () => {
+    const doc = {
+      tipo_documento: "sentenza",
+      organo_giudicante: "Corte di Cassazione",
+      massima: "Massima valida.",
+      fonte: "fonte-non-ammessa-test",
+    };
+    const file = "https://storage.jurio.it/docs/sentenza.pdf";
+
+    const { unmount } = render(<MassimaCard result={doc} file={file} />, "/documenti/abc");
+    expect(screen.getByTestId("mock-pdf-preview-sidebar")).toBeInTheDocument();
+    unmount();
+
+    render(<MassimaCard result={doc} file={file} />, "/giurisprudenza/abc");
     expect(screen.queryByTestId("mock-pdf-preview-sidebar")).toBeNull();
   });
 });

@@ -46,6 +46,7 @@ describe("SearchFilters Component Suite", () => {
   const mockSetnumberPages = vi.fn<(val: number) => void>();
   const mockSetStartDate = vi.fn<(val: string) => void>();
   const mockSetEndDate = vi.fn<(val: string) => void>();
+  const mockSetSearchNormativa = vi.fn<(val: boolean) => void>();
   const mockClearFilters = vi.fn<() => void>();
 
   beforeEach(() => {
@@ -75,6 +76,8 @@ describe("SearchFilters Component Suite", () => {
       setStartDate: mockSetStartDate,
       endDate: "",
       setEndDate: mockSetEndDate,
+      searchNormativa: false,
+      setSearchNormativa: mockSetSearchNormativa,
       clearFilters: mockClearFilters,
       ...props,
     };
@@ -225,6 +228,8 @@ describe("SearchFilters Component Suite", () => {
         setStartDate={mockSetStartDate}
         endDate=""
         setEndDate={mockSetEndDate}
+        searchNormativa={false}
+        setSearchNormativa={mockSetSearchNormativa}
         clearFilters={mockClearFilters}
       />
     );
@@ -248,5 +253,27 @@ describe("SearchFilters Component Suite", () => {
     expect(screen.getByLabelText("N. risultati")).toBeDisabled();
     expect(screen.getByLabelText("Dal")).toBeDisabled();
     expect(screen.getByLabelText("Al")).toBeDisabled();
+    expect(screen.getByRole("checkbox", { name: /Cerca per riferimento normativo/i })).toBeDisabled();
+  });
+
+  test("la ricerca per riferimento normativo è disattivata di default e si attiva spuntando la casella", () => {
+    renderFilters();
+
+    const checkbox = screen.getByRole("checkbox", { name: /Cerca per riferimento normativo/i });
+    expect(checkbox).not.toBeChecked();
+
+    fireEvent.click(checkbox);
+    expect(mockSetSearchNormativa).toHaveBeenCalledWith(true);
+  });
+
+  test("con la ricerca normativa attiva la casella è spuntata, si può disattivare e compare 'Resetta filtri'", () => {
+    renderFilters({ searchNormativa: true });
+
+    const checkbox = screen.getByRole("checkbox", { name: /Cerca per riferimento normativo/i });
+    expect(checkbox).toBeChecked();
+    expect(screen.getByRole("button", { name: /Resetta filtri/i })).toBeInTheDocument();
+
+    fireEvent.click(checkbox);
+    expect(mockSetSearchNormativa).toHaveBeenCalledWith(false);
   });
 });

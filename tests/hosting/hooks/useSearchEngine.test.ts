@@ -335,13 +335,7 @@ describe("useSearchEngine Hook Suite", () => {
       expect(result.current.results).toEqual([targetDoc]);
     });
 
-    test("identifica ricerca per normativa impostando detailedMatch e abilitando deepSearch", async () => {
-      const normaDoc = createMockDoc("doc_norma_1");
-      mockFindNormativaFromUserQuery.mockResolvedValueOnce({
-        docs: [normaDoc],
-        keys: ["art_2043_cc"],
-      });
-
+    test("non esegue la ricerca per normativa se il filtro searchNormativa non è attivo", async () => {
       const filters = createMockFilters();
       const history = createMockHistory();
 
@@ -351,14 +345,88 @@ describe("useSearchEngine Hook Suite", () => {
         await result.current.handleSearch("art 2043 cc");
       });
 
-      expect(result.current.detailedMatch).toEqual({
-        type: "normativa",
+      expect(mockFindNormativaFromUserQuery).not.toHaveBeenCalled();
+      expect(result.current.normativaMatch).toBeNull();
+      expect(mockVectorSearch).toHaveBeenCalledTimes(1);
+    });
+
+    test("con searchNormativa attivo mostra i risultati normativi a parte senza bloccare la ricerca semantica", async () => {
+      const normaDoc = createMockDoc("doc_norma_1");
+      const vectorTop = createMockDoc("doc_vec_top");
+      const vectorOther = createMockDoc("doc_vec_other");
+      mockFindNormativaFromUserQuery.mockResolvedValueOnce({
+        docs: [normaDoc],
+        keys: ["art_2043_cc"],
+      });
+      mockVectorSearch.mockResolvedValueOnce({
+        topMatches: [vectorTop],
+        allMatches: [vectorOther],
+        status: "SUCCESS",
+        webFallback: null,
+      });
+
+      const filters = createMockFilters({ searchNormativa: true });
+      const history = createMockHistory();
+
+      const { result } = renderHook(() => useSearchEngine(filters, history));
+
+      await act(async () => {
+        await result.current.handleSearch("art 2043 cc");
+      });
+
+      expect(mockFindNormativaFromUserQuery).toHaveBeenCalledWith("art 2043 cc");
+      expect(result.current.normativaMatch).toEqual({
         query: "art 2043 cc",
-        key: "art_2043_cc",
+        keys: ["art_2043_cc"],
         docs: [normaDoc],
       });
-      expect(result.current.isDeepSearchAvailable).toBe(true);
-      expect(mockVectorSearch).not.toHaveBeenCalled();
+      expect(result.current.detailedMatch).toBeNull();
+      expect(result.current.isDeepSearchAvailable).toBe(false);
+      expect(mockVectorSearch).toHaveBeenCalledTimes(1);
+      expect(result.current.topResults).toEqual([vectorTop]);
+      // i documenti normativi non finiscono tra gli "altri risultati"
+      expect(result.current.results).toEqual([vectorOther]);
+    });
+
+    test("con searchNormativa attivo segnala comunque la sezione anche se non riconosce articoli", async () => {
+      const filters = createMockFilters({ searchNormativa: true });
+      const history = createMockHistory();
+
+      const { result } = renderHook(() => useSearchEngine(filters, history));
+
+      await act(async () => {
+        await result.current.handleSearch("responsabilità del custode");
+      });
+
+      expect(result.current.normativaMatch).toEqual({
+        query: "responsabilità del custode",
+        keys: [],
+        docs: [],
+      });
+    });
+
+    test("una nuova ricerca azzera i risultati normativi precedenti", async () => {
+      mockFindNormativaFromUserQuery.mockResolvedValueOnce({
+        docs: [createMockDoc("doc_norma_1")],
+        keys: ["art_2043_cc"],
+      });
+
+      const history = createMockHistory();
+      let filters = createMockFilters({ searchNormativa: true });
+      const { result, rerender } = renderHook(() => useSearchEngine(filters, history));
+
+      await act(async () => {
+        await result.current.handleSearch("art 2043 cc");
+      });
+      expect(result.current.normativaMatch).not.toBeNull();
+
+      filters = createMockFilters({ searchNormativa: false });
+      rerender();
+
+      await act(async () => {
+        await result.current.handleSearch("danno ingiusto");
+      });
+      expect(result.current.normativaMatch).toBeNull();
     });
 
     test("identifica query per sottocategoria tramite prefisso esplicito", async () => {

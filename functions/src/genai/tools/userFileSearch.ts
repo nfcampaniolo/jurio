@@ -6,6 +6,67 @@ import { getDb } from "../../_deps";
 import { logSafeError } from "../../_logging";
 
 const db = getDb();
+const LEADING_CHUNKS_PER_DOC = 3;
+const MAX_LEADING_CHUNKS = 6;
+
+function canAccess(data: FirebaseFirestore.DocumentData | undefined, userId: string): boolean {
+  if (!data) return false;
+  return data.user === userId || (Array.isArray(data.visibleTo) && data.visibleTo.includes(userId));
+}
+
+function toChunkResult(id: string, data: FirebaseFirestore.DocumentData, distance: number) {
+  return {
+    id,
+    documentId: data.parentId ?? "",
+    fileName: data.nome_file || data.titolo || "Documento utente",
+    paragraphText: data.text || "",
+    originalPosition: data.index ?? 0,
+    _distance: distance,
+    _score: Math.max(0, 1 - distance),
+    _type: "document_chunk",
+    sourceType: "document",
+  };
+}
+
+/**
+ * Fallback per documenti indicati esplicitamente: quando la query è generica
+ * ("riesci a leggere l'allegato?") la ricerca vettoriale non supera la soglia,
+ * quindi si leggono i primi chunk di ciascun documento (ID deterministici
+ * `${parentId}_chunk_${i}`). Se un documento non ha chunk se ne riporta lo stato.
+ */
+async function readLeadingChunks(docIds: string[], userId: string) {
+  const targets = docIds.slice(0, MAX_LEADING_CHUNKS);
+  const perDoc = Math.max(1, Math.min(LEADING_CHUNKS_PER_DOC, Math.floor(MAX_LEADING_CHUNKS / targets.length)));
+  const refs = targets.flatMap((docId) =>
+    Array.from({ length: perDoc }, (_, i) => db.collection("document_chunks").doc(`${docId}_chunk_${i}`))
+  );
+  const snaps = await db.getAll(...refs);
+
+  const results = snaps
+    .filter((snap) => snap.exists && canAccess(snap.data(), userId))
+    .map((snap) => toChunkResult(snap.id, snap.data() ?? {}, CFG.ragDistance.document));
+
+  const docsWithChunks = new Set(results.map((r) => r.documentId));
+  const missing = targets.filter((docId) => !docsWithChunks.has(docId));
+  const notices: { message: string }[] = [];
+
+  if (missing.length > 0) {
+    const parents = await db.getAll(...missing.map((docId) => db.collection("documents").doc(docId)));
+    for (const parent of parents) {
+      const data = parent.data();
+      if (!parent.exists || !canAccess(data, userId)) continue;
+      const name = data?.nome_file || data?.titolo || "Il documento allegato";
+      const message = data?.isEmbeddingFailed
+        ? `${name}: l'elaborazione del documento non è andata a buon fine. Si consiglia di ricaricarlo.`
+        : !data?.isEmbeddingFinished
+          ? `${name}: il documento è ancora in fase di elaborazione. Riprova tra qualche istante.`
+          : `${name}: il documento non contiene testo leggibile (ad esempio una scansione senza testo selezionabile).`;
+      notices.push({ message });
+    }
+  }
+
+  return { results, notices };
+}
 
 export const userFileSearch = ai.defineTool(
   {
@@ -180,6 +241,16 @@ export const userFileSearch = ai.defineTool(
       }
 
       if (uniqueDocs.size === 0) {
+        const explicitDocs = attachedDocs.length > 0
+          ? attachedDocs
+          : input.specificDocumentId ? [input.specificDocumentId] : [];
+        if (explicitDocs.length > 0) {
+          const { results, notices } = await readLeadingChunks(explicitDocs, userId);
+          if (results.length > 0 || notices.length > 0) {
+            await safeIncrementRagCounter("document_chunks", results.map((r) => r.id));
+            return [...results, ...notices];
+          }
+        }
         return [
           {
             message:
@@ -204,17 +275,7 @@ export const userFileSearch = ai.defineTool(
 
       await safeIncrementRagCounter("document_chunks", ids);
 
-      return ordered.map(([id, item]) => ({
-        id,
-        documentId: item.data.parentId ?? "",
-        fileName: item.data.nome_file || item.data.titolo || "Documento utente",
-        paragraphText: item.data.text || "",
-        originalPosition: item.data.index ?? 0,
-        _distance: item.distance,
-        _score: Math.max(0, 1 - item.distance),
-        _type: "document_chunk",
-        sourceType: "document",
-      }));
+      return ordered.map(([id, item]) => toChunkResult(id, item.data, item.distance));
     } catch (error) {
       logSafeError("USER_FILE_SEARCH_FAILED", error);
       return [
