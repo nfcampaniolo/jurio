@@ -38,6 +38,7 @@ const mocks = vi.hoisted(() => {
     purchaseHtml: vi.fn((...args: string[]) => `<purchase>${args.join("|")}</purchase>`),
     downgradeHtml: vi.fn((name: string) => `<downgrade>${name}</downgrade>`),
     reportHtml: vi.fn((data: MonthlyUsageReportData) => `<report>${data.mese}</report>`),
+    internalHtml: vi.fn((data: { orderId: string; customerEmail: string }) => `<internal>${data.customerEmail}|${data.orderId}</internal>`),
   };
 });
 
@@ -54,6 +55,7 @@ vi.mock("../../../../functions/src/email/plans/html", () => ({
   generatePurchaseEmail: mocks.purchaseHtml,
   generateDowngradeEmail: mocks.downgradeHtml,
   generateMonthlyReportEmail: mocks.reportHtml,
+  generateInternalPurchaseNotificationEmail: mocks.internalHtml,
 }));
 
 const functionRequire = createRequire(resolve(process.cwd(), "functions/src/email/plans/logic.ts"));
@@ -120,7 +122,7 @@ describe("plans email logic", () => {
         "buyer@example.com", "premium", "12.50 EUR",
         start.toDate().toISOString(), expire.toDate().toISOString(), "session-1",
       );
-      expect(mocks.dispatch).toHaveBeenCalledWith({
+      expect(mocks.dispatch).toHaveBeenNthCalledWith(1, {
         to: "buyer@example.com",
         subject: "Conferma Ordine Jurio - session-1",
         html: `<purchase>buyer@example.com|premium|12.50 EUR|${start.toDate().toISOString()}|${expire.toDate().toISOString()}|session-1</purchase>`,
@@ -132,10 +134,39 @@ describe("plans email logic", () => {
           link: "/profilo/piani",
         },
       });
+      expect(mocks.internalHtml).toHaveBeenCalledWith({
+        customerEmail: "buyer@example.com",
+        uid: "uid",
+        planId: "premium",
+        amountLabel: "12.50 EUR",
+        provider: "stripe",
+        orderId: "session-1",
+        dataAcquisto: start.toDate().toISOString(),
+        dataScadenza: expire.toDate().toISOString(),
+      });
+      expect(mocks.dispatch).toHaveBeenNthCalledWith(2, {
+        to: "contatti@jurio.it",
+        subject: "Nuovo acquisto Jurio - premium - 12.50 EUR",
+        html: "<internal>buyer@example.com|session-1</internal>",
+      });
+      expect(mocks.dispatch).toHaveBeenCalledTimes(2);
       expect(mocks.sessionSet).toHaveBeenCalledWith({ purchaseEmailSentAt: "server-timestamp" }, { merge: true });
     });
 
-    it("salta l'email senza indirizzo ma segna come inviata, e gestisce dati di piano mancanti", async () => {
+    it("un errore della notifica interna viene registrato senza bloccare il flusso", async () => {
+      mocks.sessionGet.mockResolvedValue({ exists: true, data: () => ({}) });
+      mocks.getUser.mockResolvedValue({ email: "buyer@example.com" });
+      mocks.registerGet.mockResolvedValue({ exists: false, data: () => undefined });
+      mocks.dispatch.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error("mail error"));
+      const log = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      await logic.queuePurchaseEmailOnceStripe(args);
+
+      expect(log).toHaveBeenCalledWith("INTERNAL_PURCHASE_NOTIFICATION_FAILED", { errorType: "Error" });
+      expect(mocks.sessionSet).toHaveBeenCalledWith({ purchaseEmailSentAt: "server-timestamp" }, { merge: true });
+    });
+
+    it("salta l'email al cliente senza indirizzo ma avvisa comunque contatti@jurio.it", async () => {
       // Arrange
       mocks.sessionGet.mockResolvedValue({ exists: true, data: () => ({}) });
       mocks.getUser.mockResolvedValue({ email: null });
@@ -146,7 +177,9 @@ describe("plans email logic", () => {
 
       // Assert
       expect(mocks.purchaseHtml).not.toHaveBeenCalled();
-      expect(mocks.dispatch).not.toHaveBeenCalled();
+      expect(mocks.dispatch).toHaveBeenCalledTimes(1);
+      expect(mocks.dispatch).toHaveBeenCalledWith(expect.objectContaining({ to: "contatti@jurio.it" }));
+      expect(mocks.internalHtml).toHaveBeenCalledWith(expect.objectContaining({ customerEmail: "", planId: "" }));
       expect(mocks.sessionSet).toHaveBeenCalledWith({ purchaseEmailSentAt: "server-timestamp" }, { merge: true });
     });
 

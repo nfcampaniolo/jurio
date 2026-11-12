@@ -13,12 +13,12 @@
   <meta property="og:site_name" content="Jurio">
   <meta property="og:title" content="Jurio MCP: la ricerca giuridica nella tua AI">
   <meta property="og:description" content="Integra la banca dati giuridica di Jurio in ChatGPT, Claude e Mistral Vibe con una connessione MCP e autenticazione OAuth.">
-  <meta property="og:image" content="https://jurio.ithttps://jurio.it/guida-image/vibe.webp">
+  <meta property="og:image" content="https://jurio.it/guida-image/vibe.webp">
   <meta property="og:image:alt" content="Jurio MCP: connettore per ChatGPT, Claude e Mistral Vibe">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Jurio MCP: la ricerca giuridica nella tua AI">
   <meta name="twitter:description" content="Collega Jurio a ChatGPT, Claude e Mistral Vibe tramite MCP.">
-  <meta name="twitter:image" content="https://jurio.ithttps://jurio.it/guida-image/vibe.webp">
+  <meta name="twitter:image" content="https://jurio.it/guida-image/vibe.webp">
   <title>Jurio MCP: collega la ricerca giuridica alla tua AI</title>
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
   <link rel="stylesheet" href="/styles.css">
@@ -686,6 +686,38 @@
     .mcp-body .mcp-integration-bridge-label { transition: none !important; }
   }
 
+
+  /* =========================================================
+     ANIMAZIONI IN INGRESSO
+     Attive solo con JS e senza "riduci movimento" (classe mcp-motion
+     su <html>). A fine animazione lo script rimuove gli attributi,
+     così le transizioni hover originali tornano attive.
+     ========================================================= */
+  .mcp-motion [data-reveal] {
+    --mcp-reveal-ease: cubic-bezier(.16, 1, .3, 1);
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+    transition:
+      opacity 1.1s var(--mcp-reveal-ease),
+      transform 1.3s var(--mcp-reveal-ease);
+    transition-delay: var(--mcp-reveal-delay, 0ms);
+  }
+  .mcp-motion [data-reveal="right"] { transform: translate3d(16px, 0, 0); }
+  .mcp-motion [data-reveal="scale"] { transform: translate3d(0, 10px, 0) scale(.985); }
+  /* Blocchi molto alti (guide, FAQ): solo dissolvenza con un accenno di movimento */
+  .mcp-motion [data-reveal="fade"] { transform: translate3d(0, 6px, 0); transition-duration: 1.2s, 1.4s; }
+  .mcp-motion [data-reveal].is-revealed { opacity: 1; transform: none; }
+  @media (max-width: 760px) {
+    /* Su mobile niente spostamenti laterali: evitano scroll orizzontale */
+    .mcp-motion [data-reveal="right"] { transform: translate3d(0, 14px, 0); }
+  }
+
+  /* Diagramma: la linea MCP si "disegna" dopo l'ingresso dei nodi */
+  .mcp-motion .mcp-integration-diagram[data-reveal] .mcp-integration-bridge::before {
+    transform: scaleX(0);
+    transition: transform 1.2s cubic-bezier(.65, 0, .35, 1) .5s;
+  }
+  .mcp-motion .mcp-integration-diagram[data-reveal].is-revealed .mcp-integration-bridge::before { transform: scaleX(1); }
   </style>
 
   <script type="application/ld+json">
@@ -721,6 +753,14 @@
     ]
   }
   </script>
+  <script>
+    (function () {
+      try {
+        var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (!reduce && "IntersectionObserver" in window) document.documentElement.classList.add("mcp-motion");
+      } catch (e) { /* senza animazioni il contenuto resta visibile */ }
+    })();
+  </script>
 </head>
 <body class="mcp-body">
   <div id="header"></div>
@@ -729,19 +769,19 @@
     <section class="mcp-hero" aria-labelledby="mcp-title">
       <div class="mcp-container mcp-hero-grid">
         <div>
-          <p class="mcp-eyebrow">Jurio · Model Context Protocol</p>
-          <h1 id="mcp-title">La ricerca giuridica, <em>direttamente nella tua AI.</em></h1>
-          <p class="mcp-lead">Collega la banca dati giuridica di Jurio a ChatGPT, Claude o Mistral Vibe. Cerca decisioni per argomento, individua sentenze precise e consulta i documenti senza interrompere il tuo flusso di lavoro.</p>
-          <ul class="mcp-hero-proof" aria-label="Vantaggi dell'integrazione">
+          <p data-reveal class="mcp-eyebrow">Jurio · Model Context Protocol</p>
+          <h1 data-reveal id="mcp-title">La ricerca giuridica, <em>direttamente nella tua AI.</em></h1>
+          <p data-reveal class="mcp-lead">Collega la banca dati giuridica di Jurio a ChatGPT, Claude o Mistral Vibe. Cerca decisioni per argomento, individua sentenze precise e consulta i documenti senza interrompere il tuo flusso di lavoro.</p>
+          <ul data-reveal class="mcp-hero-proof" aria-label="Vantaggi dell'integrazione">
             <li>Un solo endpoint MCP</li>
             <li>Accesso tramite OAuth</li>
             <li>Ricerca e consultazione in chat</li>
           </ul>
-          <div class="mcp-actions">
+          <div data-reveal class="mcp-actions">
             <a class="mcp-btn" href="#configurazione">Configura Jurio <span aria-hidden="true">→</span></a>
             <a class="mcp-btn mcp-btn-secondary" href="/contatti">Richiedi informazioni</a>
           </div>
-          <div class="mcp-endpoint-box" aria-label="Endpoint del server MCP Jurio">
+          <div data-reveal class="mcp-endpoint-box" aria-label="Endpoint del server MCP Jurio">
             <div class="mcp-endpoint-label"><span>Endpoint Server MCP</span><span>Connessione OAuth</span></div>
             <div class="mcp-endpoint-row">
               <code class="mcp-endpoint-url" id="mcp-url">https://jurio.it/mcp</code>
@@ -754,7 +794,7 @@
           </div>
         </div>
 
-        <section class="mcp-diagram mcp-integration-diagram" aria-labelledby="mcp-integration-title">
+        <section class="mcp-diagram mcp-integration-diagram" data-reveal="right" aria-labelledby="mcp-integration-title">
           <h2 class="mcp-diagram-label" id="mcp-integration-title">Come funziona l'integrazione</h2>
           <div class="mcp-integration-flow">
             <article class="mcp-integration-node mcp-integration-node-ai">
@@ -781,43 +821,43 @@
 
     <section class="mcp-section" aria-labelledby="benefici-title">
       <div class="mcp-container">
-        <div class="mcp-heading">
+        <div class="mcp-heading" data-reveal>
           <p class="mcp-eyebrow">Il valore per il tuo lavoro</p>
           <h2 id="benefici-title">Meno passaggi tra strumenti. <em>Più continuità nella ricerca.</em></h2>
           <p>Porta le fonti giuridiche di Jurio nel contesto in cui stai già ragionando, scrivendo o approfondendo una questione.</p>
         </div>
         <div class="mcp-card-grid">
-          <article class="mcp-card"><span class="mcp-card-index">01 / RICERCA PER ARGOMENTO</span><h3>Parti dalla questione giuridica</h3><p>Descrivi il caso o il principio di diritto da approfondire e avvia una ricerca semantica di decisioni e precedenti pertinenti.</p></article>
-          <article class="mcp-card"><span class="mcp-card-index">02 / RICERCA PUNTUALE</span><h3>Raggiungi il provvedimento</h3><p>Recupera una pronuncia specifica utilizzando il numero della sentenza o il relativo identificativo ECLI, quando disponibile.</p></article>
-          <article class="mcp-card"><span class="mcp-card-index">03 / CONSULTAZIONE</span><h3>Approfondisci il contenuto</h3><p>Consulta i contenuti dei documenti disponibili, inclusi testo, motivi e massime, per proseguire l'analisi nella conversazione.</p></article>
+          <article class="mcp-card" data-reveal><span class="mcp-card-index">01 / RICERCA PER ARGOMENTO</span><h3>Parti dalla questione giuridica</h3><p>Descrivi il caso o il principio di diritto da approfondire e avvia una ricerca semantica di decisioni e precedenti pertinenti.</p></article>
+          <article class="mcp-card" data-reveal><span class="mcp-card-index">02 / RICERCA PUNTUALE</span><h3>Raggiungi il provvedimento</h3><p>Recupera una pronuncia specifica utilizzando il numero della sentenza o il relativo identificativo ECLI, quando disponibile.</p></article>
+          <article class="mcp-card" data-reveal><span class="mcp-card-index">03 / CONSULTAZIONE</span><h3>Approfondisci il contenuto</h3><p>Consulta i contenuti dei documenti disponibili, inclusi testo, motivi e massime, per proseguire l'analisi nella conversazione.</p></article>
         </div>
       </div>
     </section>
 
     <section class="mcp-section mcp-tinted" aria-labelledby="flusso-title">
       <div class="mcp-container">
-        <div class="mcp-heading">
+        <div class="mcp-heading" data-reveal>
           <p class="mcp-eyebrow">Attivazione semplice</p>
           <h2 id="flusso-title">Tre passaggi per collegare <em>Jurio alla tua AI.</em></h2>
         </div>
         <div class="mcp-workflow">
-          <article><h3>Copia l'endpoint</h3><p>Usa <strong>https://jurio.it/mcp</strong> come URL del server MCP remoto.</p></article>
-          <article><h3>Aggiungi il connettore</h3><p>Apri la sezione Connettori o Plugin del tuo client AI e crea un connettore MCP personalizzato chiamato Jurio.</p></article>
-          <article><h3>Autorizza e verifica</h3><p>Completa il login OAuth, abilita gli strumenti di Jurio e prova una ricerca direttamente in chat.</p></article>
+          <article data-reveal><h3>Copia l'endpoint</h3><p>Usa <strong>https://jurio.it/mcp</strong> come URL del server MCP remoto.</p></article>
+          <article data-reveal><h3>Aggiungi il connettore</h3><p>Apri la sezione Connettori o Plugin del tuo client AI e crea un connettore MCP personalizzato chiamato Jurio.</p></article>
+          <article data-reveal><h3>Autorizza e verifica</h3><p>Completa il login OAuth, abilita gli strumenti di Jurio e prova una ricerca direttamente in chat.</p></article>
         </div>
       </div>
     </section>
 
     <section class="mcp-section" id="configurazione" aria-labelledby="configurazione-title">
       <div class="mcp-container">
-        <div class="mcp-heading">
+        <div class="mcp-heading" data-reveal>
           <p class="mcp-eyebrow">Guide di configurazione</p>
           <h2 id="configurazione-title">Scegli la tua piattaforma <em>e segui la procedura.</em></h2>
           <p>Il nome delle voci di menu può cambiare con gli aggiornamenti delle piattaforme. L'indirizzo del server Jurio resta lo stesso.</p>
         </div>
 
         <div class="mcp-platforms">
-          <article class="mcp-platform" id="mistral-vibe">
+          <article class="mcp-platform" data-reveal="fade" id="mistral-vibe">
             <header class="mcp-platform-header">
               <div><h3>Mistral Vibe</h3><p>Configura Jurio tra i connettori MCP personalizzati di Vibe/Work.</p></div>
               <span class="mcp-platform-tag">Mistral</span>
@@ -848,7 +888,7 @@
             </div>
           </article>
 
-          <article class="mcp-platform" id="claude">
+          <article class="mcp-platform" data-reveal="fade" id="claude">
             <header class="mcp-platform-header">
               <div><h3>Claude</h3><p>Aggiungi Jurio come connettore personalizzato tramite remote MCP.</p></div>
               <span class="mcp-platform-tag">Anthropic</span>
@@ -880,7 +920,7 @@
             </div>
           </article>
 
-          <article class="mcp-platform" id="chatgpt">
+          <article class="mcp-platform" data-reveal="fade" id="chatgpt">
             <header class="mcp-platform-header">
               <div><h3>ChatGPT</h3><p>Collega il server remoto di Jurio tramite la gestione dei server MCP personalizzati.</p></div>
               <span class="mcp-platform-tag">OpenAI</span>
@@ -917,26 +957,26 @@
 
     <section class="mcp-section mcp-tinted" aria-labelledby="esempio-title">
       <div class="mcp-container">
-        <div class="mcp-heading">
+        <div class="mcp-heading" data-reveal>
           <p class="mcp-eyebrow">Dopo il collegamento</p>
           <h2 id="esempio-title">Interroga Jurio <em>con il linguaggio del tuo lavoro.</em></h2>
           <p>Una volta abilitato il connettore, puoi formulare le richieste direttamente nella chat del tuo assistente AI.</p>
         </div>
         <div class="mcp-card-grid">
-          <article class="mcp-card"><span class="mcp-card-index">ESEMPIO 01</span><h3>Ricerca giurisprudenziale</h3><p>«Cerca decisioni sul risarcimento del danno da perdita di chance e individua i principi di diritto rilevanti».</p></article>
-          <article class="mcp-card"><span class="mcp-card-index">ESEMPIO 02</span><h3>Ricerca di una sentenza</h3><p>«Recupera la sentenza con questo numero o identificativo ECLI e mostrami i passaggi rilevanti».</p></article>
-          <article class="mcp-card"><span class="mcp-card-index">ESEMPIO 03</span><h3>Approfondimento di un documento</h3><p>«Consulta il provvedimento e riassumi motivi, massime e argomentazioni centrali».</p></article>
+          <article class="mcp-card" data-reveal><span class="mcp-card-index">ESEMPIO 01</span><h3>Ricerca giurisprudenziale</h3><p>«Cerca decisioni sul risarcimento del danno da perdita di chance e individua i principi di diritto rilevanti».</p></article>
+          <article class="mcp-card" data-reveal><span class="mcp-card-index">ESEMPIO 02</span><h3>Ricerca di una sentenza</h3><p>«Recupera la sentenza con questo numero o identificativo ECLI e mostrami i passaggi rilevanti».</p></article>
+          <article class="mcp-card" data-reveal><span class="mcp-card-index">ESEMPIO 03</span><h3>Approfondimento di un documento</h3><p>«Consulta il provvedimento e riassumi motivi, massime e argomentazioni centrali».</p></article>
         </div>
       </div>
     </section>
 
     <section class="mcp-section" aria-labelledby="faq-title">
       <div class="mcp-container">
-        <div class="mcp-heading">
+        <div class="mcp-heading" data-reveal>
           <p class="mcp-eyebrow">Domande frequenti</p>
           <h2 id="faq-title">Tutto quello che serve sapere su <em>Jurio MCP.</em></h2>
         </div>
-        <div class="mcp-faq">
+        <div class="mcp-faq" data-reveal="fade">
           <details><summary>Che cos'è Jurio MCP?</summary><p>È il connettore che permette a un assistente AI compatibile con il Model Context Protocol di utilizzare gli strumenti di ricerca e consultazione della banca dati giuridica Jurio direttamente nella conversazione.</p></details>
           <details><summary>Qual è l'indirizzo corretto del server MCP?</summary><p>L'endpoint da inserire nella configurazione del client è <strong>https://jurio.it/mcp</strong>. Utilizza questo indirizzo per Mistral Vibe, Claude e ChatGPT.</p></details>
           <details><summary>Devo creare o copiare un token API?</summary><p>La connessione descritta in questa guida utilizza il flusso OAuth quando richiesto dal client. Non è necessario copiare manualmente un token: segui la finestra di autorizzazione e accedi al tuo account Jurio. Le impostazioni esatte dipendono dal client e dal server.</p></details>
@@ -945,7 +985,7 @@
           <details><summary>Posso usare Jurio con più piattaforme AI?</summary><p>Sì. Puoi configurare Jurio nei diversi client compatibili MCP utilizzando lo stesso endpoint. Ogni piattaforma richiede una propria procedura di collegamento e autorizzazione.</p></details>
           <details><summary>Come posso ricevere assistenza per la configurazione?</summary><p>Per problemi durante la connessione o l'autenticazione, visita la pagina <a href="/contatti">Contatti</a> e invia una richiesta di supporto indicando la piattaforma utilizzata e il passaggio in cui si verifica il problema.</p></details>
         </div>
-        <div class="mcp-resources" aria-label="Documentazione ufficiale delle piattaforme">
+        <div class="mcp-resources" data-reveal aria-label="Documentazione ufficiale delle piattaforme">
           <a href="https://jurio.it/guida/mcp-vibe" target="_blank" rel="noopener noreferrer">Documentazione MCP Mistral</a>
           <a href="https://jurio.it/guida/mcp-claude" target="_blank" rel="noopener noreferrer">Guida connettori Claude</a>
           <a href="https://jurio.it/guida/mcp-chatgpt" target="_blank" rel="noopener noreferrer">Guida server MCP ChatGPT</a>
@@ -956,7 +996,7 @@
 
     <section class="mcp-section" aria-label="Contatta Jurio">
       <div class="mcp-container">
-        <div class="mcp-cta">
+        <div class="mcp-cta" data-reveal="scale">
           <p class="mcp-eyebrow">Porta Jurio nel tuo flusso di lavoro</p>
           <h2>La tua AI. Le fonti giuridiche di Jurio. Un'unica conversazione.</h2>
           <p>Configura il connettore MCP e rendi la ricerca giurisprudenziale parte del tuo modo di lavorare. Per informazioni o supporto, contatta il team Jurio.</p>
@@ -1003,6 +1043,54 @@
       }
 
       if (copyButton) copyButton.addEventListener("click", copyEndpoint);
+
+      // Animazioni in ingresso
+      (function initReveal() {
+        const root = document.documentElement;
+        const items = Array.from(document.querySelectorAll("[data-reveal]"));
+        if (!root.classList.contains("mcp-motion") || items.length === 0) return;
+
+        // Cascata leggera tra fratelli animati (60ms, max 4 passi)
+        items.forEach((item) => {
+          const siblings = Array.from(item.parentElement ? item.parentElement.children : [])
+            .filter((el) => el.hasAttribute("data-reveal"));
+          const index = Math.min(siblings.indexOf(item), 4);
+          if (index > 0) item.style.setProperty("--mcp-reveal-delay", `${index * 60}ms`);
+        });
+
+        // A fine transizione si rimuove lo stato di animazione: tornano
+        // le transizioni hover originali senza scatti (valori già a riposo).
+        const cleanup = (item) => {
+          if (!item.hasAttribute("data-reveal")) return;
+          item.removeAttribute("data-reveal");
+          item.classList.remove("is-revealed");
+          item.style.removeProperty("--mcp-reveal-delay");
+        };
+
+        const reveal = (item) => {
+          const onEnd = (event) => {
+            if (event.target !== item || event.pseudoElement || event.propertyName !== "transform") return;
+            item.removeEventListener("transitionend", onEnd);
+            if (!item.classList.contains("mcp-integration-diagram")) cleanup(item);
+          };
+          item.addEventListener("transitionend", onEnd);
+          const delay = parseInt(item.style.getPropertyValue("--mcp-reveal-delay"), 10) || 0;
+          const lastsLonger = item.classList.contains("mcp-integration-diagram");
+          window.setTimeout(() => cleanup(item), delay + (lastsLonger ? 2000 : 1600)); // fallback
+          // Doppio rAF: lo stato iniziale viene dipinto prima della transizione
+          requestAnimationFrame(() => requestAnimationFrame(() => item.classList.add("is-revealed")));
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            observer.unobserve(entry.target);
+            reveal(entry.target);
+          });
+        }, { rootMargin: "0px 0px -6% 0px", threshold: 0 });
+
+        items.forEach((item) => observer.observe(item));
+      })();
 
       document.addEventListener("DOMContentLoaded", async () => {
         const components = [

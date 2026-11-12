@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { MonthlyUsageReportData } from "../../../../functions/src/email/_interfaces";
 import {
   generateDowngradeEmail,
+  generateInternalPurchaseNotificationEmail,
   generateMonthlyReportEmail,
   generatePurchaseEmail,
 } from "../../../../functions/src/email/plans/html";
@@ -118,5 +119,26 @@ describe("plans email HTML", () => {
     expect(formatTimeSaved(120)).toBe("2 ore");
     expect(formatTimeSaved(2880)).toBe("2 giorni");
     expect(formatTimeSaved(20160)).toBe("2 settimane");
+  });
+
+  it("genera la notifica interna di acquisto con i dettagli e l'escape dei valori", () => {
+    const result = generateInternalPurchaseNotificationEmail({
+      customerEmail: "buyer@example.com",
+      uid: "uid-1",
+      planId: "<b>business</b>",
+      amountLabel: "49.00 EUR",
+      provider: "stripe",
+      orderId: "cs_test_1",
+      dataAcquisto: "",
+      dataScadenza: "1 gennaio 2027",
+    });
+
+    expect(result).toContain("<title>Nuovo acquisto | Jurio</title>");
+    expect(result).toContain("buyer@example.com");
+    expect(result).toContain("49.00 EUR");
+    expect(result).toContain("cs_test_1");
+    expect(result).toContain("&lt;b&gt;business&lt;/b&gt;");
+    expect(result).not.toContain("<b>business</b>");
+    expect(result).toContain("Non disponibile");
   });
 });

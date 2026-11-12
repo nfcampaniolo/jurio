@@ -251,3 +251,68 @@ export const generateMonthlyReportEmail = (data: MonthlyUsageReportData) => {
   </html>
   `;
 };
+
+const escapeHtml = (value: string): string =>
+  value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+
+export interface InternalPurchaseEmailData {
+  customerEmail: string;
+  uid: string;
+  planId: string;
+  amountLabel: string;
+  provider: string;
+  orderId: string;
+  dataAcquisto: string;
+  dataScadenza: string;
+}
+
+/** Notifica interna (contatti@jurio.it) per ogni nuovo acquisto. */
+export const generateInternalPurchaseNotificationEmail = (data: InternalPurchaseEmailData) => {
+  const rows: [string, string][] = [
+    ["Cliente", data.customerEmail || "Email non disponibile"],
+    ["UID", data.uid],
+    ["Piano", data.planId || "Non disponibile"],
+    ["Importo", data.amountLabel],
+    ["Provider", data.provider],
+    ["ID ordine", data.orderId],
+    ["Data acquisto", data.dataAcquisto || "Non disponibile"],
+    ["Scadenza", data.dataScadenza || "Non disponibile"],
+  ];
+
+  return `
+  <!DOCTYPE html>
+  <html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nuovo acquisto | Jurio</title>
+    <style>
+      ${emailStyles}
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header" style="text-align:center;">
+        <img src="https://jurio-it.web.app/image.png" alt="Jurio" style="max-width:120px; margin-bottom:15px;" />
+        <h1>Nuovo acquisto</h1>
+      </div>
+      <div class="feature">
+        <table style="width:100%; border-collapse:collapse;">
+          ${rows
+            .map(
+              ([label, value]) =>
+                `<tr><td style="padding:6px 8px; font-weight:bold; vertical-align:top;">${escapeHtml(label)}</td><td style="padding:6px 8px;">${escapeHtml(value)}</td></tr>`
+            )
+            .join("")}
+        </table>
+      </div>
+    </div>
+  </body>
+  </html>
+  `;
+};

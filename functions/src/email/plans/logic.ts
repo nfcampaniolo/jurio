@@ -1,4 +1,4 @@
-import {  generatePurchaseEmail, generateDowngradeEmail, generateMonthlyReportEmail } from "./html"; 
+import {  generatePurchaseEmail, generateDowngradeEmail, generateMonthlyReportEmail, generateInternalPurchaseNotificationEmail } from "./html"; 
 import { formatTimeSaved } from "./time";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { getDb, getAdminAuth } from "../../_deps";
@@ -7,11 +7,11 @@ import { dispatchMailAndNotification, fmtRome, getAuthEmailAndName } from "../_h
 import { logSafeError } from "../../_logging";
 
 const db = getDb();
+export const INTERNAL_PURCHASE_NOTIFICATION_EMAIL = "contatti@jurio.it";
 
 async function enqueuePurchaseEmailGeneric(args: EnqueuePurchaseEmailArgs): Promise<void> {
   const userRecord = await getAdminAuth().getUser(args.uid);
   const email = userRecord.email ?? null;
-  if (!email) return;
 
   const regSnap = await db.collection("register").doc(args.uid).get();
   const reg = regSnap.exists ? (regSnap.data() as any) : null;
@@ -24,21 +24,44 @@ async function enqueuePurchaseEmailGeneric(args: EnqueuePurchaseEmailArgs): Prom
   const dataScadenza = expireTs ? fmtRome(expireTs) : "";
 
   const amountLabel = `${args.paidValue.toFixed(2)} ${args.paidCurrency}`;
-  const subject = `Conferma Ordine Jurio - ${args.orderId}`;
-  const html = generatePurchaseEmail(email, planId, amountLabel, dataAcquisto, dataScadenza, args.orderId);
 
-  await dispatchMailAndNotification({
-    to: email,
-    subject,
-    html,
-    notifications: {
-      user: args.uid,
-      title: "Acquisto Confermato",
-      message: `Grazie! Il tuo ordine ${args.orderId} è andato a buon fine.`,
-      type: "billing",
-      link: "/profilo/piani"
-    }
-  });
+  if (email) {
+    const subject = `Conferma Ordine Jurio - ${args.orderId}`;
+    const html = generatePurchaseEmail(email, planId, amountLabel, dataAcquisto, dataScadenza, args.orderId);
+
+    await dispatchMailAndNotification({
+      to: email,
+      subject,
+      html,
+      notifications: {
+        user: args.uid,
+        title: "Acquisto Confermato",
+        message: `Grazie! Il tuo ordine ${args.orderId} è andato a buon fine.`,
+        type: "billing",
+        link: "/profilo/piani"
+      }
+    });
+  }
+
+  // Notifica interna: indipendente dalla mail al cliente, un suo errore non blocca il flusso
+  try {
+    await dispatchMailAndNotification({
+      to: INTERNAL_PURCHASE_NOTIFICATION_EMAIL,
+      subject: `Nuovo acquisto Jurio - ${planId || "piano"} - ${amountLabel}`,
+      html: generateInternalPurchaseNotificationEmail({
+        customerEmail: email ?? "",
+        uid: args.uid,
+        planId,
+        amountLabel,
+        provider: args.provider,
+        orderId: args.orderId,
+        dataAcquisto,
+        dataScadenza,
+      }),
+    });
+  } catch (e) {
+    logSafeError("INTERNAL_PURCHASE_NOTIFICATION_FAILED", e);
+  }
 }
 
 export async function queuePurchaseEmailOnceStripe(args: QueuePurchaseStripeArgs): Promise<void> {
