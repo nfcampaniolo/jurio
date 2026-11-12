@@ -131,7 +131,6 @@ export function useSearchFilters() {
     setSortBy(DEFAULT_FILTERS.sortBy);
     setFilterSezione(DEFAULT_FILTERS.filterSezione);
     setnumberPages(DEFAULT_FILTERS.numberPages);
-    setSearchNormativa(DEFAULT_FILTERS.searchNormativa);
     
     localStorage.removeItem(SEARCH_FILTERS_CACHE_KEY);
     toast.success("Filtri resettati");

@@ -35,8 +35,6 @@ interface SearchFiltersProps {
   setStartDate: (val: string) => void;
   endDate: string;
   setEndDate: (val: string) => void;
-  searchNormativa: boolean;
-  setSearchNormativa: (val: boolean) => void;
   clearFilters: () => void;
 }
 
@@ -58,8 +56,6 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
   setStartDate,
   endDate,
   setEndDate,
-  searchNormativa,
-  setSearchNormativa,
   clearFilters,
 }) => {
   let sezioniOptions: readonly string[] = [];
@@ -209,30 +205,8 @@ export const SearchFilters: React.FC<SearchFiltersProps> = ({
         </div>
       </div>
 
-      <label
-        htmlFor="filter-normativa"
-        className="flex items-start gap-3 mt-2 px-1 cursor-pointer select-none"
-      >
-        <input
-          type="checkbox"
-          id="filter-normativa"
-          checked={searchNormativa}
-          disabled={loading}
-          onChange={(e) => setSearchNormativa(e.target.checked)}
-          className="mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-(--color-primary) disabled:opacity-60"
-        />
-        <span className="flex flex-col">
-          <span className="text-xs font-bold uppercase tracking-widest text-(--color-text)">
-            Cerca per riferimento normativo
-          </span>
-          <span className="text-xs text-(--color-muted) font-light mt-0.5">
-            Se la ricerca contiene un articolo (es. "art. 2051 c.c."), mostra anche le pronunce che lo citano in una sezione dedicata.
-          </span>
-        </span>
-      </label>
-
       <div className="flex flex-col items-center justify-center gap-4 mt-8 mb-4 w-full">
-        {(filterGrado || filterTipo || filterTipologia || startDate || endDate || filterSezione || searchNormativa) && (
+        {(filterGrado || filterTipo || filterTipologia || startDate || endDate || filterSezione) && (
           <button
             onClick={clearFilters}
             type="button"

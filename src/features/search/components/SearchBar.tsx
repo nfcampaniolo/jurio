@@ -10,6 +10,7 @@ import {
 import { LeftPickerPanel } from "./LeftPickerPanel";
 import { AccessDenied } from "@/shared/components/AccessDenied";
 import { SearchFilters } from "./SearchFilters";
+import { SearchAssistBar } from "./SearchAssistBar";
 import { SearchResultsList } from "./SearchResultsList";
 
 import type {
@@ -243,8 +244,6 @@ export const SearchBar = () => {
     setStartDate,
     endDate,
     setEndDate,
-    searchNormativa,
-    setSearchNormativa,
     clearFilters,
   };
 
@@ -564,6 +563,12 @@ export const SearchBar = () => {
             </div>
 
           </div>
+
+          <SearchAssistBar
+            searchNormativa={searchNormativa}
+            setSearchNormativa={setSearchNormativa}
+            disabled={loading}
+          />
 
           {!showSuggestions && !loading && !isRecording && (
             <div className="sm:hidden flex justify-center mt-3">

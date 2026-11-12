@@ -139,6 +139,14 @@ vi.mock("@/features/search/components/SearchFilters", () => ({
   SearchFilters: () => <div data-testid="mock-search-filters">SearchFilters Mock</div>,
 }));
 
+vi.mock("@/features/search/components/SearchAssistBar", () => ({
+  SearchAssistBar: ({ searchNormativa, setSearchNormativa }: { searchNormativa: boolean; setSearchNormativa: (v: boolean) => void }) => (
+    <button type="button" data-testid="mock-search-assist" onClick={() => setSearchNormativa(!searchNormativa)}>
+      Normativa {searchNormativa ? "on" : "off"}
+    </button>
+  ),
+}));
+
 vi.mock("@/features/search/components/SearchResultsList", () => ({
   SearchResultsList: ({
     totalResultsCount,
