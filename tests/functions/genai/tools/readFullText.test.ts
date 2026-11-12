@@ -24,7 +24,14 @@ vi.mock("@functions/support/pdfText", () => ({ extractPdfTextFromStorage: mocks.
 
 import { readFullText, resolveSentenceId } from "@functions/genai/tools/readFullText";
 
-const handler = readFullText as unknown as (input: unknown, options?: unknown) => Promise<any>;
+interface ToolResult {
+  message?: string;
+  error?: string;
+  truncated?: boolean;
+  fullText?: string;
+  [key: string]: unknown;
+}
+const handler = readFullText as unknown as (input: unknown, options?: unknown) => Promise<ToolResult>;
 const ctx = { context: { userId: "u1" } };
 const sentence = (id: string) => ({
   id, exists: true,
@@ -70,7 +77,7 @@ describe("readFullText tool", () => {
     const result = await handler({ identifier: "n. 12 / 2024" }, ctx);
     expect(mocks.query.where).toHaveBeenCalledWith("numero_sentenza", "==", "12/2024");
     expect(result.truncated).toBe(true);
-    expect(result.fullText.startsWith("a".repeat(20))).toBe(true);
+    expect(result.fullText?.startsWith("a".repeat(20))).toBe(true);
     expect(result.fullText).toContain("testo troncato");
   });
 

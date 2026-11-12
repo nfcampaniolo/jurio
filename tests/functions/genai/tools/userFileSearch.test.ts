@@ -107,7 +107,7 @@ describe("userFileSearch tool", () => {
         { exists: true, data: () => ({ visibleTo: ["u1"], nome_file: "c.pdf", isEmbeddingFinished: true }) },
         { exists: true, data: () => ({ user: "intruder", nome_file: "d.pdf" }) },
       ]);
-    const handler = userFileSearch as unknown as (input: { query: string }, options?: unknown) => Promise<any>;
+    const handler = userFileSearch as unknown as (input: { query: string }, options?: unknown) => Promise<unknown>;
     const result = await handler({ query: "leggi" }, { context: { userId: "u1", docs: ["a", "b", "c", "d"] } });
 
     expect(result).toEqual([
