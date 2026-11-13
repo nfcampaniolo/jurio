@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ai, CFG } from "../_config";
+import { ai, CFG, getWebDomains } from "../_config";
 import { validateUserPlanAndLimits } from "../../_utils";
 import { safeIncrementRagCounter, createResearchEmbedding } from "./_helper";
 import { getSafeLimit, normalizeQuery, getHostname, isSafeHttpUrl, getDistance, normalizePrecedenti, serializeFirestoreDate } from "./_utils";
@@ -48,19 +48,7 @@ export const webSearch = ai.defineTool(
         await validateUserPlanAndLimits(userId, "web");
       }
 
-      let domains = [
-        ...CFG.domains.institutional,
-        ...CFG.domains.practices,
-        ...CFG.domains.editorial,
-      ];
-
-      if (input.focus === "institutional") {
-        domains = [...CFG.domains.institutional];
-      }
-
-      if (input.focus === "editorial") {
-        domains = [...CFG.domains.editorial];
-      }
+      const domains = getWebDomains(input.focus);
 
       const webLimit = getSafeLimit(options?.context?.webLimit, 5, 10);
 

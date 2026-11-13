@@ -14,6 +14,9 @@ vi.mock("@functions/genai/_config", () => ({
     limits: { maxDbLimit: 5 },
     ragDistance: { doctrine: 0.68 },
   },
+  getWebDomains: (focus: string) =>
+    ({ institutional: ["official.test"], editorial: ["legal.test"] } as Record<string, string[]>)[focus]
+    ?? ["official.test", "practice.test", "legal.test"],
 }));
 vi.mock("@functions/_deps", () => ({ getDb: () => mocks.db }));
 vi.mock("@functions/_utils", () => ({ validateUserPlanAndLimits: mocks.validate }));
