@@ -4,6 +4,27 @@ import { translateRiferimento } from "../../_riferimenti_normativi";
 import { getDb } from "../../_deps";
 import { verifyPlanAndLimits, formatDocument, JurioDocument } from "../helpers";
 
+// Candidati extra letti da Firestore per poter privilegiare i provvedimenti che citano
+// la norma nella massima o nella fattispecie (l'indice copre anche il testo integrale).
+const OVERFETCH_FACTOR = 3;
+const MAX_CANDIDATES = 60;
+
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** True se massima, fattispecie o questione di diritto richiamano esplicitamente l'articolo. */
+export function citaArticoloNelTesto(doc: JurioDocument, article: string | undefined): boolean {
+  if (!article) return true;
+  const testo = [doc.massima, doc.fattispecie_rilevante, doc.questione_di_diritto]
+    .filter((v): v is string => typeof v === "string")
+    .join(" ")
+    .toLowerCase();
+  if (!testo) return false;
+  const pattern = new RegExp(
+    `\\bart(?:t|icol[oi])?\\.?\\s*(?:\\d+[\\w-]*\\s*(?:,|e)\\s*)*${escapeRegExp(article.toLowerCase())}(?![\\d])`,
+  );
+  return pattern.test(testo);
+}
+
 export function registerRicercaNormativa(server: McpServer, authHeader: string): void {
   server.registerTool(
     "ricercaNormativa",
@@ -53,7 +74,7 @@ export function registerRicercaNormativa(server: McpServer, authHeader: string):
         const snap = await db
           .collection("sentences")
           .where("riferimenti_normativi_key", "array-contains", searchKey)
-          .limit(safeLimit)
+          .limit(Math.min(safeLimit * OVERFETCH_FACTOR, MAX_CANDIDATES))
           .get();
 
         if (snap.empty) {
@@ -67,8 +88,24 @@ export function registerRicercaNormativa(server: McpServer, authHeader: string):
           };
         }
 
-        const formatted = snap.docs
-          .map((doc) => formatDocument({ id: doc.id, ...doc.data() } as JurioDocument))
+        const article = translation.parsed?.article;
+        const candidates = snap.docs.map((doc) => {
+          const data = { id: doc.id, ...doc.data() } as JurioDocument;
+          return { data, esplicito: citaArticoloNelTesto(data, article) };
+        });
+        // Ordinamento stabile: prima chi cita la norma in massima/fattispecie, poi il resto.
+        const ranked = [
+          ...candidates.filter((c) => c.esplicito),
+          ...candidates.filter((c) => !c.esplicito),
+        ].slice(0, safeLimit);
+
+        const formatted = ranked
+          .map(({ data, esplicito }) => {
+            const base = formatDocument(data);
+            return esplicito
+              ? base
+              : `${base}\nNOTA: ${riferimento} è citato nel testo integrale del provvedimento, ma non nella massima né nella fattispecie.`;
+          })
           .join("\n\n---\n\n");
         return { content: [{ type: "text", text: formatted }] };
       } catch (error: unknown) {

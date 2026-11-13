@@ -25,6 +25,7 @@ import { executeListCloudFiles, executeDownloadCloudFile } from "./cloud/googled
 import { handleEmbeddingCreation, handleEmbeddingDocumentCreation, handleEmbeddingManualCreation } from "./triggers/embedding.logic";
 import { handleGenerateStaticStatsJson, handleFileCreation, handleProcessContacts } from "./triggers/triggers.logic";
 import { executeTasksDowngrade, computeAndSaveWeeklyStats, computeAndSaveMonthlyUsage } from "./schedules/tasks.logic";
+import { computeAndSaveMonthlyActivityReports } from "./schedules/activityReports.logic";
 import { executePayWithStripeCreateCheckoutSession, executeStripeWebhook } from "./subscriptions/payments.logic";
 import { executeGetRegister, executeGetPrice, executeApplyDiscountCoupon} from "./subscriptions/subscription.logic";
 
@@ -429,8 +430,8 @@ export const monthlyUsageStatsCron = onSchedule(
   {
     schedule: "0 2 1 * *",
     timeZone: "Europe/Rome",
-    timeoutSeconds: 300,
-    memory: "512MiB",
+    timeoutSeconds: 540,
+    memory: "1GiB",
     retryCount: 3,
   },
   async (event) => {
@@ -441,6 +442,15 @@ export const monthlyUsageStatsCron = onSchedule(
     } catch (error) {
       logSafeError("MONTHLY_USAGE_CONSOLIDATION_FAILED", error);
       throw error;
+    }
+
+    // Report di attività (chat/fascicoli e deep analysis): un loro errore non rilancia,
+    // altrimenti il retry ripeterebbe il consolidamento e rimanderebbe le email agli utenti
+    try {
+      const reports = await computeAndSaveMonthlyActivityReports();
+      console.log(`✅ Report attività ${reports.mese_id} salvati: ${reports.conversazioni.path}, ${reports.deep_analysis.path}`);
+    } catch (error) {
+      logSafeError("MONTHLY_ACTIVITY_REPORTS_FAILED", error);
     }
   }
 );

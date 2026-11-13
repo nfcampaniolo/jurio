@@ -18,7 +18,7 @@ vi.mock("@functions/mpc/helpers", () => ({
   formatDocument: mocks.formatDocument,
 }));
 
-import { registerRicercaNormativa } from "@functions/mpc/tools/ricercaNormativa";
+import { citaArticoloNelTesto, registerRicercaNormativa } from "@functions/mpc/tools/ricercaNormativa";
 
 function setup() {
   const handler = vi.fn();
@@ -46,7 +46,7 @@ describe("registerRicercaNormativa", () => {
     expect(server.registerTool).toHaveBeenCalledWith("ricercaNormativa", expect.any(Object), expect.any(Function));
     expect(mocks.translateRiferimento).toHaveBeenCalledWith("art. 2051 c.c.");
     expect(mocks.query.where).toHaveBeenCalledWith("riferimenti_normativi_key", "array-contains", "codice:2051");
-    expect(mocks.query.limit).toHaveBeenCalledWith(8);
+    expect(mocks.query.limit).toHaveBeenCalledWith(24);
     expect(result.content[0].text).toBe("formatted:s-1");
   });
 
@@ -72,8 +72,8 @@ describe("registerRicercaNormativa", () => {
     await handler({ riferimento: "art. 2051 c.c.", limit: 50 });
 
     expect(empty.content[0].text).toContain("Nessun precedente trovato");
-    expect(mocks.query.limit).toHaveBeenNthCalledWith(1, 10);
-    expect(mocks.query.limit).toHaveBeenNthCalledWith(2, 20);
+    expect(mocks.query.limit).toHaveBeenNthCalledWith(1, 30);
+    expect(mocks.query.limit).toHaveBeenNthCalledWith(2, 60);
   });
 
   it("converts Firestore failures into an error response", async () => {
@@ -84,5 +84,34 @@ describe("registerRicercaNormativa", () => {
 
     expect(result).toMatchObject({ isError: true });
     expect(result.content[0].text).toContain("Errore Firestore: Firestore unavailable");
+  });
+  it("ranks rulings that cite the article in massima/fattispecie first and flags the others", async () => {
+    const { handler } = setup();
+    mocks.translateRiferimento.mockReturnValue({ key: "codice:2051", parsed: { article: "2051" } });
+    mocks.query.get.mockResolvedValue({
+      empty: false,
+      docs: [
+        { id: "implicit", data: () => ({ massima: "danno emergente ex art. 1223 c.c." }) },
+        { id: "explicit", data: () => ({ massima: "responsabilità del custode ex art. 2051 c.c." }) },
+      ],
+    });
+
+    const result = await handler({ riferimento: "art. 2051 c.c.", limit: 1 });
+
+    expect(result.content[0].text).toBe("formatted:explicit");
+
+    const both = await handler({ riferimento: "art. 2051 c.c.", limit: 2 });
+    const [first, second] = both.content[0].text.split("\n\n---\n\n");
+    expect(first).toBe("formatted:explicit");
+    expect(second).toContain("formatted:implicit");
+    expect(second).toContain("NOTA: art. 2051 c.c. è citato nel testo integrale");
+  });
+
+  it("citaArticoloNelTesto matches article lists and avoids partial numbers", () => {
+    expect(citaArticoloNelTesto({ massima: "ai sensi degli artt. 2043 e 2051 c.c." }, "2051")).toBe(true);
+    expect(citaArticoloNelTesto({ fattispecie_rilevante: "Art. 2051 cod. civ." }, "2051")).toBe(true);
+    expect(citaArticoloNelTesto({ massima: "art. 20510" }, "2051")).toBe(false);
+    expect(citaArticoloNelTesto({ massima: "art. 1223 c.c." }, "2051")).toBe(false);
+    expect(citaArticoloNelTesto({}, undefined)).toBe(true);
   });
 });

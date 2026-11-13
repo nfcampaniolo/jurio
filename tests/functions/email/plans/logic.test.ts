@@ -124,7 +124,7 @@ describe("plans email logic", () => {
       );
       expect(mocks.dispatch).toHaveBeenNthCalledWith(1, {
         to: "buyer@example.com",
-        subject: "Conferma Ordine Jurio - session-1",
+        subject: "Conferma d'ordine Jurio n. session-1",
         html: `<purchase>buyer@example.com|premium|12.50 EUR|${start.toDate().toISOString()}|${expire.toDate().toISOString()}|session-1</purchase>`,
         notifications: {
           user: "uid",
@@ -245,7 +245,7 @@ describe("plans email logic", () => {
       expect(mocks.downgradeHtml).toHaveBeenCalledWith(expectedName);
       expect(mocks.dispatch).toHaveBeenCalledWith({
         to: "user@example.com",
-        subject: "Piano Jurio scaduto",
+        subject: "Il tuo piano Jurio è scaduto",
         html: `<downgrade>${expectedName}</downgrade>`,
         notifications: {
           user: "downgrade-uid",
@@ -321,7 +321,7 @@ describe("plans email logic", () => {
       expect(mocks.getUserByEmail).toHaveBeenCalledTimes(3);
       expect(mocks.dispatch).toHaveBeenCalledWith({
         to: recipients,
-        subject: "Il tuo resoconto mensile su Jurio: hai risparmiato 10 minuti!",
+        subject: "Il tuo resoconto mensile Jurio: 10 minuti di lavoro risparmiato",
         html: "<report>settembre 2026</report>",
         notifications: expect.arrayContaining([
           expect.objectContaining({ user: "uid-a", type: "report", link: "/profilo/utilizzi" }),
@@ -341,7 +341,7 @@ describe("plans email logic", () => {
 
       // Assert
       expect(mocks.dispatch).toHaveBeenCalledWith(expect.objectContaining({
-        subject: "Il tuo resoconto mensile su Jurio: hai risparmiato 2 giorni!",
+        subject: "Il tuo resoconto mensile Jurio: 2 giorni di lavoro risparmiato",
       }));
     });
 
@@ -356,7 +356,7 @@ describe("plans email logic", () => {
       // Assert
       expect(mocks.dispatch).toHaveBeenCalledWith({
         to: ["unknown@example.com"],
-        subject: "Il tuo resoconto mensile su Jurio",
+        subject: "Il tuo resoconto mensile Jurio",
         html: "<report>settembre 2026</report>",
         notifications: undefined,
       });

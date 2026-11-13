@@ -178,7 +178,7 @@ LINEE GUIDA CAMPO PER CAMPO:
 - data_sentenza: data ufficiale della sentenza in formato ISO (YYYY-MM-DD).
 - ecli: inserire solo se disponibile l’ECLI ufficiale della sentenza; se non presente, lasciare vuoto.
 - urn: se l’URN NIR ufficiale è esplicitamente presente nel testo o in metadati affidabili, riportarlo integralmente. In mancanza, tentare una ricostruzione **solo se** tutti gli elementi strutturali necessari sono certi (organo, tipo atto, data, numero). Se anche uno solo di questi elementi è incerto, lasciare il campo vuoto. Non inventare mai URN.
-- fattispecie_rilevante: fatti giuridicamente rilevanti, sintetici, senza dettagli superflui.
+- fattispecie_rilevante: fatti giuridicamente rilevanti, sintetici, senza dettagli superflui. Anonimizzazione obbligatoria: indica le persone fisiche e giuridiche private SOLO con il ruolo processuale o sostanziale (es. "l'imputato", "la persona offesa", "il ricorrente", "la società datrice di lavoro", "il condominio"); MAI nomi, cognomi, iniziali, ragioni sociali, indirizzi o altri dati identificativi.
 - questione_di_diritto: problema giuridico centrale risolto dalla sentenza, una sola questione.
 - massima: principio generale applicabile a casi analoghi se emerge un principio; in mancanza, massima descrittiva non vuota e indicizzabile (1–2 frasi).
 - tipo_massima: uno dei valori consentiti ["conforme","difforme","principio_nuovo","di_specie","con_fattispecie","non_massimabile"].

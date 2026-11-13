@@ -1,6 +1,7 @@
 import { getAuth } from "firebase-admin/auth";
 import type { Firestore } from "firebase-admin/firestore";
 import { consumePerMinuteFeature, consumeDailyFeature } from "../_utils";
+import { anonimizzaTesto } from "./anonimizza";
 
 export interface JurioDocument {
   id?: string;
@@ -162,12 +163,20 @@ export async function verifyPlanAndLimits(
 
 export function formatDocument(doc: JurioDocument): string {
   const lines: string[] = [];
-  lines.push(
-    `DOCUMENTO: ${doc.tipo_documento ?? ""} ${doc.organo_giudicante ?? ""}, N. ${doc.numero_sentenza ?? ""}`
-  );
+  const intestazione =
+    [doc.tipo_documento, doc.organo_giudicante]
+      .map((v) => (typeof v === "string" ? v.trim() : ""))
+      .filter(Boolean)
+      .join(" ") || "Provvedimento";
+  const numero = typeof doc.numero_sentenza === "string" && doc.numero_sentenza.trim()
+    ? doc.numero_sentenza.trim()
+    : "n.d.";
+  lines.push(`DOCUMENTO: ${intestazione}, N. ${numero}`);
   if (doc.data_decisione) lines.push(`DATA: ${doc.data_decisione}`);
-  if (doc.massima?.trim()) lines.push(`MASSIMA: ${doc.massima.trim()}`);
-  if (doc.fattispecie_rilevante?.trim()) lines.push(`FATTISPECIE: ${doc.fattispecie_rilevante.trim()}`);
+  if (doc.massima?.trim()) lines.push(`MASSIMA: ${anonimizzaTesto(doc.massima.trim())}`);
+  if (doc.fattispecie_rilevante?.trim()) {
+    lines.push(`FATTISPECIE: ${anonimizzaTesto(doc.fattispecie_rilevante.trim())}`);
+  }
   if (doc.id) {
     lines.push(`URL: https://jurio.it/giurisprudenza/${doc.id.trim()}`);
   }

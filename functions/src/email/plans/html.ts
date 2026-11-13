@@ -1,264 +1,145 @@
-import emailStyles from '../emailStyles';
-import type{ MonthlyUsageReportData } from "../_interfaces";
+import type { MonthlyUsageReportData } from "../_interfaces";
+import {
+  SITE_URL,
+  button,
+  callout,
+  detailsTable,
+  escapeHtml,
+  featureList,
+  link,
+  paragraph,
+  renderEmailLayout,
+  sectionLabel,
+  statHighlight,
+} from "../_layout";
 import { formatTimeSaved } from "./time";
 
 export const generateDowngradeEmail = (nome: string) => {
-  return `
-  <!DOCTYPE html>
-  <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Piano scaduto | Jurio</title>
-    <style>
-      ${emailStyles}
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <!-- Logo e header -->
-      <div class="header" style="text-align:center;">
-        <img src="https://jurio-it.web.app/image.png" alt="Jurio" style="max-width:120px; margin-bottom:15px;" />
-        <h1>Jurio</h1>
-      </div>
-
-      <!-- Intro -->
-      <div class="subheader">
-        <p>Ciao ${nome},</p>
-        <p>ti informiamo che il tuo <strong>piano attuale su Jurio è scaduto</strong>.</p>
-      </div>
-
-      <!-- Contenuto -->
-      <div class="feature">
-        <h3>Cosa cambia ora?</h3>
-        <p>Il tuo account è stato riportato al <strong>piano gratuito</strong>, che include funzionalità limitate rispetto al piano premium.</p>
-      </div>
-
-      <div class="feature">
-        <h3>Riprendi l’accesso completo</h3>
-        <p>Attivando nuovamente un piano a pagamento, potrai tornare a utilizzare tutte le funzionalità avanzate: ricerca giurisprudenziale completa, analisi automatica dei documenti e strumenti di annotazione.</p>
-      </div>
-
-      <div class="feature">
-        <h3>Hai bisogno di aiuto?</h3>
-        <p>Se hai dubbi sui piani o vuoi capire quale sia il più adatto alle tue esigenze, il nostro team è a disposizione.</p>
-      </div>
-
-      <!-- CTA -->
-      <p style="text-align:center;">
-        <a href="https://jurio.it/pricing" class="button">Rinnova il piano</a>
-      </p>
-
-      <!-- Footer -->
-      <div class="footer">
-        <p>Grazie per aver utilizzato Jurio.</p>
-        <p>Puoi gestire il tuo piano e le preferenze email dal tuo <a href="https://jurio.it/profilo">profilo</a>.</p>
-      </div>
-    </div>
-  </body>
-  </html>
-  `;
+  return renderEmailLayout({
+    title: "Piano scaduto | Jurio",
+    preheader: "Il tuo account è passato al piano gratuito. Puoi riattivare l'accesso completo in qualsiasi momento.",
+    eyebrow: "Stato dell'abbonamento",
+    heading: "Il tuo piano è scaduto",
+    body: `
+      ${paragraph(`Ciao ${escapeHtml(nome)},`)}
+      ${paragraph("ti informiamo che il periodo di validità del tuo piano Jurio è terminato. Il tuo account è stato riportato al <strong>piano gratuito</strong>: i tuoi dati, i fascicoli e lo storico restano disponibili.")}
+      ${featureList([
+        {
+          title: "Cosa cambia",
+          text: "Il piano gratuito include un numero limitato di utilizzi e non comprende le funzionalità avanzate.",
+        },
+        {
+          title: "Come riattivare l'accesso completo",
+          text: "Con un nuovo piano tornerai a disporre di ricerca giurisprudenziale completa, analisi dei documenti, consulente legale e analisi approfondite.",
+        },
+        {
+          title: "Serve un consiglio?",
+          text: "Se non sei sicuro di quale piano scegliere, il nostro team è a disposizione per aiutarti.",
+        },
+      ])}
+      ${button(`${SITE_URL}/prezzi`, "Scopri i piani")}
+    `,
+    footerNote: `Ricevi questa email perché sei titolare di un account Jurio. Puoi verificare lo stato del piano dal tuo ${link(`${SITE_URL}/profilo/piani`, "profilo")}.`,
+  });
 };
 
 export const generatePurchaseEmail = (
-nome: string,
-piano: string,
-prezzo: string,
-dataAcquisto: string,          // es. “2026-01-19 19:30”
-dataScadenza: string,          // es. “2027-01-19”
-ordineId: string,              // es. “JURIO-20260119-000123” o PayPal orderId
-transazioneId?: string,        // opzionale
-metodoPagamento?: string,      // es. “PayPal”
-linkRicevuta?: string,         // opzionale (URL)
-linkFattura?: string           // opzionale (URL)
+  nome: string,
+  piano: string,
+  prezzo: string,
+  dataAcquisto: string,          // es. "2026-01-19 19:30"
+  dataScadenza: string,          // es. "2027-01-19"
+  ordineId: string,              // es. "JURIO-20260119-000123" o PayPal orderId
+  transazioneId?: string,        // opzionale
+  metodoPagamento?: string,      // es. "PayPal"
+  linkRicevuta?: string,         // opzionale (URL)
+  linkFattura?: string           // opzionale (URL)
 ) => {
-const txRow = transazioneId ? `<p><strong>ID transazione:</strong> ${transazioneId}</p>` : ``;
-const payRow = metodoPagamento ? `<p><strong>Metodo di pagamento:</strong> ${metodoPagamento}</p>` : ``;
-const receiptRow = linkRicevuta ? `<p><strong>Ricevuta:</strong> <a href="${linkRicevuta}">Apri ricevuta</a></p>` : ``;
-const invoiceRow = linkFattura ? `<p><strong>Fattura:</strong> <a href="${linkFattura}">Apri fattura</a></p>` : ``;
-return `
- <!DOCTYPE html>
-   <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Acquisto completato | Jurio</title>
-    <style>
-      ${emailStyles}
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <!-- Logo e header -->
-      <div class="header" style="text-align:center;">
-        <img src="https://jurio-it.web.app/image.png" alt="Jurio" style="max-width:120px; margin-bottom:15px;" />
-        <h1>Jurio</h1>
-      </div>
-      <!-- Intro -->
-      <div class="subheader">
-        <p>Ciao ${nome},</p>
-        <p>ti confermiamo che il tuo <strong>acquisto è stato completato con successo</strong> e che l’accesso al piano è attivo.</p>
-      </div>
+  const rows: Array<[string, string]> = [
+    ["Piano", escapeHtml(piano)],
+    ["Importo", escapeHtml(prezzo)],
+    ["Data di acquisto", escapeHtml(dataAcquisto)],
+    ["Valido fino al", escapeHtml(dataScadenza)],
+    ["Numero d'ordine", escapeHtml(ordineId)],
+  ];
+  if (transazioneId) rows.push(["ID transazione", escapeHtml(transazioneId)]);
+  if (metodoPagamento) rows.push(["Metodo di pagamento", escapeHtml(metodoPagamento)]);
+  if (linkRicevuta) rows.push(["Ricevuta", link(linkRicevuta, "Apri ricevuta")]);
+  if (linkFattura) rows.push(["Fattura", link(linkFattura, "Apri fattura")]);
 
-      <!-- Dettagli acquisto -->
-      <div class="feature">
-        <h3>Dettagli dell’acquisto</h3>
-        <p><strong>Piano:</strong> ${piano}</p>
-        <p><strong>Prezzo:</strong> ${prezzo}</p>
-        <p><strong>Data acquisto:</strong> ${dataAcquisto}</p>
-        <p><strong>Scadenza:</strong> ${dataScadenza}</p>
-        <p><strong>ID ordine:</strong> ${ordineId}</p>
-        ${txRow}
-        ${payRow}
-        ${receiptRow}
-        ${invoiceRow}
-      </div>
-
-      <!-- Note contrattuali -->
-      <div class="feature">
-        <h3>Informazioni importanti</h3>
-        <p>Il piano acquistato è <strong>una tantum</strong> e non prevede alcun rinnovo automatico o addebito ricorrente. Alla scadenza, potrai scegliere se acquistare un nuovo periodo di validità.</p>
-      </div>
-
-      <!-- Gestione abbonamento -->
-      <div class="feature">
-        <h3>Gestione dal profilo</h3>
-        <p>Puoi verificare in ogni momento lo stato del tuo piano e la data di scadenza accedendo al tuo profilo.</p>
-      </div>
-
-      <!-- CTA -->
-      <p style="text-align:center;">
-        <a href="https://jurio.it" class="button">Accedi a Jurio</a>
-      </p>
-
-      <!-- Footer -->
-      <div class="footer">
-        <p>Se hai bisogno di assistenza, il nostro team è a tua disposizione.</p>
-        <p>Puoi gestire le impostazioni del tuo account dal <a href="https://jurio.it/profilo">profilo</a>.</p>
-      </div>
-    </div>
-  </body>
-  </html>
-  `;
+  return renderEmailLayout({
+    title: "Acquisto completato | Jurio",
+    preheader: `Il tuo piano ${piano} è attivo. Qui trovi il riepilogo dell'ordine.`,
+    eyebrow: "Conferma d'ordine",
+    heading: "Grazie, il tuo piano è attivo",
+    body: `
+      ${paragraph(`Ciao ${escapeHtml(nome)},`)}
+      ${paragraph("ti confermiamo che il pagamento è andato a buon fine e che l'accesso al piano è già attivo sul tuo account.")}
+      ${sectionLabel("Riepilogo dell'ordine")}
+      ${detailsTable(rows)}
+      ${callout("Il piano è <strong>una tantum</strong>: non prevede rinnovi automatici né addebiti ricorrenti. Alla scadenza potrai scegliere liberamente se acquistare un nuovo periodo.", "accent")}
+      ${button(SITE_URL, "Accedi a Jurio")}
+    `,
+    footerNote: `Conserva questa email come conferma dell'acquisto. Puoi verificare in ogni momento stato e scadenza del piano dal tuo ${link(`${SITE_URL}/profilo/piani`, "profilo")}.`,
+  });
 };
 
 export const generateMonthlyReportEmail = (data: MonthlyUsageReportData) => {
   const totalTimeSavedLabel = formatTimeSaved(data.totalTimeSavedMinutes);
+  const mese = escapeHtml(data.mese);
 
-  // Costruiamo i blocchi dinamici per le feature usate
-  let dettagliOperazioni = "";
+  // Formula senza accordo di genere ("circa 1,4 ore" / "circa 45 minuti")
+  const risparmio = (minutes: number, rispetto = "") =>
+    `con un risparmio stimato di circa <strong>${formatTimeSaved(minutes)}</strong>${rispetto}.`;
+  const conta = (count: number, singolare: string, plurale: string) =>
+    `<strong>${count}</strong> ${count === 1 ? singolare : plurale}`;
 
+  const attivita: Array<{ title: string; text: string }> = [];
   if (data.ricerca.count > 0) {
-    dettagliOperazioni += `
-      <div class="feature">
-        <h3>Ricerca Giurisprudenziale</h3>
-        <p>Hai effettuato <strong>${data.ricerca.count}</strong> ricerche intelligenti, risparmiando circa <strong>${data.ricerca.timeSavedMinutes} minuti</strong> rispetto alla ricerca tradizionale.</p>
-      </div>
-    `;
+    attivita.push({
+      title: "Ricerca giurisprudenziale",
+      text: `${conta(data.ricerca.count, "ricerca", "ricerche")}, ${risparmio(data.ricerca.timeSavedMinutes, " rispetto alla ricerca tradizionale")}`,
+    });
   }
-
   if (data.analisi.count > 0) {
-    dettagliOperazioni += `
-      <div class="feature">
-        <h3>Analisi, Reasoning e OCR</h3>
-        <p>Hai completato <strong>${data.analisi.count}</strong> elaborazioni, recuperando <strong>${data.analisi.timeSavedMinutes} minuti</strong> di tempo prezioso.</p>
-      </div>
-    `;
+    attivita.push({
+      title: "Analisi documentale",
+      text: `${conta(data.analisi.count, "elaborazione", "elaborazioni")} tra analisi, reasoning e OCR, ${risparmio(data.analisi.timeSavedMinutes)}`,
+    });
   }
-
   if (data.deepAnalysis.count > 0) {
-    dettagliOperazioni += `
-      <div class="feature">
-        <h3>Ricerca Giurisprudenziale Approfondita</h3>
-        <p>Hai completato <strong>${data.deepAnalysis.count}</strong> indagini approfondite, risparmiando circa <strong>${data.deepAnalysis.timeSavedMinutes} minuti</strong>.</p>
-      </div>
-    `;
+    attivita.push({
+      title: "Ricerca giurisprudenziale approfondita",
+      text: `${conta(data.deepAnalysis.count, "indagine completata", "indagini completate")}, ${risparmio(data.deepAnalysis.timeSavedMinutes)}`,
+    });
   }
-
   if (data.sintesi.count > 0) {
-    dettagliOperazioni += `
-      <div class="feature">
-        <h3>Sintesi e Drafting</h3>
-        <p>Hai generato <strong>${data.sintesi.count}</strong> sintesi, salvando <strong>${data.sintesi.timeSavedMinutes} minuti</strong> di stesura manuale.</p>
-      </div>
-    `;
+    attivita.push({
+      title: "Sintesi e redazione",
+      text: `${conta(data.sintesi.count, "sintesi generata", "sintesi generate")}, ${risparmio(data.sintesi.timeSavedMinutes, " sulla stesura manuale")}`,
+    });
   }
 
-  // Blocco condizionale per il prompting
-  let bloccoPrompting = "";
-  if (data.haFattoPrompting) {
-    bloccoPrompting = `
-      <div class="subheader" style="margin-top:30px; background-color: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #0056b3;">
-        <h3 style="margin-top: 0;">Siamo curiosi! 🤖</h3>
-        <p>Abbiamo notato che questo mese hai messo alla prova Jurio utilizzando il <strong>prompting libero</strong>. Speriamo che il nostro assistente abbia risposto in modo eccellente ai tuoi quesiti giuridici più complessi e fuori dagli schemi.</p>
-      </div>
-    `;
-  }
+  const bloccoPrompting = data.haFattoPrompting
+    ? callout("<strong>Consulente legale.</strong> Questo mese hai posto quesiti in forma libera (prompting libero). Se una risposta non ti ha convinto, scrivici: ogni segnalazione ci aiuta a migliorare la qualità dell'assistente.", "accent")
+    : "";
 
-  return `
-  <!DOCTYPE html>
-  <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Il tuo mese su Jurio</title>
-    <style>
-      ${emailStyles}
-      /* Aggiunta di una classe extra per dare enfasi al tempo */
-      .highlight-time {
-        font-size: 2.5rem;
-        color: #0056b3; /* Sostituisci con il colore primario di Jurio */
-        font-weight: bold;
-        margin: 10px 0;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <!-- Logo e header -->
-      <div class="header" style="text-align:center;">
-        <img src="https://jurio-it.web.app/image.png" alt="Jurio" style="max-width:120px; margin-bottom:15px;" />
-        <h1>Jurio</h1>
-      </div>
-
-      <!-- Intro con enfasi sul tempo risparmiato -->
-      <div class="subheader" style="text-align: center;">
-        <p>Ecco il tuo resoconto di <strong>${data.mese}</strong>.</p>
-        <p>Questo mese hai delegato a Jurio il lavoro ripetitivo, recuperando tempo prezioso per le attività ad alto valore aggiunto:</p>
-        <div class="highlight-time">${totalTimeSavedLabel}</div>
-        <p>risparmiati complessivamente.</p>
-      </div>
-
-      <!-- Dettaglio attività dinamico -->
-      <div style="margin-top: 30px;">
-        ${dettagliOperazioni}
-      </div>
-
+  return renderEmailLayout({
+    title: "Il tuo mese su Jurio",
+    preheader: `Resoconto di ${data.mese}: ${totalTimeSavedLabel} di lavoro risparmiato con Jurio.`,
+    eyebrow: `Resoconto di ${mese}`,
+    heading: "Il tuo mese su Jurio",
+    body: `
+      ${paragraph(`Ecco il riepilogo della tua attività di <strong>${mese}</strong>. Affidando a Jurio le attività di ricerca e analisi, hai recuperato tempo per il lavoro a maggior valore.`)}
+      ${statHighlight(totalTimeSavedLabel, "di lavoro risparmiato, secondo una stima indicativa")}
+      ${attivita.length ? `${sectionLabel("Dettaglio delle attività")}${featureList(attivita)}` : ""}
       ${bloccoPrompting}
-
-      <!-- CTA -->
-      <div style="margin-top: 40px; text-align:center;">
-        <p>Vuoi vedere il dettaglio di tutte le tue interazioni?</p>
-        <a href="https://jurio.it/profile/utilizzi" class="button">Vai ai tuoi utilizzi</a>
-      </div>
-
-      <!-- Footer -->
-      <div class="footer">
-        <p>Se non vuoi più ricevere queste email, puoi <a href="https://jurio.it/profilo">disiscriverti qui</a>.</p>
-      </div>
-    </div>
-  </body>
-  </html>
-  `;
+      ${button(`${SITE_URL}/profilo/utilizzi`, "Vedi il dettaglio degli utilizzi")}
+    `,
+    footerNote: "Le stime del tempo risparmiato sono indicative e calcolate sui tempi medi delle attività svolte manualmente.",
+    showPreferences: true,
+  });
 };
-
-const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
 
 export interface InternalPurchaseEmailData {
   customerEmail: string;
@@ -273,7 +154,7 @@ export interface InternalPurchaseEmailData {
 
 /** Notifica interna (contatti@jurio.it) per ogni nuovo acquisto. */
 export const generateInternalPurchaseNotificationEmail = (data: InternalPurchaseEmailData) => {
-  const rows: [string, string][] = [
+  const rows: Array<[string, string]> = [
     ["Cliente", data.customerEmail || "Email non disponibile"],
     ["UID", data.uid],
     ["Piano", data.planId || "Non disponibile"],
@@ -282,37 +163,14 @@ export const generateInternalPurchaseNotificationEmail = (data: InternalPurchase
     ["ID ordine", data.orderId],
     ["Data acquisto", data.dataAcquisto || "Non disponibile"],
     ["Scadenza", data.dataScadenza || "Non disponibile"],
-  ];
+  ].map(([label, value]) => [escapeHtml(label), escapeHtml(value)]);
 
-  return `
-  <!DOCTYPE html>
-  <html lang="it">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nuovo acquisto | Jurio</title>
-    <style>
-      ${emailStyles}
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header" style="text-align:center;">
-        <img src="https://jurio-it.web.app/image.png" alt="Jurio" style="max-width:120px; margin-bottom:15px;" />
-        <h1>Nuovo acquisto</h1>
-      </div>
-      <div class="feature">
-        <table style="width:100%; border-collapse:collapse;">
-          ${rows
-            .map(
-              ([label, value]) =>
-                `<tr><td style="padding:6px 8px; font-weight:bold; vertical-align:top;">${escapeHtml(label)}</td><td style="padding:6px 8px;">${escapeHtml(value)}</td></tr>`
-            )
-            .join("")}
-        </table>
-      </div>
-    </div>
-  </body>
-  </html>
-  `;
+  return renderEmailLayout({
+    title: "Nuovo acquisto | Jurio",
+    preheader: `Nuovo acquisto: ${data.planId || "piano"} · ${data.amountLabel}`,
+    eyebrow: "Notifica interna",
+    heading: "Nuovo acquisto",
+    body: detailsTable(rows),
+    signature: false,
+  });
 };

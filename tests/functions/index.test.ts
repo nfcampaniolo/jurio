@@ -40,6 +40,7 @@ const mocks = vi.hoisted(() => {
     "executeTasksDowngrade",
     "computeAndSaveWeeklyStats",
     "computeAndSaveMonthlyUsage",
+    "computeAndSaveMonthlyActivityReports",
     "executePayWithStripeCreateCheckoutSession",
     "executeStripeWebhook",
     "executeGetRegister",
@@ -151,6 +152,9 @@ vi.mock("../../functions/src/schedules/tasks.logic", () => ({
   executeTasksDowngrade: mocks.handlers.executeTasksDowngrade,
   computeAndSaveWeeklyStats: mocks.handlers.computeAndSaveWeeklyStats,
   computeAndSaveMonthlyUsage: mocks.handlers.computeAndSaveMonthlyUsage,
+}));
+vi.mock("../../functions/src/schedules/activityReports.logic", () => ({
+  computeAndSaveMonthlyActivityReports: mocks.handlers.computeAndSaveMonthlyActivityReports,
 }));
 vi.mock("../../functions/src/subscriptions/payments.logic", () => ({
   executePayWithStripeCreateCheckoutSession: mocks.handlers.executePayWithStripeCreateCheckoutSession,
@@ -320,7 +324,8 @@ describe("functions/src/index", () => {
     expect(monthly.options).toMatchObject({
       schedule: "0 2 1 * *",
       timeZone: "Europe/Rome",
-      timeoutSeconds: 300,
+      timeoutSeconds: 540,
+      memory: "1GiB",
       retryCount: 3,
     });
   });
@@ -381,5 +386,60 @@ describe("functions/src/index", () => {
     // Assert
     await expect(result).rejects.toBe(failure);
     expect(errorLog).toHaveBeenCalledWith("MONTHLY_USAGE_CONSOLIDATION_FAILED", { errorType: "Error" });
+  });
+
+  it("generates the activity reports after the monthly usage consolidation", async () => {
+    // Arrange
+    const order: string[] = [];
+    mocks.handlers.computeAndSaveMonthlyUsage.mockImplementationOnce(async () => {
+      order.push("usage");
+      return { utenti_processati: 2 };
+    });
+    mocks.handlers.computeAndSaveMonthlyActivityReports.mockImplementationOnce(async () => {
+      order.push("reports");
+      return {
+        mese_id: "2026_10",
+        conversazioni: { path: "reports/conversations/monthly/2026_10.json" },
+        deep_analysis: { path: "reports/deep_analysis/monthly/2026_10.json" },
+      };
+    });
+    const registration = functions.monthlyUsageStatsCron as unknown as { handler: (event: unknown) => Promise<void> };
+    const log = vi.spyOn(console, "log").mockImplementation(() => undefined);
+
+    // Act
+    await registration.handler({ scheduleTime: "2026-11-01T02:00:00Z" });
+
+    // Assert
+    expect(order).toEqual(["usage", "reports"]);
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("reports/deep_analysis/monthly/2026_10.json"));
+  });
+
+  it("logs activity report failures without rethrowing, so the retry does not resend usage emails", async () => {
+    // Arrange
+    mocks.handlers.computeAndSaveMonthlyUsage.mockResolvedValueOnce({ utenti_processati: 2 });
+    mocks.handlers.computeAndSaveMonthlyActivityReports.mockRejectedValueOnce(new Error("reports failed"));
+    const registration = functions.monthlyUsageStatsCron as unknown as { handler: (event: unknown) => Promise<void> };
+    vi.spyOn(console, "log").mockImplementation(() => undefined);
+    const errorLog = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    // Act
+    await registration.handler({ scheduleTime: "2026-11-01T02:00:00Z" });
+
+    // Assert
+    expect(errorLog).toHaveBeenCalledWith("MONTHLY_ACTIVITY_REPORTS_FAILED", { errorType: "Error" });
+  });
+
+  it("skips the activity reports when the usage consolidation fails", async () => {
+    // Arrange
+    mocks.handlers.computeAndSaveMonthlyUsage.mockRejectedValueOnce(new Error("usage failed"));
+    const registration = functions.monthlyUsageStatsCron as unknown as { handler: (event: unknown) => Promise<void> };
+    vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+    // Act
+    const result = registration.handler({});
+
+    // Assert
+    await expect(result).rejects.toThrow("usage failed");
+    expect(mocks.handlers.computeAndSaveMonthlyActivityReports).not.toHaveBeenCalled();
   });
 });

@@ -1,0 +1,16 @@
+[
+  {
+    "origin": [
+      "https://jurio.it",
+      "https://www.jurio.it",
+      "https://jurio-it.web.app",
+      "https://jurio-it.firebaseapp.com",
+      "https://jurio-it-dev.web.app",
+      "https://jurio-it-dev.firebaseapp.com",
+      "http://localhost:5173"
+    ],
+    "method": ["GET"],
+    "responseHeader": ["Content-Type", "Authorization"],
+    "maxAgeSeconds": 3600
+  }
+]

@@ -26,7 +26,7 @@ async function enqueuePurchaseEmailGeneric(args: EnqueuePurchaseEmailArgs): Prom
   const amountLabel = `${args.paidValue.toFixed(2)} ${args.paidCurrency}`;
 
   if (email) {
-    const subject = `Conferma Ordine Jurio - ${args.orderId}`;
+    const subject = `Conferma d'ordine Jurio n. ${args.orderId}`;
     const html = generatePurchaseEmail(email, planId, amountLabel, dataAcquisto, dataScadenza, args.orderId);
 
     await dispatchMailAndNotification({
@@ -98,7 +98,7 @@ export async function enqueueDowngradeEmail({ uid }: EnqueueEmailArgs): Promise<
   const user = await getAuthEmailAndName(uid, "DOWNGRADE");
   if (!user) return;
 
-  const subject = "Piano Jurio scaduto";
+  const subject = "Il tuo piano Jurio è scaduto";
   const html = generateDowngradeEmail(user.name);
 
   await dispatchMailAndNotification({
@@ -125,8 +125,8 @@ export async function enqueueMonthlyUsageEmail({
   const emailsArray = Array.isArray(email) ? email : [email];
 
   const subject = reportData.totalTimeSavedMinutes > 0
-    ? `Il tuo resoconto mensile su Jurio: hai risparmiato ${formatTimeSaved(reportData.totalTimeSavedMinutes)}!`
-    : `Il tuo resoconto mensile su Jurio`;
+    ? `Il tuo resoconto mensile Jurio: ${formatTimeSaved(reportData.totalTimeSavedMinutes)} di lavoro risparmiato`
+    : `Il tuo resoconto mensile Jurio`;
 
   const html = generateMonthlyReportEmail(reportData);
 

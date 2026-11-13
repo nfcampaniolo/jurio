@@ -273,6 +273,18 @@ mcpRouter.use(async (req, res) => {
 
     phases.push({ name: "token_validated", t: performance.now() });
 
+    // Server stateless: niente stream SSE di notifiche (GET) né sessioni da chiudere (DELETE).
+    // Senza questo 405 la GET restava aperta fino al timeout di 300s, tenendo l'istanza occupata e fatturata.
+    if (req.method === "GET" || req.method === "DELETE") {
+      res.set("Allow", "POST, OPTIONS");
+      res.status(405).json({
+        jsonrpc: "2.0",
+        error: { code: -32000, message: "Method not allowed: questo server MCP è stateless e accetta solo POST." },
+        id: null,
+      });
+      return;
+    }
+
     const mcpAuthHeader = `Bearer ${token}`;
     const server = createMcpServer(mcpAuthHeader);
 

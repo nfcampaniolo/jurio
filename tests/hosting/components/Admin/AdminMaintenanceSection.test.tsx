@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import React from "react";
 
 /* ---------- mock lucide-react ---------- */
@@ -7,6 +7,24 @@ vi.mock("lucide-react", () => ({
   Loader2: (props: React.SVGProps<SVGSVGElement>) => (
     <svg data-testid="loader2-icon" {...props} />
   ),
+  Download: (props: React.SVGProps<SVGSVGElement>) => (
+    <svg data-testid="download-icon" {...props} />
+  ),
+}));
+
+/* ---------- mock download report e toast ---------- */
+const mockDownloadLatestAdminReport = vi.fn();
+const mockToastSuccess = vi.fn();
+const mockToastError = vi.fn();
+vi.mock("react-hot-toast", () => ({
+  toast: {
+    success: (...args: unknown[]) => mockToastSuccess(...args),
+    error: (...args: unknown[]) => mockToastError(...args),
+  },
+}));
+vi.mock("@/features/admin/hooks/admin", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/features/admin/hooks/admin")>()),
+  downloadLatestAdminReport: (...args: unknown[]) => mockDownloadLatestAdminReport(...args),
 }));
 
 /* ---------- component ---------- */
@@ -211,5 +229,51 @@ describe("AdminMaintenanceSection", () => {
     // Nessun contatore scansionati o statistiche finali
     expect(screen.queryByText("Scansionati:")).not.toBeInTheDocument();
     expect(screen.queryByText(/Task concluso/i)).not.toBeInTheDocument();
+  });
+
+  test("mostra un pulsante di download per ogni tipologia di report e scarica l'ultimo disponibile", async () => {
+    mockDownloadLatestAdminReport.mockResolvedValueOnce("jurio_report_conversations_2026_10.json");
+    render(
+      <AdminMaintenanceSection
+        maintenanceParams={defaultParams}
+        isUpdating={false}
+        progressData={null}
+        onParamChange={mockOnParamChange}
+        onMaintenanceSubmit={mockOnMaintenanceSubmit}
+      />
+    );
+
+    expect(screen.getByText("Report mensili")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Scarica ultimo report Utilizzi" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Scarica ultimo report Deep Analysis" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Scarica ultimo report Chat e fascicoli" }));
+
+    expect(screen.getByText("Download in corso...")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Scarica ultimo report Utilizzi" })).toBeDisabled();
+    await waitFor(() =>
+      expect(mockToastSuccess).toHaveBeenCalledWith("Report scaricato: jurio_report_conversations_2026_10.json")
+    );
+    expect(mockDownloadLatestAdminReport).toHaveBeenCalledWith("conversations");
+    expect(screen.getByRole("button", { name: "Scarica ultimo report Utilizzi" })).not.toBeDisabled();
+  });
+
+  test("mostra un errore se il download del report fallisce", async () => {
+    mockDownloadLatestAdminReport.mockRejectedValueOnce(new Error("Nessun report disponibile per questa tipologia."));
+    render(
+      <AdminMaintenanceSection
+        maintenanceParams={defaultParams}
+        isUpdating={false}
+        progressData={null}
+        onParamChange={mockOnParamChange}
+        onMaintenanceSubmit={mockOnMaintenanceSubmit}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Scarica ultimo report Deep Analysis" }));
+
+    await waitFor(() =>
+      expect(mockToastError).toHaveBeenCalledWith("Nessun report disponibile per questa tipologia.")
+    );
   });
 });

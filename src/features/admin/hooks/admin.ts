@@ -115,6 +115,76 @@ export async function executeAdminMaintenanceTask(
 }
 
 // -----------------------------------------------------------------------------
+// ADMIN REPORT DOWNLOAD
+// -----------------------------------------------------------------------------
+
+export type AdminReportType = "usage" | "conversations" | "deep_analysis";
+
+export const ADMIN_REPORT_OPTIONS: ReadonlyArray<{
+  type: AdminReportType;
+  label: string;
+  description: string;
+}> = [
+  { type: "usage", label: "Utilizzi", description: "Utilizzi aggregati per servizio" },
+  { type: "conversations", label: "Chat e fascicoli", description: "Conversazioni del mese per utente" },
+  { type: "deep_analysis", label: "Deep Analysis", description: "Sessioni di analisi approfondita" },
+];
+
+const REPORT_FILE = /^(\d{4}_\d{2})\.json$/;
+
+/**
+ * Scarica l'ultimo report mensile disponibile per la tipologia indicata (reports/{tipo}/monthly/{YYYY_MM}.json).
+ * Accesso garantito dalle regole di Storage (solo admin). Si usa getBlob e non getDownloadURL:
+ * quest'ultimo genera un link con token che resterebbe accessibile a chiunque lo possieda.
+ * Richiede la configurazione CORS del bucket (cors.json nella root del progetto).
+ */
+export async function downloadLatestAdminReport(type: AdminReportType): Promise<string> {
+  try {
+    return await fetchAndSaveLatestReport(type);
+  } catch (error) {
+    if ((error as { code?: string })?.code === "storage/unauthorized") {
+      throw new Error("Accesso ai report riservato agli amministratori.");
+    }
+    throw error;
+  }
+}
+
+async function fetchAndSaveLatestReport(type: AdminReportType): Promise<string> {
+  const { getStorageClient } = await import("@/infrastructure/storageClient");
+  const { ref, list, getBlob } = await import("firebase/storage");
+  const storage = await getStorageClient();
+
+  const folder = `reports/${type}/monthly`;
+  const months: string[] = [];
+  let pageToken: string | undefined;
+  do {
+    const page = await list(ref(storage, folder), { maxResults: 1000, pageToken });
+    months.push(...page.items.map((item) => item.name).filter((name) => REPORT_FILE.test(name)));
+    pageToken = page.nextPageToken;
+  } while (pageToken);
+
+  const latest = months.sort().at(-1);
+  if (!latest) {
+    throw new Error("Nessun report disponibile per questa tipologia.");
+  }
+
+  const blob = await getBlob(ref(storage, `${folder}/${latest}`));
+  const fileName = `jurio_report_${type}_${latest}`;
+
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  // Revoca differita: alcuni browser annullano il download se l'URL viene revocato subito
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+  return fileName;
+}
+
+// -----------------------------------------------------------------------------
 // ADMIN MERGE CATEGORY
 // -----------------------------------------------------------------------------
 

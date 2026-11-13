@@ -140,6 +140,21 @@ describe("mcpRouter", () => {
     expect(consoleError).toHaveBeenCalledOnce();
   });
 
+  it.each(["GET", "DELETE"])("answers authenticated %s requests with 405 without opening a stream", async (method) => {
+    const res = makeResponse();
+    mocks.tokenGet.mockResolvedValue({
+      exists: true,
+      data: () => ({ user: "user", expiresAt: { toDate: () => new Date(Date.now() + 60_000) } }),
+    });
+
+    await routeMiddleware()({ method, headers: { authorization: `Bearer ${"f".repeat(64)}` } }, res);
+
+    expect(res.status).toHaveBeenCalledWith(405);
+    expect(res.set).toHaveBeenCalledWith("Allow", "POST, OPTIONS");
+    expect(mocks.createMcpServer).not.toHaveBeenCalled();
+    expect(mocks.handleRequest).not.toHaveBeenCalled();
+  });
+
   it("returns an internal error when Firestore or the MCP transport fails", async () => {
     const res = makeResponse();
     mocks.tokenGet.mockRejectedValue(new Error("database unavailable"));

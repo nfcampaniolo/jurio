@@ -38,8 +38,8 @@ describe("comms email logic", () => {
   });
 
   describe.each([
-    ["enqueueWelcomeEmail", enqueueWelcomeEmail, "Benvenuto su Jurio", "account", "Benvenuto su Jurio!", "Siamo felici di averti a bordo. Inizia subito a esplorare la piattaforma.", mocks.welcomeHtml],
-    ["enqueueTrialEmail", enqueueTrialEmail, "Periodo di Prova Jurio", "billing", "Periodo di Prova Attivo", "Hai iniziato il tuo periodo di prova gratuito. Goditi tutte le funzionalità premium!", mocks.trialHtml],
+    ["enqueueWelcomeEmail", enqueueWelcomeEmail, "Benvenuto in Jurio", "account", "Benvenuto su Jurio!", "Siamo felici di averti a bordo. Inizia subito a esplorare la piattaforma.", mocks.welcomeHtml],
+    ["enqueueTrialEmail", enqueueTrialEmail, "La tua prova gratuita di Jurio è attiva", "billing", "Periodo di Prova Attivo", "Hai iniziato il tuo periodo di prova gratuito. Goditi tutte le funzionalità premium!", mocks.trialHtml],
   ])("%s", (_name, enqueue, subject, type, title, message, htmlGenerator) => {
     it("usa il nome ripulito e invia email e notifica", async () => {
       // Arrange
@@ -118,7 +118,7 @@ describe("comms email logic", () => {
     expect(mocks.dispatch).toHaveBeenCalledWith({
       to: "ada@example.com",
       cc: "contatti@jurio.it",
-      subject: "Richiesta Jurio: T-42",
+      subject: "Richiesta di assistenza ricevuta – ticket #T-42",
       html: "<request>Ada|T-42|Problema accesso|Non riesco ad accedere</request>",
     });
     expect(mocks.getUser).not.toHaveBeenCalled();

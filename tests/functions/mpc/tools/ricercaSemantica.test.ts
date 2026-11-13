@@ -31,7 +31,25 @@ describe("registerRicercaSemantica", () => {
       "Bearer search-token",
       { query: "caduta e responsabilità civile", limit: 4 }
     );
-    expect(result.content[0].text).toBe("formatted:one\n\n---\n\nformatted:two");
+    expect(result.content[0].text).toBe(
+      "Trovati 2 risultati sopra la soglia di pertinenza (richiesti: 4).\n\nformatted:one\n\n---\n\nformatted:two"
+    );
+  });
+
+  it("omits the header when the requested number of results is reached and fills with partial matches", async () => {
+    const { handler } = setup();
+    mocks.mcpFetch.mockResolvedValue({
+      data: { topMatches: [{ id: "one" }, { id: "two" }], allMatches: [{ id: "three" }, { id: "four" }] },
+    });
+
+    const result = await handler({ query: "caduta pedone dislivello marciapiede", limit: 3 });
+
+    const blocks = result.content[0].text.split("\n\n---\n\n");
+    expect(blocks).toHaveLength(3);
+    expect(blocks[0]).toBe("formatted:one");
+    expect(blocks[2]).toContain("formatted:three");
+    expect(blocks[2]).toContain("PERTINENZA: parziale");
+    expect(result.content[0].text).not.toContain("Trovati");
   });
 
   it("uses the default limit and caps an oversized direct invocation", async () => {

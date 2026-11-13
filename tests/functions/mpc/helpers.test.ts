@@ -176,6 +176,9 @@ describe("MPC helpers", () => {
 
     it("omits blank optional text and formats doctrine defaults and cited statutes", () => {
       expect(formatDocument({ massima: "  ", fattispecie_rilevante: "\t" })).not.toContain("MASSIMA:");
+      expect(formatDocument({ tipo_documento: "ordinanza", organo_giudicante: "CORTE DI CASSAZIONE", numero_sentenza: " " }))
+        .toContain("DOCUMENTO: ordinanza CORTE DI CASSAZIONE, N. n.d.");
+      expect(formatDocument({})).toContain("DOCUMENTO: Provvedimento, N. n.d.");
       const result = formatDoctrineDocument({
         norme_citate: ["art. 1 c.c.", "art. 2 Cost."],
         url_pdf: "  https://jurio.it/doc.pdf  ",

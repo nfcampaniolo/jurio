@@ -24,7 +24,7 @@ describe("plans email HTML", () => {
     expect(result).toContain("<title>Piano scaduto | Jurio</title>");
     expect(result).toContain(`Ciao ${name},`);
     expect(result).toContain("piano gratuito");
-    expect(result).toContain("https://jurio.it/pricing");
+    expect(result).toContain("https://jurio.it/prezzi");
   });
 
   it("include i dettagli essenziali dell'acquisto senza righe opzionali", () => {
@@ -40,8 +40,8 @@ describe("plans email HTML", () => {
     expect(result).toContain("Premium");
     expect(result).toContain("19.99 EUR");
     expect(result).toContain("ORDER-42");
-    expect(result).not.toContain("ID transazione:");
-    expect(result).not.toContain("Metodo di pagamento:");
+    expect(result).not.toContain("ID transazione");
+    expect(result).not.toContain("Metodo di pagamento");
     expect(result).not.toContain("Apri ricevuta");
     expect(result).not.toContain("Apri fattura");
   });
@@ -57,10 +57,10 @@ describe("plans email HTML", () => {
     const result = generatePurchaseEmail(...args);
 
     // Assert
-    expect(result).toContain("ID transazione:</strong> TX-9");
-    expect(result).toContain("Metodo di pagamento:</strong> PayPal");
-    expect(result).toContain('<a href="https://example.com/receipt">Apri ricevuta</a>');
-    expect(result).toContain('<a href="https://example.com/invoice">Apri fattura</a>');
+    expect(result).toMatch(/ID transazione<\/td>\s*<td[^>]*>TX-9<\/td>/);
+    expect(result).toMatch(/Metodo di pagamento<\/td>\s*<td[^>]*>PayPal<\/td>/);
+    expect(result).toMatch(/<a href="https:\/\/example.com\/receipt"[^>]*>Apri ricevuta<\/a>/);
+    expect(result).toMatch(/<a href="https:\/\/example.com\/invoice"[^>]*>Apri fattura<\/a>/);
   });
 
   it("mostra le sole attività usate e il blocco prompting quando è attivo", () => {
@@ -82,11 +82,12 @@ describe("plans email HTML", () => {
     // Assert
     expect(result).toContain("settembre 2026");
     expect(result).toContain("1,4 ore");
-    expect(result).toContain("Ricerca Giurisprudenziale");
-    expect(result).toContain("Ricerca Giurisprudenziale Approfondita");
-    expect(result).toContain("Sintesi e Drafting");
+    expect(result).toContain("Ricerca giurisprudenziale");
+    expect(result).toContain("Ricerca giurisprudenziale approfondita");
+    expect(result).toContain("Sintesi e redazione");
+    expect(result).toContain("https://jurio.it/profilo/utilizzi");
     expect(result).toContain("prompting libero");
-    expect(result).not.toContain("Analisi Documentale");
+    expect(result).not.toContain("Analisi documentale");
   });
 
   it("omette attività non usate e il blocco prompting quando i conteggi sono zero", () => {
@@ -108,9 +109,10 @@ describe("plans email HTML", () => {
     // Assert
     expect(result).toContain("ottobre 2026");
     expect(result).toContain("0 minuti");
-    expect(result).not.toContain("Ricerca Giurisprudenziale");
-    expect(result).not.toContain("Analisi Documentale");
-    expect(result).not.toContain("Sintesi e Drafting");
+    expect(result).not.toContain("Ricerca giurisprudenziale");
+    expect(result).not.toContain("Analisi documentale");
+    expect(result).not.toContain("Sintesi e redazione");
+    expect(result).not.toContain("Dettaglio delle attività");
     expect(result).not.toContain("prompting libero");
   });
 

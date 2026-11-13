@@ -31,7 +31,7 @@ export function registerRicercaSemantica(server: McpServer, authHeader: string):
     },
     async ({ query, limit }) => {
       const safeLimit = Math.min(limit ?? 10, 15);
-      const res = await mcpFetch<{ topMatches?: JurioDocument[] }>(
+      const res = await mcpFetch<{ topMatches?: JurioDocument[]; allMatches?: JurioDocument[] }>(
         JURIO_VECTOR_SEARCH_URL,
         authHeader,
         { query, limit: safeLimit }
@@ -41,12 +41,25 @@ export function registerRicercaSemantica(server: McpServer, authHeader: string):
         return { content: [{ type: "text", text: res.errorText }], isError: res.isError };
       }
 
-      const matches = res.data?.topMatches ?? [];
-      if (matches.length === 0) {
+      // topMatches: contengono la maggior parte delle parole chiave della query.
+      // allMatches: semanticamente vicini (sopra la soglia di similarità) ma con corrispondenza lessicale parziale.
+      const top = res.data?.topMatches ?? [];
+      const partial = (res.data?.allMatches ?? []).slice(0, Math.max(0, safeLimit - top.length));
+      if (top.length === 0 && partial.length === 0) {
         return { content: [{ type: "text", text: "Nessuna sentenza pertinente trovata per questo quesito." }] };
       }
 
-      const formatted = matches.map((m) => formatDocument(m)).join("\n\n---\n\n");
+      const blocks = [
+        ...top.map((m) => formatDocument(m)),
+        ...partial.map(
+          (m) => `${formatDocument(m)}\nPERTINENZA: parziale (non tutte le parole chiave del quesito compaiono nel documento).`
+        ),
+      ];
+      const totale = blocks.length;
+      const header = totale < safeLimit
+        ? `Trovati ${totale} ${totale === 1 ? "risultato" : "risultati"} sopra la soglia di pertinenza (richiesti: ${safeLimit}).\n\n`
+        : "";
+      const formatted = header + blocks.join("\n\n---\n\n");
       return { content: [{ type: "text", text: formatted }] };
     }
   );

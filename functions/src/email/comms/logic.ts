@@ -6,7 +6,7 @@ export async function enqueueWelcomeEmail({ uid }: EnqueueEmailArgs): Promise<vo
   const user = await getAuthEmailAndName(uid, "WELCOME");
   if (!user) return;
 
-  const subject = "Benvenuto su Jurio";
+  const subject = "Benvenuto in Jurio";
   const html = generateWelcomeEmail(user.name);
 
   await dispatchMailAndNotification({
@@ -27,7 +27,7 @@ export async function enqueueTrialEmail({ uid }: EnqueueEmailArgs): Promise<void
   const user = await getAuthEmailAndName(uid, "TRIAL");
   if (!user) return;
 
-  const subject = "Periodo di Prova Jurio";
+  const subject = "La tua prova gratuita di Jurio è attiva";
   const html = generateTrialEmail(user.name);
 
   await dispatchMailAndNotification({
@@ -45,7 +45,7 @@ export async function enqueueTrialEmail({ uid }: EnqueueEmailArgs): Promise<void
 }
 
 export async function enqueueContactEmail({ nome, id, subject, message, email }: EnqueueEmailArgsContact): Promise<void> {
-  const oggetto = "Richiesta Jurio: "+id;
+  const oggetto = `Richiesta di assistenza ricevuta – ticket #${id}`;
   const html = generateRequestEmail(nome, id, subject, message);
   
   await dispatchMailAndNotification({

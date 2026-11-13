@@ -1,6 +1,8 @@
-import React from "react";
-import type { AdminMaintenanceParams, MaintenanceProgressData } from "../hooks/admin";
-import { Loader2 } from "lucide-react";
+import React, { useState } from "react";
+import { toast } from "react-hot-toast";
+import type { AdminMaintenanceParams, AdminReportType, MaintenanceProgressData } from "../hooks/admin";
+import { ADMIN_REPORT_OPTIONS, downloadLatestAdminReport } from "../hooks/admin";
+import { Download, Loader2 } from "lucide-react";
 
 interface AdminMaintenanceSectionProps {
   maintenanceParams: AdminMaintenanceParams;
@@ -17,6 +19,20 @@ export const AdminMaintenanceSection: React.FC<AdminMaintenanceSectionProps> = (
   onParamChange,
   onMaintenanceSubmit,
 }) => {
+  const [downloadingReport, setDownloadingReport] = useState<AdminReportType | null>(null);
+
+  const handleReportDownload = async (type: AdminReportType) => {
+    setDownloadingReport(type);
+    try {
+      const fileName = await downloadLatestAdminReport(type);
+      toast.success(`Report scaricato: ${fileName}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Download del report non riuscito.");
+    } finally {
+      setDownloadingReport(null);
+    }
+  };
+
   return (
     <section
       id="admin-maintenance-section"
@@ -126,6 +142,40 @@ export const AdminMaintenanceSection: React.FC<AdminMaintenanceSectionProps> = (
             {isUpdating && <Loader2 size={14} className="animate-spin" />}
             <span>{isUpdating ? "Esecuzione in corso..." : "Avvia Manutenzione"}</span>
           </button>
+        </div>
+
+        <div className="pt-6 border-t border-(--color-border)">
+          <h3 className="font-bold text-[10px] uppercase tracking-widest text-(--color-text)">
+            Report mensili
+          </h3>
+          <p className="text-xs sm:text-sm text-(--color-muted) font-light mt-1.5 leading-relaxed">
+            Scarica l&apos;ultimo report disponibile per ogni tipologia (JSON, accesso riservato agli admin).
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-4">
+            {ADMIN_REPORT_OPTIONS.map(({ type, label, description }) => {
+              const isDownloading = downloadingReport === type;
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => handleReportDownload(type)}
+                  disabled={downloadingReport !== null}
+                  aria-label={`Scarica ultimo report ${label}`}
+                  className="group flex items-start gap-3 px-4 py-3 rounded-md border border-(--color-border) bg-(--color-bg) text-left hover:border-(--color-primary) disabled:opacity-50 disabled:cursor-not-allowed transition-colors outline-none"
+                >
+                  <span className="mt-0.5 text-(--color-primary)">
+                    {isDownloading ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                  </span>
+                  <span className="flex flex-col">
+                    <span className="text-xs sm:text-sm font-semibold text-(--color-text)">{label}</span>
+                    <span className="text-[11px] sm:text-xs text-(--color-muted) font-light">
+                      {isDownloading ? "Download in corso..." : description}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {progressData && (
