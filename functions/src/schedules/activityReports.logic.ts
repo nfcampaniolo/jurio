@@ -260,7 +260,7 @@ export async function buildConversationsReport(range: MonthRange) {
     });
   }
 
-  const uids = Object.keys(byUser).sort();
+  const uids = Object.keys(byUser).sort((a, b) => a.localeCompare(b));
   const plans = await getUserPlans(uids);
   const firstMessageTime = (entry: Record<string, Plain>) => {
     const msgs = (entry.messaggi ?? (entry.thread as Record<string, Plain>[] | undefined)?.[0]?.messaggi) as
@@ -412,7 +412,7 @@ export async function buildDeepAnalysisReport(range: MonthRange) {
     (byUser[uid] ??= []).push(mapDeepAnalysisSession(doc.id, data, nowMs));
   }
 
-  const uids = Object.keys(byUser).sort();
+  const uids = Object.keys(byUser).sort((a, b) => a.localeCompare(b));
   const plans = await getUserPlans(uids);
   const perStato: Record<string, number> = {};
   const perAnomalia: Record<string, number> = {};
