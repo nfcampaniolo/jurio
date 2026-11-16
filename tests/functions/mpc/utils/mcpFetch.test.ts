@@ -113,16 +113,46 @@ describe("mcpFetch", () => {
     expect(fetchMock).toHaveBeenCalledOnce();
   });
 
-  it("reports a timeout after the last attempt", async () => {
+  it("does not retry after a timeout, since the backend is still processing the request", async () => {
     const timeout = Object.assign(new Error("The operation was aborted due to timeout"), { name: "TimeoutError" });
     const fetchMock = vi.fn().mockRejectedValue(timeout);
     vi.stubGlobal("fetch", fetchMock);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const result = await mcpFetch("https://backend.example", "", {}, { retryDelayMs: 0 });
 
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledOnce();
     expect(result.errorText).toContain("non ha risposto in tempo");
     expect(result.isError).toBe(true);
+    expect(warn).toHaveBeenCalledWith("MCP_BACKEND_CALL_FAILED", expect.objectContaining({ reason: "timeout" }));
+  });
+
+  it("shares a single deadline across attempts and skips a retry that cannot fit in it", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchMock = vi.fn().mockImplementation(async () => {
+        vi.advanceTimersByTime(38_000);
+        return { status: 503, ok: false, statusText: "Unavailable", json: vi.fn().mockResolvedValue({}) };
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await mcpFetch("https://backend.example", "", {}, { retryDelayMs: 0 });
+
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(result.errorText).toContain("temporaneamente non disponibile (503)");
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("passes the remaining budget as the abort timeout of each attempt", async () => {
+    const timeoutSpy = vi.spyOn(AbortSignal, "timeout");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ status: 200, ok: true, json: vi.fn().mockResolvedValue({}) }));
+
+    await mcpFetch("https://backend.example", "", {});
+
+    expect(timeoutSpy.mock.calls[0][0]).toBeGreaterThan(39_000);
+    expect(timeoutSpy.mock.calls[0][0]).toBeLessThanOrEqual(40_000);
   });
 
   it("uses an error field from valid JSON for unsuccessful backend responses", async () => {

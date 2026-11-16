@@ -77,4 +77,36 @@ describe("registerRicercaSemantica", () => {
     const empty = await handler({ query: "questione di diritto" });
     expect(empty.content[0].text).toContain("Nessuna sentenza pertinente");
   });
+
+  it("sends the sezione filter to the backend and mentions it when nothing is found", async () => {
+    const { handler } = setup();
+    mocks.mcpFetch.mockResolvedValue({ data: { topMatches: [] } });
+
+    const result = await handler({ query: "colpa medica nesso causale", sezione: "QUARTA SEZIONE PENALE" });
+
+    expect(mocks.mcpFetch).toHaveBeenCalledWith(JURIO_VECTOR_SEARCH_URL, "Bearer search-token", {
+      query: "colpa medica nesso causale",
+      limit: 10,
+      filters: [{ field: "sezione", operator: "==", value: "QUARTA SEZIONE PENALE" }],
+    });
+    expect(result.content[0].text).toContain("sezione = QUARTA SEZIONE PENALE");
+    expect(result.content[0].text).toContain("senza filtro");
+  });
+
+  it("exposes the section legend with exact uppercase values in the input schema", () => {
+    const { server } = setup();
+    const config = server.registerTool.mock.calls[0][1] as {
+      inputSchema: { sezione: { description: string; safeParse: (v: unknown) => { success: boolean } } };
+    };
+    const accepts = (v: unknown) => config.inputSchema.sezione.safeParse(v).success;
+
+    expect(accepts("PRIMA SEZIONE CIVILE")).toBe(true);
+    expect(accepts("SEZIONE VII")).toBe(true);
+    expect(accepts("SEZIONE FERIALE PENALE")).toBe(true);
+    expect(accepts(undefined)).toBe(true);
+    expect(accepts("PLENARIA")).toBe(true);
+    expect(accepts("ADUNANZA PLENARIA")).toBe(false);
+    expect(config.inputSchema.sezione.description).toContain("- SEZIONE V: appalti e contratti pubblici");
+    expect(accepts("Prima Sezione Civile")).toBe(false);
+  });
 });
