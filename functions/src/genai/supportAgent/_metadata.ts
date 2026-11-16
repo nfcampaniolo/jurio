@@ -1,7 +1,7 @@
 import { getDb } from "../../_deps";
 import { estraiMetadatiFlow } from "./flow";
 import { MessageDoc, FascicoloDoc, ExtractedMetadataItem, EstraiMetadatiResult } from "../_interfaces";
-import { withPseudonymization } from "../../privacy/pseudonymization";
+import { restoreForStorage, withPseudonymization } from "../../privacy/pseudonymization";
 
 const db = getDb();
 const MAX_CONTEXT_CHARS = 40_000;
@@ -21,11 +21,14 @@ export async function extractAndSaveFascicoloMetadata(
   const fascicoloData = fascicoloSnap.data() as FascicoloDoc;
   const metadatiAttuali = fascicoloData.metadati || {};
 
+  // Il ripristino va fatto dentro lo stesso contesto: fuori, il vault di questa estrazione è già stato svuotato
+  // e un vault esterno potrebbe associare lo stesso segnaposto a un'altra persona.
   const result = (await withPseudonymization(
     { chatContext, metadatiAttuali },
-    () => estraiMetadatiFlow({ chatContext, metadatiAttuali })
+    async () => restoreForStorage(await estraiMetadatiFlow({ chatContext, metadatiAttuali }), "fascicolo.metadati")
   )) as EstraiMetadatiResult;
 
+  // I metadati del fascicolo si salvano con i nomi originali.
   const estratti = result.dati_nuovi_o_aggiornati || [];
   if (!Array.isArray(estratti) || estratti.length === 0) return 0;
 

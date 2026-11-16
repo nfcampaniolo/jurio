@@ -159,7 +159,7 @@ C. REGOLE PER ATTI E PARERI (sottotipo: "memoria", "parere"):
 - Compila "fatti" (circostanze esposte), "nucleo" (argomentazione giuridica centrale/tesi sostenuta) e "conclusioni" (richieste finali o esito del parere).
 
 D. REGOLE PER DOCUMENTI DI SUPPORTO/PROVE (sottotipo: "fattura", "mail", "perizia", "altro"):
-- Compila "sintesi" (descrizione generale del documento), "mittente" e "destinatario" (anonimizzati o descritti per ruolo, es. "Fornitore", "Società Cliente"), "importo" (se presente, estrai il valore numerico totale, altrimenti null), "data_riferimento_documento" (formato YYYY-MM-DD).
+- Compila "sintesi" (descrizione generale del documento), "mittente" e "destinatario" (riporta il nome o il segnaposto esattamente come appare nel testo, es. "{NOME_1}" o "Edilnord Srl"; usa il ruolo, es. "Fornitore", solo se il nome non è indicato), "importo" (se presente, estrai il valore numerico totale, altrimenti null), "data_riferimento_documento" (formato YYYY-MM-DD).
 
 GESTIONE CAMPI NON RICAVABILI (OBBLIGATORIA):
 - Se un campo stringa non è ricavabile: usa "".
@@ -215,7 +215,7 @@ LINEE GUIDA CAMPI PER DOCUMENTI GENERICI:
 - nucleo: fulcro logico o tesi giuridica sostenuta dall'autore del documento.
 - conclusioni: le richieste al giudice o il responso finale.
 - sintesi: contenuto essenziale per mail, fatture o perizie.
-- mittente / destinatario: chi invia/riceve (anonimizzato in ruoli).
+- mittente / destinatario: chi invia/riceve, riportando il nome o il segnaposto ({NOME_n}) esattamente come appare nel testo; il ruolo solo se il nome manca.
 - importo: valore numerico (es. 1500.50), null se non presente.
 - data_riferimento_documento: data del documento generico (YYYY-MM-DD).
 

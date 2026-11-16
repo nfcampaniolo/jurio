@@ -4,6 +4,7 @@ import { getKeywordStems, calculateMatchScore, applyHighlight } from "../../rese
 import { incrementRagCounter } from "../_utils";
 import { validateUserPlanAndLimits } from "../../_utils";
 import { logSafeError } from "../../_logging";
+import { pseudonymizeOutbound } from "../../privacy/pseudonymization";
 
 export async function safeIncrementRagCounter(
   collection: string,
@@ -35,6 +36,8 @@ const embeddingRequests = new Map<string, Promise<number[]>>();
 let openAIClient: OpenAI | undefined;
 
 export async function createEmbedding(text: string): Promise<number[]> {
+  // Il testo va a OpenAI: i dati personali della richiesta corrente vengono sostituiti dai segnaposto.
+  text = pseudonymizeOutbound(text);
   const cacheKey = text.trim().toLowerCase();
   const cached = embeddingCache.get(cacheKey);
   if (cached) {

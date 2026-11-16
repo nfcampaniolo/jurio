@@ -3,6 +3,7 @@ import * as admin from "firebase-admin";
 import { getDb, sanitize } from "../../_deps";
 import { FieldValue } from "firebase-admin/firestore";
 import { logSafeError } from "../../_logging";
+import { restoreForStorage } from "../../privacy/pseudonymization";
 
 const db = getDb();
 
@@ -49,6 +50,8 @@ export async function persistLegalAgentConversation(args: {
 }): Promise<void> {
   const batch = db.batch();
   const FieldValue = admin.firestore.FieldValue;
+  // Su Firestore vanno sempre i dati originali, mai i segnaposto inviati al modello.
+  const result = restoreForStorage(args.result, "legalAgent.conversation");
 
   // Timestamp distinti: con lo stesso serverTimestamp l'ordinamento "desc" tra user e model è casuale
   const nowMs = Date.now();
@@ -60,8 +63,8 @@ export async function persistLegalAgentConversation(args: {
 
   batch.set(args.messagesRef.doc(), {
     role: "model",
-    content: String(args.result?.risposta ?? ""),
-    sources: Array.isArray(args.result?.fonti) ? args.result.fonti : [],
+    content: String(result?.risposta ?? ""),
+    sources: Array.isArray(result?.fonti) ? result.fonti : [],
     timestamp: admin.firestore.Timestamp.fromMillis(nowMs + 1),
   });
 
@@ -72,11 +75,11 @@ export async function persistLegalAgentConversation(args: {
     updatedAt: FieldValue.serverTimestamp(),
   };
 
-  if (args.isFirstMessage && args.result?.titoloGenerato) {
+  if (args.isFirstMessage && result?.titoloGenerato) {
     if (args.isFascicolo && args.threadId) {
       const threadRef = db.collection("fascicoli").doc(args.parentId).collection("threads").doc(args.threadId);
       batch.set(threadRef, {
-        title: String(args.result.titoloGenerato),
+        title: String(result.titoloGenerato),
         updatedAt: FieldValue.serverTimestamp(),
       }, { merge: true });
 
@@ -84,7 +87,7 @@ export async function persistLegalAgentConversation(args: {
         parentUpdate.title = args.contextTitle.trim();
       }
     } else {
-      parentUpdate.title = String(args.result.titoloGenerato);
+      parentUpdate.title = String(result.titoloGenerato);
     }
   }
 

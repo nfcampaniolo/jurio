@@ -5,6 +5,7 @@ import { safeIncrementRagCounter, createResearchEmbedding } from "./_helper";
 import { getSafeLimit, normalizeQuery, getHostname, isSafeHttpUrl, getDistance, normalizePrecedenti, serializeFirestoreDate } from "./_utils";
 import { getDb } from "../../_deps";
 import { logSafeError } from "../../_logging";
+import { stripPersonalDataForSearch } from "../../privacy/pseudonymization";
 
 const db = getDb();
 
@@ -59,7 +60,8 @@ export const webSearch = ai.defineTool(
         },
         body: JSON.stringify({
           api_key: apiKey,
-          query: normalizeQuery(input.query),
+          // Tavily è un servizio esterno: i dati personali vengono rimossi dalla query.
+          query: normalizeQuery(stripPersonalDataForSearch(input.query)),
           search_depth: "basic",
           include_domains: domains,
           max_results: webLimit,

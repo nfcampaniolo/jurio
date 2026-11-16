@@ -4,6 +4,10 @@ import {
   pseudonymizeGenkit,
   PseudonymizationVault,
   withPseudonymization,
+  containsPseudonymTokens,
+  pseudonymizeOutbound,
+  restoreForStorage,
+  stripPersonalDataForSearch,
 } from "@functions/privacy/pseudonymization";
 
 describe("PseudonymizationVault", () => {
@@ -129,8 +133,174 @@ describe("PseudonymizationVault", () => {
         })
     );
 
-    expect(generate.mock.calls[0][0].prompt).toBe("Contatta {EMAIL_1}");
-    expect(result.text).toBe("Contatta mario.rossi@email.it");
-    expect(streamedChunks).toEqual([{ text: "Contatta mario.rossi@email.it" }]);
+    expect(generate.mock.calls[0][0].prompt).toMatch(/^Contatta \{EMAIL_1\}\n\n\[NOTA PRIVACY\]/);
+    expect(result.text).toMatch(/^Contatta mario\.rossi@email\.it\n\n\[NOTA PRIVACY\]/);
+    expect(streamedChunks).toHaveLength(1);
+    expect(streamedChunks[0].text).toMatch(/^Contatta mario\.rossi@email\.it/);
+  });
+
+  it("does not add the placeholder instruction when the request has no personal data", async () => {
+    const generate = vi.fn(async (request: { prompt: string }) => ({ text: request.prompt }));
+    const ai = pseudonymizeGenkit({ generate });
+
+    await withPseudonymization({}, () => ai.generate({ prompt: "Che cos'è l'art. 2043 c.c.?" }));
+
+    expect(generate.mock.calls[0][0].prompt).toBe("Che cos'è l'art. 2043 c.c.?");
+  });
+
+  it("restores class instances returned by Genkit (getters read the restored content)", async () => {
+    class FakeMessage {
+      constructor(public role: string, public content: Array<{ text?: string; toolRequest?: unknown }>) {}
+      get text() {
+        return this.content.map((part) => part.text ?? "").join("");
+      }
+    }
+    class FakeResponse {
+      constructor(public message: FakeMessage) {}
+      get text() {
+        return this.message.text;
+      }
+      get toolRequests() {
+        return this.message.content.filter((part) => part.toolRequest);
+      }
+    }
+    const generate = vi.fn(async (request: { prompt: string }) =>
+      new FakeResponse(new FakeMessage("model", [
+        { text: request.prompt.split("\n\n")[0] },
+        { toolRequest: { name: "webSearch", input: { query: "{NOME_1}" } } },
+      ]))
+    );
+    const ai = pseudonymizeGenkit({ generate });
+
+    const response = await withPseudonymization({}, () => ai.generate({ prompt: "Il cliente Mario Rossi chiede…" }));
+
+    expect(generate.mock.calls[0][0].prompt).toMatch(/^Il cliente \{NOME_1\} chiede…/);
+    expect(response).toBeInstanceOf(FakeResponse);
+    expect(response.text).toBe("Il cliente Mario Rossi chiede…");
+    expect(response.toolRequests).toEqual([{ toolRequest: { name: "webSearch", input: { query: "Mario Rossi" } } }]);
+  });
+
+  it("restores placeholders split across streamed chunks", async () => {
+    const received: string[] = [];
+    const generate = vi.fn(async (request: { onChunk: (chunk: unknown) => void }) => {
+      request.onChunk({ content: [{ text: "Gentile {NO" }] });
+      request.onChunk({ content: [{ text: "ME_1}, la" }] });
+      request.onChunk({ content: [{ text: " pratica di {COGNOME_" }] });
+      return { text: "" };
+    });
+    const ai = pseudonymizeGenkit({ generate });
+
+    await withPseudonymization({ cliente: "Mario Rossi" }, () =>
+      ai.generate({
+        prompt: "Scrivi a Mario Rossi",
+        onChunk: (chunk: { content: Array<{ text: string }> }) => received.push(chunk.content[0].text),
+      })
+    );
+
+    expect(received.join("")).toBe("Gentile Mario Rossi, la pratica di {COGNOME_");
+    expect(received.some((text) => text.includes("{NO") && !text.includes("{NOME_1}"))).toBe(false);
+  });
+});
+
+describe("PseudonymizationVault — rilevamento nomi", () => {
+  it("does not treat lowercase words after a label as names", () => {
+    const vault = new PseudonymizationVault();
+    const input = "Il mio cliente vuole sapere se può recedere. Il dottore ha detto che va bene.";
+
+    expect(vault.pseudonymize(input)).toBe(input);
+  });
+
+  it("stops labelled names at the first lowercase word", () => {
+    const vault = new PseudonymizationVault();
+    const pseudonymized = vault.pseudonymize("il sig. Rossi e la sig.ra Verdi");
+
+    expect(pseudonymized).toBe("il sig. {NOME_1} e la sig.ra {NOME_2}");
+  });
+
+  it("detects unlabelled names and later surname-only mentions", () => {
+    const vault = new PseudonymizationVault();
+    const input = "Mario Rossi ha citato in giudizio la Bianchi Srl. Il ROSSI chiede i danni; Rossi è assistito da me.";
+    const pseudonymized = vault.pseudonymize(input);
+
+    expect(pseudonymized).toBe(
+      "{NOME_1} ha citato in giudizio la Bianchi Srl. Il {COGNOME_1} chiede i danni; {COGNOME_1} è assistito da me."
+    );
+    expect(vault.restore("{NOME_1} e {COGNOME_1}")).toBe("Mario Rossi e Rossi");
+  });
+
+  it("detects party formulas and birth data cues", () => {
+    const vault = new PseudonymizationVault();
+    const pseudonymized = vault.pseudonymize("Ricorso contro ROSSI MARIO, nato a Roma; Anna De Luca, nata a Bari.");
+
+    expect(pseudonymized).not.toMatch(/ROSSI|MARIO|Anna|De Luca/);
+  });
+
+  it("seeds names from case-file metadata with legal role keys, ignoring non-name values", () => {
+    const vault = new PseudonymizationVault();
+    vault.registerPayload({
+      metadatiFascicolo: { controparte: "Giulia Neri", ruolo_cliente: "attore", parte_convenuta: "Edilnord Srl" },
+    });
+
+    expect(vault.pseudonymize("L'attore chiede che la Neri e Edilnord Srl siano condannate.")).toBe(
+      "L'attore chiede che la {COGNOME_1} e {NOME_2} siano condannate."
+    );
+  });
+
+  it("keeps lowercase common words that match a registered first name", () => {
+    const vault = new PseudonymizationVault();
+    vault.registerPayload({ nome: "Rosa" });
+
+    expect(vault.pseudonymize("Rosa ha scelto la vernice rosa.")).toBe("{NOME_1} ha scelto la vernice rosa.");
+  });
+
+  it("does not replace registered names inside longer words", () => {
+    const vault = new PseudonymizationVault();
+    vault.registerPayload({ cognome: "Rossi" });
+
+    expect(vault.pseudonymize("Il Rossini e il Rossi")).toBe("Il Rossini e il {NOME_1}");
+  });
+
+  it("restores placeholders altered by the model", () => {
+    const vault = new PseudonymizationVault();
+    vault.registerPayload({ cliente: "Mario Rossi", email: "m.rossi@email.it" });
+
+    expect(vault.restore("[NOME_1], {nome_1}, {NOME\\_1}, { EMAIL_1 }, {COGNOME_1}, {NOME_9}")).toBe(
+      "Mario Rossi, Mario Rossi, Mario Rossi, m.rossi@email.it, Rossi, {NOME_9}"
+    );
+  });
+
+  it("ignores lowercase street-like phrases but detects real addresses", () => {
+    const vault = new PseudonymizationVault();
+    const pseudonymized = vault.pseudonymize("Il corso di formazione 2026 si tiene in Via dei Mille 5.");
+
+    expect(pseudonymized).toBe("Il corso di formazione 2026 si tiene in {INDIRIZZO_1}.");
+  });
+});
+
+describe("helper per servizi esterni e salvataggio", () => {
+  it("strips personal data from external search queries", async () => {
+    const query = await withPseudonymization({ cliente: "Mario Rossi" }, () =>
+      stripPersonalDataForSearch("risarcimento danni Mario Rossi incidente stradale")
+    );
+
+    expect(query).toBe("risarcimento danni incidente stradale");
+  });
+
+  it("pseudonymizes outbound text only inside a request context", async () => {
+    expect(pseudonymizeOutbound("Mario Rossi")).toBe("Mario Rossi");
+    const inside = await withPseudonymization({ cliente: "Mario Rossi" }, () => pseudonymizeOutbound("Mario Rossi"));
+    expect(inside).toBe("{NOME_1}");
+  });
+
+  it("restores data before storage and warns about leftover placeholders", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    const saved = await withPseudonymization({ cliente: "Mario Rossi" }, () =>
+      restoreForStorage({ risposta: "{NOME_1} ha ragione", altro: "{NOME_7}" }, "test")
+    );
+
+    expect(saved).toEqual({ risposta: "Mario Rossi ha ragione", altro: "{NOME_7}" });
+    expect(containsPseudonymTokens(saved)).toBe(true);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("PSEUDONYM_LEAK"));
+    warn.mockRestore();
   });
 });
