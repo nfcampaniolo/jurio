@@ -68,6 +68,7 @@ const Contatti = lazy(() => import("@/features/info/Contatti"));
 const NotFound = lazy(() => import("@/shared/NotFound"));
 const Session = lazy(() => import("@/features/auth/Session"));
 const VerifyEmail = lazy(() => import("@/features/auth/VerifyEmail"));
+const ResetPassword = lazy(() => import("@/features/auth/ResetPassword"));
 const Chat = lazy(() => import("@/features/chat/Chat"));
 const DeepAnalysisTool = lazy(() => import("@/features/analisi/DeepAnalysisTool"));
 const HistoryPage = lazy(() => import("@/features/chat/components/HistoryPage"));
@@ -151,6 +152,11 @@ export const appRoutes: RouteObject[] = [
   {
     path: "/verifica-email",
     element: <VerifyEmail />,
+  },
+
+  {
+    path: "/reimposta-password",
+    element: <ResetPassword />,
   },
 
   {

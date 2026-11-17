@@ -138,20 +138,48 @@ export function onUserStateChange(callback: (user: User | null, hasConflict: boo
 }
 
 export async function resetPassword(email: string) {
-  console.log(`[resetPassword] Richiesta reset per: ${email}`);
+  console.log("[resetPassword] Richiesta reset password");
   if (!email) throw new Error("Inserisci un indirizzo email valido");
-  const auth = await getAuthClient();
-  const { sendPasswordResetEmail } = await import("firebase/auth");
+
+  const url = import.meta.env.VITE_SEND_PASSWORD_RESET_URL as string | undefined;
+  if (!url) throw new Error("Endpoint di reset password non configurato");
 
   try {
-    const res = await sendPasswordResetEmail(auth, email);
-    console.log("[resetPassword] Email di reset inviata con successo.");
+    const { fetchWithAppCheckOnly } = await import("@/config/apiClient");
+    const res = await fetchWithAppCheckOnly(url, { email: email.trim() });
+
+    if (res.status === 429) throw new Error("rate_limited");
+    if (res.status === 400) throw new Error("invalid_email");
+    if (!res.ok) throw new Error(`reset_password_failed (${res.status})`);
+
     void trackEvent("password_reset_requested", { method: "email" });
-    return res;
   } catch (err) {
-    console.error("[resetPassword] Errore durante l'invio dell'email di reset:", err);
+    console.error("[resetPassword] Errore durante la richiesta di reset:", err);
     void trackEvent("analytics_error", {
       name: "reset_password",
+      reason: err instanceof Error ? err.message : "unknown_error",
+    });
+    throw err;
+  }
+}
+
+/** Verifica il codice del link di reset e restituisce l'email dell'account. */
+export async function verifyResetCode(oobCode: string): Promise<string> {
+  const auth = await getAuthClient();
+  const { verifyPasswordResetCode } = await getFirebaseAuthModule();
+  return verifyPasswordResetCode(auth, oobCode);
+}
+
+/** Imposta la nuova password usando il codice ricevuto via email. */
+export async function confirmNewPassword(oobCode: string, newPassword: string): Promise<void> {
+  const auth = await getAuthClient();
+  const { confirmPasswordReset } = await getFirebaseAuthModule();
+  try {
+    await confirmPasswordReset(auth, oobCode, newPassword);
+    void trackEvent("password_reset_completed", {});
+  } catch (err) {
+    void trackEvent("analytics_error", {
+      name: "confirm_password_reset",
       reason: err instanceof Error ? err.message : "unknown_error",
     });
     throw err;

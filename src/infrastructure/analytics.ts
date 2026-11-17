@@ -6,6 +6,7 @@ export type AnalyticsEvent =
   | "password_reset_requested"
   | "verification_email_sent"
   | "email_verified"
+  | "password_reset_completed"
   | "sign_up"
   | "free_trial_start"
   | "subscription_start"
@@ -43,6 +44,8 @@ export type EventParamsMap = {
   verification_email_sent: Record<string, never>;
 
   email_verified: Record<string, never>;
+
+  password_reset_completed: Record<string, never>;
 
   password_reset_requested: {
     method: "email" | "google" | "apple" | "sso";

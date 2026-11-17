@@ -28,6 +28,7 @@ const mocks = vi.hoisted(() => {
     "executeVerifyVoucher",
     "executeSendTeamInviteEmail",
     "executeSendVerificationEmail",
+    "executeSendPasswordResetEmail",
     "executeDeleteTeam",
     "executeShareAllTeamDocuments",
     "executeListCloudFiles",
@@ -134,6 +135,9 @@ vi.mock("../../functions/src/team/teamsharing.logic", () => ({
 vi.mock("../../functions/src/auth/emailVerification.logic", () => ({
   executeSendVerificationEmail: mocks.handlers.executeSendVerificationEmail,
 }));
+vi.mock("../../functions/src/auth/passwordReset.logic", () => ({
+  executeSendPasswordResetEmail: mocks.handlers.executeSendPasswordResetEmail,
+}));
 vi.mock("../../functions/src/team/teammanagement.logic", () => ({
   executeDeleteTeam: mocks.handlers.executeDeleteTeam,
   executeShareAllTeamDocuments: mocks.handlers.executeShareAllTeamDocuments,
@@ -208,6 +212,7 @@ const requestDispatches: Array<[keyof typeof functions, keyof typeof mocks.handl
   ["deleteTeam", "executeDeleteTeam"],
   ["sendTeamInviteEmail", "executeSendTeamInviteEmail"],
   ["sendVerificationEmail", "executeSendVerificationEmail"],
+  ["sendPasswordResetEmail", "executeSendPasswordResetEmail"],
   ["shareAllTeamDocuments", "executeShareAllTeamDocuments"],
   ["listCloudFiles", "executeListCloudFiles"],
   ["downloadCloudFile", "executeDownloadCloudFile"],
@@ -236,7 +241,7 @@ describe("functions/src/index", () => {
     const exportedRegistrations = Object.entries(functions).filter(([name]) => name !== "default");
 
     // Act / Assert
-    expect(exportedRegistrations).toHaveLength(47);
+    expect(exportedRegistrations).toHaveLength(48);
     for (const [name, registration] of exportedRegistrations) {
       const registrationDetails = registration as unknown as { kind: string; handler: unknown };
       expect(registrationDetails, `${name} is registered`).toMatchObject({

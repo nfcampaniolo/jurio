@@ -18,6 +18,8 @@ export type JurioFeatureType =
   | "teams"
   | "cloud_files"
   | "email_verification"
+  | "password_reset"
+  | "password_reset_email"
   ;
 
 type FeatureLimit = { perMinute: number; perDay: number };
@@ -103,6 +105,9 @@ export const JURIO_USAGE_LIMITS = {
   teams: planLimits({ global: [10, 50] }),
   cloud_files: planLimits({ global: [10, 50] }),
   email_verification: planLimits({ global: [1, 8] }),
+  // Reset password (endpoint pubblico): limite per IP del richiedente e per indirizzo destinatario
+  password_reset: planLimits({ global: [5, 30] }),
+  password_reset_email: planLimits({ global: [1, 5] }),
 } satisfies Record<
   JurioFeatureType,
   Partial<Record<string, { perMinute: number; perDay: number }>>

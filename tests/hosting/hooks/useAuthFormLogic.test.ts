@@ -32,8 +32,9 @@ vi.mock("react-router-dom", () => ({
 
 const toastFn = vi.fn<(msg: string) => void>();
 const toastError = vi.fn<(msg: string, opts?: unknown) => void>();
+const toastSuccess = vi.fn<(msg: string, opts?: unknown) => void>();
 vi.mock("react-hot-toast", () => ({
-  toast: Object.assign(toastFn, { error: toastError }),
+  toast: Object.assign(toastFn, { error: toastError, success: toastSuccess }),
 }));
 
 async function importFresh() {
@@ -279,9 +280,10 @@ describe("useAuthFormLogic", () => {
     });
 
     await waitFor(() => {
-      expect(result.current.error).toBe("Email di recupero inviata");
+      expect(toastSuccess).toHaveBeenCalledWith(expect.stringContaining("Se l'indirizzo è registrato"), expect.anything());
     });
 
+    expect(result.current.error).toBeNull();
     expect(resetPassword).toHaveBeenCalledWith("a@b.com");
     expect(result.current.loading).toBe(false);
   });
@@ -300,7 +302,24 @@ describe("useAuthFormLogic", () => {
       await result.current.handleResetPassword();
     });
 
-    expect(result.current.error).toBe("reset fail");
+    expect(result.current.error).toBe("Errore durante l'invio. Riprova tra poco.");
     expect(result.current.loading).toBe(false);
+  });
+
+  it("handleResetPassword: rate limited -> shows wait message", async () => {
+    resetPassword.mockRejectedValueOnce(new Error("rate_limited"));
+
+    const { useAuthFormLogic } = await importFresh();
+    const { result } = renderHook(() => useAuthFormLogic("login"));
+
+    act(() => {
+      result.current.setEmail("a@b.com");
+    });
+
+    await act(async () => {
+      await result.current.handleResetPassword();
+    });
+
+    expect(result.current.error).toBe("Troppe richieste. Attendi qualche minuto e riprova.");
   });
 });

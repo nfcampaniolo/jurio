@@ -28,6 +28,7 @@ import { executeTasksDowngrade, computeAndSaveWeeklyStats, computeAndSaveMonthly
 import { computeAndSaveMonthlyActivityReports } from "./schedules/activityReports.logic";
 import { executePayWithStripeCreateCheckoutSession, executeStripeWebhook } from "./subscriptions/payments.logic";
 import { executeSendVerificationEmail } from "./auth/emailVerification.logic";
+import { executeSendPasswordResetEmail } from "./auth/passwordReset.logic";
 import { executeGetRegister, executeGetPrice, executeApplyDiscountCoupon} from "./subscriptions/subscription.logic";
 
 setGlobalOptions({
@@ -570,6 +571,16 @@ export const sendVerificationEmail = onRequest(
   },
   async (req, res) => {
     return executeSendVerificationEmail(req, res);
+  }
+);
+
+export const sendPasswordResetEmail = onRequest(
+  {
+    timeoutSeconds: 30,
+    memory: "512MiB",
+  },
+  async (req, res) => {
+    return executeSendPasswordResetEmail(req, res);
   }
 );
 

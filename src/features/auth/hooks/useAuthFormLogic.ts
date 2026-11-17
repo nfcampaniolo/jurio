@@ -4,6 +4,7 @@ import { useUserStore } from "@/infrastructure/userStore";
 import { useNavigate } from "react-router-dom";
 import { userExists } from "@/shared/services/user";
 import { toast } from "react-hot-toast"; 
+import { getPasswordFailures } from "../passwordRules";
 
 export function useAuthFormLogic(initialMode: "login" | "register") {
   const [mode, setMode] = useState(initialMode);
@@ -37,18 +38,7 @@ export function useAuthFormLogic(initialMode: "login" | "register") {
           void navigate("/registrati");
         }
       } else {
-          // Controllo requisiti password
-        const passwordRequirements = [
-          { regex: /[A-Z]/, message: "Almeno una lettera maiuscola" },
-          { regex: /[a-z]/, message: "Almeno una lettera minuscola" },
-          { regex: /\d/, message: "Almeno un numero" },
-          { regex: /[!@#$%^&*(),.?":{}|<>]/, message: "Almeno un carattere speciale" },
-          { regex: /^.{8,20}$/, message: "Lunghezza tra 8 e 20 caratteri" }
-        ];
-
-        const failedRequirements = passwordRequirements
-          .filter(req => !req.regex.test(password))
-          .map(req => `• ${req.message}`);
+        const failedRequirements = getPasswordFailures(password).map((msg) => `• ${msg}`);
 
         if (failedRequirements.length > 0) {
           toast.error(`La password deve contenere:\n${failedRequirements.join("\n")}`, {
@@ -89,12 +79,14 @@ export function useAuthFormLogic(initialMode: "login" | "register") {
 
     try {
         await resetPassword(email);
-        setError("Email di recupero inviata"); // temporaneo, poi toast
+        toast.success("Se l'indirizzo è registrato, riceverai un'email con il link per reimpostare la password.", { duration: 6000 });
     } catch (err) {
         setError(
-        err instanceof Error
-            ? err.message
-            : "Errore durante il reset password"
+        err instanceof Error && err.message === "rate_limited"
+            ? "Troppe richieste. Attendi qualche minuto e riprova."
+            : err instanceof Error && err.message === "invalid_email"
+            ? "Inserisci un indirizzo email valido"
+            : "Errore durante l'invio. Riprova tra poco."
         );
     } finally {
         setLoading(false);

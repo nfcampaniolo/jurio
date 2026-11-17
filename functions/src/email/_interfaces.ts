@@ -95,3 +95,8 @@ export interface EnqueueEmailVerificationArgs {
   email: string;
   verificationUrl: string;
 }
+
+export interface EnqueuePasswordResetArgs {
+  email: string;
+  resetUrl: string;
+}

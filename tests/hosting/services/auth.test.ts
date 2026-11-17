@@ -52,6 +52,12 @@ vi.mock("@/infrastructure/firebase", () => ({
   firebaseApp: { name: "[AUTH_APP]" },
 }));
 
+const { mockFetchWithAppCheckOnly } = vi.hoisted(() => ({ mockFetchWithAppCheckOnly: vi.fn() }));
+vi.mock("@/config/apiClient", () => ({
+  __esModule: true,
+  fetchWithAppCheckOnly: mockFetchWithAppCheckOnly,
+}));
+
 vi.mock("firebase/auth", () => ({
   __esModule: true,
   getAuth: mockGetAuth,
@@ -303,26 +309,38 @@ describe("Auth Service Suite", () => {
       );
     });
 
-    test("invia l'email di recupero e traccia l'evento", async () => {
-      mockSendPasswordResetEmail.mockResolvedValueOnce(undefined);
+    test("chiama l'endpoint di reset con App Check e traccia l'evento", async () => {
+      vi.stubEnv("VITE_SEND_PASSWORD_RESET_URL", "https://reset.example.test");
+      mockFetchWithAppCheckOnly.mockResolvedValueOnce(new Response("{}", { status: 200 }));
 
-      await resetPassword("recupero@jurio.it");
+      await resetPassword(" recupero@jurio.it ");
 
-      expect(mockSendPasswordResetEmail).toHaveBeenCalledWith(mockAuth, "recupero@jurio.it");
+      expect(mockFetchWithAppCheckOnly).toHaveBeenCalledWith("https://reset.example.test", { email: "recupero@jurio.it" });
+      expect(mockSendPasswordResetEmail).not.toHaveBeenCalled();
       expect(mockTrackEvent).toHaveBeenCalledWith("password_reset_requested", {
         method: "email",
       });
+      vi.unstubAllEnvs();
     });
 
-    test("traccia errore se l'invio della mail fallisce", async () => {
-      mockSendPasswordResetEmail.mockRejectedValueOnce(new Error("auth/user-not-found"));
+    test("mappa 429 in rate_limited e traccia l'errore", async () => {
+      vi.stubEnv("VITE_SEND_PASSWORD_RESET_URL", "https://reset.example.test");
+      mockFetchWithAppCheckOnly.mockResolvedValueOnce(new Response("{}", { status: 429 }));
 
-      await expect(resetPassword("inesistente@jurio.it")).rejects.toThrow("auth/user-not-found");
+      await expect(resetPassword("x@jurio.it")).rejects.toThrow("rate_limited");
 
       expect(mockTrackEvent).toHaveBeenCalledWith("analytics_error", {
         name: "reset_password",
-        reason: "auth/user-not-found",
+        reason: "rate_limited",
       });
+      vi.unstubAllEnvs();
+    });
+
+    test("fallisce se l'endpoint non è configurato", async () => {
+      vi.stubEnv("VITE_SEND_PASSWORD_RESET_URL", "");
+      await expect(resetPassword("x@jurio.it")).rejects.toThrow("non configurato");
+      expect(mockFetchWithAppCheckOnly).not.toHaveBeenCalled();
+      vi.unstubAllEnvs();
     });
   });
 
