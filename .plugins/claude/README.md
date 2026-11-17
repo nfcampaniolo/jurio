@@ -4,6 +4,8 @@
 
 Pacchetto plugin per Claude Code con skill di ricerca e connessione al server MCP remoto Jurio. Richiede un account Jurio e OAuth.
 
+Plugin ufficiale pubblicato: <https://claude.ai/plugins/id/plugin_01WLTCa5wRdowcM4N9bYUc6N?via=directory>
+
 ## Claude Code
 
 Per provare il plugin dal checkout locale, avvia Claude Code con `claude --plugin-dir ./jurio-claude-plugin`. Per distribuirlo stabilmente, pubblicalo in un marketplace Claude Code. La struttura segue il formato Claude Code: `.claude-plugin/plugin.json`, `.mcp.json`, `skills/` e `assets/`. Dopo il caricamento, autorizza Jurio dal prompt OAuth o dal comando `/mcp`.

@@ -27,6 +27,18 @@ export default function ConfigurazioneClaude() {
         <p className="text-md text-(--color-muted) font-light leading-relaxed">
           Questa guida illustra i passaggi per integrare Jurio all'interno di Claude utilizzando il protocollo MCP (Model Context Protocol) e l'autenticazione tramite <strong className="font-semibold text-(--color-text)">OAuth2</strong>.
         </p>
+        <p className="mt-3 p-3 rounded-lg border border-(--color-border) border-l-4 border-l-(--color-primary) bg-(--color-surface) text-md text-(--color-muted) font-light leading-relaxed">
+          <strong className="font-semibold text-(--color-text)">Plugin ufficiale:</strong> Jurio è disponibile nella directory dei plugin di Claude. Puoi installarlo direttamente dal{" "}
+          <a
+            href="https://claude.ai/plugins/id/plugin_01WLTCa5wRdowcM4N9bYUc6N?via=directory"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold underline underline-offset-2 text-(--color-text) hover:text-(--color-primary)"
+          >
+            plugin ufficiale Jurio per Claude
+          </a>
+          , oppure seguire la configurazione manuale descritta di seguito.
+        </p>
       </div>
 
       <hr className="border-(--color-border)" />

@@ -346,13 +346,20 @@
   .mcp-platform-header p { margin: .35rem 0 0; color: var(--color-muted); font-size: .88rem; line-height: 1.6; }
   .mcp-platform-tag { padding: .35rem .7rem; border: 1px solid color-mix(in srgb, var(--color-primary) 35%, var(--color-border)); border-radius: 999px; color: var(--color-primary); font-size: .68rem; font-weight: 800; white-space: nowrap; }
   .mcp-platform-content { display: grid; grid-template-columns: minmax(0,1.05fr) minmax(280px,.95fr); gap: 1.8rem; padding: 1.7rem; }
-  .mcp-platform-content h4 { margin: 0 0 .6rem; font-family: var(--font-sans); font-size: .88rem; font-weight: 800; letter-spacing: .025em; }
-  .mcp-steps { margin: 0 0 1.35rem; padding-left: 1.25rem; }
-  .mcp-steps li { margin: .55rem 0; padding-left: .25rem; color: var(--color-text); font-size: .9rem; line-height: 1.7; }
-  .mcp-steps li::marker { color: var(--color-primary); font-weight: 850; }
+  .mcp-platform-content h4 { margin: 0 0 .85rem; font-family: var(--font-sans); font-size: .8rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--color-muted); }
+  .mcp-platform-content h4:not(:first-child) { margin-top: 1.9rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border); }
+  .mcp-platform-content .mcp-note + h4 { margin-top: 1.6rem; padding-top: 0; border-top: 0; }
+  .mcp-steps { counter-reset: mcp-step; margin: 0; padding: 0; list-style: none; display: grid; gap: .95rem; }
+  .mcp-steps[start="5"] { counter-reset: mcp-step 4; }
+  .mcp-steps[start="6"] { counter-reset: mcp-step 5; }
+  .mcp-steps li { counter-increment: mcp-step; position: relative; margin: 0; padding-left: 2.35rem; color: var(--color-text); font-size: .92rem; line-height: 1.65; }
+  .mcp-steps li::before { content: counter(mcp-step); position: absolute; left: 0; top: .05rem; width: 1.6rem; height: 1.6rem; display: grid; place-items: center; border-radius: 999px; background: color-mix(in srgb, var(--color-surface) 82%, var(--color-primary) 18%); color: var(--color-primary); font-size: .75rem; font-weight: 800; line-height: 1; }
+  .mcp-steps li strong { font-weight: 700; }
   .mcp-steps code { padding: .12rem .28rem; border-radius: 4px; background: color-mix(in srgb, var(--color-bg) 70%, var(--color-primary) 5%); color: var(--color-primary); font-size: .85em; overflow-wrap: anywhere; }
   .mcp-note { margin: 1rem 0 0; padding: .95rem 1.05rem; border: 1px solid var(--color-border); border-left: 4px solid var(--color-primary); border-radius: 10px; background: color-mix(in srgb, var(--color-bg) 75%, var(--color-primary) 4%); color: var(--color-muted); font-size: .83rem; line-height: 1.65; }
   .mcp-note strong { color: var(--color-text); }
+  .mcp-steps + .mcp-note { margin-top: 1.5rem; }
+  .mcp-platform-content > div > .mcp-note:first-child { margin-top: 0; }
   .mcp-figure { min-width: 0; margin: 0; }
   .mcp-figure img { display: block; width: 100%; height: auto; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-bg); box-shadow: 0 8px 22px rgba(42,34,24,.05); }
   .mcp-figure figcaption { margin-top: .5rem; color: var(--color-muted); font-size: .74rem; line-height: 1.5; }
@@ -465,7 +472,8 @@
     .mcp-platform-header h3 { font-size: 1.55rem; }
     .mcp-platform-tag { justify-self: start; }
     .mcp-platform-content { padding: 1.2rem; }
-    .mcp-steps li { font-size: .88rem; }
+    .mcp-steps li { font-size: .88rem; padding-left: 2.15rem; }
+    .mcp-steps { gap: .8rem; }
     .mcp-figure-stack { gap: .9rem; }
     .mcp-screenshot-grid { grid-template-columns: 1fr; }
     .mcp-screenshot-grid .mcp-figure:last-child:nth-child(odd) { grid-column: auto; max-width: none; }
@@ -895,6 +903,7 @@
             </header>
             <div class="mcp-platform-content">
               <div>
+                <p class="mcp-note"><strong>Plugin ufficiale:</strong> Jurio è disponibile nella directory dei plugin di Claude. Puoi installarlo direttamente da <a href="https://claude.ai/plugins/id/plugin_01WLTCa5wRdowcM4N9bYUc6N?via=directory" target="_blank" rel="noopener noreferrer">questa pagina</a>, oppure seguire la configurazione manuale descritta qui sotto.</p>
                 <h4>1. Aggiungi il connettore</h4>
                 <ol class="mcp-steps">
                   <li>Accedi a <a href="https://claude.ai/" target="_blank" rel="noopener noreferrer">Claude</a> e apri <strong>Personalizza → Connettori</strong> (Customize → Connectors).</li>
@@ -988,6 +997,7 @@
         <div class="mcp-resources" data-reveal aria-label="Documentazione ufficiale delle piattaforme">
           <a href="https://jurio.it/guida/mcp-vibe" target="_blank" rel="noopener noreferrer">Documentazione MCP Mistral</a>
           <a href="https://jurio.it/guida/mcp-claude" target="_blank" rel="noopener noreferrer">Guida connettori Claude</a>
+          <a href="https://claude.ai/plugins/id/plugin_01WLTCa5wRdowcM4N9bYUc6N?via=directory" target="_blank" rel="noopener noreferrer">Plugin ufficiale Jurio per Claude</a>
           <a href="https://jurio.it/guida/mcp-chatgpt" target="_blank" rel="noopener noreferrer">Guida server MCP ChatGPT</a>
         </div>
         <p class="mcp-footer-note">Le interfacce, i nomi delle opzioni e i requisiti dei piani possono cambiare. Le istruzioni sono aggiornate sulla base della documentazione delle piattaforme consultata al momento della revisione; in caso di differenze, fanno fede le schermate mostrate dal tuo account.</p>
