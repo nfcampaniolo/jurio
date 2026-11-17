@@ -65,9 +65,10 @@ export function useVerifyEmailLogic() {
     void refreshUser().catch((err) => console.error("[verifyEmail] Refresh utente fallito:", err));
   }, [phase, status, user, refreshUser]);
 
-  // 3. Account registrati prima dell'introduzione della verifica: non vanno bloccati.
+  // 3. Profilo già completato? Serve sia per non bloccare gli account registrati prima
+  //    della verifica (pending) sia per la CTA corretta dopo la conferma (verified).
   useEffect(() => {
-    if (phase !== "pending" || status !== "authenticated" || !user) return;
+    if ((phase !== "pending" && phase !== "verified") || status !== "authenticated" || !user || user.isAnonymous) return;
     let mounted = true;
     userExists(user.uid)
       .then((exists) => mounted && setHasProfile(exists))

@@ -7,6 +7,7 @@ import { useProfile } from "@/features/profile/hooks/useProfile";
 import { EditProfileAvatar } from "@/features/profile/components/EditProfileAvatar";
 import { EditProfileForm } from "@/features/profile/components/EditProfileForm";
 import { EditProfileConsents } from "@/features/profile/components/EditProfileConsents";
+import { EmailVerificationStatus } from "@/features/profile/components/EmailVerificationStatus";
 import { SEO } from "@/shared/components/SEO";
 import { Loader2 } from "lucide-react";
 
@@ -143,6 +144,13 @@ export const EditProfile: React.FC = () => {
               shouldReduceMotion={shouldReduceMotion ?? null}
             />
           </div>
+
+          <motion.div className="flex flex-col gap-2 mt-8" variants={fadeUp}>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-(--color-muted) ml-1">
+              Email
+            </span>
+            <EmailVerificationStatus />
+          </motion.div>
 
           <EditProfileConsents
             consents={consents}

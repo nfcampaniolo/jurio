@@ -42,14 +42,18 @@ export default function VerifyEmail() {
 
   if (phase === "verified") {
     const loggedIn = status === "authenticated" && !!user && !user.isAnonymous;
+    const cta = !loggedIn
+      ? { to: "/login", label: "Accedi", text: "Accedi per continuare." }
+      : hasProfile
+        ? { to: "/profilo", label: "Torna al profilo", text: "" }
+        : { to: "/registrati", label: "Completa la registrazione", text: "Completa la registrazione per attivare la prova gratuita." };
     return (
       <Card icon={<MailCheck className="h-6 w-6" />} title="Email confermata">
         <p className="text-xs sm:text-sm text-(--color-muted) font-light mb-6 leading-relaxed">
-          Il tuo indirizzo email è stato verificato.{" "}
-          {loggedIn ? "Completa la registrazione per attivare la prova gratuita." : "Accedi per completare la registrazione."}
+          Il tuo indirizzo email è stato verificato. {cta.text}
         </p>
-        <Link to={loggedIn ? "/registrati" : "/login"} replace className={primaryBtn}>
-          {loggedIn ? "Completa la registrazione" : "Accedi"}
+        <Link to={cta.to} replace className={primaryBtn}>
+          {cta.label}
         </Link>
       </Card>
     );

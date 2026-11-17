@@ -74,6 +74,11 @@ vi.mock("@/features/profile/components/EditProfileForm", () => ({
   ),
 }));
 
+vi.mock("@/features/profile/components/EmailVerificationStatus", () => ({
+  __esModule: true,
+  EmailVerificationStatus: () => <div data-testid="email-verification-status" />,
+}));
+
 vi.mock("@/features/profile/components/EditProfileConsents", () => ({
   __esModule: true,
   EditProfileConsents: () => (
