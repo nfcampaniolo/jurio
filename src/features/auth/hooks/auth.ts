@@ -179,3 +179,67 @@ export async function ensureAnonAuth() {
     throw err;
   }
 }
+
+// ============================================================================
+// VERIFICA EMAIL
+// ============================================================================
+
+/**
+ * True per gli account email/password che non hanno ancora confermato l'indirizzo.
+ * Utenti anonimi e provider OAuth (es. Google, già verificati) sono esclusi.
+ */
+export function needsEmailVerification(user: User | null | undefined): boolean {
+  if (!user || user.isAnonymous || user.emailVerified) return false;
+  return (user.providerData ?? []).some((p) => p.providerId === "password");
+}
+
+/** Chiede al backend di inviare l'email di verifica personalizzata Jurio. */
+export async function sendVerificationEmail(): Promise<{ alreadyVerified: boolean }> {
+  const url = import.meta.env.VITE_SEND_VERIFICATION_EMAIL_URL as string | undefined;
+  if (!url) throw new Error("Endpoint di verifica email non configurato");
+
+  const { fetchWithSecurity } = await import("@/config/apiClient");
+  const res = await fetchWithSecurity(url, {});
+
+  if (res.status === 429) {
+    throw new Error("rate_limited");
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    void trackEvent("analytics_error", { name: "send_verification_email", reason: `${res.status}` });
+    throw new Error(`send_verification_failed (${res.status}): ${text}`);
+  }
+
+  const data = (await res.json()) as { alreadyVerified?: boolean };
+  void trackEvent("verification_email_sent", {});
+  return { alreadyVerified: Boolean(data.alreadyVerified) };
+}
+
+/** Applica il codice ricevuto via email (oobCode) e marca l'indirizzo come verificato. */
+export async function confirmEmailVerification(oobCode: string): Promise<void> {
+  const auth = await getAuthClient();
+  const { applyActionCode } = await getFirebaseAuthModule();
+  try {
+    await applyActionCode(auth, oobCode);
+    void trackEvent("email_verified", {});
+  } catch (err) {
+    void trackEvent("analytics_error", {
+      name: "email_verification",
+      reason: err instanceof Error ? err.message : "unknown_error",
+    });
+    throw err;
+  }
+}
+
+/**
+ * Ricarica l'utente corrente da Firebase e rinnova l'ID token, così il claim
+ * email_verified arriva aggiornato anche alle Cloud Functions.
+ */
+export async function reloadCurrentUser(): Promise<User | null> {
+  const auth = await getAuthClient();
+  const user = auth.currentUser;
+  if (!user) return null;
+  await user.reload();
+  await user.getIdToken(true);
+  return auth.currentUser;
+}

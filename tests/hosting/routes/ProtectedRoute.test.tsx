@@ -79,6 +79,7 @@ describe("ProtectedRoute Route Guard Suite", () => {
   const baseContext: Partial<AuthContextType> = {
     errorMessage: null,
     resolveConflict: vi.fn(),
+    refreshUser: vi.fn(),
   };
 
   const renderWithAuth = (

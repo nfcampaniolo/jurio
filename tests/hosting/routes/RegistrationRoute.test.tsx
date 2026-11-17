@@ -12,6 +12,7 @@ const { mockAuthState, mockNavigateComponent, mockUserExists } = vi.hoisted(() =
     hasConflict: false,
     errorMessage: null,
     resolveConflict: vi.fn(),
+    refreshUser: vi.fn(),
   } as AuthContextType,
   mockNavigateComponent: vi.fn(),
   mockUserExists: vi.fn(),
@@ -165,6 +166,49 @@ describe("RegistrationRoute Route Guard Suite", () => {
 
     expect(screen.queryByTestId("mock-navigate")).not.toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  test("reindirizza a '/verifica-email' un nuovo account email/password non ancora verificato", async () => {
+    mockAuthState.user = {
+      uid: "usr_unverified",
+      isAnonymous: false,
+      emailVerified: false,
+      providerData: [{ providerId: "password" }],
+    } as unknown as User;
+    mockAuthState.status = 'authenticated';
+    mockUserExists.mockResolvedValue(false);
+
+    render(
+      <RegistrationRoute>
+        <div data-testid="register-form">Form Completamento Profilo</div>
+      </RegistrationRoute>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("mock-navigate")).toHaveAttribute("data-to", "/verifica-email");
+    });
+    expect(screen.queryByTestId("register-form")).not.toBeInTheDocument();
+  });
+
+  test("non richiede la verifica per account Google senza profilo", async () => {
+    mockAuthState.user = {
+      uid: "usr_google",
+      isAnonymous: false,
+      emailVerified: true,
+      providerData: [{ providerId: "google.com" }],
+    } as unknown as User;
+    mockAuthState.status = 'authenticated';
+    mockUserExists.mockResolvedValue(false);
+
+    render(
+      <RegistrationRoute>
+        <div data-testid="register-form">Form Completamento Profilo</div>
+      </RegistrationRoute>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("register-form")).toBeInTheDocument();
+    });
   });
 
   test("BLOCCA l'accesso mostrando ErrorScreen se la verifica su Firestore fallisce per errore di rete", async () => {

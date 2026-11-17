@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { loginWithEmail, registerWithEmail, resetPassword } from "./auth";
+import { loginWithEmail, registerWithEmail, resetPassword, needsEmailVerification, sendVerificationEmail } from "./auth";
 import { useUserStore } from "@/infrastructure/userStore";
 import { useNavigate } from "react-router-dom";
 import { userExists } from "@/shared/services/user";
@@ -31,6 +31,8 @@ export function useAuthFormLogic(initialMode: "login" | "register") {
         const exists = await userExists(res.user.uid);
         if (exists) {
           void navigate("/profilo");
+        } else if (needsEmailVerification(res.user)) {
+          void navigate("/verifica-email");
         } else {
           void navigate("/registrati");
         }
@@ -60,7 +62,13 @@ export function useAuthFormLogic(initialMode: "login" | "register") {
         } else {
           // password ok, procedi con la registrazione
           await registerWithEmail(email, password);
-          setMode("login"); // switch automatico alla modalità login
+          try {
+            await sendVerificationEmail();
+          } catch (sendErr) {
+            // La pagina di verifica permette comunque di richiedere un nuovo invio
+            console.error("[register] Invio email di verifica fallito:", sendErr);
+          }
+          void navigate("/verifica-email", { replace: true, state: { emailSent: true } });
         }
       }
     } catch (err) {

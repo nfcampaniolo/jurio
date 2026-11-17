@@ -18,6 +18,7 @@ describe("useAuth Hook Suite", () => {
       hasConflict: false,
       errorMessage: null,
       resolveConflict: vi.fn(),
+      refreshUser: vi.fn(),
     };
 
     const wrapper = ({ children }: { children: React.ReactNode }) => (

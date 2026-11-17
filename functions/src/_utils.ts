@@ -115,7 +115,7 @@ function handleApiError(res: Response, err: unknown): void {
     res.status(403).json({ error: "Forbidden", details: msg });
     return;
   }
-  if (msg === "TOO_MANY_REQUESTS" || msg.includes("quota_exceeded") || msg.includes("Limite")) {
+  if (msg === "TOO_MANY_REQUESTS" || msg.includes("quota_exceeded") || msg === "rate_limited" || msg.includes("Limite")) {
     res.status(429).json({ error: "Too Many Requests", details: "Limite di utilizzo superato." });
     return;
   }

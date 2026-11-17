@@ -5,5 +5,12 @@
     "dev": "jurio-it-dev"
   },
   "targets": {},
-  "etags": {}
+  "etags": {
+    "jurio-it": {
+      "extensionInstances": {
+        "firestore-send-email": "de0ed2a4137a304c672d810dd9d15ebe83641533b5319470b693d6f9ecb5d1ff",
+        "storage-resize-images": "0bc9d3aff4dd977405115f6eeda60775f8b406d4ced125a5afb43848cad3058a"
+      }
+    }
+  }
 }

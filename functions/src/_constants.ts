@@ -17,6 +17,7 @@ export type JurioFeatureType =
   | "apply_coupon"
   | "teams"
   | "cloud_files"
+  | "email_verification"
   ;
 
 type FeatureLimit = { perMinute: number; perDay: number };
@@ -101,6 +102,7 @@ export const JURIO_USAGE_LIMITS = {
   apply_coupon: planLimits({ global: [10, 30] }),
   teams: planLimits({ global: [10, 50] }),
   cloud_files: planLimits({ global: [10, 50] }),
+  email_verification: planLimits({ global: [1, 8] }),
 } satisfies Record<
   JurioFeatureType,
   Partial<Record<string, { perMinute: number; perDay: number }>>

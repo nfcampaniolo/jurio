@@ -12,6 +12,7 @@ const { mockAuthState, mockNavigateComponent } = vi.hoisted(() => ({
     hasConflict: false,
     errorMessage: null,
     resolveConflict: vi.fn(),
+    refreshUser: vi.fn(),
   } as AuthContextType,
   mockNavigateComponent: vi.fn(),
 }));

@@ -91,3 +91,7 @@ export interface EnqueueMonthlyUsageEmailArgs {
   email: string | string[];
   reportData: MonthlyUsageReportData;
 }
+export interface EnqueueEmailVerificationArgs {
+  email: string;
+  verificationUrl: string;
+}

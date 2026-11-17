@@ -18,13 +18,15 @@ const mocks = vi.hoisted(() => {
   const db = { collection, runTransaction: vi.fn() };
   const timestampNow = vi.fn();
   const timestampFromMillis = vi.fn();
+  const getUser = vi.fn();
   return {
+    getUser,
     secure, cors, appCheck, validate, minute, daily, refGet, txGet, txSet, txUpdate,
     enqueueWelcome, enqueueTrial, schedule, collection, db, timestampNow, timestampFromMillis,
   };
 });
 
-vi.mock("@functions/_deps", () => ({ getDb: () => mocks.db }));
+vi.mock("@functions/_deps", () => ({ getDb: () => mocks.db, getAdminAuth: () => ({ getUser: mocks.getUser }) }));
 vi.mock("@functions/_utils", () => ({
   withSecureApiEndpoint: mocks.secure,
   corsHandlerDomain: mocks.cors,
@@ -59,6 +61,7 @@ describe("subscription endpoints", () => {
     mocks.enqueueWelcome.mockResolvedValue(undefined);
     mocks.enqueueTrial.mockResolvedValue(undefined);
     mocks.schedule.mockResolvedValue(undefined);
+    mocks.getUser.mockResolvedValue({ email: "user@example.test", emailVerified: true });
     mocks.refGet.mockResolvedValue({ exists: true, data: () => ({ price: 12, currency: "eur" }), get: () => undefined });
     mocks.txGet.mockResolvedValue({ exists: false });
     mocks.txSet.mockReset();
@@ -94,6 +97,53 @@ describe("subscription endpoints", () => {
     }));
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ created: true, uid: "user-1" }));
+  });
+
+  it("blocks trial activation for a new account whose email is not verified", async () => {
+    // Arrange
+    mocks.refGet.mockResolvedValueOnce({ exists: false });
+    mocks.getUser.mockResolvedValueOnce({ email: "user@example.test", emailVerified: false });
+    const { executeGetRegister } = await import("@functions/subscriptions/subscription.logic");
+    const res = response();
+
+    // Act
+    await executeGetRegister({ body: {} } as never, res as never);
+
+    // Assert
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ error: "EMAIL_NOT_VERIFIED" }));
+    expect(mocks.minute).not.toHaveBeenCalled();
+    expect(mocks.db.runTransaction).not.toHaveBeenCalled();
+    expect(mocks.enqueueWelcome).not.toHaveBeenCalled();
+  });
+
+  it("activates the trial for a new account with a verified email", async () => {
+    // Arrange
+    mocks.refGet.mockResolvedValueOnce({ exists: false });
+    const { executeGetRegister } = await import("@functions/subscriptions/subscription.logic");
+    const res = response();
+
+    // Act
+    await executeGetRegister({ body: {} } as never, res as never);
+
+    // Assert
+    expect(mocks.getUser).toHaveBeenCalledWith("user-1");
+    expect(mocks.minute).toHaveBeenCalledWith("user-1", "register", 5);
+    expect(mocks.validate).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ created: true }));
+  });
+
+  it("does not check email verification for users who already have a register record", async () => {
+    // Arrange
+    const { executeGetRegister } = await import("@functions/subscriptions/subscription.logic");
+    const res = response();
+
+    // Act
+    await executeGetRegister({ body: {} } as never, res as never);
+
+    // Assert
+    expect(mocks.getUser).not.toHaveBeenCalled();
   });
 
   it("returns a stored register record without recreating the trial", async () => {

@@ -1,6 +1,6 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { AuthContext } from "./AuthContext";
-import { onUserStateChange } from "@/features/auth/hooks/auth";
+import { onUserStateChange, reloadCurrentUser } from "@/features/auth/hooks/auth";
 
 type FirebaseUser = import("firebase/auth").User;
 const STATIC_ROUTES = new Set(["/privacy", "/termini", "/gdpr"]);
@@ -19,6 +19,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
   const [hasConflict, setHasConflict] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  // L'oggetto User di Firebase viene mutato in place da reload(): questo contatore
+  // forza il re-render dei consumer quando cambiano campi come emailVerified.
+  const [, setUserVersion] = useState(0);
+
+  const refreshUser = useCallback(async () => {
+    const refreshed = await reloadCurrentUser();
+    setUser(refreshed);
+    setUserVersion((v) => v + 1);
+    return refreshed;
+  }, []);
 
   // Azzeramento immediato dello stato per evitare rimbalzi dal router
   const resolveConflict = () => {
@@ -58,7 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
   
   return (
-    <AuthContext.Provider value={{ user, status, hasConflict, errorMessage, resolveConflict }}>
+    <AuthContext.Provider value={{ user, status, hasConflict, errorMessage, resolveConflict, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

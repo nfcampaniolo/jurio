@@ -27,6 +27,7 @@ import { handleGenerateStaticStatsJson, handleFileCreation, handleProcessContact
 import { executeTasksDowngrade, computeAndSaveWeeklyStats, computeAndSaveMonthlyUsage } from "./schedules/tasks.logic";
 import { computeAndSaveMonthlyActivityReports } from "./schedules/activityReports.logic";
 import { executePayWithStripeCreateCheckoutSession, executeStripeWebhook } from "./subscriptions/payments.logic";
+import { executeSendVerificationEmail } from "./auth/emailVerification.logic";
 import { executeGetRegister, executeGetPrice, executeApplyDiscountCoupon} from "./subscriptions/subscription.logic";
 
 setGlobalOptions({
@@ -559,6 +560,16 @@ export const deleteTeam = onRequest(
   },
   async (req, res) => {
     return executeDeleteTeam(req, res);
+  }
+);
+
+export const sendVerificationEmail = onRequest(
+  {
+    timeoutSeconds: 30,
+    memory: "512MiB",
+  },
+  async (req, res) => {
+    return executeSendVerificationEmail(req, res);
   }
 );
 

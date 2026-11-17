@@ -6,7 +6,7 @@ import {
 } from "../_utils";
 import { corsHandlerDomain, requireAppCheck, consumePerMinuteFeature, consumeDailyFeature } from "../_utils";
 import { JURIO_USAGE_LIMITS } from "../_constants";
-import { getDb } from "../_deps";
+import { getDb, getAdminAuth } from "../_deps";
 import { GetRegisterResponse, GetPriceRequestBody, GetPriceResponse, ApplyCouponRequestBody, ApplyCouponResponse } from "./_interfaces";
 import { enqueueWelcomeEmail, enqueueTrialEmail } from "../email/comms/logic";
 import { scheduleDowngradeTask } from "../schedules/schedule.logic"
@@ -24,6 +24,15 @@ export async function executeGetRegister(req: Request, res: Response): Promise<a
       // Per una registrazione già completata, applica il normale controllo piano e quote.
       await validateUserPlanAndLimits(uid, "register", existingSnap);
     } else {
+      // Gli account email/password devono aver confermato l'indirizzo prima di
+      // attivare la prova. Gli utenti già registrati (register/{uid} esistente)
+      // non sono toccati da questo controllo.
+      const userRecord = await getAdminAuth().getUser(uid);
+      if (userRecord.email && !userRecord.emailVerified) {
+        res.status(403).json({ error: "EMAIL_NOT_VERIFIED", details: "Conferma il tuo indirizzo email per completare la registrazione." });
+        return;
+      }
+
       // Un nuovo utente non ha ancora un piano in register/{uid}; applica
       // direttamente il limite globale previsto per la feature "register".
       const limits = JURIO_USAGE_LIMITS.register?.global ?? { perMinute: 5, perDay: 20 };

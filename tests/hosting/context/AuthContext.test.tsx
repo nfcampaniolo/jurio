@@ -43,6 +43,7 @@ describe("AuthContext Suite", () => {
       hasConflict: true,
       errorMessage: null,
       resolveConflict: vi.fn(),
+      refreshUser: vi.fn(),
     };
 
     render(
@@ -63,6 +64,7 @@ describe("AuthContext Suite", () => {
       hasConflict: false,
       errorMessage: null,
       resolveConflict: vi.fn(),
+      refreshUser: vi.fn(),
     };
 
     const { rerender } = render(
@@ -84,6 +86,7 @@ describe("AuthContext Suite", () => {
       hasConflict: false,
       errorMessage: null,
       resolveConflict: vi.fn(),
+      refreshUser: vi.fn(),
     };
 
     rerender(

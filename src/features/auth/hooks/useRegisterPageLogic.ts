@@ -80,6 +80,11 @@ export function useRegisterPageLogic() {
 
       const r = await fetchWithSecurity(GET_REGISTER_URL, {});
       const text = await r.text();
+      if (r.status === 403 && text.includes("EMAIL_NOT_VERIFIED")) {
+        toast.error("Conferma il tuo indirizzo email per completare la registrazione.");
+        await navigate("/verifica-email", { replace: true });
+        return;
+      }
       if (!r.ok) throw new Error(`getRegister failed (${r.status}): ${text}`);
 
       void trackEvent("sign_up", { method: "email", success: true });

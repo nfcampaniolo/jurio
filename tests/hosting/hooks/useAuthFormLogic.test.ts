@@ -1,15 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 
-type UserLike = { uid: string };
+type UserLike = { uid: string; needsVerification?: boolean };
 
 const loginWithEmail = vi.fn<(email: string, password: string) => Promise<{ user: UserLike }>>();
 const registerWithEmail = vi.fn<(email: string, password: string) => Promise<unknown>>();
 const resetPassword = vi.fn<(email: string) => Promise<unknown>>();
+const sendVerificationEmail = vi.fn<() => Promise<{ alreadyVerified: boolean }>>();
+const needsEmailVerification = (u: UserLike) => Boolean(u.needsVerification);
 vi.mock("@/features/auth/hooks/auth", () => ({
   loginWithEmail,
   registerWithEmail,
   resetPassword,
+  sendVerificationEmail,
+  needsEmailVerification,
 }));
 
 const userExists = vi.fn<(uid: string) => Promise<boolean>>();
@@ -21,7 +25,7 @@ vi.mock("@/infrastructure/userStore", () => ({
     selector({ setUser: setUserMock }),
 }));
 
-const navigateMock = vi.fn<(path: string) => void>();
+const navigateMock = vi.fn<(path: string, opts?: unknown) => void>();
 vi.mock("react-router-dom", () => ({
   useNavigate: () => navigateMock,
 }));
@@ -147,8 +151,69 @@ describe("useAuthFormLogic", () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it("register: password ok -> calls register and switches to login mode", async () => {
+  it("login success -> new unverified user navigates /verifica-email", async () => {
+    loginWithEmail.mockResolvedValueOnce({ user: { uid: "u3", needsVerification: true } });
+    userExists.mockResolvedValueOnce(false);
+
+    const { useAuthFormLogic } = await importFresh();
+    const { result } = renderHook(() => useAuthFormLogic("login"));
+
+    act(() => {
+      result.current.setEmail("a@b.com");
+      result.current.setPassword("Pwd123!!");
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit(mkEvt() as unknown as React.FormEvent);
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith("/verifica-email");
+  });
+
+  it("login success -> existing unverified user (legacy) still navigates /profilo", async () => {
+    loginWithEmail.mockResolvedValueOnce({ user: { uid: "u4", needsVerification: true } });
+    userExists.mockResolvedValueOnce(true);
+
+    const { useAuthFormLogic } = await importFresh();
+    const { result } = renderHook(() => useAuthFormLogic("login"));
+
+    act(() => {
+      result.current.setEmail("a@b.com");
+      result.current.setPassword("Pwd123!!");
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit(mkEvt() as unknown as React.FormEvent);
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith("/profilo");
+  });
+
+  it("register: sending verification email fails -> still navigates /verifica-email", async () => {
     registerWithEmail.mockResolvedValueOnce(undefined);
+    sendVerificationEmail.mockRejectedValueOnce(new Error("network"));
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const { useAuthFormLogic } = await importFresh();
+    const { result } = renderHook(() => useAuthFormLogic("register"));
+
+    act(() => {
+      result.current.setEmail("a@b.com");
+      result.current.setPassword("Abcdef1!");
+    });
+
+    await act(async () => {
+      await result.current.handleSubmit(mkEvt() as unknown as React.FormEvent);
+    });
+
+    expect(navigateMock).toHaveBeenCalledWith("/verifica-email", { replace: true, state: { emailSent: true } });
+    expect(result.current.error).toBeNull();
+    consoleSpy.mockRestore();
+  });
+
+  it("register: password ok -> calls register, sends verification email and navigates /verifica-email", async () => {
+    registerWithEmail.mockResolvedValueOnce(undefined);
+    sendVerificationEmail.mockResolvedValueOnce({ alreadyVerified: false });
 
     const { useAuthFormLogic } = await importFresh();
     const { result } = renderHook(() => useAuthFormLogic("register"));
@@ -163,7 +228,8 @@ describe("useAuthFormLogic", () => {
     });
 
     expect(registerWithEmail).toHaveBeenCalledWith("a@b.com", "Abcdef1!");
-    expect(result.current.mode).toBe("login");
+    expect(sendVerificationEmail).toHaveBeenCalledTimes(1);
+    expect(navigateMock).toHaveBeenCalledWith("/verifica-email", { replace: true, state: { emailSent: true } });
     expect(result.current.loading).toBe(false);
   });
 

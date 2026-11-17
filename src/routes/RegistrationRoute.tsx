@@ -5,6 +5,7 @@ import { userExists } from "@/shared/services/user";
 import { AuthLoader } from "./AuthLoader";
 import { ErrorScreen } from "../shared/components/ErrorScreen";
 import { useSmoothLoading } from "@/shared/hooks/useSmoothLoading";
+import { needsEmailVerification } from "@/features/auth/hooks/auth";
 
 export const RegistrationRoute = ({ children }: { children: ReactNode }) => {
   const { user, status, errorMessage } = useAuth();
@@ -59,6 +60,9 @@ export const RegistrationRoute = ({ children }: { children: ReactNode }) => {
   // 6. Registrazione su Firestore completata in precedenza
   if (profileState === 'exists') return <Navigate to="/profilo" replace />;
 
-  // 7. Utente in Auth ma manca il record su Firestore: Via libera al form
+  // 7. Account email/password non ancora verificato: prima va confermato l'indirizzo
+  if (needsEmailVerification(user)) return <Navigate to="/verifica-email" replace />;
+
+  // 8. Utente in Auth ma manca il record su Firestore: Via libera al form
   return <>{children}</>;
 };
