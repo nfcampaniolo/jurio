@@ -35,6 +35,7 @@ function makeDb(tokenSnapshot = snapshot(undefined, false), userSnapshot = snaps
       clauses.push(args);
       return query;
     }),
+    orderBy: vi.fn(() => query),
     limit: vi.fn(() => query),
     get: get.mockImplementation(async () => {
       const key = clauses.map((clause) => clause.join(":")).join("|");
@@ -251,7 +252,28 @@ describe("MPC helpers", () => {
       ]);
       expect(query.where).toHaveBeenCalledWith("area", "==", "Penale");
       expect(query.where).toHaveBeenCalledWith("sottocategoria", "array-contains", "penale");
+      expect(query.orderBy).toHaveBeenCalledTimes(2);
+      expect(query.orderBy).toHaveBeenCalledWith("dataSentenza", "desc");
       expect(query.limit).toHaveBeenCalledTimes(2);
+    });
+
+    it("merges area and subcategory matches newest first, whatever the date format", async () => {
+      const { db, query } = makeDb();
+      query.get.mockResolvedValueOnce({
+        docs: [
+          { id: "ts", data: () => ({ dataSentenza: { toMillis: () => Date.parse("2024-06-01") } }) },
+          { id: "nodate", data: () => ({}) },
+        ],
+      }).mockResolvedValueOnce({
+        docs: [
+          { id: "date", data: () => ({ dataSentenza: new Date("2025-01-10") }) },
+          { id: "string", data: () => ({ dataSentenza: "2023-03-15" }) },
+        ],
+      });
+
+      const result = await findBySottocategoriaAdmin("Diritto Penale Sostanziale", 10, db);
+
+      expect(result.map((d) => d.id)).toEqual(["date", "ts", "string", "nodate"]);
     });
   });
 });

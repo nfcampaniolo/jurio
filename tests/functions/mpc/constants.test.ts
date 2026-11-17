@@ -5,6 +5,7 @@ import {
   JURIO_EXTRACT_TEXT_URL,
   JURIO_VECTOR_SEARCH_URL,
   NOMI_AREE,
+  VALORI_AREA,
 } from "@functions/mpc/constants";
 
 describe("MPC constants", () => {
@@ -22,5 +23,10 @@ describe("MPC constants", () => {
     expect(NOMI_AREE).toBe(Object.values(AREE).join("', '"));
     expect(NOMI_AREE).toContain("Diritto Costituzionale e Parlamentare");
     expect(NOMI_AREE).toContain("Ordinamento Minorile (Civile e Penale)");
+  });
+
+  it("exposes every area label as an enum value for the semantic-search filter", () => {
+    expect(VALORI_AREA).toEqual(Object.values(AREE));
+    expect(VALORI_AREA).toHaveLength(41);
   });
 });

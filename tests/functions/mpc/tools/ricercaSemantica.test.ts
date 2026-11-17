@@ -109,4 +109,47 @@ describe("registerRicercaSemantica", () => {
     expect(config.inputSchema.sezione.description).toContain("- SEZIONE V: appalti e contratti pubblici");
     expect(accepts("Prima Sezione Civile")).toBe(false);
   });
+
+  it("sends the area filter to the backend and mentions it when nothing is found", async () => {
+    const { handler } = setup();
+    mocks.mcpFetch.mockResolvedValue({ data: { topMatches: [] } });
+
+    const result = await handler({ query: "aggiudicazione offerta anomala verifica", area: "Contrattualistica Pubblica, Appalti e Concessioni" });
+
+    expect(mocks.mcpFetch).toHaveBeenCalledWith(JURIO_VECTOR_SEARCH_URL, "Bearer search-token", {
+      query: "aggiudicazione offerta anomala verifica",
+      limit: 10,
+      filters: [{ field: "area", operator: "==", value: "Contrattualistica Pubblica, Appalti e Concessioni" }],
+    });
+    expect(result.content[0].text).toContain("area = Contrattualistica Pubblica, Appalti e Concessioni");
+    expect(result.content[0].text).toContain("senza filtro");
+  });
+
+  it("rejects sezione and area together without calling the backend", async () => {
+    const { handler } = setup();
+
+    const result = await handler({
+      query: "colpa medica nesso causale",
+      sezione: "QUARTA SEZIONE PENALE",
+      area: "Diritto Sanitario, Farmaceutico e Responsabilità Medica",
+    });
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain("un solo filtro");
+    expect(mocks.mcpFetch).not.toHaveBeenCalled();
+  });
+
+  it("accepts only exact area labels in the input schema", () => {
+    const { server } = setup();
+    const config = server.registerTool.mock.calls[0][1] as {
+      inputSchema: { area: { safeParse: (v: unknown) => { success: boolean } } };
+    };
+    const accepts = (v: unknown) => config.inputSchema.area.safeParse(v).success;
+
+    expect(accepts("Diritto Penale Sostanziale")).toBe(true);
+    expect(accepts("Ordinamento Minorile (Civile e Penale)")).toBe(true);
+    expect(accepts(undefined)).toBe(true);
+    expect(accepts("diritto penale sostanziale")).toBe(false);
+    expect(accepts("Diritto Penale")).toBe(false);
+  });
 });

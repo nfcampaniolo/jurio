@@ -253,15 +253,32 @@ export async function findBySottocategoriaAdmin(
   const lower = original.toLowerCase();
   if (!lower) return [];
 
+  // Ordinamento per data decrescente: senza orderBy Firestore restituirebbe i primi documenti per ID, cioè a caso.
+  // Richiede gli indici compositi (area, dataSentenza DESC) e (sottocategoria CONTAINS, dataSentenza DESC);
+  // i documenti privi di dataSentenza sono esclusi dai risultati.
   const sentencesRef = db.collection("sentences");
   const [snapArea, snapSotto] = await Promise.all([
-    sentencesRef.where("area", "==", original).limit(max).get(),
-    sentencesRef.where("sottocategoria", "array-contains", lower).limit(max).get(),
+    sentencesRef.where("area", "==", original).orderBy("dataSentenza", "desc").limit(max).get(),
+    sentencesRef.where("sottocategoria", "array-contains", lower).orderBy("dataSentenza", "desc").limit(max).get(),
   ]);
 
   const uniqueDocs = new Map<string, JurioDocument>();
   snapArea.docs.forEach((d) => uniqueDocs.set(d.id, { id: d.id, ...d.data() } as JurioDocument));
   snapSotto.docs.forEach((d) => uniqueDocs.set(d.id, { id: d.id, ...d.data() } as JurioDocument));
 
-  return Array.from(uniqueDocs.values()).slice(0, max);
+  return Array.from(uniqueDocs.values())
+    .sort((a, b) => toMillis(b.dataSentenza) - toMillis(a.dataSentenza))
+    .slice(0, max);
+}
+
+function toMillis(value: unknown): number {
+  if (value && typeof (value as { toMillis?: unknown }).toMillis === "function") {
+    return (value as { toMillis: () => number }).toMillis();
+  }
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+  return 0;
 }
