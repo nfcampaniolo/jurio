@@ -1,5 +1,5 @@
 /// <reference types="office-js" />
-/* global Word, Office */
+
 /**
  * Operazioni su Word condivise dagli strumenti. Nessuna modifica avviene senza un clic dell'utente.
  */

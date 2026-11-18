@@ -16,7 +16,6 @@ export default defineConfig({
     __WORD_AUTH_URL__: JSON.stringify("https://wordauth.test"),
     __WEB_APP_URL__: JSON.stringify("https://app.jurio.test"),
     __RECAPTCHA_SITE_KEY__: JSON.stringify("test-site-key"),
-    __APPCHECK_DEBUG_TOKEN__: JSON.stringify(""),
   },
   esbuild: {
     jsx: "transform",

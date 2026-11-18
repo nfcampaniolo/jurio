@@ -1,7 +1,7 @@
 /* global window */
 import type { FirebaseApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from "firebase/app-check";
-import { APPCHECK_DEBUG_TOKEN, RECAPTCHA_SITE_KEY } from "../config/env";
+import { RECAPTCHA_SITE_KEY } from "../config/env";
 
 declare global {
   interface Window {
@@ -16,8 +16,7 @@ declare global {
  */
 export function setupAppCheck(app: FirebaseApp): AppCheck | undefined {
   if (typeof window === "undefined" || !RECAPTCHA_SITE_KEY) return undefined;
-  // Il token debug esiste solo nel dev server locale (vedi build-targets.js)
-  if (APPCHECK_DEBUG_TOKEN) window.FIREBASE_APPCHECK_DEBUG_TOKEN = APPCHECK_DEBUG_TOKEN;
+  // In locale il token debug lo imposta lo script del dev server (vedi webpack.config.js), mai il bundle.
   return initializeAppCheck(app, {
     provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_SITE_KEY),
     isTokenAutoRefreshEnabled: true,

@@ -46,9 +46,28 @@ interface SessionDoc {
   expireAt: Timestamp;
 }
 
+/**
+ * Errori previsti: la risposta usa SOLO questi testi fissi, mai il messaggio di un'eccezione
+ * (nessun dato interno o di terzi può finire nella risposta).
+ */
+const ERRORS = {
+  INVALID_SESSION: [400, "Sessione non valida."],
+  INVALID_REQUEST: [400, "Richiesta di accesso non valida."],
+  INVALID_ACTION: [400, "Azione non valida."],
+  APP_CHECK_FAILED: [401, "Verifica dell'app non riuscita. Ricarica e riprova."],
+  UNAUTHENTICATED: [401, "Accedi a Jurio per continuare."],
+  VERIFIER_MISMATCH: [403, "Richiesta di accesso non valida."],
+  NOT_REGISTERED: [403, "Completa la registrazione su jurio.it prima di collegare Word."],
+  ALREADY_HANDLED: [409, "Questa richiesta è già stata gestita."],
+  EXPIRED: [410, "La richiesta è scaduta: riavvia l'accesso da Word."],
+  TOO_MANY_STARTS: [429, "Troppe richieste di accesso. Riprova tra un minuto."],
+} as const satisfies Record<string, readonly [number, string]>;
+
+type ErrorCode = keyof typeof ERRORS;
+
 class HttpError extends Error {
-  constructor(readonly status: number, message: string, readonly body: Record<string, unknown> = {}) {
-    super(message);
+  constructor(readonly code: ErrorCode) {
+    super(code);
   }
 }
 
@@ -75,7 +94,7 @@ const sessions = () => getDb().collection(WORD_LOGIN.collection);
 
 function readSessionId(body: Record<string, unknown>): string {
   const id = body.sessionId;
-  if (typeof id !== "string" || !SESSION_ID.test(id)) throw new HttpError(400, "Sessione non valida.");
+  if (typeof id !== "string" || !SESSION_ID.test(id)) throw new HttpError("INVALID_SESSION");
   return id;
 }
 
@@ -88,12 +107,12 @@ const isExpired = (doc: SessionDoc) => doc.expireAt.toMillis() <= Date.now();
 async function start(req: Request, body: Record<string, unknown>) {
   const challenge = body.challenge;
   if (typeof challenge !== "string" || !CHALLENGE.test(challenge)) {
-    throw new HttpError(400, "Richiesta di accesso non valida.");
+    throw new HttpError("INVALID_REQUEST");
   }
   try {
     await consumePerMinuteFeature(clientIpKey(req), "word_login", WORD_LOGIN.startsPerMinutePerIp);
   } catch {
-    throw new HttpError(429, "Troppe richieste di accesso. Riprova tra un minuto.");
+    throw new HttpError("TOO_MANY_STARTS");
   }
 
   const sessionId = randomBytes(32).toString("base64url");
@@ -113,14 +132,14 @@ async function start(req: Request, body: Record<string, unknown>) {
 async function exchange(body: Record<string, unknown>) {
   const sessionId = readSessionId(body);
   const verifier = body.verifier;
-  if (typeof verifier !== "string" || !VERIFIER.test(verifier)) throw new HttpError(400, "Richiesta di accesso non valida.");
+  if (typeof verifier !== "string" || !VERIFIER.test(verifier)) throw new HttpError("INVALID_REQUEST");
 
   const ref = sessions().doc(sessionId);
   const outcome = await getDb().runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     if (!snap.exists) return { status: "expired" as const };
     const doc = snap.data() as SessionDoc;
-    if (!safeEqual(challengeFor(verifier), doc.challenge)) throw new HttpError(403, "Richiesta di accesso non valida.");
+    if (!safeEqual(challengeFor(verifier), doc.challenge)) throw new HttpError("VERIFIER_MISMATCH");
     if (isExpired(doc)) {
       tx.delete(ref);
       return { status: "expired" as const };
@@ -145,8 +164,8 @@ async function exchange(body: Record<string, unknown>) {
 async function loadPending(sessionId: string): Promise<SessionDoc> {
   const snap = await sessions().doc(sessionId).get();
   const doc = snap.exists ? (snap.data() as SessionDoc) : undefined;
-  if (!doc || isExpired(doc)) throw new HttpError(410, "La richiesta è scaduta: riavvia l'accesso da Word.");
-  if (doc.status !== "pending") throw new HttpError(409, "Questa richiesta è già stata gestita.");
+  if (!doc || isExpired(doc)) throw new HttpError("EXPIRED");
+  if (doc.status !== "pending") throw new HttpError("ALREADY_HANDLED");
   return doc;
 }
 
@@ -160,15 +179,15 @@ async function decide(body: Record<string, unknown>, uid: string, status: "appro
   if (status === "approved") {
     const registered = await getDb().collection("register").doc(uid).get();
     if (!registered.exists) {
-      throw new HttpError(403, "Completa la registrazione su jurio.it prima di collegare Word.");
+      throw new HttpError("NOT_REGISTERED");
     }
   }
   const ref = sessions().doc(sessionId);
   await getDb().runTransaction(async (tx) => {
     const snap = await tx.get(ref);
     const doc = snap.exists ? (snap.data() as SessionDoc) : undefined;
-    if (!doc || isExpired(doc)) throw new HttpError(410, "La richiesta è scaduta: riavvia l'accesso da Word.");
-    if (doc.status !== "pending") throw new HttpError(409, "Questa richiesta è già stata gestita.");
+    if (!doc || isExpired(doc)) throw new HttpError("EXPIRED");
+    if (doc.status !== "pending") throw new HttpError("ALREADY_HANDLED");
     tx.update(ref, { status, uid: status === "approved" ? uid : null, decidedAt: FieldValue.serverTimestamp() });
   });
   return { status };
@@ -197,12 +216,12 @@ export async function executeWordAuth(req: Request, res: Response): Promise<void
     const action = body.action;
     try {
       if (typeof action !== "string" || ![...PUBLIC_ACTIONS, ...USER_ACTIONS].includes(action as never)) {
-        throw new HttpError(400, "Azione non valida.");
+        throw new HttpError("INVALID_ACTION");
       }
       try {
         await requireAppCheck(req);
       } catch {
-        throw new HttpError(401, "Verifica dell'app non riuscita. Ricarica e riprova.");
+        throw new HttpError("APP_CHECK_FAILED");
       }
 
       let result: Record<string, unknown>;
@@ -213,7 +232,7 @@ export async function executeWordAuth(req: Request, res: Response): Promise<void
         try {
           uid = await requireUidFromAuthHeader(req);
         } catch {
-          throw new HttpError(401, "Accedi a Jurio per continuare.");
+          throw new HttpError("UNAUTHENTICATED");
         }
         if (action === "describe") result = await describe(body);
         else result = await decide(body, uid, action === "approve" ? "approved" : "denied");
@@ -221,7 +240,8 @@ export async function executeWordAuth(req: Request, res: Response): Promise<void
       res.status(200).json(result);
     } catch (err) {
       if (err instanceof HttpError) {
-        res.status(err.status).json({ error: err.message, details: err.message, ...err.body });
+        const [status, details] = ERRORS[err.code];
+        res.status(status).json({ error: err.code, details });
         return;
       }
       logSafeError("WORD_AUTH_FAILED", err);

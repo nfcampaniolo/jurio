@@ -19,7 +19,34 @@ function loadEnv(envFile) {
 function resolveFunctionUrl(env, explicitKey, functionName) {
   if (env[explicitKey]) return env[explicitKey];
   const legal = env.VITE_LEGAL_AGENT_ENDPOINT || "";
-  return legal.includes("://legalagent-") ? legal.replace("://legalagent-", `://${functionName}-`) : "";
+  return legal.includes("://legalagent-")
+    ? legal.replace("://legalagent-", `://${functionName}-`)
+    : "";
+}
+
+/**
+ * Token debug di App Check (consente di aggirare App Check): non entra MAI nei file compilati.
+ * Solo il dev server locale lo serve in memoria come script, inserito in testa a taskpane.html
+ * prima dei bundle; l'SDK lo legge da self.FIREBASE_APPCHECK_DEBUG_TOKEN.
+ */
+const DEV_APPCHECK_SCRIPT = "/__dev/appcheck-debug.js";
+
+class DevAppCheckTokenPlugin {
+  apply(compiler) {
+    compiler.hooks.compilation.tap("DevAppCheckToken", (compilation) => {
+      HtmlWebpackPlugin.getHooks(compilation).alterAssetTagGroups.tap(
+        "DevAppCheckToken",
+        (data) => {
+          if (data.outputName === "taskpane.html") {
+            data.headTags.unshift(
+              HtmlWebpackPlugin.createHtmlTagObject("script", { src: DEV_APPCHECK_SCRIPT })
+            );
+          }
+          return data;
+        }
+      );
+    });
+  }
 }
 
 const readSitePage = (name) => fs.readFileSync(path.resolve(__dirname, "src/site", name), "utf8");
@@ -43,6 +70,8 @@ module.exports = async (env, options) => {
     appId: envVars.VITE_FIREBASE_APP_ID,
     measurementId: envVars.VITE_FIREBASE_MEASUREMENT_ID,
   };
+  const devAppCheckToken =
+    env.WEBPACK_SERVE && target.appCheckDebugToken ? envVars.VITE_APPCHECK_DEBUG_TOKEN || "" : "";
   const wordAgentUrl = resolveFunctionUrl(envVars, "VITE_WORD_AGENT_URL", "wordagent");
   const wordAuthUrl = resolveFunctionUrl(envVars, "VITE_WORD_AUTH_URL", "wordauth");
 
@@ -164,11 +193,8 @@ module.exports = async (env, options) => {
         __WORD_AUTH_URL__: JSON.stringify(wordAuthUrl),
         __WEB_APP_URL__: JSON.stringify(target.webAppUrl),
         __RECAPTCHA_SITE_KEY__: JSON.stringify(envVars.VITE_RECAPTCHA_SITE_KEY || ""),
-        // Il token debug di App Check consente di aggirare App Check: MAI nella build di produzione
-        __APPCHECK_DEBUG_TOKEN__: JSON.stringify(
-          dev && target.appCheckDebugToken ? envVars.VITE_APPCHECK_DEBUG_TOKEN || "" : ""
-        ),
       }),
+      ...(devAppCheckToken ? [new DevAppCheckTokenPlugin()] : []),
       new MiniCssExtractPlugin({
         filename: dev ? "[name].css" : "[name].[contenthash:10].css",
       }),
@@ -183,6 +209,17 @@ module.exports = async (env, options) => {
             : await getHttpsOptions(),
       },
       port: process.env.npm_package_config_dev_server_port || 3000,
+      setupMiddlewares: (middlewares, devServer) => {
+        if (devAppCheckToken) {
+          devServer.app.get(DEV_APPCHECK_SCRIPT, (_req, res) => {
+            res
+              .type("application/javascript")
+              .set("Cache-Control", "no-store")
+              .send(`self.FIREBASE_APPCHECK_DEBUG_TOKEN = ${JSON.stringify(devAppCheckToken)};`);
+          });
+        }
+        return middlewares;
+      },
     },
   };
 

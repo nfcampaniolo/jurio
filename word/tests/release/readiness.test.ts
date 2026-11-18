@@ -98,7 +98,9 @@ describe("Codice sorgente – URL e segreti", () => {
   });
 
   it("il token debug di App Check non viene iniettato nella build di produzione", () => {
-    expect(webpack).toMatch(/__APPCHECK_DEBUG_TOKEN__:\s*JSON\.stringify\(\s*dev && target\.appCheckDebugToken\s*\?/);
+    // il token non passa mai da DefinePlugin: lo serve solo il dev server, in memoria
+    expect(webpack).not.toMatch(/__APPCHECK_DEBUG_TOKEN__/);
+    expect(webpack).toMatch(/env\.WEBPACK_SERVE && target\.appCheckDebugToken/);
     // solo il dev server locale può usarlo; i siti pubblicati (staging e produzione) mai
     expect(TARGETS.staging.appCheckDebugToken).toBe(false);
     expect(TARGETS.production.appCheckDebugToken).toBe(false);

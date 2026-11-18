@@ -1,4 +1,4 @@
-/* global Word console */
+/* global console */
 
 export async function insertText(text: string) {
   // Write text to the document.

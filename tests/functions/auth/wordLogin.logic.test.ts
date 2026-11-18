@@ -188,6 +188,16 @@ describe("accesso a Word tramite jurio.it", () => {
     expect((await call({ action: "exchange", ...body })).status).toBe(400);
   });
 
+  it("gli errori previsti rispondono con codice e testo fissi (mai il messaggio di un'eccezione)", async () => {
+    const { sessionId } = await startSession();
+    mocks.store.get(sessionPath(sessionId))!.expireAt = { toMillis: () => Date.now() - 1 };
+    const out = await call({ action: "describe", sessionId });
+    expect(out).toEqual({
+      status: 410,
+      body: { error: "EXPIRED", details: "La richiesta è scaduta: riavvia l'accesso da Word." },
+    });
+  });
+
   it("errori imprevisti → 500 generico senza dettagli interni", async () => {
     const { sessionId } = await startSession();
     await call({ action: "approve", sessionId });

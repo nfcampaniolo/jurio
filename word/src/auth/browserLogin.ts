@@ -1,5 +1,5 @@
 /// <reference types="office-js" />
-/* global Office, window, crypto, TextEncoder, btoa */
+/* global window, crypto, TextEncoder, btoa */
 /**
  * Accesso al pannello tramite jurio.it (vedi functions/src/auth/wordLogin.logic.ts).
  * Il pannello conserva il verifier (segreto) e invia solo il suo hash: anche chi vedesse il link

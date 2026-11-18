@@ -3,8 +3,6 @@
  * il pulsante della barra multifunzione apre solo il pannello laterale.
  */
 
-/* global Office */
-
 Office.onReady(() => {
   // Nessun comando da registrare.
 });

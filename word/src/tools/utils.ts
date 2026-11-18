@@ -1,5 +1,5 @@
 /// <reference types="office-js" />
-/* global Word, console */
+/* global console */
 
 import { useState, useEffect } from "react";
 import { listFascicoliByUser, PastFascicolo } from "../firebase/functions";

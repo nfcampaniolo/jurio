@@ -1,4 +1,4 @@
-/* global navigator, window, Office, AudioContext, MediaStream, btoa */
+/* global navigator, window, AudioContext, MediaStream, btoa */
 /**
  * Registrazione per la dettatura: PCM catturato con Web Audio e codificato in WAV 16 bit mono a 16 kHz.
  * Non usa MediaRecorder perché su Word per Mac (WKWebView) produce solo AAC/MP4, non accettato da

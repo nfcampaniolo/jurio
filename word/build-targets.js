@@ -6,6 +6,7 @@
  *  production  → sito Hosting "jurio-word" del progetto jurio-it, dominio word.jurio.it
  *
  * webAppUrl è la web app dello stesso progetto Firebase: l'accesso al pannello avviene lì (/word-login).
+ * appCheckDebugToken: il dev server locale serve il token debug di App Check (mai nei file compilati).
  * Ogni ambiente ha un manifest con Id e nome propri, così più versioni possono convivere in Word.
  * L'Id di produzione NON va mai cambiato: identifica l'add-in presso Microsoft 365 e AppSource.
  * Le origini devono coincidere con WORD_ADDIN_*_ORIGIN in functions/src/_constants.ts (CORS).
