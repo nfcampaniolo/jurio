@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ generate: vi.fn(), randomUUID: vi.fn() }));
+const mocks = vi.hoisted(() => ({ generate: vi.fn(), randomUUID: vi.fn(), search: vi.fn() }));
+vi.mock("@functions/genai/wordAgent/_search", () => ({ searchJurioDatabase: mocks.search }));
 vi.mock("@functions/genai/_config", () => ({ ai: { defineFlow: (_config: unknown, handler: unknown) => handler, generate: mocks.generate } }));
 vi.mock("@functions/genai/tools/index", () => ({
   internalDatabaseSearch: { name: "internalDatabaseSearch" }, webSearch: { name: "webSearch" },
+  userFileSearch: { name: "userFileSearch" },
 }));
 vi.mock("node:crypto", async (importOriginal) => {
   const actual = await importOriginal<typeof import("node:crypto")>();
@@ -14,7 +16,14 @@ vi.mock("node:crypto", async (importOriginal) => {
   };
 });
 
-import { estraiFontiDalRisultato, wordQuoteFlow, wordReviewFlow } from "@functions/genai/wordAgent/flow";
+import {
+  estraiFontiDalRisultato,
+  wordAskFlow,
+  wordCaseLawFlow,
+  wordQuoteFlow,
+  wordRedraftFlow,
+  wordReviewFlow,
+} from "@functions/genai/wordAgent/flow";
 
 describe("Word-agent flows", () => {
   beforeEach(() => {
@@ -114,5 +123,138 @@ describe("Word-agent flows", () => {
     const review = wordReviewFlow as unknown as (input: unknown, context: unknown) => Promise<unknown>;
     await expect(review({ chunks: ["text"], userId: "u1" }, { sendChunk: vi.fn() }))
       .rejects.toThrow("Si è verificato un errore durante l'analisi di conformità.");
+  });
+
+  describe("wordRedraftFlow", () => {
+    const redraft = wordRedraftFlow as unknown as (input: unknown, context: unknown) => Promise<unknown>;
+
+    it("isola testo e direttiva nei delimitatori e usa solo la banca dati senza fascicolo", async () => {
+      mocks.generate.mockResolvedValueOnce({ text: "  Clausola riscritta  ", messages: [] });
+      const out = await redraft(
+        { text: "Clausola", promptDirettiva: " più chiara ", fascicoloId: null, userId: "u1" },
+        { sendChunk: vi.fn() }
+      );
+      expect(out).toEqual({ risultato: "Clausola riscritta", fonti: [] });
+      const call = mocks.generate.mock.calls[0][0];
+      expect(call.messages[1].content[0].text).toBe(
+        "<TESTO_DA_RISCRIVERE>\nClausola\n</TESTO_DA_RISCRIVERE>\n<DIRETTIVA>\npiù chiara\n</DIRETTIVA>"
+      );
+      expect(call.tools.map((t: { name: string }) => t.name)).toEqual(["internalDatabaseSearch"]);
+      expect(call.messages[0].content[0].text).not.toContain("userFileSearch");
+    });
+
+    it("con un fascicolo abilita userFileSearch e passa fascicoloId nel contesto", async () => {
+      mocks.generate.mockImplementationOnce(async (options: { onChunk: (c: unknown) => void }) => {
+        options.onChunk({ content: [{ toolRequest: { name: "userFileSearch" } }] });
+        return { text: "ok", messages: [] };
+      });
+      const sendChunk = vi.fn();
+      await redraft({ text: "x", fascicoloId: "f1", userId: "u1" }, { sendChunk });
+      const call = mocks.generate.mock.calls[0][0];
+      expect(call.tools.map((t: { name: string }) => t.name)).toEqual(["internalDatabaseSearch", "userFileSearch"]);
+      expect(call.context).toEqual({ userId: "u1", fascicoloId: "f1" });
+      expect(sendChunk).toHaveBeenCalledWith({ status: "Consultazione dei documenti del fascicolo..." });
+    });
+
+    it("risposta vuota o errore del modello → errore generico", async () => {
+      mocks.generate.mockResolvedValueOnce({ text: "  ", messages: [] });
+      await expect(redraft({ text: "x", userId: "u1" }, { sendChunk: vi.fn() }))
+        .rejects.toThrow("Si è verificato un errore durante la riscrittura.");
+      mocks.generate.mockRejectedValueOnce(new Error("provider"));
+      await expect(redraft({ text: "x", userId: "u1" }, { sendChunk: vi.fn() }))
+        .rejects.toThrow("Si è verificato un errore durante la riscrittura.");
+    });
+  });
+
+  describe("wordReviewFlow con criteri (prompt Jurio o playbook)", () => {
+    it("aggiunge i criteri delimitati dopo il documento", async () => {
+      mocks.generate.mockResolvedValueOnce({ output: { tesi: [] } });
+      const review = wordReviewFlow as unknown as (input: unknown, context: unknown) => Promise<unknown>;
+      await review(
+        { chunks: ["Art. 1"], criteri: { titolo: 'Playbook "A"', testo: "Soglia rischio: alta" }, userId: "u1" },
+        { sendChunk: vi.fn() }
+      );
+      const text = mocks.generate.mock.calls[0][0].messages[1].content[0].text as string;
+      expect(text).toContain("</TESTO_DOCUMENTO>");
+      expect(text).toContain(`<CRITERI_DI_REVISIONE titolo="Playbook 'A'">\nSoglia rischio: alta\n</CRITERI_DI_REVISIONE>`);
+      expect(text.indexOf("</TESTO_DOCUMENTO>")).toBeLessThan(text.indexOf("<CRITERI_DI_REVISIONE"));
+    });
+  });
+
+  describe("wordAskFlow", () => {
+    const ask = wordAskFlow as unknown as (input: unknown, context: unknown) => Promise<unknown>;
+
+    it("documento e domanda delimitati, cronologia come turni, solo la banca dati come strumento", async () => {
+      mocks.generate.mockResolvedValueOnce({ text: " Risposta ", messages: [] });
+      const out = await ask(
+        {
+          domanda: "Chi può recedere?",
+          documento: "Contratto...",
+          cronologia: [{ role: "user", text: "prima" }, { role: "model", text: "risposta" }],
+          userId: "u1",
+        },
+        { sendChunk: vi.fn() }
+      );
+      expect(out).toEqual({ risposta: "Risposta", fonti: [] });
+      const call = mocks.generate.mock.calls[0][0];
+      expect(call.messages.map((m: { role: string }) => m.role)).toEqual(["system", "user", "model", "user"]);
+      expect(call.messages[3].content[0].text).toBe(
+        "<DOCUMENTO>\nContratto...\n</DOCUMENTO>\n<DOMANDA>\nChi può recedere?\n</DOMANDA>"
+      );
+      expect(call.tools.map((t: { name: string }) => t.name)).toEqual(["internalDatabaseSearch"]);
+    });
+
+    it("senza documento lo dichiara nel prompt di sistema", async () => {
+      mocks.generate.mockResolvedValueOnce({ text: "ok", messages: [] });
+      await ask({ domanda: "x", userId: "u1" }, { sendChunk: vi.fn() });
+      const call = mocks.generate.mock.calls[0][0];
+      expect(call.messages[0].content[0].text).toContain("il documento non è stato allegato");
+      expect(call.messages.at(-1).content[0].text).toBe("<DOMANDA>\nx\n</DOMANDA>");
+    });
+
+    it("risposta vuota o errore → messaggio generico", async () => {
+      mocks.generate.mockResolvedValueOnce({ text: "", messages: [] });
+      await expect(ask({ domanda: "x", userId: "u1" }, { sendChunk: vi.fn() }))
+        .rejects.toThrow("Si è verificato un errore durante la risposta.");
+    });
+  });
+
+  describe("wordCaseLawFlow", () => {
+    const caseLaw = wordCaseLawFlow as unknown as (input: unknown, context: unknown) => Promise<unknown>;
+
+    it("una sola chiamata al modello, poi ricerca semantica per ogni query con dedup per id e ordinamento", async () => {
+      mocks.generate.mockResolvedValueOnce({ output: { sintesi: " Sintesi ", query: ["q1", " ", "q2"] } });
+      mocks.search
+        .mockResolvedValueOnce({ risultati: [{ id: "a", score: 0.7 }, { id: "b", score: 0.9 }], messaggio: null })
+        .mockResolvedValueOnce({ risultati: [{ id: "a", score: 0.8 }], messaggio: null });
+      const sendChunk = vi.fn();
+      const out = await caseLaw({ documento: "Atto", userId: "u1" }, { sendChunk });
+      expect(mocks.generate).toHaveBeenCalledOnce();
+      expect(mocks.generate.mock.calls[0][0].prompt).toBe("<DOCUMENTO>\nAtto\n</DOCUMENTO>");
+      expect(mocks.search).toHaveBeenCalledWith({ mode: "semantic", query: "q1", userId: "u1", limit: 8 });
+      expect(mocks.search).toHaveBeenCalledTimes(2);
+      expect(out).toEqual({
+        sintesi: "Sintesi",
+        query: ["q1", "q2"],
+        risultati: [{ id: "b", score: 0.9 }, { id: "a", score: 0.8 }],
+      });
+      expect(sendChunk).toHaveBeenCalledWith({ status: "Ricerca dei precedenti pertinenti..." });
+    });
+
+    it("una ricerca fallita non blocca le altre", async () => {
+      mocks.generate.mockResolvedValueOnce({ output: { sintesi: "S", query: ["q1", "q2"] } });
+      mocks.search
+        .mockRejectedValueOnce(new Error("vector"))
+        .mockResolvedValueOnce({ risultati: [{ id: "x", score: 0.5 }], messaggio: null });
+      const out = (await caseLaw({ documento: "A", userId: "u1" }, { sendChunk: vi.fn() })) as { risultati: unknown[] };
+      expect(out.risultati).toEqual([{ id: "x", score: 0.5 }]);
+    });
+
+    it("sintesi assente → errore generico, nessuna ricerca", async () => {
+      mocks.generate.mockResolvedValueOnce({ output: null });
+      await expect(caseLaw({ documento: "A", userId: "u1" }, { sendChunk: vi.fn() }))
+        .rejects.toThrow("Si è verificato un errore durante la sintesi del documento.");
+      expect(mocks.search).not.toHaveBeenCalled();
+    });
   });
 });

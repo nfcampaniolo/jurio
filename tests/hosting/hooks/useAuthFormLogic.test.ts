@@ -28,7 +28,9 @@ vi.mock("@/infrastructure/userStore", () => ({
 const navigateMock = vi.fn<(path: string, opts?: unknown) => void>();
 vi.mock("react-router-dom", () => ({
   useNavigate: () => navigateMock,
+  useLocation: () => mockLocation,
 }));
+const mockLocation: { state: unknown } = { state: null };
 
 const toastFn = vi.fn<(msg: string) => void>();
 const toastError = vi.fn<(msg: string, opts?: unknown) => void>();

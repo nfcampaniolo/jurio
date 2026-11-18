@@ -80,6 +80,7 @@ const FascicoloSetupPage = lazy(
 
 const PromptBuilder = lazy(() => import("@/features/prompt/PromptBuilder"));
 const SupportoWord = lazy(() => import("@/features/guide/components/SupportoWord"));
+const WordLogin = lazy(() => import("@/features/word/WordLogin"));
 const UserUsage = lazy(() => import("@/features/profile/UserUsage"));
 
 const BillingSuccess = lazy(() => import("@/features/plans/BillingSuccess"));
@@ -204,6 +205,16 @@ export const appRoutes: RouteObject[] = [
   // ==========================================================
   // ROTTE PROTETTE
   // ==========================================================
+
+  {
+    // Autorizzazione dell'add-in Word (aperta dal pannello nel browser di sistema)
+    path: "/word-login",
+    element: (
+      <ProtectedRoute>
+        <WordLogin />
+      </ProtectedRoute>
+    ),
+  },
 
   {
     path: "/profilo",

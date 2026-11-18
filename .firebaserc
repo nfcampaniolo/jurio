@@ -4,7 +4,28 @@
     "prod": "jurio-it",
     "dev": "jurio-it-dev"
   },
-  "targets": {},
+  "targets": {
+    "jurio-it": {
+      "hosting": {
+        "app": [
+          "jurio-it"
+        ],
+        "word": [
+          "jurio-word"
+        ]
+      }
+    },
+    "jurio-it-dev": {
+      "hosting": {
+        "app": [
+          "jurio-it-dev"
+        ],
+        "word": [
+          "jurio-word-dev"
+        ]
+      }
+    }
+  },
   "etags": {
     "jurio-it": {
       "extensionInstances": {

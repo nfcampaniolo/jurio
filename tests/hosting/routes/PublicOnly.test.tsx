@@ -34,7 +34,9 @@ vi.mock("react-router-dom", () => ({
       />
     );
   },
+  useLocation: () => mockLocation,
 }));
+const mockLocation: { state: unknown } = { state: null };
 
 /* ---------- mock useAuth hook ---------- */
 vi.mock("@/context/useAuth", () => ({

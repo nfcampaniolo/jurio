@@ -4,7 +4,16 @@ import { getAppCheck } from "firebase-admin/app-check";
 import { FieldValue } from "firebase-admin/firestore";
 import { getDb, getAdminAuth} from "./_deps";
 import { Request, Response } from "express";
-import { JurioFeatureType, ALLOWED_ORIGINS, ALLOWED_PLANS, JURIO_USAGE_LIMITS } from "./_constants";
+import {
+  JurioFeatureType,
+  ALLOWED_ORIGINS,
+  ALLOWED_PLANS,
+  JURIO_USAGE_LIMITS,
+  WORD_ADDIN_PROD_ORIGIN,
+  WORD_ADDIN_DEV_ORIGIN,
+  WORD_ADDIN_STAGING_ORIGIN,
+  DEV_PROJECT_IDS,
+} from "./_constants";
 import { logSafeError } from "./_logging";
 import { withPseudonymization } from "./privacy/pseudonymization";
 
@@ -15,18 +24,48 @@ const auth = getAdminAuth();
 // CORS E APP CHECK
 // ============================================================================
 
-export const corsHandlerDomain = cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, false);
-    if (ALLOWED_ORIGINS.includes(origin)) {
-      return callback(null, true);
-    }
-    console.error("[CORS] Origine non autorizzata");
-    return callback(new Error(`Not allowed by CORS: ${origin}`));
-  },
-  methods: ["POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Firebase-AppCheck"], 
-});
+function createCorsHandler(getOrigins: () => readonly string[]) {
+  return cors({
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, false);
+      if (getOrigins().includes(origin)) {
+        return callback(null, true);
+      }
+      console.error("[CORS] Origine non autorizzata");
+      return callback(new Error(`Not allowed by CORS: ${origin}`));
+    },
+    methods: ["POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Firebase-AppCheck"],
+  });
+}
+
+export const corsHandlerDomain = createCorsHandler(() => ALLOWED_ORIGINS);
+
+function currentProjectId(): string {
+  if (process.env.GCLOUD_PROJECT) return process.env.GCLOUD_PROJECT;
+  try {
+    return String(JSON.parse(process.env.FIREBASE_CONFIG ?? "{}").projectId ?? "");
+  } catch {
+    return "";
+  }
+}
+
+/** true nell'emulatore locale o nel progetto Firebase di sviluppo; mai in produzione. */
+export function isDevEnvironment(): boolean {
+  return process.env.FUNCTIONS_EMULATOR === "true" || DEV_PROJECT_IDS.includes(currentProjectId());
+}
+
+/**
+ * Origini ammesse dagli endpoint dell'add-in Word: quelle della web app + il sottodominio
+ * di produzione dell'add-in; in ambiente dev anche il dev server locale e il sito Hosting di dev.
+ */
+export function getWordAddinOrigins(): string[] {
+  const origins = [...ALLOWED_ORIGINS, WORD_ADDIN_PROD_ORIGIN];
+  if (isDevEnvironment()) origins.push(WORD_ADDIN_DEV_ORIGIN, WORD_ADDIN_STAGING_ORIGIN);
+  return origins;
+}
+
+export const corsHandlerWordAddin = createCorsHandler(getWordAddinOrigins);
 
 export async function requireAppCheck(req: Request): Promise<void> {
   // Ignora il controllo se le funzioni girano nell'emulatore locale
@@ -139,9 +178,10 @@ function handleApiError(res: Response, err: unknown): void {
 export async function withSecureApiEndpoint(
   req: Request,
   res: Response,
-  handler: (uid: string) => Promise<void>
+  handler: (uid: string) => Promise<void>,
+  corsHandler: typeof corsHandlerDomain = corsHandlerDomain
 ): Promise<void> {
-  return corsHandlerDomain(req, res, async (): Promise<void> => {
+  return corsHandler(req, res, async (): Promise<void> => {
     if (req.method === "OPTIONS") {
       res.status(204).end();
       return;
@@ -192,6 +232,39 @@ export async function validateUserPlanAndLimits(
     console.warn(`[${type}] Rate limit superato`);
     throw new Error("TOO_MANY_REQUESTS");
   }
+}
+
+/** Mese corrente nel fuso di Roma, es. "2026-11". */
+export function monthKeyRome(d = new Date()): string {
+  return dayKeyRome(d).slice(0, 7);
+}
+
+function monthlyUsageRef(uid: string, feature: string, d = new Date()) {
+  return db.collection("usage").doc(uid).collection("months").doc(`${monthKeyRome(d)}_${feature}`);
+}
+
+/** Utilizzi del mese corrente per una feature (sola lettura, non consuma quota). */
+export async function readMonthlyFeatureCount(uid: string, feature: string): Promise<number> {
+  const snap = await monthlyUsageRef(uid, feature).get();
+  return snap.exists ? Number(snap.data()?.count ?? 0) : 0;
+}
+
+/**
+ * Consuma una unità del contatore mensile. Lancia `monthly_quota_exceeded` oltre il limite.
+ * Il documento ha la stessa forma dei contatori giornalieri (count, updatedAt).
+ */
+export async function consumeMonthlyFeature(uid: string, feature: string, limit: number): Promise<{ used: number; remaining: number }> {
+  const ref = monthlyUsageRef(uid, feature);
+  return await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const prev = snap.exists ? Number(snap.data()?.count ?? 0) : 0;
+    const next = prev + 1;
+    if (next > limit) {
+      throw Object.assign(new Error("monthly_quota_exceeded"), { code: "monthly_quota_exceeded", feature, prev });
+    }
+    tx.set(ref, { count: next, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return { used: next, remaining: limit - next };
+  });
 }
 
 export async function consumePerMinuteFeature(uid: string, feature: JurioFeatureType, limit: number): Promise<void> {

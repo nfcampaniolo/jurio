@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { loginWithEmail, registerWithEmail, resetPassword, needsEmailVerification, sendVerificationEmail } from "./auth";
 import { useUserStore } from "@/infrastructure/userStore";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { redirectTargetFrom } from "@/routes/redirectTarget";
 import { userExists } from "@/shared/services/user";
 import { toast } from "react-hot-toast"; 
 import { getPasswordFailures } from "../passwordRules";
@@ -15,6 +16,7 @@ export function useAuthFormLogic(initialMode: "login" | "register") {
 
   const setUser = useUserStore((s) => s.setUser);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleMode = () =>
     setMode((m) => (m === "login" ? "register" : "login"));
@@ -31,7 +33,7 @@ export function useAuthFormLogic(initialMode: "login" | "register") {
         console.log(res.user);
         const exists = await userExists(res.user.uid);
         if (exists) {
-          void navigate("/profilo");
+          void navigate(redirectTargetFrom(location.state));
         } else if (needsEmailVerification(res.user)) {
           void navigate("/verifica-email");
         } else {

@@ -20,6 +20,13 @@ export type JurioFeatureType =
   | "email_verification"
   | "password_reset"
   | "password_reset_email"
+  | "research_agent"
+  | "review_agent"
+  | "redraft_agent"
+  | "ask_agent"
+  | "case_law_agent"
+  | "word_dictation"
+  | "word_login"
   ;
 
 type FeatureLimit = { perMinute: number; perDay: number };
@@ -47,6 +54,15 @@ const standardBusinessLimits = planLimits({
   admin: [20, 200],
   business: [20, 200],
   business_m: [20, 200],
+});
+/** Strumenti AI dell'add-in Word: disponibili anche in Essential, che ha in più il tetto mensile sotto. */
+const wordAgentLimits = planLimits({
+  prova: [5, 20],
+  admin: [120, 50],
+  business: [20, 50],
+  business_m: [20, 50],
+  personale: [5, 10],
+  personale_m: [5, 10],
 });
 const legalAgentLimits = planLimits({
   prova: [5, 20],
@@ -108,10 +124,50 @@ export const JURIO_USAGE_LIMITS = {
   // Reset password (endpoint pubblico): limite per IP del richiedente e per indirizzo destinatario
   password_reset: planLimits({ global: [5, 30] }),
   password_reset_email: planLimits({ global: [1, 5] }),
+  // Add-in Word: la chiave è `${action}_agent` (vedi genai/wordAgent/logic.ts)
+  research_agent: wordAgentLimits,
+  review_agent: wordAgentLimits,
+  // Draft/Redline: funzione del piano Business
+  redraft_agent: wordAgentLimits,
+  ask_agent: wordAgentLimits,
+  case_law_agent: wordAgentLimits,
+  // Dettatura nell'add-in Word: trascrizione, non conta nelle richieste AI mensili.
+  // Avvio dell'accesso a Word tramite jurio.it: contato per IP (utente non ancora autenticato).
+  word_login: planLimits({ global: [10, 200] }),
+  word_dictation: planLimits({
+    prova: [6, 30],
+    admin: [20, 200],
+    business: [10, 120],
+    business_m: [10, 120],
+    personale: [6, 60],
+    personale_m: [6, 60],
+  }),
 } satisfies Record<
   JurioFeatureType,
   Partial<Record<string, { perMinute: number; perDay: number }>>
 >;
+
+/**
+ * Richieste AI mensili dall'add-in Word, condivise tra tutti gli strumenti AI.
+ * Essential (personale) e prova hanno un tetto; Business e admin no (valgono solo i limiti giornalieri).
+ */
+export const WORD_AI_MONTHLY_FEATURE = "word_ai";
+export const WORD_AI_MONTHLY_LIMITS: Readonly<Record<string, number | null>> = {
+  personale: 10,
+  personale_m: 10,
+  prova: 10,
+  business: null,
+  business_m: null,
+  admin: null,
+};
+
+/** Piano commerciale mostrato nell'add-in. */
+export function wordPlanTier(planId: string): "essential" | "business" | "prova" | "admin" | "nessuno" {
+  if (planId === "personale" || planId === "personale_m") return "essential";
+  if (planId === "business" || planId === "business_m") return "business";
+  if (planId === "prova" || planId === "admin") return planId;
+  return "nessuno";
+}
 
 export const ALLOWED_PLANS = new Set([
   "prova",
@@ -133,6 +189,17 @@ export const ALLOWED_ORIGINS = [
   "https://jurio-it-dev.firebaseapp.com",
 
 ];
+
+/**
+ * Origini ammesse in più SOLO per gli endpoint dell'add-in Word (wordAgent).
+ * - produzione: il sottodominio che ospita il taskpane;
+ * - sviluppo: il dev server webpack, accettato solo nell'emulatore o nel progetto dev.
+ */
+export const WORD_ADDIN_PROD_ORIGIN = "https://word.jurio.it";
+export const WORD_ADDIN_DEV_ORIGIN = "https://localhost:3000";
+/** Sito Hosting "jurio-word-dev" nel progetto dev: ammesso solo in ambiente dev, come localhost. */
+export const WORD_ADDIN_STAGING_ORIGIN = "https://jurio-word-dev.web.app";
+export const DEV_PROJECT_IDS = ["jurio-it-dev"];
 
 export const MAX_INPUT_CHARS_DOCUMENT = 1_000_000; 
 

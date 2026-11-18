@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => {
     "executePromptAgent",
     "executeEnhancePromptAgent",
     "executeWordAgent",
+    "executeWordAuth",
     "executeSpeechToTextAgent",
     "executeExtractDocumentText",
     "executeSubmitFeedback",
@@ -108,6 +109,9 @@ vi.mock("../../functions/src/genai/promptAgent/logic", () => ({
 vi.mock("../../functions/src/genai/wordAgent/logic", () => ({
   executeWordAgent: mocks.handlers.executeWordAgent,
 }));
+vi.mock("../../functions/src/auth/wordLogin.logic", () => ({
+  executeWordAuth: mocks.handlers.executeWordAuth,
+}));
 vi.mock("../../functions/src/support/textAgents.logic", () => ({
   executeSpeechToTextAgent: mocks.handlers.executeSpeechToTextAgent,
   executeExtractDocumentText: mocks.handlers.executeExtractDocumentText,
@@ -190,6 +194,7 @@ const requestDispatches: Array<[keyof typeof functions, keyof typeof mocks.handl
   ["promptAgent", "executePromptAgent"],
   ["enhancePromptAgent", "executeEnhancePromptAgent"],
   ["wordAgent", "executeWordAgent"],
+  ["wordAuth", "executeWordAuth"],
   ["adminDoctrineUpload", "executeAdminDoctrineUpload"],
   ["generateEmbedding", "executeGenerateEmbedding"],
   ["speechToTextAgent", "executeSpeechToTextAgent"],
@@ -241,7 +246,7 @@ describe("functions/src/index", () => {
     const exportedRegistrations = Object.entries(functions).filter(([name]) => name !== "default");
 
     // Act / Assert
-    expect(exportedRegistrations).toHaveLength(48);
+    expect(exportedRegistrations).toHaveLength(49);
     for (const [name, registration] of exportedRegistrations) {
       const registrationDetails = registration as unknown as { kind: string; handler: unknown };
       expect(registrationDetails, `${name} is registered`).toMatchObject({

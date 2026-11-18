@@ -14,6 +14,7 @@ import { executeSupport, executeUpdateMetadataFromChat, executeGenerateEmbedding
 import { executeReasoning, executeAdminDoctrineUpload } from "./genai/documentAnalysisAgent/logic";
 import { executePromptAgent, executeEnhancePromptAgent } from "./genai/promptAgent/logic";
 import { executeWordAgent } from "./genai/wordAgent/logic";
+import { executeWordAuth } from "./auth/wordLogin.logic";
 import { executeSpeechToTextAgent, executeExtractDocumentText } from "./support/textAgents.logic";
 import { executeSubmitFeedback } from  "./support/feedback.logic";
 import { executeAdminMaintenanceTask, executeAdminMergeCategoryTask, executeAdminUploadManualContentTask, executeSendAdminNotification } from  "./admin/admin.logic";
@@ -203,6 +204,19 @@ export const wordAgent = onRequest(
   }, 
   async (req, res) => {
     return executeWordAgent(req, res);
+  }
+);
+
+// Accesso all'add-in Word tramite jurio.it (autorizzazione dal browser + token personalizzato)
+export const wordAuth = onRequest(
+  {
+    timeoutSeconds: 30,
+    // All'avvio ogni funzione carica l'intero index (~280 MiB): sotto 512 MiB il container non parte.
+    memory: "512MiB",
+    concurrency: 80,
+  },
+  async (req, res) => {
+    return executeWordAuth(req, res);
   }
 );
 

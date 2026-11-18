@@ -66,3 +66,13 @@ export function getSessionUrl() {
     FORCE_TAKEOVER_SESSION_ENDPOINT: String(env.VITE_FORCE_TAKEOVER_SESSION_ENDPOINT ?? ""),
   };
 };
+/**
+ * Endpoint dell'accesso a Word tramite jurio.it (funzione wordAuth): esplicito o derivato
+ * dall'URL Cloud Run di legalAgent dello stesso progetto, come fa l'add-in.
+ */
+export const getWordAuthUrl = (): string => {
+  const explicit = import.meta.env.VITE_WORD_AUTH_ENDPOINT as string | undefined;
+  if (explicit) return explicit;
+  const legal = (import.meta.env.VITE_LEGAL_AGENT_ENDPOINT as string | undefined) ?? "";
+  return legal.includes("://legalagent-") ? legal.replace("://legalagent-", "://wordauth-") : "";
+};

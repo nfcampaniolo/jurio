@@ -17,6 +17,10 @@ const mocks = vi.hoisted(() => {
   const serverTimestamp = vi.fn(() => "server-timestamp");
   const constants = {
     ALLOWED_ORIGINS: ["https://jurio.example"],
+    WORD_ADDIN_PROD_ORIGIN: "https://word.jurio.example",
+    WORD_ADDIN_DEV_ORIGIN: "https://localhost:3000",
+    WORD_ADDIN_STAGING_ORIGIN: "https://word-dev.example.web.app",
+    DEV_PROJECT_IDS: ["jurio-dev"],
     ALLOWED_PLANS: new Set(["prova", "admin"]),
     JURIO_USAGE_LIMITS: {
       research: { prova: { perMinute: 2, perDay: 5 } },
@@ -34,12 +38,14 @@ const mocks = vi.hoisted(() => {
     serverTimestamp,
     constants,
     corsOptions: undefined as unknown,
+    corsOptionsList: [] as unknown[],
   };
 });
 
 vi.mock("../../functions/node_modules/cors/lib/index.js", () => ({
   default: vi.fn((options) => {
-    mocks.corsOptions = options;
+    mocks.corsOptions ??= options;
+    mocks.corsOptionsList.push(options);
     return (_req: unknown, _res: unknown, next: (error?: unknown) => void) => next();
   }),
 }));
@@ -57,10 +63,15 @@ vi.mock("@functions/_constants", () => mocks.constants);
 
 import {
   consumeDailyFeature,
+  consumeMonthlyFeature,
   consumePerMinuteFeature,
   corsHandlerDomain,
   dayKeyRome,
+  getWordAddinOrigins,
+  isDevEnvironment,
   minuteKeyRome,
+  monthKeyRome,
+  readMonthlyFeatureCount,
   requireAppCheck,
   requireUidFromAuthHeader,
   validateUserPlanAndLimits,
@@ -231,6 +242,57 @@ describe("functions/src/_utils", () => {
 
       // Assert
       expect(result).toBe("2025-01-02");
+    });
+  });
+
+  describe("CORS dell'add-in Word", () => {
+    type OriginFn = (origin: string | undefined, cb: (e: Error | null, allow?: boolean) => void) => void;
+    const wordOrigin = () => (mocks.corsOptionsList[1] as { origin: OriginFn }).origin;
+    const check = (origin: string) => {
+      const cb = vi.fn();
+      wordOrigin()(origin, cb);
+      return cb.mock.calls[0][0] === null && cb.mock.calls[0][1] === true;
+    };
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    it("in produzione ammette web app e sottodominio dell'add-in, non localhost", () => {
+      vi.stubEnv("FUNCTIONS_EMULATOR", "");
+      vi.stubEnv("GCLOUD_PROJECT", "jurio-prod");
+      expect(getWordAddinOrigins()).toEqual(["https://jurio.example", "https://word.jurio.example"]);
+      expect(isDevEnvironment()).toBe(false);
+      expect(check("https://word.jurio.example")).toBe(true);
+      expect(check("https://localhost:3000")).toBe(false);
+      expect(check("https://word-dev.example.web.app")).toBe(false);
+    });
+
+    it("ammette https://localhost:3000 nell'emulatore", () => {
+      vi.stubEnv("FUNCTIONS_EMULATOR", "true");
+      expect(check("https://localhost:3000")).toBe(true);
+    });
+
+    it("ammette https://localhost:3000 nel progetto dev (anche da FIREBASE_CONFIG)", () => {
+      vi.stubEnv("FUNCTIONS_EMULATOR", "");
+      vi.stubEnv("GCLOUD_PROJECT", "");
+      vi.stubEnv("FIREBASE_CONFIG", JSON.stringify({ projectId: "jurio-dev" }));
+      expect(isDevEnvironment()).toBe(true);
+      expect(check("https://localhost:3000")).toBe(true);
+      expect(check("https://word-dev.example.web.app")).toBe(true);
+    });
+
+    it("FIREBASE_CONFIG malformato non è considerato dev", () => {
+      vi.stubEnv("FUNCTIONS_EMULATOR", "");
+      vi.stubEnv("GCLOUD_PROJECT", "");
+      vi.stubEnv("FIREBASE_CONFIG", "{non json");
+      expect(isDevEnvironment()).toBe(false);
+    });
+
+    it("il CORS standard non ammette l'origine dell'add-in", () => {
+      const cb = vi.fn();
+      (mocks.corsOptions as { origin: OriginFn }).origin("https://word.jurio.example", cb);
+      expect(cb).toHaveBeenCalledWith(expect.any(Error));
     });
   });
 
@@ -519,6 +581,43 @@ describe("functions/src/_utils", () => {
         { count: 3, updatedAt: "server-timestamp" },
         { merge: true }
       );
+    });
+
+    it("monthly counter: chiave usage/{uid}/months/{YYYY-MM}_{feature}, incrementa e restituisce i residui", async () => {
+      mocks.transaction.get.mockResolvedValueOnce({ exists: true, data: () => ({ count: 3 }) });
+      const result = await consumeMonthlyFeature("user-1", "word_ai", 10);
+      expect(result).toEqual({ used: 4, remaining: 6 });
+      expect(mocks.transaction.get).toHaveBeenCalledWith(
+        expect.objectContaining({ path: expect.stringMatching(/^usage\/user-1\/months\/\d{4}-\d{2}_word_ai$/) })
+      );
+      expect(mocks.transaction.set).toHaveBeenCalledWith(
+        expect.anything(),
+        { count: 4, updatedAt: "server-timestamp" },
+        { merge: true }
+      );
+    });
+
+    it("monthly counter: oltre il limite lancia monthly_quota_exceeded senza scrivere", async () => {
+      mocks.transaction.get.mockResolvedValueOnce({ exists: true, data: () => ({ count: 10 }) });
+      await expect(consumeMonthlyFeature("user-1", "word_ai", 10)).rejects.toMatchObject({
+        code: "monthly_quota_exceeded",
+        prev: 10,
+      });
+      expect(mocks.transaction.set).not.toHaveBeenCalled();
+    });
+
+    it("monthKeyRome usa il mese di Roma (a cavallo di mezzanotte UTC)", () => {
+      expect(monthKeyRome(new Date("2026-11-30T23:30:00Z"))).toBe("2026-12");
+      expect(monthKeyRome(new Date("2026-11-30T12:00:00Z"))).toBe("2026-11");
+    });
+
+    it("readMonthlyFeatureCount legge il contatore senza transazione", async () => {
+      const get = vi.fn().mockResolvedValue({ exists: true, data: () => ({ count: 7 }) });
+      mocks.db.collection.mockImplementationOnce(() => ({
+        doc: () => ({ collection: () => ({ doc: () => ({ get }) }) }),
+      }));
+      await expect(readMonthlyFeatureCount("user-1", "word_ai")).resolves.toBe(7);
+      expect(mocks.db.runTransaction).not.toHaveBeenCalled();
     });
 
     it("rejects a daily transaction above its limit without writing", async () => {

@@ -41,8 +41,6 @@ firebase-export/
 *.sln
 *.sw?
 
-# Nascondi la cartella word
-word/
 compilance/
 posts/
 !.plugins/

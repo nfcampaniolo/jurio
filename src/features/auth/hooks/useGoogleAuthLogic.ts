@@ -2,7 +2,8 @@ import { useState } from "react";
 import { loginWithGoogle } from "./auth";
 import { userExists } from "@/shared/services/user";
 import { useUserStore } from "@/infrastructure/userStore";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { redirectTargetFrom } from "@/routes/redirectTarget";
 
 export function useGoogleAuthLogic() {
   const [loading, setLoading] = useState(false);
@@ -10,6 +11,7 @@ export function useGoogleAuthLogic() {
 
   const setUser = useUserStore((s) => s.setUser);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -19,7 +21,7 @@ export function useGoogleAuthLogic() {
       setUser(user);
       const exists = await userExists(user.uid);
       if (exists) {
-        void navigate("/profilo");
+        void navigate(redirectTargetFrom(location.state));
       } else {
         void navigate("/registrati");
       }

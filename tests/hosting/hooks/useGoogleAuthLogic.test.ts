@@ -24,7 +24,9 @@ vi.mock("@/infrastructure/userStore", () => ({
 const navigateMock = vi.fn<(path: string) => void>();
 vi.mock("react-router-dom", () => ({
   useNavigate: () => navigateMock,
+  useLocation: () => mockLocation,
 }));
+const mockLocation: { state: unknown } = { state: null };
 
 /* =========================
    IMPORT FRESH
@@ -69,6 +71,27 @@ describe("useGoogleAuthLogic", () => {
     expect(navigateMock).toHaveBeenCalledWith("/profilo");
     expect(result.current.loading).toBe(false);
     expect(result.current.error).toBeNull();
+  });
+
+  it("success -> torna alla pagina protetta di partenza (es. /word-login)", async () => {
+    mockLocation.state = { from: { pathname: "/word-login", search: "?s=abc" } };
+    loginWithGoogle.mockResolvedValueOnce({ uid: "u1" });
+    userExists.mockResolvedValueOnce(true);
+
+    const { useGoogleAuthLogic } = await importFresh();
+    const { result } = renderHook(() => useGoogleAuthLogic());
+
+    await act(async () => {
+      await result.current.handleGoogleLogin();
+    });
+
+    expect(loginWithGoogle).toHaveBeenCalled();
+    expect(setUserMock).toHaveBeenCalledWith({ uid: "u1" });
+    expect(userExists).toHaveBeenCalledWith("u1");
+    expect(navigateMock).toHaveBeenCalledWith("/word-login?s=abc");
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBeNull();
+    mockLocation.state = null;
   });
 
   it("success -> new user navigates to /registrati", async () => {

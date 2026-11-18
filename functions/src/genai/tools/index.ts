@@ -5,7 +5,9 @@ import { webSearch, doctrineSearch } from "./webSearch";
 import { readFullText } from "./readFullText";
 import { enableFirebaseTelemetry } from "@genkit-ai/firebase";
 
-void enableFirebaseTelemetry();
+// Metriche e tracce restano attive, ma senza il contenuto di input e output: i testi degli utenti
+// (atti, contratti, documenti dei fascicoli) non devono finire in Cloud Logging / Cloud Trace.
+void enableFirebaseTelemetry({ disableLoggingInputAndOutput: true });
 
 export const dynamicTools = [
   internalDatabaseSearch,
