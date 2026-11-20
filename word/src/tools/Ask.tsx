@@ -20,7 +20,17 @@ interface Turno {
   fonti?: Fonte[];
 }
 
+/** Massimo di caratteri elaborabili per domanda: deve coincidere con `askDocumentChars` del backend (wordAgent/logic.ts). */
 export const ASK_DOCUMENT_LIMIT = 60_000;
+
+const caratteri = (n: number) => n.toLocaleString("it-IT");
+
+export function messaggioTroppoLungo(contesto: Contesto, lunghezza: number): string {
+  const misura = `${caratteri(lunghezza)} caratteri, massimo ${caratteri(ASK_DOCUMENT_LIMIT)}`;
+  return contesto === "selection"
+    ? `La selezione è troppo lunga (${misura}): riducila alla parte pertinente.`
+    : `Il documento è troppo lungo per essere elaborato tutto insieme (${misura}): seleziona la parte pertinente nel documento e scegli «Selezione».`;
+}
 
 const CONTESTI: { id: Contesto; label: string }[] = [
   { id: "document", label: "Tutto il documento" },
@@ -47,7 +57,7 @@ async function leggiContesto(contesto: Contesto): Promise<string> {
     );
   }
   if (testo.length > ASK_DOCUMENT_LIMIT) {
-    throw new Error("Il documento è troppo lungo per una domanda: seleziona la parte pertinente.");
+    throw new Error(messaggioTroppoLungo(contesto, testo.length));
   }
   return testo;
 }
@@ -138,6 +148,12 @@ const Ask: React.FC = () => {
             </button>
           ))}
         </div>
+        {contesto !== "none" && (
+          <p className="field-help">
+            Fino a {caratteri(ASK_DOCUMENT_LIMIT)} caratteri: per documenti più lunghi seleziona la
+            parte pertinente e scegli «Selezione».
+          </p>
+        )}
       </div>
 
       <div className="chat" aria-live="polite">

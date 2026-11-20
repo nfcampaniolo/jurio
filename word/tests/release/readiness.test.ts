@@ -206,6 +206,18 @@ describe("Hosting", () => {
     expect(noCache?.headers).toContainEqual({ key: "Cache-Control", value: "no-cache" });
   });
 
+  it("il sito usa le stesse favicon della web app", () => {
+    const index = read("src/site/index.html");
+    expect(index).toContain('href="/favicon.ico"');
+    expect(index).not.toMatch(/rel="icon" href="assets\//);
+    for (const f of ["favicon.ico", "favicon-16x16.png", "favicon-32x32.png", "apple-touch-icon.png"]) {
+      expect(webpack, f).toContain(`"${f}"`);
+      if (existsSync(resolve(root, "dist", f))) {
+        expect(readFileSync(resolve(root, "dist", f)).equals(readFileSync(resolve(root, "../public", f))), f).toBe(true);
+      }
+    }
+  });
+
   it("il sito ha una pagina principale con il manifest e una pagina 404", () => {
     expect(read("src/site/index.html")).toContain('href="manifest.xml"');
     if (existsSync(resolve(root, "dist/index.html"))) {

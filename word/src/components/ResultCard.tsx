@@ -5,16 +5,20 @@ import { giurisprudenzaUrl } from "../config/env";
 import { formattaScore } from "../tools/utils";
 import { footnotesSupported, insertCitation, insertFootnote } from "../tools/word";
 
+/** Stessi valori di `tipoMassimaLabels` in RenderGiurisprudenza (webapp). */
 const TIPO_MASSIMA_LABEL: Record<string, string> = {
   conforme: "Conforme",
   difforme: "Difforme",
   principio_nuovo: "Principio nuovo",
-  "principio nuovo": "Principio nuovo",
+  di_specie: "Di specie",
+  con_fattispecie: "Con fattispecie",
+  non_massimabile: "Non massimabile",
 };
 
 export const tipoMassimaLabel = (tipo: string | null): string | null => {
   if (!tipo) return null;
-  return TIPO_MASSIMA_LABEL[tipo.toLowerCase()] ?? tipo;
+  const key = tipo.trim().toLowerCase().replace(/\s+/g, "_");
+  return TIPO_MASSIMA_LABEL[key] ?? tipo.replace(/_/g, " ");
 };
 
 export const citazione = (r: RisultatoRicerca): string =>
@@ -88,7 +92,7 @@ export const ResultCard: React.FC<Props> = ({ risultato, onError }) => {
             type="button"
             className="btn-small"
             onClick={() =>
-              void run(() => insertFootnote(`${citazione(risultato)}. ${url}`), "Nota inserita")
+              void run(() => insertFootnote(`${citazione(risultato)}.`), "Nota inserita")
             }
           >
             Nota a piè di pagina

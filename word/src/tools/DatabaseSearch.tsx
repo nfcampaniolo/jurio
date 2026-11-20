@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { postWordAgent, SearchMode, SearchResponse } from "../api/wordApi";
 import { ResultCard } from "../components/ResultCard";
 import { AutoTextarea } from "../components/AutoTextarea";
@@ -33,6 +33,16 @@ const DatabaseSearch: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const current = MODES.find((m) => m.id === mode) ?? MODES[0];
+  const resultsRef = useRef<HTMLElement>(null);
+  const pendingScroll = useRef(false);
+
+  // A ricerca conclusa porta in vista il primo risultato (o il messaggio "Nessun risultato").
+  useEffect(() => {
+    if (!esito || !pendingScroll.current) return;
+    pendingScroll.current = false;
+    const target = resultsRef.current?.querySelector(".result-card") ?? resultsRef.current;
+    target?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+  }, [esito]);
 
   const handleCapture = async () => {
     setError("");
@@ -51,6 +61,7 @@ const DatabaseSearch: React.FC = () => {
     setError("");
     setEsito(null);
     try {
+      pendingScroll.current = true;
       setEsito(
         await postWordAgent<SearchResponse>({ action: "search", mode, query: query.trim() })
       );
@@ -114,7 +125,7 @@ const DatabaseSearch: React.FC = () => {
       </button>
 
       {esito && (
-        <section className="result-section" aria-live="polite">
+        <section ref={resultsRef} className="result-section" aria-live="polite">
           <div className="results-header">
             <h3>
               {esito.risultati.length > 0

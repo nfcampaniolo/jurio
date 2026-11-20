@@ -65,7 +65,9 @@ describe("internal GenAI search tools", () => {
     const result = await handler({ searchType: "exact", query: "n. 12 / 2024" }, {
       context: { userId: "u1", dbLimit: 1, uiFilters: [] },
     });
-    expect(query.where).toHaveBeenCalledWith("numero_sentenza", "==", "12/2024");
+    expect(query.where).toHaveBeenCalledWith(
+      "numero_sentenza", "in", ["12/2024", "012/2024", "0012/2024", "00012/2024"],
+    );
     expect(result).toEqual([expect.objectContaining({
       id: "case-1", caseNumber: "12/2024", court: "Cassazione", sourceUrl: "https://court.test",
       _score: 1, sourceType: "case_law",

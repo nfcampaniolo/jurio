@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ai, CFG } from "../_config";
-import { getSafeLimit, normalizeQuery, passesUiFilters, isSafeHttpUrl, getDistance, applyUiFilters } from "./_utils";
+import { getSafeLimit, normalizeQuery, passesUiFilters, isSafeHttpUrl, getDistance, applyUiFilters, variantiNumeroSentenza } from "./_utils";
 import { safeIncrementRagCounter, mapToObject, createResearchEmbedding} from "./_helper";
 import { makeRiferimentiNormativiKeys } from "../../_riferimenti_normativi";
 import { getDb } from "../../_deps";
@@ -57,18 +57,17 @@ export const internalDatabaseSearch = ai.defineTool(
       // ----------------------------------------------------------------------
       if (searchType === "exact") {
         const identifier = finalQuery;
-        const match = identifier.match(/\d+\s*\/\s*\d{4}/);
-        const sanitizedNumero = match
-          ? match[0].replace(/\s+/g, "")
-          : identifier;
+        const variantiNumero = variantiNumeroSentenza(identifier);
 
         const sentencesRef = db.collection("sentences");
 
         const [snapNumero, snapEcli, snapUrn] = await Promise.all([
-          sentencesRef
-            .where("numero_sentenza", "==", sanitizedNumero)
-            .limit(5)
-            .get(),
+          variantiNumero.length > 0
+            ? sentencesRef
+                .where("numero_sentenza", "in", variantiNumero)
+                .limit(Math.max(safeLimit, 5))
+                .get()
+            : sentencesRef.where("numero_sentenza", "==", identifier).limit(5).get(),
           sentencesRef
             .where("ecli", "==", identifier)
             .limit(5)

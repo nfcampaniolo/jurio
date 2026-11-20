@@ -27,7 +27,7 @@
     "test:release": "TEST_SUITE=release vitest run",
     "typecheck": "tsc --noEmit -p . && tsc -p tests/tsconfig.json",
     "deploy:dev": "npm run build:staging && cd .. && firebase deploy --only hosting:word --project dev",
-    "deploy:prod": "npm test && npm run test:release && npm run build && cd .. && firebase deploy --only hosting:word --project prod"
+    "deploy:prod": "npm test && npm run build && npm run test:release && cd .. && firebase deploy --only hosting:word --project prod"
   },
   "dependencies": {
     "@fluentui/react-icons": "^2.0.264",

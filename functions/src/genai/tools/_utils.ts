@@ -32,6 +32,20 @@ export function normalizeQuery(value: unknown): string {
     .trim();
 }
 
+/**
+ * Varianti di "numero/anno" con e senza zeri iniziali (es. 599/2025 → 0599/2025, 00599/2025),
+ * come nella ricerca puntuale della webapp e del server MCP: in banca dati il numero può essere zero-padded.
+ */
+export function variantiNumeroSentenza(identificativo: string): string[] {
+  const match = identificativo.match(/(\d+)\s*\/\s*(\d{4})/);
+  if (!match) return [];
+  const numero = String(parseInt(match[1], 10));
+  const anno = match[2];
+  const varianti = new Set<string>([`${numero}/${anno}`, `${match[1]}/${anno}`]);
+  for (let width = 2; width <= 5; width++) varianti.add(`${numero.padStart(width, "0")}/${anno}`);
+  return Array.from(varianti);
+}
+
 export function getDistance(doc: any, queryVector: number[]): number {
   const docDistance = doc?.distance;
   if (typeof docDistance === "number" && Number.isFinite(docDistance)) {

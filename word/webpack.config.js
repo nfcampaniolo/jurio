@@ -152,6 +152,14 @@ module.exports = async (env, options) => {
             from: "assets/*",
             to: "assets/[name][ext][query]",
           },
+          // Favicon identiche a quelle della web app (unica fonte: ../public)
+          ...[
+            "favicon.ico",
+            "favicon-16x16.png",
+            "favicon-32x32.png",
+            "apple-touch-icon.png",
+            "android-chrome-192x192.png",
+          ].map((file) => ({ from: path.resolve(__dirname, "../public", file), to: file })),
           {
             from: "manifest*.xml",
             to: "[name]" + "[ext]",

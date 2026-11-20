@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   applyUiFilters, chunkArray, getDistance, getHostname, getSafeDistance, getSafeLimit,
-  isSafeHttpUrl, normalizePrecedenti, normalizeQuery, passesUiFilters, serializeFirestoreDate,
+  isSafeHttpUrl, normalizePrecedenti, normalizeQuery, passesUiFilters, serializeFirestoreDate, variantiNumeroSentenza,
 } from "@functions/genai/tools/_utils";
 
 describe("GenAI retrieval utilities", () => {
@@ -14,6 +14,12 @@ describe("GenAI retrieval utilities", () => {
     expect(getSafeLimit(0, 5, 10)).toBe(1);
     expect(getSafeLimit(99, 5, 10)).toBe(10);
     expect(getSafeLimit("invalid", 5, 10)).toBe(5);
+  });
+
+  it("builds zero-padded variants of a case number like the webapp search", () => {
+    expect(variantiNumeroSentenza("599/2025")).toEqual(expect.arrayContaining(["599/2025", "0599/2025", "00599/2025"]));
+    expect(variantiNumeroSentenza("n. 0599 / 2025")).toEqual(expect.arrayContaining(["599/2025", "0599/2025"]));
+    expect(variantiNumeroSentenza("ECLI:IT:CASS:2020:1234CIV")).toEqual([]);
   });
 
   it("accepts only HTTPS URLs and derives a safe hostname", () => {

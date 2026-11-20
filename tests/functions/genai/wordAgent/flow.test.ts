@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ generate: vi.fn(), randomUUID: vi.fn(), search: vi.fn() }));
-vi.mock("@functions/genai/wordAgent/_search", () => ({ searchJurioDatabase: mocks.search }));
+vi.mock("@functions/genai/wordAgent/_search", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@functions/genai/wordAgent/_search")>()),
+  searchJurioDatabase: mocks.search,
+}));
 vi.mock("@functions/genai/_config", () => ({ ai: { defineFlow: (_config: unknown, handler: unknown) => handler, generate: mocks.generate } }));
 vi.mock("@functions/genai/tools/index", () => ({
   internalDatabaseSearch: { name: "internalDatabaseSearch" }, webSearch: { name: "webSearch" },
@@ -18,6 +21,7 @@ vi.mock("node:crypto", async (importOriginal) => {
 
 import {
   estraiFontiDalRisultato,
+  rimuoviIdInterni,
   wordAskFlow,
   wordCaseLawFlow,
   wordQuoteFlow,
@@ -37,6 +41,28 @@ describe("Word-agent flows", () => {
       { id: "s1", titolo: "Sentenza", _distance: 0.2 }, { id: "s1", titolo: "Duplicate" },
     ] } }] }] };
     expect(estraiFontiDalRisultato(response)).toEqual([{ id: "s1", titolo: "Sentenza", url: undefined, score: 0.8 }]);
+  });
+
+  it("builds source titles from the tool fields and drops sources without any", () => {
+    const response = { messages: [{ role: "tool", content: [{ toolResponse: { output: [
+      { id: "a", court: "Cassazione Civile", sezione: "TERZA SEZIONE CIVILE", caseNumber: "599/2025", _score: 1 },
+      { id: "b", caseNumber: "12/2024" },
+      { id: "c", ecli: "ECLI:IT:CASS:2020:1" },
+      { id: "d", summary: "solo massima" },
+    ] } }] }] };
+    expect(estraiFontiDalRisultato(response).map((f) => f.titolo)).toEqual([
+      "Cassazione Civile, TERZA SEZIONE CIVILE n. 599/2025",
+      "12/2024",
+      "ECLI:IT:CASS:2020:1",
+    ]);
+  });
+
+  it("removes internal UUIDs from generated text keeping the citation", () => {
+    const id = "fdcdd16a-ab95-479b-995e-aa5f9dbf8edc";
+    expect(rimuoviIdInterni(`Cass. civ. n. 599/2025 (id: ${id}).`)).toBe("Cass. civ. n. 599/2025.");
+    expect(rimuoviIdInterni(`Cass. civ. n. 599/2025, id: ${id}, afferma che`)).toBe("Cass. civ. n. 599/2025, afferma che");
+    expect(rimuoviIdInterni(`Cass. n. 1/2024 [${id}] e **ID:** \`${id}\``)).toBe("Cass. n. 1/2024 e");
+    expect(rimuoviIdInterni(`- Cass. n. 1/2024\n- ${id}\n  - sotto`)).toBe("- Cass. n. 1/2024\n\n  - sotto");
   });
 
   it("uses unique secure fallback keys for sources without identifiers", () => {
@@ -230,6 +256,7 @@ describe("Word-agent flows", () => {
       const sendChunk = vi.fn();
       const out = await caseLaw({ documento: "Atto", userId: "u1" }, { sendChunk });
       expect(mocks.generate).toHaveBeenCalledOnce();
+      expect(mocks.generate.mock.calls[0][0].model).toBe("vertexai/gemini-3.5-flash-lite");
       expect(mocks.generate.mock.calls[0][0].prompt).toBe("<DOCUMENTO>\nAtto\n</DOCUMENTO>");
       expect(mocks.search).toHaveBeenCalledWith({ mode: "semantic", query: "q1", userId: "u1", limit: 8 });
       expect(mocks.search).toHaveBeenCalledTimes(2);
@@ -250,8 +277,19 @@ describe("Word-agent flows", () => {
       expect(out.risultati).toEqual([{ id: "x", score: 0.5 }]);
     });
 
+    it("lite fallito → una sola ripetuta con il modello predefinito", async () => {
+      mocks.generate
+        .mockRejectedValueOnce(new Error("lite down"))
+        .mockResolvedValueOnce({ output: { sintesi: "S", query: ["q1"] } });
+      mocks.search.mockResolvedValueOnce({ risultati: [], messaggio: null });
+      const out = (await caseLaw({ documento: "A", userId: "u1" }, { sendChunk: vi.fn() })) as { sintesi: string };
+      expect(out.sintesi).toBe("S");
+      expect(mocks.generate).toHaveBeenCalledTimes(2);
+      expect(mocks.generate.mock.calls[1][0].model).toBeUndefined();
+    });
+
     it("sintesi assente → errore generico, nessuna ricerca", async () => {
-      mocks.generate.mockResolvedValueOnce({ output: null });
+      mocks.generate.mockResolvedValue({ output: null });
       await expect(caseLaw({ documento: "A", userId: "u1" }, { sendChunk: vi.fn() }))
         .rejects.toThrow("Si è verificato un errore durante la sintesi del documento.");
       expect(mocks.search).not.toHaveBeenCalled();

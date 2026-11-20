@@ -1,11 +1,15 @@
 <!doctype html>
-<html lang="it">
+<html lang="it" class="no-js">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="robots" content="noindex" />
+  <script>document.documentElement.className = "js";</script>
   <title>__DISPLAY_NAME__ · Installazione in Microsoft Word</title>
-  <link rel="icon" href="assets/icon-32.png" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <style>
     :root {
       --bg: #fbfbfa; --surface: #ffffff; --text: #1a1d21; --muted: #5f6672; --faint: #8a9099;
@@ -38,7 +42,7 @@
       justify-content: space-between; gap: 16px;
     }
     .brand { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-weight: 700; font-size: 18px; }
-    .brand img { width: 28px; height: 28px; border-radius: 7px; }
+    .brand img { width: 28px; height: 28px; border-radius: 50%; }
     .env {
       font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: .04em;
       padding: 2px 8px; border-radius: 999px; background: var(--primary-soft); color: var(--primary);
@@ -66,7 +70,7 @@
     .btn:hover { background: var(--cta-hover); color: var(--cta-text); }
     .btn svg { width: 16px; height: 16px; }
     .manifest-url { margin: 10px 0 0; font-size: 13px; color: var(--faint); word-break: break-all; }
-    .manifest-url code { font-size: 12px; }
+    .manifest-url code { display: block; width: fit-content; max-width: 100%; margin-top: 4px; font-size: 12px; word-break: normal; overflow-wrap: anywhere; }
 
     .aside-block { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--border); }
     .aside-title { margin: 0 0 12px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--faint); }
@@ -129,6 +133,100 @@
     .footer-inner { max-width: 1180px; margin: 0 auto; padding: 24px; font-size: 14px; color: var(--faint); display: flex; flex-wrap: wrap; gap: 8px 24px; justify-content: space-between; }
     footer a { color: var(--muted); }
 
+    /* ── Animazioni ─────────────────────────────────────────── */
+    :root { --ease: cubic-bezier(.2, .8, .2, 1); }
+
+    /* Ingresso della colonna introduttiva (solo con JavaScript attivo, così senza JS tutto è visibile) */
+    .js .reveal { opacity: 0; transform: translateY(14px); }
+    .js .ready .reveal { animation: rise .7s var(--ease) forwards; animation-delay: calc(var(--i, 0) * 70ms + 120ms); }
+    @keyframes rise { to { opacity: 1; transform: none; } }
+
+    .eyebrow { position: relative; display: inline-block; padding-bottom: 8px; }
+    .eyebrow::after {
+      content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 36px; background: var(--line);
+      transform-origin: left; border-radius: 2px;
+    }
+    .js .eyebrow::after { transform: scaleX(0); }
+    .js .ready .eyebrow::after { animation: draw .8s var(--ease) .35s forwards; }
+    @keyframes draw { to { transform: scaleX(1); } }
+
+    /* Sezioni che compaiono allo scorrimento */
+    .js section.in-view-pending { opacity: 0; transform: translateY(18px); }
+    section { transition: opacity .7s var(--ease), transform .7s var(--ease); }
+
+    /* Pulsante di download */
+    .btn { transition: background-color .15s, transform .2s var(--ease), box-shadow .2s var(--ease); }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0, 0, 0, .12); }
+    .btn:hover svg { animation: nudge .9s var(--ease) infinite; }
+    @keyframes nudge { 0%, 100% { transform: none; } 50% { transform: translateY(2px); } }
+
+    /* Indice: sezione corrente */
+    .toc a { transition: color .2s, border-color .2s; }
+    .toc a.active { color: var(--text); border-left-color: var(--line); font-weight: 500; }
+
+    /* Apertura delle piattaforme */
+    details[open] .details-body { animation: open .35s var(--ease); }
+    @keyframes open { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+
+    /* Anteprima animata del prodotto */
+    .preview { margin: 0 0 56px; }
+    .pv-window {
+      border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, .04), 0 18px 40px -18px rgba(0, 0, 0, .18);
+    }
+    .pv-bar {
+      display: flex; align-items: center; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--border);
+      background: var(--bg); font-size: 12px; color: var(--faint);
+    }
+    .pv-bar span { width: 9px; height: 9px; border-radius: 50%; background: var(--border); }
+    .pv-bar em { margin-left: 8px; font-style: normal; }
+    .pv-body { display: grid; grid-template-columns: minmax(0, 1fr) 42%; min-height: 220px; }
+    .pv-doc { padding: 22px 26px; display: flex; flex-direction: column; gap: 11px; }
+    .pv-doc i, .pv-card i {
+      display: block; height: 7px; border-radius: 4px; background: var(--border);
+    }
+    .pv-doc i.hl { position: relative; overflow: hidden; }
+    .pv-doc i.hl::after {
+      content: ""; position: absolute; inset: 0; background: var(--line); opacity: .55;
+      transform: scaleX(0); transform-origin: left;
+    }
+    .pv-pane { border-left: 1px solid var(--border); background: var(--bg); padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+    .pv-head { display: flex; align-items: center; gap: 7px; font-family: var(--serif); font-weight: 700; font-size: 13px; }
+    .pv-head img { width: 16px; height: 16px; border-radius: 50%; }
+    .pv-card {
+      display: grid; grid-template-columns: 10px 1fr; gap: 6px 8px; align-items: center; padding: 10px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    }
+    .pv-card b { width: 8px; height: 8px; border-radius: 50%; grid-row: span 2; align-self: start; margin-top: 2px; }
+    .pv-card i:last-child { grid-column: 2; }
+    .g { background: #16a34a; } .y { background: #d97706; } .r { background: #dc2626; }
+    .w95 { width: 95%; } .w90 { width: 90%; } .w85 { width: 85%; } .w80 { width: 80%; } .w75 { width: 75%; }
+    .w70 { width: 70%; } .w60 { width: 60%; } .w50 { width: 50%; } .w40 { width: 40%; }
+
+    .js .pv-card { opacity: 0; transform: translateX(10px); }
+    .js .ready .pv-doc i.hl::after { animation: select .9s var(--ease) .9s forwards; }
+    .js .ready .pv-card { animation: slide .6s var(--ease) forwards; }
+    .js .ready .pv-card:nth-of-type(2) { animation-delay: 1.7s; }
+    .js .ready .pv-card:nth-of-type(3) { animation-delay: 2.0s; }
+    .js .ready .pv-card:nth-of-type(4) { animation-delay: 2.3s; }
+    .ready .pv-card b { animation: glow 2.4s ease-in-out 3s infinite; }
+    @keyframes select { to { transform: scaleX(1); } }
+    @keyframes slide { to { opacity: 1; transform: none; } }
+    @keyframes glow { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 0 4px rgba(224, 163, 46, .18); } }
+
+    @media (max-width: 560px) {
+      .pv-body { grid-template-columns: 1fr; }
+      .pv-doc { display: none; }
+      .pv-pane { border-left: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+      .js .reveal, .js .pv-card, .js section.in-view-pending { opacity: 1 !important; transform: none !important; }
+      .js .eyebrow::after, .js .pv-doc i.hl::after { transform: none !important; }
+      html { scroll-behavior: auto; }
+    }
+
     @media (max-width: 560px) {
       .layout { padding: 32px 18px 56px; }
       h2 { font-size: 21px; }
@@ -140,26 +238,26 @@
   <header class="topbar">
     <div class="topbar-inner">
       <div class="brand">
-        <img src="assets/icon-64.png" alt="" />
+        <img src="/android-chrome-192x192.png" alt="" />
         Jurio __ENV_BADGE__
       </div>
       <a href="https://jurio.it/supporto-word">Supporto</a>
     </div>
   </header>
 
-  <div class="layout">
+  <div class="layout" id="page">
     <aside class="aside">
-      <p class="eyebrow">Componente aggiuntivo per Microsoft Word</p>
-      <h1>Installa Jurio in Word</h1>
-      <p class="lead">Ricerca giurisprudenziale, revisione e redazione con fonti verificate, direttamente nel documento su cui stai lavorando.</p>
+      <p class="eyebrow reveal" style="--i:0">Componente aggiuntivo per Microsoft Word</p>
+      <h1 class="reveal" style="--i:1">Installa Jurio in Word</h1>
+      <p class="lead reveal" style="--i:2">Ricerca giurisprudenziale, revisione e redazione con fonti verificate, direttamente nel documento su cui stai lavorando.</p>
 
-      <a class="btn" href="manifest.xml" download="jurio-manifest.xml">
+      <a class="btn reveal" style="--i:3" href="manifest.xml" download="jurio-manifest.xml">
         <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2v8m0 0L4.5 6.5M8 10l3.5-3.5M3 13h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Scarica il manifest
       </a>
-      <p class="manifest-url">oppure usa l'indirizzo <code>__MANIFEST_URL__</code></p>
+      <p class="manifest-url reveal" style="--i:4">oppure usa l'indirizzo <code>__MANIFEST_URL__</code></p>
 
-      <div class="aside-block">
+      <div class="aside-block reveal" style="--i:5">
         <p class="aside-title">Requisiti</p>
         <ul class="reqs">
           <li><strong>Account Jurio attivo</strong><span>Le stesse credenziali di jurio.it</span></li>
@@ -168,7 +266,7 @@
         </ul>
       </div>
 
-      <div class="aside-block toc-block">
+      <div class="aside-block toc-block reveal" style="--i:6">
         <p class="aside-title">In questa guida</p>
         <ul class="toc">
           <li><a href="#manifest">Il manifest</a></li>
@@ -181,6 +279,24 @@
     </aside>
 
     <main class="content">
+      <div class="preview reveal" style="--i:3" aria-hidden="true">
+        <div class="pv-window">
+          <div class="pv-bar"><span></span><span></span><span></span><em>Contratto di locazione.docx</em></div>
+          <div class="pv-body">
+            <div class="pv-doc">
+              <i class="w90"></i><i class="w75"></i><i class="w95"></i><i class="hl w85"></i>
+              <i class="w80"></i><i class="w95"></i><i class="w60"></i><i class="w85"></i><i class="w40"></i>
+            </div>
+            <div class="pv-pane">
+              <div class="pv-head"><img src="/favicon-32x32.png" alt="" />Jurio</div>
+              <div class="pv-card"><b class="g"></b><i class="w80"></i><i class="w60"></i></div>
+              <div class="pv-card"><b class="y"></b><i class="w70"></i><i class="w50"></i></div>
+              <div class="pv-card"><b class="r"></b><i class="w75"></i><i class="w40"></i></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <section id="manifest">
         <div class="section-head"><span class="step">01</span><h2>Il manifest</h2></div>
         <p>Il manifest è un breve file XML che indica a Word nome, icone e indirizzo del componente aggiuntivo. Non contiene dati personali né programmi da eseguire sul computer.</p>
@@ -308,5 +424,34 @@
       <span><a href="https://jurio.it/supporto-word">Supporto</a> · <a href="https://jurio.it/contatti">Contatti</a></span>
     </div>
   </footer>
+  <script>
+    (function () {
+      var page = document.getElementById("page");
+      requestAnimationFrame(function () { page.classList.add("ready"); });
+
+      if (!("IntersectionObserver" in window)) return;
+      var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var sections = Array.prototype.slice.call(document.querySelectorAll("main section"));
+
+      if (!reduce) {
+        var reveal = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            if (e.isIntersecting) { e.target.classList.remove("in-view-pending"); reveal.unobserve(e.target); }
+          });
+        }, { rootMargin: "0px 0px -8% 0px" });
+        sections.forEach(function (s, i) { if (i > 0) { s.classList.add("in-view-pending"); reveal.observe(s); } });
+      }
+
+      var links = {};
+      Array.prototype.forEach.call(document.querySelectorAll(".toc a"), function (a) { links[a.getAttribute("href").slice(1)] = a; });
+      var spy = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting || !links[e.target.id]) return;
+          Object.keys(links).forEach(function (k) { links[k].classList.toggle("active", k === e.target.id); });
+        });
+      }, { rootMargin: "-30% 0px -60% 0px" });
+      sections.forEach(function (s) { spy.observe(s); });
+    })();
+  </script>
 </body>
 </html>

@@ -73,7 +73,7 @@ describe("Chiedi al documento", () => {
     installWordMock({ bodyText: "x".repeat(ASK_DOCUMENT_LIMIT + 1) });
     render(<Ask />);
     chiedi("Domanda");
-    expect(await screen.findByText(/seleziona la parte pertinente/)).toBeInTheDocument();
+    expect(await screen.findByText(/Il documento è troppo lungo .*60\.001 caratteri, massimo 60\.000.*«Selezione»/)).toBeInTheDocument();
     expect(mocks.fetchWithSecurity).not.toHaveBeenCalled();
   });
 

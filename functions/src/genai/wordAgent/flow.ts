@@ -11,8 +11,22 @@ import {
   buildReviewSystemPrompt,
   formatReviewCriteria,
 } from "./_prompts";
-import { RisultatoRicerca, searchJurioDatabase } from "./_search";
+import { RisultatoRicerca, searchJurioDatabase, titoloProvvedimento } from "./_search";
 import { logSafeError } from "../../_logging";
+
+/**
+ * Modello per strumento. `undefined` = predefinito di _config (gemini-3.5-flash, thinking LOW):
+ * serve agli strumenti che chiamano i tool e citano fonti, dove conta il rispetto delle regole.
+ * Il lite solo per compiti di pura trasformazione del testo, senza tool.
+ */
+export const WORD_LITE_MODEL = "vertexai/gemini-3.5-flash-lite";
+export const WORD_MODELS: Record<"quote" | "review" | "redraft" | "ask" | "caseLawPlan", string | undefined> = {
+  quote: undefined,
+  review: undefined,
+  redraft: undefined,
+  ask: undefined,
+  caseLawPlan: WORD_LITE_MODEL,
+};
 
 export const wordQuoteFlow = ai.defineFlow(
   {
@@ -45,6 +59,7 @@ export const wordQuoteFlow = ai.defineFlow(
 
     try {
       const response = await ai.generate({
+        model: WORD_MODELS.quote,
         messages: messages as any,
         tools: [internalDatabaseSearch], 
         context: {
@@ -58,7 +73,7 @@ export const wordQuoteFlow = ai.defineFlow(
       });
 
       const fontiFinali = estraiFontiDalRisultato(response); 
-      const rawText = response.text?.trim() ?? "";
+      const rawText = rimuoviIdInterni(response.text ?? "");
 
       // Gestione sicura del fallback
       if (rawText.includes("NESSUN_RISULTATO") || fontiFinali.length === 0) {
@@ -120,6 +135,7 @@ export const wordReviewFlow = ai.defineFlow(
 
     try {
       const response = await ai.generate({
+        model: WORD_MODELS.review,
         messages: messages as any,
         tools: [internalDatabaseSearch, webSearch], 
         context: { userId: input.userId },
@@ -210,6 +226,7 @@ export const wordRedraftFlow = ai.defineFlow(
 
     try {
       const response = await ai.generate({
+        model: WORD_MODELS.redraft,
         messages: messages as any,
         tools: hasFascicolo ? [internalDatabaseSearch, userFileSearch] : [internalDatabaseSearch],
         context: { userId: input.userId, fascicoloId: input.fascicoloId ?? undefined },
@@ -221,7 +238,7 @@ export const wordRedraftFlow = ai.defineFlow(
       });
 
       sendChunk({ status: "Stesura della proposta..." });
-      const risultato = response.text?.trim() ?? "";
+      const risultato = rimuoviIdInterni(response.text ?? "");
       if (!risultato) {
         throw new Error("EMPTY_REDRAFT");
       }
@@ -267,6 +284,7 @@ export const wordAskFlow = ai.defineFlow(
 
     try {
       const response = await ai.generate({
+        model: WORD_MODELS.ask,
         messages: messages as any,
         tools: [internalDatabaseSearch],
         context: { userId: input.userId, uiFilters: [] },
@@ -275,7 +293,7 @@ export const wordAskFlow = ai.defineFlow(
           if (toolName) sendChunk({ status: "Ricerca nella banca dati Jurio..." });
         },
       });
-      const risposta = response.text?.trim() ?? "";
+      const risposta = rimuoviIdInterni(response.text ?? "");
       if (!risposta) throw new Error("EMPTY_ASK");
       return { risposta, fonti: estraiFontiDalRisultato(response) };
     } catch (error) {
@@ -304,14 +322,24 @@ export const wordCaseLawFlow = ai.defineFlow(
   async (input, { sendChunk }) => {
     sendChunk({ status: "Sintesi del documento..." });
     let piano: z.infer<typeof CaseLawPlanSchema>;
-    try {
+    const pianifica = async (model: string | undefined) => {
       const response = await ai.generate({
+        model,
         system: buildCaseLawSummaryPrompt(),
         prompt: `<DOCUMENTO>\n${input.documento}\n</DOCUMENTO>`,
         output: { schema: CaseLawPlanSchema },
       });
-      if (!response.output?.sintesi || !response.output.query?.length) throw new Error("EMPTY_CASE_LAW_PLAN");
-      piano = response.output;
+      if (!response?.output?.sintesi || !response.output.query?.length) throw new Error("EMPTY_CASE_LAW_PLAN");
+      return response.output;
+    };
+    try {
+      // Con il lite, in caso di errore o output incompleto si ripiega una volta sul modello predefinito.
+      piano = WORD_MODELS.caseLawPlan
+        ? await pianifica(WORD_MODELS.caseLawPlan).catch((liteError: unknown) => {
+            logSafeError("WORD_CASE_LAW_SUMMARY_LITE_FAILED", liteError);
+            return pianifica(undefined);
+          })
+        : await pianifica(undefined);
     } catch (error) {
       logSafeError("WORD_CASE_LAW_SUMMARY_FAILED", error);
       throw new Error("Si è verificato un errore durante la sintesi del documento.");
@@ -366,17 +394,58 @@ export function estraiFontiDalRisultato(response: any) {
     logSafeError("WORD_REVIEW_SOURCE_PARSING_FAILED", parseError);
   }
 
-  return Array.from(fontiUniche.values()).map(f => {
-    let rawScore = f.score ?? null;
-    if (rawScore === null && f._distance !== undefined) {
-      rawScore = 1 - f._distance; 
-    }
+  return Array.from(fontiUniche.values())
+    .map((f) => {
+      const titolo = titoloFonte(f);
+      if (!titolo) return null;
+      let rawScore = f.score ?? null;
+      if (rawScore === null && f._distance !== undefined) {
+        rawScore = 1 - f._distance;
+      }
+      return {
+        id: String(f.documento_id ?? f.id ?? "id-non-disponibile"),
+        titolo,
+        url: f.link ?? f.url ?? f.urn ?? undefined,
+        score: rawScore !== null ? Math.round(rawScore * 100) / 100 : undefined,
+      };
+    })
+    .filter((f): f is NonNullable<typeof f> => f !== null)
+    .slice(0, 5);
+}
 
-    return {
-      id: String(f.documento_id ?? f.id ?? "id-non-disponibile"),
-      titolo: String(f.titolo ?? f.numero_sentenza ?? "Documento senza titolo"),
-      url: f.link ?? f.url ?? f.urn ?? undefined,
-      score: rawScore !== null ? Math.round(rawScore * 100) / 100 : undefined
-    };
-  }).slice(0, 5); 
+const testo = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+
+/**
+ * Titolo leggibile della fonte dai campi restituiti dal tool (organo, sezione, numero/anno, ECLI).
+ * Se non c'è nessun campo utile la fonte viene scartata: niente "Documento senza titolo".
+ */
+function titoloFonte(f: any): string | null {
+  const esplicito = testo(f.titolo);
+  if (esplicito) return esplicito;
+  const organo = testo(f.court) || testo(f.organo_giudicante);
+  const sezione = testo(f.sezione);
+  const numero = testo(f.caseNumber) || testo(f.numero_sentenza);
+  if (organo || sezione) return titoloProvvedimento({ organo, sezione, numero });
+  return numero || testo(f.ecli) || null;
+}
+
+const UUID = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+const MD = "[*_`]*"; // eventuale formattazione markdown attorno all'etichetta o all'ID
+const ETICHETTA = "(?:id|documento_id|identificativo)";
+/** "(id: <uuid>)" o "[<uuid>]" */
+const ID_TRA_PARENTESI = new RegExp("[ \\t]*[(\\[][ \\t]*" + MD + "(?:" + ETICHETTA + ")?" + MD + "[ \\t]*[:=]?[ \\t]*" + MD + UUID + MD + "[ \\t]*[)\\]]", "gi");
+/** ", id: <uuid>" o "**ID:** <uuid>" */
+const ID_ETICHETTATO = new RegExp("[,;]?[ \\t]*" + MD + "\\b" + ETICHETTA + "\\b[ \\t]*[:=]?" + MD + "[ \\t]*[:=]?[ \\t]*" + MD + UUID + MD, "gi");
+const ID_NUDO = new RegExp("[ \\t]*" + MD + "\\b" + UUID + "\\b" + MD, "gi");
+
+/** Gli identificativi interni (UUID Firestore) non devono comparire nel testo: si citano solo gli estremi. */
+export function rimuoviIdInterni(text: string): string {
+  return text
+    .replace(ID_TRA_PARENTESI, "")
+    .replace(ID_ETICHETTATO, "")
+    .replace(ID_NUDO, "")
+    .replace(/[ \t]*\([ \t]*[,;]?[ \t]*\)/g, "") // parentesi rimaste vuote
+    .replace(/^[ \t]*[-*•][ \t]*$/gm, "") // voci di elenco rimaste vuote
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
