@@ -9,6 +9,8 @@ import {
   isNameToken,
   PARTICLES,
   PLACE_BEFORE,
+  CAPITALIZED_FUNCTION_WORDS,
+  detectArticleSurnames,
   PROTECTED,
   SURNAMES,
   tokenize,
@@ -147,13 +149,6 @@ const MID_SENTENCE_NAMES = new Set(
   "rosa vera serena chiara bianca viola gioia stella speranza celeste aurora alba diana gemma ambra flora dora lea pia norma linda giada carmen grazia regina".split(
     " "
   )
-);
-/** Parole con l'iniziale maiuscola a inizio frase che non fanno parte di un nome ("Il Rossi", "Con Marco"). */
-const CAPITALIZED_FUNCTION_WORDS = new Set(
-  (
-    "il i gli un una uno ed ma con per in su tra fra ad al allo alla ai agli alle dal dai dagli dalle nel nella " +
-    "nei negli nelle sul sulla sui che se anche come quando mentre dopo prima poi ho ha hanno sono ecco oggi ieri domani"
-  ).split(" ")
 );
 
 /** Dopo il nome: forma societaria ("Bianchi Srl", "Rossi & C."). */
@@ -492,6 +487,9 @@ export class PseudonymizationVault {
       if (COMPANY_AFTER.test(text.slice(token.end, token.end + 12))) return;
       this.getToken(token.text, "NOME");
     });
+
+    // Cognomi usati con l'articolo e ripetuti ("il Cutrupi … il Cutrupi").
+    for (const surname of detectArticleSurnames(text)) this.getToken(surname, "NOME");
   }
 
   private replaceText(text: string): string {
