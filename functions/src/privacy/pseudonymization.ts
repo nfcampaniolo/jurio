@@ -1,14 +1,20 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 import {
+  AMBIGUOUS_NAME_WORDS,
   bareWord,
   detectPersonNames,
   FIRST_NAMES,
+  isKnownSurname,
   isNameLikeWord,
   isNameToken,
   PARTICLES,
+  PLACE_BEFORE,
   PROTECTED,
+  SURNAMES,
   tokenize,
+  type Token,
 } from "./personNames";
+import { enrichVaultWithDlp, isDlpEnabled } from "./dlp";
 
 /**
  * Pseudonimizzazione reversibile dei dati personali inviati agli LLM.
@@ -19,13 +25,15 @@ import {
  * La mappa segnaposto→valore vive solo in memoria per la durata della richiesta.
  */
 
-type PiiCategory =
+export type PiiCategory =
   | "EMAIL"
   | "TELEFONO"
   | "CODICE_FISCALE"
   | "PARTITA_IVA"
   | "IBAN"
   | "INDIRIZZO"
+  | "DATA_NASCITA"
+  | "TARGA"
   | "NOME"
   | "COGNOME";
 
@@ -36,6 +44,8 @@ const CATEGORIES: PiiCategory[] = [
   "PARTITA_IVA",
   "IBAN",
   "INDIRIZZO",
+  "DATA_NASCITA",
+  "TARGA",
   "NOME",
   "COGNOME",
 ];
@@ -93,7 +103,7 @@ const sensitiveFieldCategories: Array<[RegExp, PiiCategory]> = [
  * con il flag "i" `\p{Lu}` accetterebbe anche le minuscole ("cliente vuole sapere…").
  */
 const NAME_CUE =
-  /\b(?:mi chiamo|(?:nome|cognome)(?:\s+(?:del|della|cliente|assistito|controparte))?|cliente|assistit[oa]|controparte|mittente|destinatario|sig(?:nore|nora)?|signor[ae]|sig\.r[ae]|avv(?:ocat[oa])?|dott(?:ore|oressa|\.?ssa)?|ing(?:egnere)?|geom|arch|rag|prof(?:essore|essoressa)?)\.?(?:\s*[:=])?\s+/giu;
+  /\b(?:mi chiamo|marito|moglie|coniuge|padre|madre|figli[oa]|fratell[oa]|sorella|zi[oa]|nonn[oa]|cugin[oa]|nipote|cognat[oa]|suocer[oa]|genero|nuora|compagn[oa]|fidanzat[oa]|convivente|collega|soci[oa]|amic[oa]|vedov[oa]|(?:nome|cognome)(?:\s+(?:del|della|cliente|assistito|controparte))?|cliente|assistit[oa]|controparte|mittente|destinatario|sig(?:nore|nora)?|signor[ae]|sig\.r[ae]|avv(?:ocat[oa])?|dott(?:ore|oressa|\.?ssa)?|ing(?:egnere)?|geom|arch|rag|prof(?:essore|essoressa)?)\.?(?:\s*[:=])?\s+/giu;
 const NAME_WORD = String.raw`(?:\p{Lu}\p{Ll}{0,3}['’])?\p{Lu}[\p{L}'’-]*`;
 const NAME_SEQUENCE = new RegExp(
   `${NAME_WORD}(?:[ \\t]+(?:(?:De|Di|Da|Del|Della|Dello|Dei|Degli|Dal|Dalla|La|Lo|Li)[ \\t]+)?${NAME_WORD}){0,3}`,
@@ -102,6 +112,52 @@ const NAME_SEQUENCE = new RegExp(
 
 const addressPattern =
   /\b(?:[Vv]ia|[Vv]iale|[Pp]iazza(?:le)?|[Cc]orso|[Ll]argo|[Vv]icolo|[Ss]trada|[Ll]ungomare|[Cc]ontrada|[Bb]orgo)\s+(?:(?:d(?:i|el|ella|ello|elle|egli|ei)|San|Santa|Sant['’])\s+)?[\p{Lu}\d][\p{L}\d'’.-]*(?:\s+(?:d(?:i|el|ella|elle|egli|ei)\s+)?[\p{Lu}][\p{L}'’.-]*){0,4},?\s+(?:n\.?\s*)?\d+[A-Za-z]?\b/gu;
+
+const DATE = String.raw`\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}|\d{1,2}°?\s+(?:gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\s+\d{4}`;
+const birthDatePatterns = [
+  new RegExp(String.raw`\bnat[oa]\s+(?:(?:a|ad|in)\s+[^,;\n]{1,50}?\s*,?\s+)?il\s+(${DATE})`, "gi"),
+  new RegExp(String.raw`\b(?:data\s+di\s+nascita|d\.\s?n\.)\s*[:=]?\s*(${DATE})`, "gi"),
+];
+
+/** Lettere ammesse nelle targhe italiane (escluse I, O, Q, U). */
+const PLATE_LETTER = "[A-HJ-NPR-TV-Z]";
+const platePatterns = [
+  new RegExp(`\\b${PLATE_LETTER}{2}\\d{3}${PLATE_LETTER}{2}\\b`, "g"),
+  new RegExp(`\\b(?:targ(?:a|at[oa])|veicolo|autovettura)\\s*[:n.°]*\\s*(${PLATE_LETTER}{2}\\s?\\d{3}\\s?${PLATE_LETTER}{2})\\b`, "gi"),
+];
+
+/** Partita IVA o codice fiscale numerico (11 cifre) introdotti dall'etichetta, con o senza "IT". */
+const vatPattern =
+  /\b(?:p\.?\s?iva|partita\s+iva|vat(?:\s+(?:number|id))?|c\.?\s?f\.?|codice\s+fiscale)\s*(?:n\.?|nr\.?|:)?\s*(?:IT\s?)?(\d{11})(?!\d)/gi;
+
+/** Cellulari (3xx) e fissi (0x) anche senza separatori o in due gruppi ("333 1234567", "0612345678"). */
+const compactPhonePattern = /(?<![\d/.,])(?:\+39\s?)?(?:3\d{2}[ .-]?\d{6,7}|0\d{1,3}[ .-]?\d{5,8})(?![\d/]|[.,]\d)/g;
+
+/**
+ * Contesto che precede un nome proprio senza riferirsi a una persona: luoghi ("Via Marco Polo",
+ * "San Giovanni"), leggi e riforme ("legge Biagi"), denominazioni ("teatro", "stadio").
+ */
+const NON_PERSON_BEFORE =
+  /(?:\b(?:legge|l\.|decreto|d\.?\s?lgs\.?|d\.?\s?l\.|ddl|riforma|lodo|codice|teorema|principio|caso|metodo|scala|governo|premio|teatro|stadio|stazione|aeroporto|palazzo|chiesa|basilica|parco|museo|hotel|ponte|galleria)\s+)$/i;
+/**
+ * Nomi propri che sono anche parole comuni ("Chiara", "Rosa"): da soli valgono solo a metà frase,
+ * dove l'iniziale maiuscola non dipende dalla punteggiatura.
+ */
+const MID_SENTENCE_NAMES = new Set(
+  "rosa vera serena chiara bianca viola gioia stella speranza celeste aurora alba diana gemma ambra flora dora lea pia norma linda giada carmen grazia regina".split(
+    " "
+  )
+);
+/** Parole con l'iniziale maiuscola a inizio frase che non fanno parte di un nome ("Il Rossi", "Con Marco"). */
+const CAPITALIZED_FUNCTION_WORDS = new Set(
+  (
+    "il i gli un una uno ed ma con per in su tra fra ad al allo alla ai agli alle dal dai dagli dalle nel nella " +
+    "nei negli nelle sul sulla sui che se anche come quando mentre dopo prima poi ho ha hanno sono ecco oggi ieri domani"
+  ).split(" ")
+);
+
+/** Dopo il nome: forma societaria ("Bianchi Srl", "Rossi & C."). */
+const COMPANY_AFTER = /^\s*(?:S\.?\s?r\.?\s?l|S\.?\s?p\.?\s?A|S\.?\s?n\.?\s?c|S\.?\s?a\.?\s?s|&|e\s+C\.)/i;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   if (!value || typeof value !== "object") return false;
@@ -197,13 +253,14 @@ export class PseudonymizationVault {
 
   registerPayload(payload: unknown): void {
     const seen = new WeakSet<object>();
+    const texts: string[] = [];
     const visit = (value: unknown, fieldName = ""): void => {
       if (typeof value === "string") {
         const category = sensitiveFieldCategories.find(([pattern]) => pattern.test(fieldName))?.[1];
         if (category && value.trim().length >= 2 && (category !== "NOME" || looksLikeName(value))) {
           this.getToken(value.trim(), category);
         }
-        this.registerDetectedValues(value);
+        texts.push(value);
         return;
       }
       if (!value || typeof value !== "object" || seen.has(value)) return;
@@ -218,14 +275,57 @@ export class PseudonymizationVault {
     };
 
     visit(payload);
+    this.registerTexts(texts);
   }
 
+  /**
+   * Due passate: prima si raccolgono i dati da TUTTE le stringhe (storico, documenti, messaggio),
+   * poi si sostituisce. Così un nome scritto per intero solo in un messaggio successivo viene
+   * mascherato anche nei testi che lo precedono ("Verdi non ha pagato" … "il debitore è Luigi Verdi").
+   */
   pseudonymize<T>(value: T): T {
-    return this.transform(value, (text) => this.pseudonymizeText(text));
+    const texts: string[] = [];
+    this.transform(value, (text) => {
+      texts.push(text);
+      return text;
+    });
+    this.registerTexts(texts);
+    return this.transform(value, (text) => this.replaceText(text));
+  }
+
+  /**
+   * Registra i dati trovati nei testi: prima i nomi completi e gli identificativi, poi le parole
+   * isolate (cognomi e nomi da elenco), così "Rossi" diventa l'alias {COGNOME_n} di "Mario Rossi"
+   * anziché un nome a sé.
+   */
+  private registerTexts(texts: string[]): void {
+    const cleaned = texts.map((input) => input.replace(CANONICAL_TOKEN, (token) => " ".repeat(token.length)));
+    cleaned.forEach((text) => this.registerDetectedValues(text));
+    cleaned.forEach((text) => this.registerIsolatedNames(text));
   }
 
   restore<T>(value: T): T {
     return this.transform(value, (text) => this.restoreText(text));
+  }
+
+  /**
+   * Registra i dati trovati da un rilevatore esterno (Cloud DLP). I nomi passano dagli stessi filtri
+   * delle regex ("Corte", "Tribunale" non sono persone); i nomi completi prima dei cognomi isolati,
+   * così "Rossi" diventa l'alias di "Mario Rossi".
+   */
+  registerExternalFindings(findings: Array<{ value: string; category: PiiCategory }>): void {
+    const wordCount = (value: string) => value.trim().split(/\s+/).length;
+    const sorted = [...findings].sort((left, right) => wordCount(right.value) - wordCount(left.value));
+    for (const { value, category } of sorted) {
+      const trimmed = value.trim();
+      if (category === "NOME") {
+        this.registerName(trimmed);
+      } else if (category === "TELEFONO") {
+        if (trimmed.replace(/\D/g, "").length >= 9) this.getToken(trimmed, category);
+      } else if (trimmed.length >= 3) {
+        this.getToken(trimmed, category);
+      }
+    }
   }
 
   /** Ripristina un frammento di testo (usato per lo streaming). */
@@ -271,10 +371,8 @@ export class PseudonymizationVault {
     this.getToken(value, "NOME");
   }
 
-  private registerDetectedValues(input: string): void {
-    // I segnaposto già presenti non devono essere riconosciuti come nomi ("{NOME_1}" → "NOME").
-    const text = input.replace(CANONICAL_TOKEN, (token) => " ".repeat(token.length));
-
+  /** `text` ha già i segnaposto sostituiti da spazi: non vanno riconosciuti come nomi ("{NOME_1}" → "NOME"). */
+  private registerDetectedValues(text: string): void {
     for (const match of text.matchAll(/\b[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]\b/gi)) {
       this.getToken(match[0], "CODICE_FISCALE");
     }
@@ -286,6 +384,10 @@ export class PseudonymizationVault {
     }
     for (const match of text.matchAll(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi)) {
       this.getToken(match[0], "EMAIL");
+    }
+    // Prima dei telefoni: una P.IVA che inizia con 0 ha la forma di un numero fisso.
+    for (const match of text.matchAll(vatPattern)) {
+      this.getToken(match[1], "PARTITA_IVA");
     }
     for (const match of text.matchAll(/(?:\+?\d[\d\s()./-]{6,}\d)/g)) {
       const digits = match[0].replace(/\D/g, "");
@@ -311,6 +413,19 @@ export class PseudonymizationVault {
         this.getToken(match[0], "TELEFONO");
       }
     }
+    for (const match of text.matchAll(compactPhonePattern)) {
+      const digits = match[0].replace(/\D/g, "");
+      const start = match.index ?? 0;
+      const precedingText = text.slice(Math.max(0, start - 24), start);
+      if (digits.length < 9 || digits.length > 12) continue;
+      if (/(?:€|\bEUR|\bn\.|\bn°|\bnr\.?|\bprot\.?|\br\.?\s?g\.?|\bart\.?)\s*$/i.test(precedingText)) continue;
+      this.getToken(match[0], "TELEFONO");
+    }
+    for (const pattern of birthDatePatterns) {
+      for (const match of text.matchAll(pattern)) this.getToken(match[1], "DATA_NASCITA");
+    }
+    for (const match of text.matchAll(platePatterns[0])) this.getToken(match[0], "TARGA");
+    for (const match of text.matchAll(platePatterns[1])) this.getToken(match[1].toUpperCase(), "TARGA");
     for (const match of text.matchAll(addressPattern)) {
       this.getToken(match[0], "INDIRIZZO");
     }
@@ -326,10 +441,60 @@ export class PseudonymizationVault {
     for (const match of detectPersonNames(text).matches) {
       this.registerName(match.text);
     }
+
+    this.registerLowercaseNames(text);
   }
 
-  private pseudonymizeText(text: string): string {
-    this.registerDetectedValues(text);
+  /** Nome e cognome scritti tutti in minuscolo ("mario rossi"): solo se entrambi sono negli elenchi. */
+  private registerLowercaseNames(text: string): void {
+    const tokens = tokenize(text);
+    const isLower = (t: Token) => /^\p{Ll}+$/u.test(t.text);
+    for (let i = 0; i + 1 < tokens.length; i++) {
+      const first = tokens[i];
+      const last = tokens[i + 1];
+      // Il nome proprio non deve essere ambiguo ("rosa bianco"); il cognome sì ("giuseppe verdi").
+      if (!isLower(first) || AMBIGUOUS_NAME_WORDS.has(first.lower) || !isLower(last)) continue;
+      if (!/^[ \t]+$/.test(text.slice(first.end, last.start))) continue;
+      if (FIRST_NAMES.has(first.lower) && SURNAMES.has(last.lower)) {
+        this.getToken(text.slice(first.start, last.end), "NOME");
+        i += 1;
+      }
+    }
+  }
+
+  /**
+   * Cognomi e nomi propri da elenco che compaiono da soli ("Esposito mi ha chiesto…", "ho parlato con Marco").
+   * Esclusi: parole ambigue ("Rosa", "Costa"), luoghi ("Via Marco Polo", "San Giovanni"), leggi
+   * ("legge Biagi") e società ("Bianchi Srl").
+   */
+  private registerIsolatedNames(text: string): void {
+    const tokens = tokenize(text);
+    const isCapitalizedNeighbour = (a: Token, b: Token, neighbour: Token) =>
+      /^[ \t]+$/.test(text.slice(a.end, b.start)) &&
+      /^\p{Lu}/u.test(neighbour.text) &&
+      !CAPITALIZED_FUNCTION_WORDS.has(neighbour.lower);
+
+    tokens.forEach((token, i) => {
+      if (!isNameToken(token)) return;
+      const word = bareWord(token.text);
+      const midSentence = !/(?:^|[.!?:;\n]\s*)$/.test(text.slice(Math.max(0, token.start - 3), token.start));
+      const knownFirstName =
+        FIRST_NAMES.has(word) && (!AMBIGUOUS_NAME_WORDS.has(word) || (midSentence && MID_SENTENCE_NAMES.has(word)));
+      if (!(isKnownSurname(token) || knownFirstName) || word.length < 3) return;
+      // Parte di una denominazione di più parole maiuscole ("San Giovanni Rotondo", "Villa Borghese"):
+      // le combinazioni di nomi le gestisce già detectPersonNames.
+      const prev = tokens[i - 1];
+      const next = tokens[i + 1];
+      if (prev && isCapitalizedNeighbour(prev, token, prev)) return;
+      if (next && isCapitalizedNeighbour(token, next, next)) return;
+      const before = text.slice(Math.max(0, token.start - 30), token.start);
+      if (PLACE_BEFORE.test(before) || NON_PERSON_BEFORE.test(before)) return;
+      if (COMPANY_AFTER.test(text.slice(token.end, token.end + 12))) return;
+      this.getToken(token.text, "NOME");
+    });
+  }
+
+  private replaceText(text: string): string {
     if (this.valueToToken.size === 0) return text;
 
     if (!this.pattern || this.patternSize !== this.valueToToken.size) {
@@ -342,8 +507,15 @@ export class PseudonymizationVault {
     return text.replace(this.pattern, (match) => {
       const token = this.valueToToken.get(normalizeKey(match));
       if (!token) return match;
-      // I nomi si sostituiscono solo con l'iniziale maiuscola: "Rosa" sì, "rosa" (colore) no.
-      if ((token.startsWith("{NOME_") || token.startsWith("{COGNOME_")) && /^\p{Ll}/u.test(match)) return match;
+      // I nomi si sostituiscono solo con l'iniziale maiuscola ("Rosa" sì, "rosa" colore no),
+      // salvo quelli rilevati già in minuscolo ("mario rossi").
+      if (
+        (token.startsWith("{NOME_") || token.startsWith("{COGNOME_")) &&
+        /^\p{Ll}/u.test(match) &&
+        !/^\p{Ll}/u.test(this.tokenToValue.get(token) ?? "")
+      ) {
+        return match;
+      }
       return token;
     });
   }
@@ -537,6 +709,12 @@ export function pseudonymizeGenkit<T extends object>(instance: T): T {
         if (!vault) return Reflect.apply(original, target, args);
 
         const request = args[0];
+        // Con DLP attivo, prima si arricchisce il vault con i dati trovati da DLP, poi si pseudonimizza.
+        if (isDlpEnabled()) return enrichVaultWithDlp(vault, request).then(() => generate(vault, request, args.slice(1)));
+        return generate(vault, request, args.slice(1));
+      };
+
+      function generate(vault: PseudonymizationVault, request: unknown, rest: unknown[]) {
         const safeRequest = vault.pseudonymize(request);
         let streamRestorer: ReturnType<typeof createStreamRestorer> | undefined;
         let onChunk: unknown;
@@ -566,13 +744,13 @@ export function pseudonymizeGenkit<T extends object>(instance: T): T {
           }
         }
 
-        const generated = Reflect.apply(original, target, [safeRequest, ...args.slice(1)]);
+        const generated = Reflect.apply(original as (...a: unknown[]) => unknown, target, [safeRequest, ...rest]);
         return Promise.resolve(generated).then((response) => {
           const tail = streamRestorer?.flush();
           if (tail !== undefined && typeof onChunk === "function") Reflect.apply(onChunk, request, [tail]);
           return vault.restore(response);
         });
-      };
+      }
     },
   });
 }

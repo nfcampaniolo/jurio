@@ -8,45 +8,14 @@
  * Individua:
  * - nomi introdotti da avv./sig. o da formule di parte ("proposto da", "contro", "a carico di"…);
  * - nomi che precedono "nato/nata a";
- * - sequenze nome+cognome riconosciute tramite un elenco di nomi propri italiani.
+ * - sequenze nome+cognome riconosciute tramite gli elenchi di nomi propri e cognomi (`nameLists.ts`).
  *
  * Esclude i magistrati (Presidente, Consigliere, Relatore, P.M.), enti, società e luoghi.
  */
 
-export const FIRST_NAMES = new Set(
-  (
-    "adriana adriano agata agostino alberto alba alessandra alessandro alessia alessio alfonso alfredo alice " +
-    "amedeo andrea angela angelo anna annalisa antonella antonietta antonino antonio arianna armando " +
-    "arturo attilio aurelio barbara beatrice benedetta bruno calogero camilla carla carlo carmela carmelo carmine " +
-    "caterina cesare chiara claudia claudio concetta corrado cosimo cristian cristiana cristina cristiano damiano " +
-    "daniela daniele dario davide debora diego domenico donatella donato edoardo elena eleonora elisa elisabetta " +
-    "emanuela emanuele emilio enrico enzo erika ernesto ettore eugenio fabiana fabio fabrizio federica federico " +
-    "filippo filomena flavio francesca francesco gabriele gabriella gaetano giacomo gianluca gianni giorgia giorgio " +
-    "giovanna giovanni girolamo giulia giuliana giuliano giulio giuseppa giuseppe giuseppina graziella guido " +
-    "ignazio ilaria immacolata irene ivan ivana jessica laura leonardo letizia liliana lino lisa loredana lorena " +
-    "lorenzo luana luca lucia luciana luciano lucio luigi luisa manuel manuela marcello marco margherita maria " +
-    "mariagrazia mariangela marianna mario marisa martina massimiliano massimo matilde matteo mattia maurizio " +
-    "mauro michela michele milena mirko monica nadia nicola nicoletta nicolò noemi nunzia nunzio orazio ornella " +
-    "pamela paola paolo pasquale patrizia patrizio piera piero pietro raffaele raffaella renato riccardo rita " +
-    "roberta roberto rocco romano rosalba rosanna rosaria rosario rossella ruggero sabrina salvatore samuele " +
-    "sandra sandro sara saverio sebastiano serena sergio silvana silvia silvio simona simone sofia stefania " +
-    "stefano teresa tiziana tiziano tommaso ugo umberto valentina valentino valeria valerio vanessa veronica " +
-    "vincenza vincenzo virginia vito vittorio walter " +
-    // Integrazione con altri nomi frequenti (ISTAT) e varianti diffuse.
-    "achille ada adele agnese alda aldo alessio alfio amalia ambra anastasia angelica angelina annamaria " +
-    "antonia assunta aurora brunella carolina cecilia cinzia clara clelia cristiano dalila " +
-    "dante denis denise dina dino edda egidio elio eliana elvira emma enrica erica ermanno ester " +
-    "eva fausto fernanda fernando ferdinando fiorella flavia franca franco gemma gerardo giada " +
-    "gianfranco giancarlo gianluigi gianmarco gianpaolo gianpiero gilda gino gioele giordano grazia " +
-    "graziano greta gregorio ida ileana ines iolanda isabella lara lea leonardo lidia livia " +
-    "loredano lucrezia ludovica lucio maddalena mafalda manlio mara marcella mariano marilena mariella " +
-    "mariarosa marta mattia melissa miriam mirella morena nadia nando natalia nicolas nina " +
-    "nino oreste orietta ottavio pierluigi pierpaolo pino quirino rachele raimondo rebecca " +
-    "renata riccarda rino roberta rolando romina rosetta rossana ruben sabina samuel " +
-    "sebastiana selene severino silvano sonia susanna tamara tecla teodoro tina " +
-    "tullio ugo valter vania viviana yuri zaira"
-  ).split(" ").filter(Boolean)
-);
+import { AMBIGUOUS_NAME_WORDS, FIRST_NAMES, SURNAMES } from "./nameLists";
+
+export { AMBIGUOUS_NAME_WORDS, FIRST_NAMES, SURNAMES };
 
 // Parole che, anche con l'iniziale maiuscola o tutte maiuscole, non sono mai nomi di persona.
 export const PROTECTED = new Set(
@@ -64,7 +33,9 @@ export const PROTECTED = new Set(
     "processo ricorso controricorso memoria memorie omissis " +
     // Parole d'uso comune che spesso iniziano una frase dopo un'etichetta ("Cliente: Buongiorno…").
     "buongiorno buonasera salve gentile egregio spettabile spett cordiali saluti grazie oggetto allegato " +
-    "nome cognome cliente assistito controparte mittente destinatario email telefono via viale piazza corso"
+    "nome cognome cliente assistito controparte mittente destinatario email telefono via viale piazza corso " +
+    // Parole tipiche delle denominazioni sociali ("Rossi Costruzioni Srl").
+    "costruzioni immobiliare servizi group holding trasporti impianti consulting associati industrie commerciale"
   ).split(" ")
 );
 
@@ -78,7 +49,7 @@ const TOKEN_RE = /(?:\p{L}{1,4}['’])?\p{L}+(?:-\p{L}+)*/gu;
 const JUDGE_BEFORE =
   /(?:\bdott(?:\.ssa|ssa|or|ore|oressa)?\.?|\bpres\.|\bcons\.|\bpresidente|\bconsigliere|\brelatore|\bestensore|\bmagistrat[oi]|\bgiudice|\bprocuratore(?:\s+generale)?|\bp\.\s?[gm]\.)\s*:?\s*$/i;
 const JUDGE_AFTER = /^\s*[-–—,]?\s*(?:(?:presidente|consigliere|relatore|estensore)\b|rel\.|est\.)/i;
-const PLACE_BEFORE =
+export const PLACE_BEFORE =
   /(?:\b(?:san|santa|santo|via|viale|piazza|piazzale|corso|largo|vicolo|reggio|venezia|ospedale|istituto|liceo|scuola|policlinico|fondazione|borgo|castel|monte|porta)\s+|\bsant['’]|\bs\.\s?)$/i;
 
 const LAWYER_CUE =
@@ -153,6 +124,13 @@ function expandLeft(text: string, tokens: Token[], i: number, e: number, anyCase
     break;
   }
   return s;
+}
+
+/** Cognome dell'elenco che non è anche una parola comune, una città o un marchio. */
+export function isKnownSurname(t: Token): boolean {
+  const word = t.lower;
+  const key = SURNAMES.has(word) ? word : bare(t);
+  return SURNAMES.has(key) && !AMBIGUOUS_NAME_WORDS.has(key);
 }
 
 export interface PersonNameMatch {
@@ -234,6 +212,22 @@ export function detectPersonNames(text: string): PersonNameDetection {
     const e = expandRight(text, tokens, i, i, false, 4);
     const s = expandLeft(text, tokens, i, e, false, 4);
     if (s === i && e === i) return; // nome isolato: troppo ambiguo
+    addSpan(s, e, true);
+  });
+
+  // 5. Cognome frequente (non ambiguo) + nome di forma qualsiasi ("Kevin Esposito", "ESPOSITO Kevin").
+  tokens.forEach((t, i) => {
+    if (!isNameToken(t) || !isKnownSurname(t)) return;
+    const e = expandRight(text, tokens, i, i, false, 4);
+    // A sinistra solo nomi propri da elenco o parole maiuscole ("Kevin Esposito", "KEVIN ESPOSITO"),
+    // non qualsiasi parola con l'iniziale maiuscola ("Il Esposito" a inizio frase).
+    let s = i;
+    while (s - 1 >= 0 && e - s + 1 < 4 && adjacent(text, tokens[s - 1], tokens[s])) {
+      const prev = tokens[s - 1];
+      if (!(isUpperName(prev) || (isNameToken(prev) && FIRST_NAMES.has(bare(prev))))) break;
+      s -= 1;
+    }
+    if (s === i && e === i) return;
     addSpan(s, e, true);
   });
 

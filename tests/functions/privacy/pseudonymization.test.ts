@@ -304,3 +304,53 @@ describe("helper per servizi esterni e salvataggio", () => {
     warn.mockRestore();
   });
 });
+
+describe("PseudonymizationVault — regressione su testi realistici", () => {
+  const hides: Array<[string, string[]]> = [
+    ["Il mio assistito Ahmed Benali è stato licenziato da Kevin Schmidt.", ["Ahmed", "Benali", "Kevin", "Schmidt"]],
+    ["La signora Ornella Vanoni e il marito Gennaro Esposito vogliono separarsi.", ["Gennaro", "Esposito"]],
+    ["il mio cliente mario rossi vuole fare causa a giuseppe verdi", ["mario rossi", "giuseppe verdi"]],
+    ["Esposito mi ha chiesto se può impugnare il licenziamento. Ferrari invece è d'accordo.", ["Esposito", "Ferrari"]],
+    ["Ho parlato con Marco ieri. Domani vedo Chiara e suo fratello Tommaso.", ["Marco", "Chiara", "Tommaso"]],
+    ["La situazione è serena. Rosa Russo invece è la ricorrente.", ["Rosa Russo"]],
+    ["Il numero è 3331234567, il fisso 0612345678, oppure 333 1234567.", ["3331234567", "0612345678", "333 1234567"]],
+    ["La società ha P.IVA 01234567890.", ["01234567890"]],
+    ["L'auto targata AB123CD guidata da Francesco Totti, nato il 27/09/1976.", ["AB123CD", "Totti", "27/09/1976"]],
+    ["SINISTRO: veicolo FG 456 HK condotto da BRUNO PELLEGRINI.", ["FG 456 HK", "BRUNO", "PELLEGRINI"]],
+    ["Oleksandr Kovalenko, nato in Ucraina il 3 maggio 1988, chiede le differenze.", ["3 maggio 1988"]],
+  ];
+
+  it.each(hides)("nasconde i dati personali: %s", (input, values) => {
+    const vault = new PseudonymizationVault();
+    const pseudonymized = vault.pseudonymize(input);
+    for (const value of values) expect(pseudonymized).not.toContain(value);
+    expect(vault.restore(pseudonymized)).toBe(input);
+  });
+
+  const keeps = [
+    "La Corte di Cassazione, con sentenza n. 1234/2023, ha richiamato l'art. 2043 c.c. San Giovanni Rotondo. Santa Maria Capua Vetere.",
+    "Il Codice Civile disciplina la materia. Via Giuseppe Garibaldi è chiusa. Legge Fornero. Riforma Cartabia.",
+    "Condanna al pagamento di € 12.345,67. Cass. civ. Sez. III, 12/05/2021 n. 12345. R.G. 1234/2022.",
+    "Sei Jurio, un assistente legale. Rispondi in italiano. Cita sempre le fonti normative.",
+    "La Legge Pinto (L. 89/2001) prevede l'equa riparazione. Il decreto Bersani ha liberalizzato le tariffe.",
+    "Il ricorso va notificato entro 60 giorni. Costa 518 euro di contributo unificato. Villa Borghese è a Roma.",
+    "Natale cade di venerdì; le udienze riprendono il 7 gennaio. Riva del Garda e Monte San Savino.",
+    "Il fascicolo R.G. n. 31245/2023 e il protocollo n. 0045678912. Importo dovuto: 3.450,00 euro.",
+    "Martini & Rossi S.p.A. ha impugnato il provvedimento dell'AGCM.",
+  ];
+
+  it.each(keeps)("non modifica testi senza dati personali: %s", (input) => {
+    expect(new PseudonymizationVault().pseudonymize(input)).toBe(input);
+  });
+
+  it("maschera un cognome anche nei testi che precedono il nome completo", () => {
+    const vault = new PseudonymizationVault();
+    const pseudonymized = vault.pseudonymize({
+      messages: [{ text: "Verdi non ha pagato." }, { text: "Il debitore è Luigi Verdi." }],
+    });
+
+    expect(pseudonymized).toEqual({
+      messages: [{ text: "{COGNOME_1} non ha pagato." }, { text: "Il debitore è {NOME_1}." }],
+    });
+  });
+});
