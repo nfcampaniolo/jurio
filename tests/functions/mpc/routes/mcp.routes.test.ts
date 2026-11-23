@@ -131,7 +131,7 @@ describe("mcpRouter", () => {
 
     await routeMiddleware()(req, res);
 
-    expect(mocks.createMcpServer).toHaveBeenCalledOnce();
+    expect(mocks.createMcpServer).toHaveBeenCalledWith(`Bearer ${"d".repeat(64)}`, { uid: "user", client: "unknown" });
     expect(mocks.connect).toHaveBeenCalledOnce();
     expect(mocks.handleRequest).not.toHaveBeenCalled();
     expect(res.on).toHaveBeenCalledWith("close", expect.any(Function));

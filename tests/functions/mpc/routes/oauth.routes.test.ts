@@ -93,12 +93,15 @@ describe("oauthRouter", () => {
     it("stores a new client and returns OAuth registration details", async () => {
       const res = makeResponse();
 
-      await postHandler("/register")({ body: { redirect_uris: ["https://client.example/callback"] } }, res);
+      await postHandler("/register")({
+        body: { redirect_uris: ["https://client.example/callback"], client_name: "Claude Desktop" },
+      }, res);
 
       expect(mocks.collection).toHaveBeenCalledWith("oauth_clients");
       expect(mocks.clientSet).toHaveBeenCalledWith(expect.objectContaining({
         client_secret: expect.stringMatching(/^[a-f0-9]{64}$/),
         redirect_uris: ["https://client.example/callback"],
+        client_name: "claude_desktop",
         createdAt: "server-timestamp",
       }));
       const [status, result] = res.status.mock.calls[0];
@@ -266,6 +269,7 @@ describe("oauthRouter", () => {
     it("deletes a valid code and persists a 30-day access token after successful PKCE", async () => {
       const res = makeResponse();
       mocks.codeGet.mockResolvedValue({ exists: true, data: () => validCodeData() });
+      mocks.clientGet.mockResolvedValueOnce({ exists: true, data: () => ({ client_name: "claude" }) });
 
       await postHandler("/token")({
         body: { grant_type: "authorization_code", code: "valid-code", client_id: "client-1", code_verifier: "verifier" },
@@ -277,6 +281,7 @@ describe("oauthRouter", () => {
         createdAt: "server-timestamp",
         expiresAt: expect.objectContaining({ toDate: expect.any(Function) }),
         client_id: "client-1",
+        client_name: "claude",
       }));
       const token = res.json.mock.calls[0][0];
       expect(res.status).toHaveBeenCalledWith(200);

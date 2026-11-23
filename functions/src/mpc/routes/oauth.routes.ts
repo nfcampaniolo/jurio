@@ -3,6 +3,7 @@ import { randomBytes, createHash } from "crypto";
 import { Timestamp, FieldValue } from "firebase-admin/firestore";
 import { getDb } from "../../_deps";
 import { logSafeError } from "../../_logging";
+import { normalizeUsageKey } from "../usage";
 
 const db = getDb();
 export const oauthRouter = Router();
@@ -39,6 +40,8 @@ oauthRouter.post("/register", async (req, res) => {
     await db.collection("oauth_clients").doc(clientId).set({
       client_secret: clientSecret,
       redirect_uris: redirectUris,
+      // Nome dichiarato dal client (es. "Claude"): serve solo a ripartire le statistiche d'uso MCP.
+      client_name: normalizeUsageKey(req.body?.client_name),
       createdAt: FieldValue.serverTimestamp(),
     });
 
@@ -255,11 +258,16 @@ oauthRouter.post("/token", async (req, res) => {
     expireDate.setDate(expireDate.getDate() + 30);
     const expiresInSeconds = 30 * 24 * 60 * 60;
 
+    // Il nome del client viene copiato sul token, così le chiamate MCP non devono rileggerlo.
+    const clientSnap = await db.collection("oauth_clients").doc(String(codeData.client_id)).get().catch(() => null);
+    const clientName = normalizeUsageKey(clientSnap?.exists ? clientSnap.data()?.client_name : undefined);
+
     await db.collection("oauth_tokens").doc(accessToken).set({
       user: codeData.user,
       createdAt: FieldValue.serverTimestamp(),
       expiresAt: Timestamp.fromDate(expireDate),
       client_id: String(codeData.client_id),
+      client_name: clientName,
       resource: codeData.resource || resource || MCP_RESOURCE,
     });
 

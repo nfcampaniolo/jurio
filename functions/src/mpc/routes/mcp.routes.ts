@@ -1,6 +1,7 @@
 import { Router, type Response } from "express";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { createMcpServer } from "../server";
+import { normalizeUsageKey } from "../usage";
 import { getDb } from "../../_deps";
 import { logSafeError } from "../../_logging";
 
@@ -286,7 +287,10 @@ mcpRouter.use(async (req, res) => {
     }
 
     const mcpAuthHeader = `Bearer ${token}`;
-    const server = createMcpServer(mcpAuthHeader);
+    const server = createMcpServer(mcpAuthHeader, {
+      uid,
+      client: normalizeUsageKey(tokenData?.client_name),
+    });
 
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,
