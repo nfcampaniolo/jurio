@@ -256,16 +256,21 @@ describe("functions/src/index", () => {
     }
   });
 
-  it("registers the MCP app as the HTTP handler with the dedicated resource options", () => {
+  it("forwards MCP requests to the lazily loaded app with the dedicated resource options", async () => {
     // Arrange
-    const registration = functions.jurioMcpServer as unknown as { options: unknown; handler: unknown };
+    const registration = functions.jurioMcpServer as unknown as {
+      options: unknown;
+      handler: (req: unknown, res: unknown) => Promise<void>;
+    };
+    const req = { method: "POST" };
+    const res = {};
 
     // Act
-    const { options, handler } = registration;
+    await registration.handler(req, res);
 
     // Assert
-    expect(options).toEqual({ timeoutSeconds: 300, memory: "512MiB" });
-    expect(handler).toBe(mocks.app);
+    expect(registration.options).toEqual({ timeoutSeconds: 300, memory: "512MiB" });
+    expect(mocks.app).toHaveBeenCalledWith(req, res);
   });
 
   it.each(requestDispatches)("forwards %s requests to %s", async (exportName, mockName) => {

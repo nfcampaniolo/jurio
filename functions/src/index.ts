@@ -2,35 +2,12 @@ import { onRequest } from "firebase-functions/v2/https";
 import { logSafeError } from "./_logging";
 import { setGlobalOptions } from "firebase-functions/v2/options";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
-import { onSchedule } from "firebase-functions/v2/scheduler"; 
+import { onSchedule } from "firebase-functions/v2/scheduler";
 
-import { app } from "./mpc/app";
-import { executeVectorSearchJurio } from "./research/sentences.logic";
-import { executeVectorSearchDoctrine } from "./research/doctrine.logic";
-import { executeLegalAgent } from "./genai/legalAgent/logic";
-import { executeDeepAnalysis, processDeepAnalysisJob } from "./genai/deepAnalysisAgent/logic";
-import { getDb } from "./_deps";
-import { executeSupport, executeUpdateMetadataFromChat, executeGenerateEmbedding } from "./genai/supportAgent/logic";
-import { executeReasoning, executeAdminDoctrineUpload } from "./genai/documentAnalysisAgent/logic";
-import { executePromptAgent, executeEnhancePromptAgent } from "./genai/promptAgent/logic";
-import { executeWordAgent } from "./genai/wordAgent/logic";
-import { executeWordAuth } from "./auth/wordLogin.logic";
-import { executeSpeechToTextAgent, executeExtractDocumentText } from "./support/textAgents.logic";
-import { executeSubmitFeedback } from  "./support/feedback.logic";
-import { executeAdminMaintenanceTask, executeAdminMergeCategoryTask, executeAdminUploadManualContentTask, executeSendAdminNotification } from  "./admin/admin.logic";
-import { executeReasoningAdmin } from  "./admin/reason.logic";
-import { executeAssignTeamSeat, executeRemoveTeamMember } from  "./team/teammembers.logic";
-import { executeVerifyVoucher, executeSendTeamInviteEmail } from  "./team/teamsharing.logic";
-import { executeDeleteTeam, executeShareAllTeamDocuments } from  "./team/teammanagement.logic";
-import { executeListCloudFiles, executeDownloadCloudFile } from "./cloud/googledrive.logic";
-import { handleEmbeddingCreation, handleEmbeddingDocumentCreation, handleEmbeddingManualCreation } from "./triggers/embedding.logic";
-import { handleGenerateStaticStatsJson, handleFileCreation, handleProcessContacts } from "./triggers/triggers.logic";
-import { executeTasksDowngrade, computeAndSaveWeeklyStats, computeAndSaveMonthlyUsage } from "./schedules/tasks.logic";
-import { computeAndSaveMonthlyActivityReports } from "./schedules/activityReports.logic";
-import { executePayWithStripeCreateCheckoutSession, executeStripeWebhook } from "./subscriptions/payments.logic";
-import { executeSendVerificationEmail } from "./auth/emailVerification.logic";
-import { executeSendPasswordResetEmail } from "./auth/passwordReset.logic";
-import { executeGetRegister, executeGetPrice, executeApplyDiscountCoupon} from "./subscriptions/subscription.logic";
+// Ogni funzione viene distribuita come servizio Cloud Run separato, ma tutti caricano questo file.
+// Per questo i moduli della logica si importano dentro l'handler (import dinamico): ogni container
+// carica solo ciò che gli serve, invece di genai, pdf, Stripe ecc. per tutte le funzioni.
+// Accorcia l'avvio a freddo; Node mette in cache il modulo dopo il primo import.
 
 setGlobalOptions({
   region: "europe-west1",
@@ -45,7 +22,10 @@ setGlobalOptions({
 
 export const jurioMcpServer = onRequest(
   { timeoutSeconds: 300, memory: "512MiB" },
-  app
+  async (req, res) => {
+    const { app } = await import("./mpc/app.js");
+    app(req, res);
+  }
 );
 
 // ============================================================================
@@ -60,7 +40,10 @@ export const vectorSearchJurio = onRequest(
     cpu: 1,
     concurrency: 80
   },
-  executeVectorSearchJurio
+  async (req, res) => {
+    const { executeVectorSearchJurio } = await import("./research/sentences.logic.js");
+    return executeVectorSearchJurio(req, res);
+  }
 );
 
 export const vectorSearchDoctrine = onRequest(
@@ -71,7 +54,10 @@ export const vectorSearchDoctrine = onRequest(
     cpu: 1,
     concurrency: 80
   },
-  executeVectorSearchDoctrine
+  async (req, res) => {
+    const { executeVectorSearchDoctrine } = await import("./research/doctrine.logic.js");
+    return executeVectorSearchDoctrine(req, res);
+  }
 );
 
 // ============================================================================
@@ -85,6 +71,7 @@ export const legalAgent = onRequest(
     concurrency: 80,
   },
   async (req, res) => {
+    const { executeLegalAgent } = await import("./genai/legalAgent/logic.js");
     return executeLegalAgent(req, res);
   }
 );
@@ -101,6 +88,7 @@ export const deepAnalysisAgent = onRequest(
     concurrency: 80,
   },
    async (req, res) => {
+    const { executeDeepAnalysis } = await import("./genai/deepAnalysisAgent/logic.js");
     return executeDeepAnalysis(req, res);
   }
 );
@@ -116,6 +104,7 @@ export const processDeepAnalysis = onDocumentWritten(
   async (event) => {
     const job = event.data?.after.data()?.job;
     if (!job || job.status !== "queued") return;
+    const { processDeepAnalysisJob } = await import("./genai/deepAnalysisAgent/logic.js");
     await processDeepAnalysisJob(event.params.sessionId);
   }
 );
@@ -127,6 +116,10 @@ export const recoverDeepAnalysisJobs = onSchedule(
     memory: "1GiB",
   },
   async () => {
+    const [{ getDb }, { processDeepAnalysisJob }] = await Promise.all([
+      import("./_deps.js"),
+      import("./genai/deepAnalysisAgent/logic.js"),
+    ]);
     const db = getDb();
     const [queued, processing] = await Promise.all([
       db.collection("deep_analysis_sessions")
@@ -159,6 +152,7 @@ export const support = onRequest(
     concurrency: 80,
   }, 
   async (req, res) => {
+    const { executeSupport } = await import("./genai/supportAgent/logic.js");
     return executeSupport(req, res);
   }
 );
@@ -170,6 +164,7 @@ export const reasoning = onRequest(
     memory: "1GiB",
   },
   async (req, res) => {
+    const { executeReasoning } = await import("./genai/documentAnalysisAgent/logic.js");
     return executeReasoning(req, res);
   }
 );
@@ -181,6 +176,7 @@ export const promptAgent = onRequest(
     memory: "1GiB",
   }, 
   async (req, res) => {
+    const { executePromptAgent } = await import("./genai/promptAgent/logic.js");
     return executePromptAgent(req, res);
   }
 );
@@ -192,6 +188,7 @@ export const enhancePromptAgent = onRequest(
     memory: "512MiB",
   }, 
   async (req, res) => {
+    const { executeEnhancePromptAgent } = await import("./genai/promptAgent/logic.js");
     return executeEnhancePromptAgent(req, res);
   }
 );
@@ -203,6 +200,7 @@ export const wordAgent = onRequest(
     memory: "1GiB"
   }, 
   async (req, res) => {
+    const { executeWordAgent } = await import("./genai/wordAgent/logic.js");
     return executeWordAgent(req, res);
   }
 );
@@ -211,11 +209,13 @@ export const wordAgent = onRequest(
 export const wordAuth = onRequest(
   {
     timeoutSeconds: 30,
-    // All'avvio ogni funzione carica l'intero index (~280 MiB): sotto 512 MiB il container non parte.
+    // Prima del caricamento su richiesta dei moduli ogni funzione caricava l'intero index (~280 MiB) e sotto
+    // 512 MiB il container non partiva. Ora carica solo wordLogin.logic: si può riprovare a ridurre la memoria.
     memory: "512MiB",
     concurrency: 80,
   },
   async (req, res) => {
+    const { executeWordAuth } = await import("./auth/wordLogin.logic.js");
     return executeWordAuth(req, res);
   }
 );
@@ -228,6 +228,7 @@ export const adminDoctrineUpload = onRequest(
     invoker: "public",
   },
   async (req, res) => {
+    const { executeAdminDoctrineUpload } = await import("./genai/documentAnalysisAgent/logic.js");
     return executeAdminDoctrineUpload(req, res);
   }
 );
@@ -239,6 +240,7 @@ export const generateEmbedding = onRequest(
     memory: "512MiB",
   },
   async (req, res) => {
+    const { executeGenerateEmbedding } = await import("./genai/supportAgent/logic.js");
     return executeGenerateEmbedding(req, res);
   }
 );
@@ -253,6 +255,7 @@ export const speechToTextAgent = onRequest(
     memory: "1GiB",
   },
   async (req, res) => {
+    const { executeSpeechToTextAgent } = await import("./support/textAgents.logic.js");
     return executeSpeechToTextAgent(req, res);
   }
 );
@@ -263,6 +266,7 @@ export const extractDocumentText = onRequest(
     memory: "1GiB",
   }, 
   async (req, res) => {
+    const { executeExtractDocumentText } = await import("./support/textAgents.logic.js");
     return executeExtractDocumentText(req, res);
   }
 );
@@ -273,6 +277,7 @@ export const submitFeedback = onRequest(
     memory: "512MiB",
   },
   async (req, res) => {
+    const { executeSubmitFeedback } = await import("./support/feedback.logic.js");
     return executeSubmitFeedback(req, res);
   }
 );
@@ -287,6 +292,7 @@ export const adminMaintenanceTask = onRequest(
     memory: "1GiB",
   }, 
   async (req, res) => {
+    const { executeAdminMaintenanceTask } = await import("./admin/admin.logic.js");
     return executeAdminMaintenanceTask(req, res);
   }
 );
@@ -297,6 +303,7 @@ export const adminMergeCategoryTask = onRequest(
     memory: "2GiB",
   }, 
   async (req, res) => {
+    const { executeAdminMergeCategoryTask } = await import("./admin/admin.logic.js");
     return executeAdminMergeCategoryTask(req, res);
   }
 );
@@ -307,6 +314,7 @@ export const adminUploadManualContentTask = onRequest(
     memory: "512MiB",
   }, 
   async (req, res) => {
+    const { executeAdminUploadManualContentTask } = await import("./admin/admin.logic.js");
     return executeAdminUploadManualContentTask(req, res);
   }
 );
@@ -317,6 +325,7 @@ export const sendAdminNotification = onRequest(
     memory: "1GiB",
   },
   async (req, res) => {
+    const { executeSendAdminNotification } = await import("./admin/admin.logic.js");
     return executeSendAdminNotification(req, res);
   }
 );
@@ -328,6 +337,7 @@ export const reasoningAdmin = onRequest(
     memory: "1GiB",
   },
   async (req, res) => {
+    const { executeReasoningAdmin } = await import("./admin/reason.logic.js");
     return executeReasoningAdmin(req, res);
   }
 );
@@ -343,7 +353,10 @@ export const processDocumentEmbedding = onDocumentCreated(
     timeoutSeconds: 120,
     memory: "512MiB"
   },
-  handleEmbeddingDocumentCreation
+  async (event) => {
+    const { handleEmbeddingDocumentCreation } = await import("./triggers/embedding.logic.js");
+    return handleEmbeddingDocumentCreation(event);
+  }
 );
 
 export const processSentenceEmbedding = onDocumentCreated(
@@ -353,7 +366,10 @@ export const processSentenceEmbedding = onDocumentCreated(
     timeoutSeconds: 120,
     memory: "512MiB"
   },
-  handleEmbeddingCreation
+  async (event) => {
+    const { handleEmbeddingCreation } = await import("./triggers/embedding.logic.js");
+    return handleEmbeddingCreation(event);
+  }
 );
 
 export const processDoctrineEmbedding = onDocumentCreated(
@@ -363,7 +379,10 @@ export const processDoctrineEmbedding = onDocumentCreated(
     timeoutSeconds: 120,
     memory: "512MiB"
   },
-  handleEmbeddingCreation
+  async (event) => {
+    const { handleEmbeddingCreation } = await import("./triggers/embedding.logic.js");
+    return handleEmbeddingCreation(event);
+  }
 );
 
 export const processManualEmbedding = onDocumentCreated(
@@ -373,7 +392,10 @@ export const processManualEmbedding = onDocumentCreated(
     timeoutSeconds: 120,
     memory: "512MiB"
   },
-  handleEmbeddingManualCreation
+  async (event) => {
+    const { handleEmbeddingManualCreation } = await import("./triggers/embedding.logic.js");
+    return handleEmbeddingManualCreation(event);
+  }
 );
 
 export const processFileCreation = onDocumentWritten(
@@ -382,7 +404,10 @@ export const processFileCreation = onDocumentWritten(
     timeoutSeconds: 60,
     memory: "512MiB"
   },
-  handleFileCreation
+  async (event) => {
+    const { handleFileCreation } = await import("./triggers/triggers.logic.js");
+    return handleFileCreation(event);
+  }
 );
 
 export const generateStaticStatsJson = onDocumentCreated(
@@ -391,6 +416,7 @@ export const generateStaticStatsJson = onDocumentCreated(
     memory: "512MiB",
   },
   async (event) => {
+    const { handleGenerateStaticStatsJson } = await import("./triggers/triggers.logic.js");
     return handleGenerateStaticStatsJson(event);
   }
 );
@@ -402,6 +428,7 @@ export const processContacts = onDocumentCreated(
     memory: "512MiB"
   },
   async (event) => {
+    const { handleProcessContacts } = await import("./triggers/triggers.logic.js");
     return handleProcessContacts(event);
   }
 );
@@ -414,6 +441,7 @@ export const updateMetadataFromChat = onDocumentCreated(
     secrets: ["GOOGLE_GENAI_API_KEY"],
   },
   async (event) => {
+    const { executeUpdateMetadataFromChat } = await import("./genai/supportAgent/logic.js");
     return executeUpdateMetadataFromChat(event);
   }
 );
@@ -433,6 +461,7 @@ export const weeklySentencesStatsCron = onSchedule(
   async (event) => {
     console.log(`⏰ Inizio task schedulato: calcolo statistiche settimanali: ${event}`);
     try {
+      const { computeAndSaveWeeklyStats } = await import("./schedules/tasks.logic.js");
       const stats = await computeAndSaveWeeklyStats();
       console.log(`✅ Statistiche salvate con successo. Totale documenti: ${stats.totale_documenti}`);
     } catch (error) {
@@ -453,6 +482,7 @@ export const monthlyUsageStatsCron = onSchedule(
   async (event) => {
     console.log(`⏰ Inizio task schedulato: consolidamento usage mensile: ${event.scheduleTime}`);
     try {
+      const { computeAndSaveMonthlyUsage } = await import("./schedules/tasks.logic.js");
       const stats = await computeAndSaveMonthlyUsage();
       console.log(`✅ Consolidamento usage completato. Utenti processati: ${stats.utenti_processati}`);
     } catch (error) {
@@ -463,6 +493,7 @@ export const monthlyUsageStatsCron = onSchedule(
     // Report di attività (chat/fascicoli e deep analysis): un loro errore non rilancia,
     // altrimenti il retry ripeterebbe il consolidamento e rimanderebbe le email agli utenti
     try {
+      const { computeAndSaveMonthlyActivityReports } = await import("./schedules/activityReports.logic.js");
       const reports = await computeAndSaveMonthlyActivityReports();
       console.log(`✅ Report attività ${reports.mese_id} salvati: ${reports.conversazioni.path}, ${reports.deep_analysis.path}`);
     } catch (error) {
@@ -472,6 +503,7 @@ export const monthlyUsageStatsCron = onSchedule(
 );
 
 export const tasksDowngrade = onRequest(async (req, res) => {
+  const { executeTasksDowngrade } = await import("./schedules/tasks.logic.js");
   return executeTasksDowngrade(req, res);
 });
 
@@ -486,6 +518,7 @@ export const getRegister = onRequest(
     memory: "512MiB",
   },
   async (req, res) => {
+    const { executeGetRegister } = await import("./subscriptions/subscription.logic.js");
     return executeGetRegister(req, res);
   }
 );
@@ -496,6 +529,7 @@ export const getPrice = onRequest(
     memory: "512MiB",
   },
   async (req, res) => {
+    const { executeGetPrice } = await import("./subscriptions/subscription.logic.js");
     return executeGetPrice(req, res);
   }
 );
@@ -506,6 +540,7 @@ export const applyDiscountCoupon = onRequest(
     memory: "512MiB",
   },
   async (req, res) => {
+    const { executeApplyDiscountCoupon } = await import("./subscriptions/subscription.logic.js");
     return executeApplyDiscountCoupon(req, res);
   }
 );
@@ -518,6 +553,7 @@ export const payWithStripeCreateCheckoutSession = onRequest(
     memory: "512MiB",
   },
   async (req, res) => {
+    const { executePayWithStripeCreateCheckoutSession } = await import("./subscriptions/payments.logic.js");
     return executePayWithStripeCreateCheckoutSession(req, res);
   }
 );
@@ -530,6 +566,7 @@ export const stripeWebhook = onRequest(
     memory: "512MiB",
   },
   async (req, res): Promise<void> => {
+    const { executeStripeWebhook } = await import("./subscriptions/payments.logic.js");
     return executeStripeWebhook(req, res);
   }
 );
@@ -544,6 +581,7 @@ export const assignTeamSeat = onRequest(
     memory: "512MiB"
   },
   async (req, res) => {
+    const { executeAssignTeamSeat } = await import("./team/teammembers.logic.js");
     return executeAssignTeamSeat(req, res);
   }
 );
@@ -554,6 +592,7 @@ export const verifyVoucher = onRequest(
     memory: "512MiB",
   },
   async (req, res) => {
+    const { executeVerifyVoucher } = await import("./team/teamsharing.logic.js");
     return executeVerifyVoucher(req, res);
   }
 );
@@ -564,6 +603,7 @@ export const removeTeamMember = onRequest(
     memory: "512MiB",
   },
   async (req, res) => {
+    const { executeRemoveTeamMember } = await import("./team/teammembers.logic.js");
     return executeRemoveTeamMember(req, res);
   }
 );
@@ -574,6 +614,7 @@ export const deleteTeam = onRequest(
     memory: "1GiB",
   },
   async (req, res) => {
+    const { executeDeleteTeam } = await import("./team/teammanagement.logic.js");
     return executeDeleteTeam(req, res);
   }
 );
@@ -584,6 +625,7 @@ export const sendVerificationEmail = onRequest(
     memory: "512MiB",
   },
   async (req, res) => {
+    const { executeSendVerificationEmail } = await import("./auth/emailVerification.logic.js");
     return executeSendVerificationEmail(req, res);
   }
 );
@@ -594,6 +636,7 @@ export const sendPasswordResetEmail = onRequest(
     memory: "512MiB",
   },
   async (req, res) => {
+    const { executeSendPasswordResetEmail } = await import("./auth/passwordReset.logic.js");
     return executeSendPasswordResetEmail(req, res);
   }
 );
@@ -604,6 +647,7 @@ export const sendTeamInviteEmail = onRequest(
     memory: "512MiB",
   },
   async (req, res) => {
+    const { executeSendTeamInviteEmail } = await import("./team/teamsharing.logic.js");
     return executeSendTeamInviteEmail(req, res);
   }
 );
@@ -614,6 +658,7 @@ export const shareAllTeamDocuments = onRequest(
     memory: "1GiB", 
   },
   async (req, res) => {
+    const { executeShareAllTeamDocuments } = await import("./team/teammanagement.logic.js");
     return executeShareAllTeamDocuments(req, res);
   }
 );
@@ -628,6 +673,7 @@ export const listCloudFiles = onRequest(
     memory: "1GiB",
   },
   async (req, res) => {
+    const { executeListCloudFiles } = await import("./cloud/googledrive.logic.js");
     return executeListCloudFiles(req, res);
   }
 );
@@ -638,6 +684,7 @@ export const downloadCloudFile = onRequest(
     memory: "1GiB",
   },
   async (req, res) => {
+    const { executeDownloadCloudFile } = await import("./cloud/googledrive.logic.js");
     return executeDownloadCloudFile(req, res);
   }
 );
